@@ -15,10 +15,18 @@ describe('runListsCommand', () => {
 
   it('throws when config does not exist', async () => {
     const { loadConfig } = await import('../config.js')
-    vi.mocked(loadConfig).mockImplementation(() => { throw new Error('not found') })
+    vi.mocked(loadConfig).mockImplementation(() => { throw new Error('Config file not found') })
 
     const { runListsCommand } = await import('./lists.js')
     await expect(runListsCommand()).rejects.toThrow('cu init first')
+  })
+
+  it('propagates non-file-not-found errors from loadConfig', async () => {
+    const { loadConfig } = await import('../config.js')
+    vi.mocked(loadConfig).mockImplementation(() => { throw new Error('invalid JSON') })
+
+    const { runListsCommand } = await import('./lists.js')
+    await expect(runListsCommand()).rejects.toThrow('invalid JSON')
   })
 
   it('writes updated config with selected lists', async () => {
