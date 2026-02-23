@@ -1,5 +1,5 @@
-vi.mock('@inquirer/prompts', async (importOriginal) => {
-  const actual = await importOriginal() as Record<string, unknown>
+vi.mock('@inquirer/prompts', async importOriginal => {
+  const actual = (await importOriginal()) as Record<string, unknown>
   return {
     ...actual,
     confirm: vi.fn(),
@@ -7,15 +7,15 @@ vi.mock('@inquirer/prompts', async (importOriginal) => {
   }
 })
 
-vi.mock('child_process', () => ({
-  execSync: vi.fn(),
+vi.mock('node:child_process', () => ({
+  execFileSync: vi.fn(),
 }))
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { confirm } from '@inquirer/prompts'
-import { execSync } from 'child_process'
-import type { Task } from './api.js'
-import type { TaskSummary } from './commands/tasks.js'
+import { execFileSync } from 'node:child_process'
+import type { Task } from '../../src/api.js'
+import type { TaskSummary } from '../../src/commands/tasks.js'
 
 const makeFullTask = (overrides: Partial<Task> = {}): Task => ({
   id: 'abc123',
@@ -44,7 +44,7 @@ beforeEach(() => {
 
 describe('formatTaskDetail', () => {
   it('formats task detail with all populated fields', async () => {
-    const { formatTaskDetail } = await import('./interactive.js')
+    const { formatTaskDetail } = await import('../../src/interactive.js')
     const task = makeFullTask({
       priority: { priority: 'high' },
       time_estimate: 115200000,
@@ -64,7 +64,7 @@ describe('formatTaskDetail', () => {
   })
 
   it('omits empty fields', async () => {
-    const { formatTaskDetail } = await import('./interactive.js')
+    const { formatTaskDetail } = await import('../../src/interactive.js')
     const task = makeFullTask({ priority: null, tags: [], assignees: [] })
     const result = formatTaskDetail(task)
     expect(result).not.toContain('Priority')
@@ -73,14 +73,14 @@ describe('formatTaskDetail', () => {
   })
 
   it('includes parent when present', async () => {
-    const { formatTaskDetail } = await import('./interactive.js')
+    const { formatTaskDetail } = await import('../../src/interactive.js')
     const task = makeFullTask({ parent: 'parent_id' })
     const result = formatTaskDetail(task)
     expect(result).toContain('parent_id')
   })
 
   it('shows description preview truncated to 3 lines', async () => {
-    const { formatTaskDetail } = await import('./interactive.js')
+    const { formatTaskDetail } = await import('../../src/interactive.js')
     const task = makeFullTask({
       text_content: 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5',
     })
@@ -94,7 +94,7 @@ describe('formatTaskDetail', () => {
 
 describe('interactiveTaskPicker', () => {
   it('returns empty array when no tasks provided', async () => {
-    const { interactiveTaskPicker } = await import('./interactive.js')
+    const { interactiveTaskPicker } = await import('../../src/interactive.js')
     const result = await interactiveTaskPicker([])
     expect(result).toEqual([])
   })
@@ -102,7 +102,7 @@ describe('interactiveTaskPicker', () => {
 
 describe('showDetailsAndOpen', () => {
   it('does nothing when no tasks selected', async () => {
-    const { showDetailsAndOpen } = await import('./interactive.js')
+    const { showDetailsAndOpen } = await import('../../src/interactive.js')
     await showDetailsAndOpen([])
   })
 
@@ -110,10 +110,14 @@ describe('showDetailsAndOpen', () => {
     vi.mocked(confirm).mockResolvedValue(false)
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const fullTask = makeFullTask({ id: 'task_001', name: 'My Important Task', text_content: 'Some desc' })
+    const fullTask = makeFullTask({
+      id: 'task_001',
+      name: 'My Important Task',
+      text_content: 'Some desc',
+    })
     const fetchTask = vi.fn().mockResolvedValue(fullTask)
 
-    const { showDetailsAndOpen } = await import('./interactive.js')
+    const { showDetailsAndOpen } = await import('../../src/interactive.js')
     const summary = makeSummary({ id: 'task_001', name: 'My Important Task' })
     await showDetailsAndOpen([summary], fetchTask)
 
@@ -130,11 +134,12 @@ describe('showDetailsAndOpen', () => {
     vi.mocked(confirm).mockResolvedValue(false)
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const fetchTask = vi.fn()
+    const fetchTask = vi
+      .fn()
       .mockResolvedValueOnce(makeFullTask({ id: 't1', name: 'Task 1' }))
       .mockResolvedValueOnce(makeFullTask({ id: 't2', name: 'Task 2' }))
 
-    const { showDetailsAndOpen } = await import('./interactive.js')
+    const { showDetailsAndOpen } = await import('../../src/interactive.js')
     await showDetailsAndOpen([makeSummary({ id: 't1' }), makeSummary({ id: 't2' })], fetchTask)
 
     const output = logSpy.mock.calls.map(c => c.join(' ')).join('\n')
@@ -149,16 +154,16 @@ describe('showDetailsAndOpen', () => {
     vi.mocked(confirm).mockResolvedValue(true)
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const { showDetailsAndOpen } = await import('./interactive.js')
+    const { showDetailsAndOpen } = await import('../../src/interactive.js')
     const tasks = [
       makeSummary({ id: 't1', url: 'https://app.clickup.com/t/t1' }),
       makeSummary({ id: 't2', url: 'https://app.clickup.com/t/t2' }),
     ]
     await showDetailsAndOpen(tasks)
 
-    expect(execSync).toHaveBeenCalledTimes(2)
-    expect(execSync).toHaveBeenCalledWith('open "https://app.clickup.com/t/t1"')
-    expect(execSync).toHaveBeenCalledWith('open "https://app.clickup.com/t/t2"')
+    expect(execFileSync).toHaveBeenCalledTimes(2)
+    expect(execFileSync).toHaveBeenCalledWith('open', ['https://app.clickup.com/t/t1'])
+    expect(execFileSync).toHaveBeenCalledWith('open', ['https://app.clickup.com/t/t2'])
 
     vi.mocked(console.log).mockRestore()
   })
@@ -167,10 +172,10 @@ describe('showDetailsAndOpen', () => {
     vi.mocked(confirm).mockResolvedValue(false)
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const { showDetailsAndOpen } = await import('./interactive.js')
+    const { showDetailsAndOpen } = await import('../../src/interactive.js')
     await showDetailsAndOpen([makeSummary()])
 
-    expect(execSync).not.toHaveBeenCalled()
+    expect(execFileSync).not.toHaveBeenCalled()
 
     vi.mocked(console.log).mockRestore()
   })

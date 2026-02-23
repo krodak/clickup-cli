@@ -1,4 +1,5 @@
 const BASE_URL = 'https://api.clickup.com/api/v2'
+const MAX_PAGES = 100
 
 export interface Task {
   id: string
@@ -84,17 +85,18 @@ export class ClickUpClient {
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const res = await fetch(`${BASE_URL}${path}`, {
       ...options,
+      signal: AbortSignal.timeout(30_000),
       headers: {
         Authorization: this.apiToken,
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-        ...options.headers
-      }
+        ...options.headers,
+      },
     })
     // Trust boundary: ClickUp API responses are cast to T without runtime validation.
     // res.json() is guarded against non-JSON bodies (e.g. HTML error pages from proxies).
     let data: Record<string, unknown>
     try {
-      data = await res.json() as Record<string, unknown>
+      data = (await res.json()) as Record<string, unknown>
     } catch {
       throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
     }
@@ -118,10 +120,10 @@ export class ClickUpClient {
     let page = 0
     let lastPage = false
 
-    while (!lastPage) {
+    while (!lastPage && page < MAX_PAGES) {
       const params = new URLSearchParams({
         subtasks: String(filters.subtasks ?? true),
-        page: String(page)
+        page: String(page),
       })
       params.append('assignees[]', String(me.id))
       for (const s of filters.statuses ?? []) params.append('statuses[]', s)
@@ -129,11 +131,21 @@ export class ClickUpClient {
       for (const id of filters.spaceIds ?? []) params.append('space_ids[]', id)
 
       const data = await this.request<{ tasks: Task[]; last_page: boolean }>(
-        `/team/${teamId}/task?${params.toString()}`
+        `/team/${teamId}/task?${params.toString()}`,
       )
-      allTasks.push(...(data.tasks ?? []))
+      const tasks = data.tasks
+      if (!Array.isArray(tasks)) {
+        throw new Error(`Unexpected API response: expected tasks array, got ${typeof tasks}`)
+      }
+      allTasks.push(...tasks)
       lastPage = data.last_page ?? true
       page++
+    }
+
+    if (page >= MAX_PAGES && !lastPage) {
+      process.stderr.write(
+        `Warning: reached maximum page limit (${MAX_PAGES}), results may be incomplete\n`,
+      )
     }
 
     return allTasks
@@ -142,21 +154,30 @@ export class ClickUpClient {
   async updateTask(taskId: string, options: UpdateTaskOptions): Promise<Task> {
     return this.request<Task>(`/task/${taskId}`, {
       method: 'PUT',
-      body: JSON.stringify(options)
+      body: JSON.stringify(options),
     })
   }
 
   async postComment(taskId: string, commentText: string): Promise<{ id: string }> {
     return this.request<{ id: string }>(`/task/${taskId}/comment`, {
       method: 'POST',
-      body: JSON.stringify({ comment_text: commentText })
+      body: JSON.stringify({ comment_text: commentText }),
     })
   }
 
-  async getTaskComments(taskId: string): Promise<Array<{ id: string; comment_text: string; user: { username: string }; date: string }>> {
-    const data = await this.request<{ comments: Array<{ id: string; comment_text: string; user: { username: string }; date: string }> }>(
-      `/task/${taskId}/comment`
-    )
+  async getTaskComments(
+    taskId: string,
+  ): Promise<
+    Array<{ id: string; comment_text: string; user: { username: string }; date: string }>
+  > {
+    const data = await this.request<{
+      comments: Array<{
+        id: string
+        comment_text: string
+        user: { username: string }
+        date: string
+      }>
+    }>(`/task/${taskId}/comment`)
     return data.comments ?? []
   }
 
@@ -165,13 +186,24 @@ export class ClickUpClient {
     let page = 0
     let lastPage = false
 
-    while (!lastPage) {
+    while (!lastPage && page < MAX_PAGES) {
       const qs = new URLSearchParams({ subtasks: 'true', page: String(page), ...params }).toString()
-      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(`/list/${listId}/task?${qs}`)
-      const tasks = data.tasks ?? []
+      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(
+        `/list/${listId}/task?${qs}`,
+      )
+      const tasks = data.tasks
+      if (!Array.isArray(tasks)) {
+        throw new Error(`Unexpected API response: expected tasks array, got ${typeof tasks}`)
+      }
       allTasks.push(...tasks)
       lastPage = data.last_page ?? true
       page++
+    }
+
+    if (page >= MAX_PAGES && !lastPage) {
+      process.stderr.write(
+        `Warning: reached maximum page limit (${MAX_PAGES}), results may be incomplete\n`,
+      )
     }
 
     return allTasks
@@ -193,27 +225,13 @@ export class ClickUpClient {
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {
     return this.request<Task>(`/list/${listId}/task`, {
       method: 'POST',
-      body: JSON.stringify(options)
+      body: JSON.stringify(options),
     })
   }
 
   async getAssignedListIds(teamId: string): Promise<Set<string>> {
-    const me = await this.getMe()
-    const allTasks: Task[] = []
-    let page = 0
-    let lastPage = false
-
-    while (!lastPage) {
-      const params = new URLSearchParams({ subtasks: 'true', page: String(page) })
-      params.append('assignees[]', String(me.id))
-      const qs = params.toString()
-      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(`/team/${teamId}/task?${qs}`)
-      allTasks.push(...(data.tasks ?? []))
-      lastPage = data.last_page ?? true
-      page++
-    }
-
-    return new Set(allTasks.map(t => t.list.id))
+    const tasks = await this.getMyTasks(teamId)
+    return new Set(tasks.map(t => t.list.id))
   }
 
   async getTeams(): Promise<Team[]> {
@@ -232,7 +250,9 @@ export class ClickUpClient {
   }
 
   async getFolders(spaceId: string): Promise<Folder[]> {
-    const data = await this.request<{ folders: Folder[] }>(`/space/${spaceId}/folder?archived=false`)
+    const data = await this.request<{ folders: Folder[] }>(
+      `/space/${spaceId}/folder?archived=false`,
+    )
     return data.folders ?? []
   }
 
@@ -241,8 +261,12 @@ export class ClickUpClient {
     return data.lists ?? []
   }
 
-  async getListViews(listId: string): Promise<{ views: View[]; required_views: Record<string, View | null> }> {
-    return this.request<{ views: View[]; required_views: Record<string, View | null> }>(`/list/${listId}/view`)
+  async getListViews(
+    listId: string,
+  ): Promise<{ views: View[]; required_views: Record<string, View | null> }> {
+    return this.request<{ views: View[]; required_views: Record<string, View | null> }>(
+      `/list/${listId}/view`,
+    )
   }
 
   async getViewTasks(viewId: string): Promise<Task[]> {
@@ -250,13 +274,23 @@ export class ClickUpClient {
     let page = 0
     let lastPage = false
 
-    while (!lastPage) {
+    while (!lastPage && page < MAX_PAGES) {
       const data = await this.request<{ tasks: Task[]; last_page: boolean }>(
-        `/view/${viewId}/task?page=${page}`
+        `/view/${viewId}/task?page=${page}`,
       )
-      allTasks.push(...(data.tasks ?? []))
+      const tasks = data.tasks
+      if (!Array.isArray(tasks)) {
+        throw new Error(`Unexpected API response: expected tasks array, got ${typeof tasks}`)
+      }
+      allTasks.push(...tasks)
       lastPage = data.last_page ?? true
       page++
+    }
+
+    if (page >= MAX_PAGES && !lastPage) {
+      process.stderr.write(
+        `Warning: reached maximum page limit (${MAX_PAGES}), results may be incomplete\n`,
+      )
     }
 
     return allTasks

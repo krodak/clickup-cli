@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseSprintDates, findActiveSprintList, runSprintCommand, extractSpaceKeywords, findRelatedSpaces } from './sprint.js'
-import { ClickUpClient } from '../api.js'
+import {
+  parseSprintDates,
+  findActiveSprintList,
+  runSprintCommand,
+  extractSpaceKeywords,
+  findRelatedSpaces,
+} from '../../../src/commands/sprint.js'
+import { ClickUpClient } from '../../../src/api.js'
 
 describe('parseSprintDates', () => {
   it('parses M/D - M/D format', () => {
@@ -99,8 +105,11 @@ describe('findRelatedSpaces', () => {
 
 describe('runSprintCommand space handling', () => {
   const baseTask = {
-    id: 't1', name: 'Task', status: { status: 'in progress', color: '#fff' },
-    assignees: [] as Array<{ id: number; username: string }>, url: 'https://app.clickup.com/t/t1',
+    id: 't1',
+    name: 'Task',
+    status: { status: 'in progress', color: '#fff' },
+    assignees: [] as Array<{ id: number; username: string }>,
+    url: 'https://app.clickup.com/t/t1',
     list: { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
     space: { id: 's1' },
   }
@@ -116,9 +125,9 @@ describe('runSprintCommand space handling', () => {
       { id: 's2', name: 'Acme Team' },
       { id: 's3', name: 'US Team' },
     ])
-    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
-      { id: 'f1', name: 'Acme Sprint' },
-    ])
+    const mockGetFolders = vi
+      .spyOn(ClickUpClient.prototype, 'getFolders')
+      .mockResolvedValue([{ id: 'f1', name: 'Acme Sprint' }])
     vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
       { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
     ])
@@ -145,9 +154,9 @@ describe('runSprintCommand space handling', () => {
       { id: 's1', name: 'Acme' },
       { id: 's2', name: 'Platform' },
     ])
-    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
-      { id: 'f1', name: 'Acme Sprint' },
-    ])
+    const mockGetFolders = vi
+      .spyOn(ClickUpClient.prototype, 'getFolders')
+      .mockResolvedValue([{ id: 'f1', name: 'Acme Sprint' }])
     vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
       { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
     ])
@@ -173,7 +182,7 @@ describe('runSprintCommand space handling', () => {
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
     await expect(runSprintCommand(config, { space: 'nonexistent' })).rejects.toThrow(
-      'No space matching "nonexistent" found'
+      'No space matching "nonexistent" found',
     )
   })
 

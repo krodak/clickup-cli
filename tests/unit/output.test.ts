@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatTable, isTTY } from './output.js'
+import { formatTable, isTTY } from '../../src/output.js'
 
 describe('formatTable', () => {
   it('includes column labels in output', () => {
@@ -9,7 +9,7 @@ describe('formatTable', () => {
         { key: 'id', label: 'ID' },
         { key: 'name', label: 'NAME', maxWidth: 20 },
         { key: 'status', label: 'STATUS' },
-      ]
+      ],
     )
     expect(result).toContain('ID')
     expect(result).toContain('NAME')
@@ -22,7 +22,7 @@ describe('formatTable', () => {
       [
         { key: 'id', label: 'ID' },
         { key: 'name', label: 'NAME', maxWidth: 20 },
-      ]
+      ],
     )
     expect(result).toContain('abc123')
     expect(result).toContain('My task')
@@ -31,7 +31,7 @@ describe('formatTable', () => {
   it('truncates long values to column maxWidth with ellipsis', () => {
     const result = formatTable(
       [{ name: 'This is a very long task name that exceeds the column width limit' }],
-      [{ key: 'name', label: 'NAME', maxWidth: 20 }]
+      [{ key: 'name', label: 'NAME', maxWidth: 20 }],
     )
     expect(result).toContain('This is a very long')
     expect(result).not.toContain('limit')
@@ -44,7 +44,7 @@ describe('formatTable', () => {
       [
         { key: 'id', label: 'ID' },
         { key: 'missing', label: 'MISSING' },
-      ]
+      ],
     )
     expect(result).toContain('abc')
   })
@@ -57,7 +57,7 @@ describe('formatTable', () => {
   it('does not truncate status column', () => {
     const result = formatTable(
       [{ status: 'needs definition' }],
-      [{ key: 'status', label: 'STATUS' }]
+      [{ key: 'status', label: 'STATUS' }],
     )
     expect(result).toContain('needs definition')
     expect(result).not.toContain('…')
@@ -72,7 +72,7 @@ describe('formatTable', () => {
       [
         { key: 'id', label: 'ID' },
         { key: 'name', label: 'NAME', maxWidth: 60 },
-      ]
+      ],
     )
     expect(result).toContain('defghi')
     expect(result).toContain('Short')
@@ -81,10 +81,7 @@ describe('formatTable', () => {
 
   it('caps NAME column at maxWidth and truncates', () => {
     const longName = 'A'.repeat(80)
-    const result = formatTable(
-      [{ name: longName }],
-      [{ key: 'name', label: 'NAME', maxWidth: 60 }]
-    )
+    const result = formatTable([{ name: longName }], [{ key: 'name', label: 'NAME', maxWidth: 60 }])
     expect(result).toContain('…')
     expect(result).not.toContain(longName)
   })

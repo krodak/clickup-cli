@@ -7,7 +7,7 @@ export type { UpdateTaskOptions }
 export async function updateTask(
   config: Config,
   taskId: string,
-  options: UpdateTaskOptions
+  options: UpdateTaskOptions,
 ): Promise<{ id: string; name: string }> {
   const hasAny = Object.values(options).some(v => v !== undefined && String(v).trim() !== '')
   if (!hasAny) throw new Error('Provide at least one of: --name, --description, --status')
@@ -20,7 +20,7 @@ export async function updateTask(
 export async function updateDescription(
   config: Config,
   taskId: string,
-  description: string
+  description: string,
 ): Promise<{ id: string; name: string }> {
   return updateTask(config, taskId, { description })
 }
