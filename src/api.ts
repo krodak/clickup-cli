@@ -10,6 +10,21 @@ export interface Task {
   url: string
   list: { id: string; name: string }
   parent?: string
+  date_updated?: string
+  locations?: Array<{ id: string; name: string }>
+}
+
+export interface TaskFilters {
+  statuses?: string[]
+  listIds?: string[]
+  spaceIds?: string[]
+  subtasks?: boolean
+}
+
+export interface UpdateTaskOptions {
+  name?: string
+  description?: string
+  status?: string
 }
 
 export interface CreateTaskOptions {
@@ -82,6 +97,54 @@ export class ClickUpClient {
     return data.user
   }
 
+  async getMyTasks(teamId: string, filters: TaskFilters = {}): Promise<Task[]> {
+    const me = await this.getMe()
+    const allTasks: Task[] = []
+    let page = 0
+    let lastPage = false
+
+    while (!lastPage) {
+      const params = new URLSearchParams({
+        subtasks: String(filters.subtasks ?? true),
+        page: String(page)
+      })
+      params.append('assignees[]', String(me.id))
+      for (const s of filters.statuses ?? []) params.append('statuses[]', s)
+      for (const id of filters.listIds ?? []) params.append('list_ids[]', id)
+      for (const id of filters.spaceIds ?? []) params.append('space_ids[]', id)
+
+      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(
+        `/team/${teamId}/task?${params.toString()}`
+      )
+      allTasks.push(...(data.tasks ?? []))
+      lastPage = data.last_page ?? true
+      page++
+    }
+
+    return allTasks
+  }
+
+  async updateTask(taskId: string, options: UpdateTaskOptions): Promise<Task> {
+    return this.request<Task>(`/task/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify(options)
+    })
+  }
+
+  async postComment(taskId: string, commentText: string): Promise<{ id: string }> {
+    return this.request<{ id: string }>(`/task/${taskId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify({ comment_text: commentText })
+    })
+  }
+
+  async getTaskComments(taskId: string): Promise<Array<{ id: string; comment_text: string; user: { username: string }; date: string }>> {
+    const data = await this.request<{ comments: Array<{ id: string; comment_text: string; user: { username: string }; date: string }> }>(
+      `/task/${taskId}/comment`
+    )
+    return data.comments ?? []
+  }
+
   async getTasksFromList(listId: string, params: Record<string, string> = {}): Promise<Task[]> {
     const allTasks: Task[] = []
     let page = 0
@@ -109,10 +172,7 @@ export class ClickUpClient {
   }
 
   async updateTaskDescription(taskId: string, description: string): Promise<Task> {
-    return this.request<Task>(`/task/${taskId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ description })
-    })
+    return this.updateTask(taskId, { description })
   }
 
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {
