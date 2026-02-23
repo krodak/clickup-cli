@@ -1,7 +1,6 @@
-import { password, confirm } from '@inquirer/prompts'
+import { password, select, confirm } from '@inquirer/prompts'
 import { ClickUpClient } from '../api.js'
 import { getConfigPath, writeConfig } from '../config.js'
-import { selectLists } from './select-lists.js'
 import fs from 'fs'
 
 export async function runInitCommand(): Promise<void> {
@@ -19,10 +18,7 @@ export async function runInitCommand(): Promise<void> {
   }
 
   const apiToken = (await password({ message: 'ClickUp API token (pk_...):' })).trim()
-
-  if (!apiToken.startsWith('pk_')) {
-    throw new Error('Token must start with pk_')
-  }
+  if (!apiToken.startsWith('pk_')) throw new Error('Token must start with pk_')
 
   const client = new ClickUpClient({ apiToken })
 
@@ -36,8 +32,20 @@ export async function runInitCommand(): Promise<void> {
 
   process.stdout.write(`Authenticated as @${username}\n`)
 
-  const lists = await selectLists(client, [])
+  const teams = await client.getTeams()
+  if (teams.length === 0) throw new Error('No workspaces found for this token.')
 
-  writeConfig({ apiToken, teamId: lists[0] ?? '' })
-  process.stdout.write(`Config written to ${configPath} (${lists.length} list${lists.length === 1 ? '' : 's'})\n`)
+  let teamId: string
+  if (teams.length === 1) {
+    teamId = teams[0].id
+    process.stdout.write(`Workspace: ${teams[0].name}\n`)
+  } else {
+    teamId = await select({
+      message: 'Select workspace:',
+      choices: teams.map(t => ({ name: t.name, value: t.id }))
+    })
+  }
+
+  writeConfig({ apiToken, teamId })
+  process.stdout.write(`Config written to ${configPath}\n`)
 }
