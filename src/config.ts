@@ -4,8 +4,7 @@ import { dirname, join } from 'path'
 
 export interface Config {
   apiToken: string
-  teamId?: string
-  lists: string[]
+  teamId: string
 }
 
 const CONFIG_PATH = join(homedir(), '.config', 'cu', 'config.json')
@@ -31,15 +30,12 @@ export function loadConfig(): Config {
     throw new Error('Config apiToken must start with pk_ (found: ' + apiToken.slice(0, 8) + '...)')
   }
 
-  if (!parsed.lists || !Array.isArray(parsed.lists) || parsed.lists.length === 0) {
-    throw new Error('Config missing required field: lists (must be a non-empty array of list IDs)')
+  const teamId = parsed.teamId?.trim()
+  if (!teamId) {
+    throw new Error('Config missing required field: teamId. Run: cu init')
   }
 
-  return {
-    apiToken,
-    ...(parsed.teamId ? { teamId: parsed.teamId } : {}),
-    lists: parsed.lists
-  }
+  return { apiToken, teamId }
 }
 
 export function getConfigPath(): string {

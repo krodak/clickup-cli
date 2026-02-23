@@ -12,7 +12,7 @@ describe('updateDescription', () => {
   it('calls API with correct task id and description', async () => {
     const { updateDescription } = await import('./update.js')
     const result = await updateDescription(
-      { apiToken: 'pk_t', lists: [] },
+      { apiToken: 'pk_t', teamId: 'team_1' },
       't1',
       'new description'
     )
@@ -23,14 +23,14 @@ describe('updateDescription', () => {
   it('throws when description is empty string', async () => {
     const { updateDescription } = await import('./update.js')
     await expect(
-      updateDescription({ apiToken: 'pk_t', lists: [] }, 't1', '')
+      updateDescription({ apiToken: 'pk_t', teamId: 'team_1' }, 't1', '')
     ).rejects.toThrow('cannot be empty')
   })
 
   it('throws when description is only whitespace', async () => {
     const { updateDescription } = await import('./update.js')
     await expect(
-      updateDescription({ apiToken: 'pk_t', lists: [] }, 't1', '   ')
+      updateDescription({ apiToken: 'pk_t', teamId: 'team_1' }, 't1', '   ')
     ).rejects.toThrow('cannot be empty')
   })
 })

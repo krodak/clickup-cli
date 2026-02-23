@@ -12,7 +12,7 @@ describe('createTask', () => {
   it('creates a task with name and list', async () => {
     const { createTask } = await import('./create.js')
     const result = await createTask(
-      { apiToken: 'pk_t', teamId: 'tm_1', lists: ['l1'] },
+      { apiToken: 'pk_t', teamId: 'tm_1' },
       { list: 'l1', name: 'New task' }
     )
     expect(mockCreate).toHaveBeenCalledWith('l1', { name: 'New task' })
@@ -22,7 +22,7 @@ describe('createTask', () => {
   it('creates a task with parent initiative', async () => {
     const { createTask } = await import('./create.js')
     await createTask(
-      { apiToken: 'pk_t', teamId: 'tm_1', lists: ['l1'] },
+      { apiToken: 'pk_t', teamId: 'tm_1' },
       { list: 'l1', name: 'Subtask', parent: 'initiative_1' }
     )
     expect(mockCreate).toHaveBeenCalledWith('l1', { name: 'Subtask', parent: 'initiative_1' })

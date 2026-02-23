@@ -80,7 +80,7 @@ describe('runInitCommand', () => {
 
     expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({
       apiToken: 'pk_valid123',
-      lists: ['l1', 'l2']
+      teamId: 'l1'
     })
     expect(vi.mocked(confirm)).not.toHaveBeenCalled()
   })
@@ -105,6 +105,6 @@ describe('runInitCommand', () => {
     const { runInitCommand } = await import('./init.js')
     await runInitCommand()
 
-    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({ apiToken: 'pk_valid123', lists: ['l1'] })
+    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({ apiToken: 'pk_valid123', teamId: 'l1' })
   })
 })
