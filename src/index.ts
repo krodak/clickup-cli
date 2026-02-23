@@ -2,7 +2,8 @@ import { Command } from 'commander'
 import { loadConfig } from './config.js'
 import { fetchMyTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
-import { createTask, CreateOptions } from './commands/create.js'
+import { createTask } from './commands/create.js'
+import type { CreateOptions } from './commands/create.js'
 
 const program = new Command()
 
