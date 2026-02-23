@@ -1,11 +1,11 @@
 # cu - ClickUp CLI
 
-A minimal ClickUp CLI for AI agents and humans. JSON on stdout, errors on stderr, exit code 1 on failure.
+A ClickUp CLI for AI agents and humans. JSON on stdout, errors on stderr, exit 1 on failure.
 
 ## Requirements
 
 - Node 20+
-- A ClickUp account with a personal API token (`pk_...`)
+- A ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps)
 
 ## Install
 
@@ -13,170 +13,160 @@ A minimal ClickUp CLI for AI agents and humans. JSON on stdout, errors on stderr
 npm install -g clickup-cli
 ```
 
-Or from source:
-
-```bash
-git clone https://github.com/krodak/clickup-cli
-cd clickup-cli
-npm install && npm run build && npm link
-```
-
 ## Getting started
-
-Run the guided setup:
 
 ```bash
 cu init
 ```
 
-This will:
-1. Ask for your ClickUp API token (`pk_...` from https://app.clickup.com/settings/apps)
-2. Verify the token against the API
-3. Show all lists in your workspace for selection
-4. Write `~/.config/cu/config.json`
+Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cu/config.json`.
 
-To update which lists are tracked at any time:
+## Config
 
-```bash
-cu lists
-```
-
-### Manual configuration
-
-If you prefer to configure manually, create `~/.config/cu/config.json`:
-
+`~/.config/cu/config.json`:
 ```json
 {
   "apiToken": "pk_...",
-  "lists": ["list_id_1", "list_id_2"]
+  "teamId": "12345678"
 }
-```
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `apiToken` | yes | Your ClickUp personal API token (`pk_...`) |
-| `lists` | yes | Array of list IDs to scope all read operations to |
-| `teamId` | no | Workspace ID (reserved for future use) |
-
-To find list IDs manually:
-
-1. Get your workspace ID:
-
-```bash
-curl -s -H "Authorization: pk_..." https://api.clickup.com/api/v2/team \
-  | jq '.teams[] | {id, name}'
-```
-
-2. Get spaces in your workspace:
-
-```bash
-curl -s -H "Authorization: pk_..." \
-  "https://api.clickup.com/api/v2/team/<teamId>/space?archived=false" \
-  | jq '.spaces[] | {id, name}'
-```
-
-3. Get lists in a space:
-
-```bash
-curl -s -H "Authorization: pk_..." \
-  "https://api.clickup.com/api/v2/space/<spaceId>/list?archived=false" \
-  | jq '.lists[] | {id, name}'
 ```
 
 ## Commands
 
-### `cu init`
+### `cu tasks`
+List tasks assigned to me.
+```bash
+cu tasks
+cu tasks --status "in progress"
+cu tasks --list <listId>
+cu tasks --space <spaceId>
+cu tasks --json          # force JSON output
+```
 
-Guided first-time setup. Prompts for your API token, verifies it, then shows all lists in your workspace for selection.
+### `cu initiatives`
+List initiatives assigned to me.
+```bash
+cu initiatives
+cu initiatives --status "to do"
+cu initiatives --json
+```
+
+### `cu sprint`
+List my tasks in the currently active sprint (auto-detected from sprint folder date ranges).
+```bash
+cu sprint
+cu sprint --status "in progress"
+cu sprint --json
+```
+
+### `cu inbox`
+Tasks assigned to me that were updated in the last 7 days, newest first.
+```bash
+cu inbox
+cu inbox --json
+```
+
+### `cu task <id>`
+Get task details. Pretty summary in terminal, JSON when piped.
+```bash
+cu task abc123
+cu task abc123 --raw     # full JSON response
+```
+
+### `cu subtasks <id>`
+List subtasks of a task or initiative.
+```bash
+cu subtasks abc123
+cu subtasks abc123 --json
+```
+
+### `cu update <id>`
+Update a task. Provide at least one option.
+```bash
+cu update abc123 -s "in progress"
+cu update abc123 -n "New task name"
+cu update abc123 -d "Updated description with **markdown**"
+cu update abc123 -n "New name" -s "done"
+```
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <text>` | New task name |
+| `-d, --description <text>` | New description (markdown supported) |
+| `-s, --status <status>` | New status (e.g. `"in progress"`, `"done"`) |
+
+### `cu create`
+Create a new task. If `--parent` is given, list is auto-detected from the parent task.
+```bash
+cu create -n "Fix login bug" -l <listId>
+cu create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
+cu create -n "Task" -l <listId> -d "desc" -s "open"
+```
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `-n, --name <name>` | yes | Task name |
+| `-l, --list <listId>` | if no `--parent` | Target list ID |
+| `-p, --parent <taskId>` | no | Parent task (list auto-detected) |
+| `-d, --description <text>` | no | Description (markdown) |
+| `-s, --status <status>` | no | Initial status |
+
+### `cu comment <id>`
+Post a comment on a task.
+```bash
+cu comment abc123 -m "Addressed in PR #42"
+```
+
+### `cu spaces`
+List spaces in your workspace. Useful for getting space IDs for `--space` filter.
+```bash
+cu spaces
+cu spaces --json
+```
+
+### `cu init`
+First-time setup. Run to create or overwrite `~/.config/cu/config.json`.
 
 ```bash
 cu init
 ```
 
-### `cu lists`
+## Output
 
-Update which lists are tracked. Opens the same interactive picker as `cu init` with your current lists pre-selected.
+- **Terminal:** Pretty table by default. Use `--json` to force JSON.
+- **Piped:** Always JSON (for AI agents and scripts).
+- **Errors:** Plain text to stderr, exit code 1.
 
-```bash
-cu lists
-```
+## For AI agents
 
-### `cu tasks`
-
-List all tasks assigned to me across configured lists.
+All read commands output JSON when piped. Recommended workflow:
 
 ```bash
-cu tasks
+# List my in-progress tasks
+cu tasks --status "in progress" --json | jq '.[] | {id, name}'
+
+# Get task details
+cu task abc123 --raw | jq '{id, name, status}'
+
+# Check current sprint
+cu sprint --json | jq '.[] | select(.status != "done")'
+
+# Create subtask under initiative
+INITIATIVE_ID=$(cu initiatives --json | jq -r '.[0].id')
+cu create -n "New subtask" -p "$INITIATIVE_ID"
+
+# Update status when done
+cu update abc123 -s "done"
 ```
 
-```json
-[
-  {
-    "id": "abc123",
-    "name": "Fix login bug",
-    "status": "in progress",
-    "task_type": "task",
-    "list": "Sprint 12",
-    "url": "https://app.clickup.com/t/abc123"
-  }
-]
-```
-
-Fields: `id`, `name`, `status`, `task_type`, `list`, `url`, `parent` (when task has a parent).
-
-### `cu initiatives`
-
-List tasks of type `Initiative` assigned to me. Output format is identical to `cu tasks`.
+## Development
 
 ```bash
-cu initiatives
+npm install
+npm test          # unit tests (vitest)
+npm run test:e2e  # e2e tests (requires CLICKUP_API_TOKEN in .env.test)
+npm run build     # tsup -> dist/
 ```
-
-> Initiatives are a custom task type in ClickUp. They appear here when `task_type === "Initiative"`.
-
-### `cu update <taskId> -d <text>`
-
-Update the description of a task. Markdown is supported.
-
-```bash
-cu update abc123 -d "## Summary\n\nFixed the regression from PR #42."
-```
-
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-d, --description <text>` | yes | New description (markdown supported) |
-
-```json
-{ "id": "abc123", "name": "Fix login bug" }
-```
-
-### `cu create -l <listId> -n <name> [options]`
-
-Create a new task.
-
-```bash
-cu create -l list_id_1 -n "Implement dark mode" -d "Support system preference" -s "open"
-```
-
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-l, --list <listId>` | yes | Target list ID |
-| `-n, --name <name>` | yes | Task name |
-| `-d, --description <text>` | no | Task description (markdown supported) |
-| `-p, --parent <taskId>` | no | Parent initiative task ID |
-| `-s, --status <status>` | no | Initial status (e.g. `open`, `in progress`) |
-
-```json
-{ "id": "xyz789", "name": "Implement dark mode", "url": "https://app.clickup.com/t/xyz789" }
-```
-
-## For AI Agents
-
-- All output is JSON on stdout - pipe directly to `jq` or parse programmatically
-- Errors print plain text to stderr and exit 1
-- The `lists` array in config scopes all read operations - only tasks in those lists are returned
-- Run `cu tasks` first to get current task IDs before calling `cu update` or using `-p`
-- Task IDs are stable alphanumeric strings (e.g. `abc123`) - safe to use across commands
 
 ### Claude Code skill
 
@@ -185,14 +175,4 @@ A skill file is included at `skill/SKILL.md`. Install it so Claude Code can use 
 ```bash
 mkdir -p ~/.config/opencode/skills/clickup
 cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
-```
-
-Once installed, Claude Code will automatically invoke the skill when you ask it to interact with ClickUp.
-
-## Development
-
-```bash
-npm install
-npm test         # runs vitest (builds once via globalSetup, then runs all 25 tests)
-npm run build    # tsup -> dist/
 ```
