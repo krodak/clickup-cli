@@ -18,11 +18,18 @@ export function loadConfig(): Config {
   }
 
   const raw = fs.readFileSync(CONFIG_PATH, 'utf-8')
-  const parsed = JSON.parse(raw) as Partial<Config>
+  let parsed: Partial<Config>
+  try {
+    parsed = JSON.parse(raw) as Partial<Config>
+  } catch {
+    throw new Error(`Config file at ${CONFIG_PATH} contains invalid JSON. Please check the file syntax.`)
+  }
 
   if (!parsed.apiToken) throw new Error('Config missing required field: apiToken')
   if (!parsed.teamId) throw new Error('Config missing required field: teamId')
-  if (!parsed.lists) throw new Error('Config missing required field: lists')
+  if (!parsed.lists || !Array.isArray(parsed.lists) || parsed.lists.length === 0) {
+    throw new Error('Config missing required field: lists (must be a non-empty array of list IDs)')
+  }
 
   return {
     apiToken: parsed.apiToken,

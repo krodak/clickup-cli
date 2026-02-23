@@ -5,7 +5,6 @@ vi.mock('fs')
 
 describe('loadConfig', () => {
   beforeEach(() => {
-    vi.resetModules()
     vi.mocked(fs.existsSync).mockReset()
     vi.mocked(fs.readFileSync).mockReset()
   })
@@ -25,16 +24,41 @@ describe('loadConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig))
     const { loadConfig } = await import('./config.js')
-    const config = loadConfig()
-    expect(config.apiToken).toBe('pk_test123')
-    expect(config.teamId).toBe('team_456')
-    expect(config.lists).toEqual(['list_1', 'list_2'])
+    expect(loadConfig()).toEqual(mockConfig)
   })
 
   it('throws when apiToken is missing', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ teamId: 'team_456', lists: [] }))
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ teamId: 'team_456', lists: ['list_1'] }))
     const { loadConfig } = await import('./config.js')
     expect(() => loadConfig()).toThrow('apiToken')
+  })
+
+  it('throws when teamId is missing', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_test123', lists: ['list_1'] }))
+    const { loadConfig } = await import('./config.js')
+    expect(() => loadConfig()).toThrow('teamId')
+  })
+
+  it('throws when lists is missing', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_test123', teamId: 'team_456' }))
+    const { loadConfig } = await import('./config.js')
+    expect(() => loadConfig()).toThrow('lists')
+  })
+
+  it('throws when lists is an empty array', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_test123', teamId: 'team_456', lists: [] }))
+    const { loadConfig } = await import('./config.js')
+    expect(() => loadConfig()).toThrow('lists')
+  })
+
+  it('throws on invalid JSON', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue('{ not valid json }')
+    const { loadConfig } = await import('./config.js')
+    expect(() => loadConfig()).toThrow('invalid JSON')
   })
 })
