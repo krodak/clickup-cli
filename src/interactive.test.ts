@@ -1,4 +1,19 @@
+vi.mock('@inquirer/prompts', async (importOriginal) => {
+  const actual = await importOriginal() as Record<string, unknown>
+  return {
+    ...actual,
+    confirm: vi.fn(),
+    checkbox: vi.fn(),
+  }
+})
+
+vi.mock('child_process', () => ({
+  execSync: vi.fn(),
+}))
+
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { confirm } from '@inquirer/prompts'
+import { execSync } from 'child_process'
 import type { TaskSummary } from './commands/tasks.js'
 
 const makeTask = (overrides: Partial<TaskSummary> = {}): TaskSummary => ({
@@ -9,6 +24,10 @@ const makeTask = (overrides: Partial<TaskSummary> = {}): TaskSummary => ({
   list: 'Sprint 1',
   url: 'https://app.clickup.com/t/abc123',
   ...overrides,
+})
+
+beforeEach(() => {
+  vi.clearAllMocks()
 })
 
 describe('formatTaskDetail', () => {
@@ -51,5 +70,51 @@ describe('showDetailsAndOpen', () => {
   it('does nothing when no tasks selected', async () => {
     const { showDetailsAndOpen } = await import('./interactive.js')
     await showDetailsAndOpen([])
+  })
+
+  it('prints task detail for each selected task', async () => {
+    vi.mocked(confirm).mockResolvedValue(false)
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const { showDetailsAndOpen } = await import('./interactive.js')
+    const task = makeTask({ id: 'task_001', name: 'My Important Task' })
+    await showDetailsAndOpen([task])
+
+    const output = logSpy.mock.calls.map(c => c.join(' ')).join('\n')
+    expect(output).toContain('task_001')
+    expect(output).toContain('My Important Task')
+
+    logSpy.mockRestore()
+  })
+
+  it('calls open for each URL when confirmed', async () => {
+    vi.mocked(confirm).mockResolvedValue(true)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const { showDetailsAndOpen } = await import('./interactive.js')
+    const tasks = [
+      makeTask({ id: 't1', url: 'https://app.clickup.com/t/t1' }),
+      makeTask({ id: 't2', url: 'https://app.clickup.com/t/t2' }),
+    ]
+    await showDetailsAndOpen(tasks)
+
+    expect(execSync).toHaveBeenCalledTimes(2)
+    expect(execSync).toHaveBeenCalledWith('open "https://app.clickup.com/t/t1"')
+    expect(execSync).toHaveBeenCalledWith('open "https://app.clickup.com/t/t2"')
+
+    vi.mocked(console.log).mockRestore()
+  })
+
+  it('does not call open when declined', async () => {
+    vi.mocked(confirm).mockResolvedValue(false)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const { showDetailsAndOpen } = await import('./interactive.js')
+    const task = makeTask()
+    await showDetailsAndOpen([task])
+
+    expect(execSync).not.toHaveBeenCalled()
+
+    vi.mocked(console.log).mockRestore()
   })
 })
