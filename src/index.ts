@@ -11,8 +11,9 @@ import { runSprintCommand } from './commands/sprint.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
 import { isTTY } from './output.js'
-import { fetchInbox } from './commands/inbox.js'
+import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
+import { runAssignedCommand } from './commands/assigned.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -210,13 +211,30 @@ program
 
 program
   .command('inbox')
-  .description('Recently updated tasks assigned to me (last 7 days)')
+  .description('Recently updated tasks grouped by time period')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { json?: boolean }) => {
+  .option('--days <n>', 'Lookback period in days', '30')
+  .action(async (opts: { json?: boolean; days?: string }) => {
     try {
       const config = loadConfig()
-      const tasks = await fetchInbox(config)
-      await printTasks(tasks, opts.json ?? false, config)
+      const days = Number(opts.days ?? 30)
+      const tasks = await fetchInbox(config, days)
+      await printInbox(tasks, opts.json ?? false, config)
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('assigned')
+  .description('Show all tasks assigned to me, grouped by status')
+  .option('--include-closed', 'Include done/closed tasks')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { includeClosed?: boolean; json?: boolean }) => {
+    try {
+      const config = loadConfig()
+      await runAssignedCommand(config, opts)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
