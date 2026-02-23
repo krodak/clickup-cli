@@ -14,26 +14,26 @@ vi.mock('@inquirer/prompts', () => ({
   select: mockSelect,
 }))
 
-vi.mock('../api.js', () => ({
+vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMe: mockGetMe,
-    getTeams: mockGetTeams
-  }))
+    getTeams: mockGetTeams,
+  })),
 }))
 
-vi.mock('../config.js', () => ({
+vi.mock('../../../src/config.js', () => ({
   getConfigPath: vi.fn().mockReturnValue('/mock/config.json'),
-  writeConfig: mockWriteConfig
+  writeConfig: mockWriteConfig,
 }))
 
-vi.mock('fs', async (importOriginal) => {
+vi.mock('fs', async importOriginal => {
   const actual = await importOriginal<typeof import('fs')>()
   return {
     ...actual,
     default: {
       ...actual.default,
       existsSync: mockExistsSync,
-    }
+    },
   }
 })
 
@@ -47,17 +47,17 @@ describe('runInitCommand', () => {
   })
 
   it('writes config with apiToken and teamId when single workspace', async () => {
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await runInitCommand()
     expect(mockWriteConfig).toHaveBeenCalledWith({
       apiToken: 'pk_testtoken',
-      teamId: 'team1'
+      teamId: 'team1',
     })
   })
 
   it('outputs authenticated message', async () => {
     const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await runInitCommand()
     const output = writeSpy.mock.calls.map(c => c[0]).join('')
     expect(output).toContain('@testuser')
@@ -66,14 +66,14 @@ describe('runInitCommand', () => {
 
   it('throws when token does not start with pk_', async () => {
     mockPassword.mockResolvedValue('invalid_token')
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await expect(runInitCommand()).rejects.toThrow('pk_')
   })
 
   it('aborts when config exists and user declines overwrite', async () => {
     mockExistsSync.mockReturnValue(true)
     mockConfirm.mockResolvedValue(false)
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await runInitCommand()
     expect(mockWriteConfig).not.toHaveBeenCalled()
   })
@@ -81,10 +81,10 @@ describe('runInitCommand', () => {
   it('shows workspace selector when multiple teams exist', async () => {
     mockGetTeams.mockResolvedValue([
       { id: 'team1', name: 'Workspace A' },
-      { id: 'team2', name: 'Workspace B' }
+      { id: 'team2', name: 'Workspace B' },
     ])
     mockSelect.mockResolvedValue('team2')
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await runInitCommand()
     expect(mockSelect).toHaveBeenCalled()
     expect(mockWriteConfig).toHaveBeenCalledWith(expect.objectContaining({ teamId: 'team2' }))
@@ -92,7 +92,7 @@ describe('runInitCommand', () => {
 
   it('throws when no workspaces found', async () => {
     mockGetTeams.mockResolvedValue([])
-    const { runInitCommand } = await import('./init.js')
+    const { runInitCommand } = await import('../../../src/commands/init.js')
     await expect(runInitCommand()).rejects.toThrow('No workspaces')
   })
 })

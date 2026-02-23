@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { ClickUpClient } from '../api.js'
-import { findActiveSprintList } from '../commands/sprint.js'
-import type { List } from '../api.js'
+import { ClickUpClient } from '../../src/api.js'
+import { findActiveSprintList } from '../../src/commands/sprint.js'
+import type { List } from '../../src/api.js'
 
 const TOKEN = process.env.CLICKUP_API_TOKEN
 

@@ -9,7 +9,7 @@ export async function runInitCommand(): Promise<void> {
   if (fs.existsSync(configPath)) {
     const overwrite = await confirm({
       message: `Config already exists at ${configPath}. Overwrite?`,
-      default: false
+      default: false,
     })
     if (!overwrite) {
       process.stdout.write('Aborted.\n')
@@ -27,7 +27,9 @@ export async function runInitCommand(): Promise<void> {
     const me = await client.getMe()
     username = me.username
   } catch (err) {
-    throw new Error(`Invalid token: ${err instanceof Error ? err.message : String(err)}`)
+    throw new Error(`Invalid token: ${err instanceof Error ? err.message : String(err)}`, {
+      cause: err,
+    })
   }
 
   process.stdout.write(`Authenticated as @${username}\n`)
@@ -37,12 +39,14 @@ export async function runInitCommand(): Promise<void> {
 
   let teamId: string
   if (teams.length === 1) {
-    teamId = teams[0].id
-    process.stdout.write(`Workspace: ${teams[0].name}\n`)
+    const [team] = teams
+    if (!team) throw new Error('No workspaces found for this token.')
+    teamId = team.id
+    process.stdout.write(`Workspace: ${team.name}\n`)
   } else {
     teamId = await select({
       message: 'Select workspace:',
-      choices: teams.map(t => ({ name: t.name, value: t.id }))
+      choices: teams.map(t => ({ name: t.name, value: t.id })),
     })
   }
 

@@ -8,16 +8,13 @@ export interface TaskSummary {
   id: string
   name: string
   status: string
-  task_type: string
+  task_type: 'task' | 'initiative'
   list: string
   url: string
   parent?: string
 }
 
-export interface FetchOptions {
-  statuses?: string[]
-  listIds?: string[]
-  spaceIds?: string[]
+export interface FetchOptions extends TaskFilters {
   typeFilter?: 'task' | 'initiative'
 }
 
@@ -25,7 +22,7 @@ function isInitiative(task: Task): boolean {
   return (task.custom_item_id ?? 0) !== 0
 }
 
-function summarize(task: Task): TaskSummary {
+export function summarize(task: Task): TaskSummary {
   return {
     id: task.id,
     name: task.name,
@@ -33,31 +30,34 @@ function summarize(task: Task): TaskSummary {
     task_type: isInitiative(task) ? 'initiative' : 'task',
     list: task.list.name,
     url: task.url,
-    ...(task.parent ? { parent: task.parent } : {})
+    ...(task.parent ? { parent: task.parent } : {}),
   }
 }
 
-export async function fetchMyTasks(config: Config, opts: FetchOptions = {}): Promise<TaskSummary[]> {
+export async function fetchMyTasks(
+  config: Config,
+  opts: FetchOptions = {},
+): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
   const { typeFilter, ...apiFilters } = opts
 
-  const apiFilterParams: TaskFilters = {
-    statuses: apiFilters.statuses,
-    listIds: apiFilters.listIds,
-    spaceIds: apiFilters.spaceIds,
-  }
-
-  const allTasks = await client.getMyTasks(config.teamId, apiFilterParams)
+  const allTasks = await client.getMyTasks(config.teamId, apiFilters)
 
   const filtered =
-    typeFilter === 'initiative' ? allTasks.filter(isInitiative) :
-    typeFilter === 'task' ? allTasks.filter(t => !isInitiative(t)) :
-    allTasks
+    typeFilter === 'initiative'
+      ? allTasks.filter(isInitiative)
+      : typeFilter === 'task'
+        ? allTasks.filter(t => !isInitiative(t))
+        : allTasks
 
   return filtered.map(summarize)
 }
 
-export async function printTasks(tasks: TaskSummary[], forceJson: boolean, config?: Config): Promise<void> {
+export async function printTasks(
+  tasks: TaskSummary[],
+  forceJson: boolean,
+  config?: Config,
+): Promise<void> {
   if (forceJson || !isTTY()) {
     console.log(JSON.stringify(tasks, null, 2))
     return
@@ -69,7 +69,10 @@ export async function printTasks(tasks: TaskSummary[], forceJson: boolean, confi
   }
 
   const fetchTask = config
-    ? (id: string) => new ClickUpClient(config).getTask(id)
+    ? (() => {
+        const client = new ClickUpClient(config)
+        return (id: string) => client.getTask(id)
+      })()
     : undefined
 
   const selected = await interactiveTaskPicker(tasks)

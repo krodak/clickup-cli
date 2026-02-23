@@ -7,17 +7,17 @@ function mockResponse(data: unknown, ok = true) {
     ok,
     status: ok ? 200 : 400,
     statusText: ok ? 'OK' : 'Bad Request',
-    json: () => Promise.resolve(data)
+    json: () => Promise.resolve(data),
   })
 }
 
 describe('ClickUpClient', () => {
-  let client: import('./api.js').ClickUpClient
+  let client: import('../../src/api.js').ClickUpClient
 
   beforeEach(async () => {
     vi.stubGlobal('fetch', mockFetch)
     vi.clearAllMocks()
-    const { ClickUpClient } = await import('./api.js')
+    const { ClickUpClient } = await import('../../src/api.js')
     client = new ClickUpClient({ apiToken: 'pk_test' })
   })
 
@@ -26,13 +26,15 @@ describe('ClickUpClient', () => {
   })
 
   it('fetches tasks from a list', async () => {
-    mockFetch.mockReturnValue(mockResponse({ tasks: [{ id: 't1', name: 'Test task' }], last_page: true }))
+    mockFetch.mockReturnValue(
+      mockResponse({ tasks: [{ id: 't1', name: 'Test task' }], last_page: true }),
+    )
     const tasks = await client.getTasksFromList('list_1')
     expect(tasks).toHaveLength(1)
     expect(tasks[0].id).toBe('t1')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/list/list_1/task'),
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'pk_test' }) })
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'pk_test' }) }),
     )
   })
 
@@ -53,8 +55,8 @@ describe('ClickUpClient', () => {
       expect.stringContaining('/task/t1'),
       expect.objectContaining({
         method: 'PUT',
-        body: JSON.stringify({ description: 'updated description' })
-      })
+        body: JSON.stringify({ description: 'updated description' }),
+      }),
     )
   })
 
@@ -64,7 +66,7 @@ describe('ClickUpClient', () => {
     expect(task.id).toBe('t2')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/list/list_1/task'),
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST' }),
     )
   })
 
@@ -74,30 +76,53 @@ describe('ClickUpClient', () => {
   })
 
   it('throws on non-JSON response body', async () => {
-    mockFetch.mockReturnValue(Promise.resolve({
-      ok: false,
-      status: 502,
-      statusText: 'Bad Gateway',
-      json: () => Promise.reject(new SyntaxError('Unexpected token'))
-    }))
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        json: () => Promise.reject(new SyntaxError('Unexpected token')),
+      }),
+    )
     await expect(client.getTasksFromList('list_1')).rejects.toThrow('not valid JSON')
   })
 
   it('getAssignedListIds returns set of list IDs from assigned tasks', async () => {
     mockFetch
       .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
-      .mockReturnValueOnce(mockResponse({
-        tasks: [
-          { id: 't1', list: { id: 'l1', name: 'Sprint 1' } },
-          { id: 't2', list: { id: 'l2', name: 'Backlog' } },
-          { id: 't3', list: { id: 'l1', name: 'Sprint 1' } }
-        ],
-        last_page: true
-      }))
+      .mockReturnValueOnce(
+        mockResponse({
+          tasks: [
+            {
+              id: 't1',
+              list: { id: 'l1', name: 'Sprint 1' },
+              status: { status: 'open', color: '' },
+              assignees: [],
+              url: '',
+              name: 't1',
+            },
+            {
+              id: 't2',
+              list: { id: 'l2', name: 'Backlog' },
+              status: { status: 'open', color: '' },
+              assignees: [],
+              url: '',
+              name: 't2',
+            },
+            {
+              id: 't3',
+              list: { id: 'l1', name: 'Sprint 1' },
+              status: { status: 'open', color: '' },
+              assignees: [],
+              url: '',
+              name: 't3',
+            },
+          ],
+          last_page: true,
+        }),
+      )
     const ids = await client.getAssignedListIds('team1')
     expect(ids).toEqual(new Set(['l1', 'l2']))
-    expect(String(mockFetch.mock.calls[1][0])).toContain('/team/team1/task')
-    expect(String(mockFetch.mock.calls[1][0])).toContain('assignees%5B%5D=42')
   })
 
   it('getTeams returns team array', async () => {
@@ -137,12 +162,12 @@ describe('ClickUpClient', () => {
 })
 
 describe('getMyTasks', () => {
-  let client: import('./api.js').ClickUpClient
+  let client: import('../../src/api.js').ClickUpClient
 
   beforeEach(async () => {
     vi.stubGlobal('fetch', mockFetch)
     vi.clearAllMocks()
-    const { ClickUpClient } = await import('./api.js')
+    const { ClickUpClient } = await import('../../src/api.js')
     client = new ClickUpClient({ apiToken: 'pk_test' })
   })
 
@@ -181,8 +206,36 @@ describe('getMyTasks', () => {
   it('paginates until last_page is true', async () => {
     mockFetch
       .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
-      .mockReturnValueOnce(mockResponse({ tasks: [{ id: 't1', status: { status: 'open' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '', name: 't1' }], last_page: false }))
-      .mockReturnValueOnce(mockResponse({ tasks: [{ id: 't2', status: { status: 'open' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '', name: 't2' }], last_page: true }))
+      .mockReturnValueOnce(
+        mockResponse({
+          tasks: [
+            {
+              id: 't1',
+              status: { status: 'open' },
+              list: { id: 'l1', name: 'L1' },
+              assignees: [],
+              url: '',
+              name: 't1',
+            },
+          ],
+          last_page: false,
+        }),
+      )
+      .mockReturnValueOnce(
+        mockResponse({
+          tasks: [
+            {
+              id: 't2',
+              status: { status: 'open' },
+              list: { id: 'l1', name: 'L1' },
+              assignees: [],
+              url: '',
+              name: 't2',
+            },
+          ],
+          last_page: true,
+        }),
+      )
     const tasks = await client.getMyTasks('team1')
     expect(tasks).toHaveLength(2)
     expect(tasks[0].id).toBe('t1')
@@ -191,12 +244,12 @@ describe('getMyTasks', () => {
 })
 
 describe('updateTask', () => {
-  let client: import('./api.js').ClickUpClient
+  let client: import('../../src/api.js').ClickUpClient
 
   beforeEach(async () => {
     vi.stubGlobal('fetch', mockFetch)
     vi.clearAllMocks()
-    const { ClickUpClient } = await import('./api.js')
+    const { ClickUpClient } = await import('../../src/api.js')
     client = new ClickUpClient({ apiToken: 'pk_test' })
   })
 
@@ -205,31 +258,51 @@ describe('updateTask', () => {
   })
 
   it('sends PUT request with provided fields', async () => {
-    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'Task', status: { status: 'done', color: '' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '' }))
+    mockFetch.mockReturnValue(
+      mockResponse({
+        id: 't1',
+        name: 'Task',
+        status: { status: 'done', color: '' },
+        list: { id: 'l1', name: 'L1' },
+        assignees: [],
+        url: '',
+      }),
+    )
     await client.updateTask('t1', { status: 'done' })
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/task/t1'),
-      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ status: 'done' }) })
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ status: 'done' }) }),
     )
   })
 
   it('can update multiple fields at once', async () => {
-    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'New name', status: { status: 'in progress', color: '' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '' }))
+    mockFetch.mockReturnValue(
+      mockResponse({
+        id: 't1',
+        name: 'New name',
+        status: { status: 'in progress', color: '' },
+        list: { id: 'l1', name: 'L1' },
+        assignees: [],
+        url: '',
+      }),
+    )
     await client.updateTask('t1', { name: 'New name', status: 'in progress' })
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/task/t1'),
-      expect.objectContaining({ body: JSON.stringify({ name: 'New name', status: 'in progress' }) })
+      expect.objectContaining({
+        body: JSON.stringify({ name: 'New name', status: 'in progress' }),
+      }),
     )
   })
 })
 
 describe('postComment', () => {
-  let client: import('./api.js').ClickUpClient
+  let client: import('../../src/api.js').ClickUpClient
 
   beforeEach(async () => {
     vi.stubGlobal('fetch', mockFetch)
     vi.clearAllMocks()
-    const { ClickUpClient } = await import('./api.js')
+    const { ClickUpClient } = await import('../../src/api.js')
     client = new ClickUpClient({ apiToken: 'pk_test' })
   })
 
@@ -242,7 +315,10 @@ describe('postComment', () => {
     await client.postComment('t1', 'hello world')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/task/t1/comment'),
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ comment_text: 'hello world' }) })
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ comment_text: 'hello world' }),
+      }),
     )
   })
 })

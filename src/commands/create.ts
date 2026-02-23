@@ -11,7 +11,7 @@ export interface CreateOptions {
 
 export async function createTask(
   config: Config,
-  options: CreateOptions
+  options: CreateOptions,
 ): Promise<{ id: string; name: string; url: string }> {
   const client = new ClickUpClient(config)
 
@@ -24,7 +24,7 @@ export async function createTask(
     throw new Error('Provide --list or --parent (list is auto-detected from parent task)')
   }
 
-  const { list: _list, ...taskOptions } = options
+  const { list: _, ...taskOptions } = options
   const task = await client.createTask(listId, taskOptions)
   return { id: task.id, name: task.name, url: task.url }
 }

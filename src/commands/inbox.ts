@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import type { TaskSummary } from './tasks.js'
+import { summarize } from './tasks.js'
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -12,13 +13,5 @@ export async function fetchInbox(config: Config): Promise<TaskSummary[]> {
   return tasks
     .filter(t => Number(t.date_updated ?? 0) > cutoff)
     .sort((a, b) => Number(b.date_updated ?? 0) - Number(a.date_updated ?? 0))
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      status: t.status.status,
-      task_type: (t.custom_item_id ?? 0) !== 0 ? 'initiative' : 'task',
-      list: t.list.name,
-      url: t.url,
-      ...(t.parent ? { parent: t.parent } : {})
-    }))
+    .map(summarize)
 }
