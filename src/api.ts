@@ -27,7 +27,7 @@ interface ClientConfig {
 export class ClickUpClient {
   private apiToken: string
   private teamId: string
-  private meCache: { id: number } | null = null
+  private meCache: { id: number; username: string } | null = null
 
   constructor(config: ClientConfig) {
     this.apiToken = config.apiToken
