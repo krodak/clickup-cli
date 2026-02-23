@@ -2,7 +2,7 @@ import { Command } from 'commander'
 import { createRequire } from 'module'
 import { loadConfig } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
-import { updateDescription } from './commands/update.js'
+import { updateTask } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
@@ -101,12 +101,14 @@ program
 
 program
   .command('update <taskId>')
-  .description('Update task description')
-  .requiredOption('-d, --description <text>', 'New description (markdown supported)')
-  .action(async (taskId: string, opts: { description: string }) => {
+  .description('Update a task (name, description, or status)')
+  .option('-n, --name <text>', 'New task name')
+  .option('-d, --description <text>', 'New description (markdown supported)')
+  .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
+  .action(async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
     try {
       const config = loadConfig()
-      const result = await updateDescription(config, taskId, opts.description)
+      const result = await updateTask(config, taskId, opts)
       console.log(JSON.stringify(result, null, 2))
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
