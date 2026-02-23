@@ -21,17 +21,14 @@ export interface CreateTaskOptions {
 
 interface ClientConfig {
   apiToken: string
-  teamId: string
 }
 
 export class ClickUpClient {
   private apiToken: string
-  private teamId: string
   private meCache: { id: number; username: string } | null = null
 
   constructor(config: ClientConfig) {
     this.apiToken = config.apiToken
-    this.teamId = config.teamId
   }
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -39,13 +36,14 @@ export class ClickUpClient {
       ...options,
       headers: {
         Authorization: this.apiToken,
-        'Content-Type': 'application/json',
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
         ...options.headers
       }
     })
     const data = await res.json() as Record<string, unknown>
     if (!res.ok) {
-      throw new Error(`ClickUp API error ${res.status}: ${data.err ?? JSON.stringify(data)}`)
+      const errMsg = (data.err ?? data.error ?? data.ECODE ?? res.statusText) as string
+      throw new Error(`ClickUp API error ${res.status}: ${errMsg}`)
     }
     return data as T
   }
@@ -58,9 +56,20 @@ export class ClickUpClient {
   }
 
   async getTasksFromList(listId: string, params: Record<string, string> = {}): Promise<Task[]> {
-    const qs = new URLSearchParams({ subtasks: 'true', ...params }).toString()
-    const data = await this.request<{ tasks: Task[] }>(`/list/${listId}/task?${qs}`)
-    return data.tasks
+    const allTasks: Task[] = []
+    let page = 0
+    let lastPage = false
+
+    while (!lastPage) {
+      const qs = new URLSearchParams({ subtasks: 'true', page: String(page), ...params }).toString()
+      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(`/list/${listId}/task?${qs}`)
+      const tasks = data.tasks ?? []
+      allTasks.push(...tasks)
+      lastPage = data.last_page ?? true
+      page++
+    }
+
+    return allTasks
   }
 
   async getMyTasksFromList(listId: string): Promise<Task[]> {
