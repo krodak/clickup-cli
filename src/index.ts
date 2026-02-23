@@ -5,6 +5,7 @@ import { fetchMyTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
+import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
 import { runListsCommand } from './commands/lists.js'
 
@@ -64,6 +65,20 @@ program
       const config = loadConfig()
       const tasks = await fetchMyTasks(config, 'Initiative')
       console.log(JSON.stringify(tasks, null, 2))
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('task <taskId>')
+  .description('Get task details')
+  .action(async (taskId: string) => {
+    try {
+      const config = loadConfig()
+      const result = await getTask(config, taskId)
+      console.log(JSON.stringify(result, null, 2))
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
