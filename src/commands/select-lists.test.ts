@@ -29,6 +29,34 @@ describe('fetchAllLists', () => {
     expect(result[0]).toEqual({ teamName: 'Acme', spaceName: 'Engineering', listId: 'l1', listName: 'Sprint 1' })
   })
 
+  it('handles multiple teams and spaces', async () => {
+    const { ClickUpClient } = await import('../api.js')
+    const mockGetSpaces = vi.fn()
+      .mockResolvedValueOnce([{ id: 's1', name: 'Space 1' }, { id: 's2', name: 'Space 2' }])
+      .mockResolvedValueOnce([{ id: 's3', name: 'Space 3' }, { id: 's4', name: 'Space 4' }])
+    const mockGetLists = vi.fn()
+      .mockResolvedValueOnce([{ id: 'l1', name: 'List 1' }])
+      .mockResolvedValueOnce([{ id: 'l2', name: 'List 2' }])
+      .mockResolvedValueOnce([{ id: 'l3', name: 'List 3' }])
+      .mockResolvedValueOnce([{ id: 'l4', name: 'List 4' }])
+
+    vi.mocked(ClickUpClient).mockImplementation(() => ({
+      getTeams: vi.fn().mockResolvedValue([
+        { id: 't1', name: 'Team 1' },
+        { id: 't2', name: 'Team 2' }
+      ]),
+      getSpaces: mockGetSpaces,
+      getLists: mockGetLists
+    }) as unknown as InstanceType<typeof ClickUpClient>)
+
+    const { fetchAllLists } = await import('./select-lists.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t' })
+    const result = await fetchAllLists(client)
+
+    expect(result).toHaveLength(4)
+    expect(result.map(r => r.listId)).toEqual(expect.arrayContaining(['l1', 'l2', 'l3', 'l4']))
+  })
+
   it('returns empty array when no teams found', async () => {
     const { ClickUpClient } = await import('../api.js')
     vi.mocked(ClickUpClient).mockImplementation(() => ({
