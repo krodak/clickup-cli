@@ -1,46 +1,79 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockGetMyTasksFromList = vi.fn().mockResolvedValue([
-  { id: 't1', name: 'Regular task', custom_item_id: 0, status: { status: 'open' }, url: 'http://cu/t1', list: { id: 'l1', name: 'L1' }, assignees: [] },
-  { id: 't2', name: 'Initiative task', custom_item_id: 1004, status: { status: 'open' }, url: 'http://cu/t2', list: { id: 'l1', name: 'L1' }, assignees: [] }
-])
+const mockGetMyTasks = vi.fn()
 
 vi.mock('../api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
-    getMyTasksFromList: mockGetMyTasksFromList
+    getMyTasks: mockGetMyTasks
   }))
 }))
 
+const baseTask = (overrides: object = {}) => ({
+  id: 't1',
+  name: 'Task',
+  custom_item_id: 0,
+  status: { status: 'open', color: '' },
+  url: 'http://cu/t1',
+  list: { id: 'l1', name: 'L1' },
+  assignees: [],
+  ...overrides
+})
+
 describe('fetchMyTasks', () => {
+  beforeEach(() => { mockGetMyTasks.mockReset() })
+
   it('returns all tasks when no type filter', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', custom_item_id: 0 }),
+      baseTask({ id: 't2', custom_item_id: 1004 })
+    ])
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, undefined, ['l1'])
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' })
     expect(result).toHaveLength(2)
   })
 
   it('filters to initiatives when typeFilter is initiative', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', custom_item_id: 0 }),
+      baseTask({ id: 't2', custom_item_id: 1004 })
+    ])
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, 'initiative', ['l1'])
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { typeFilter: 'initiative' })
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('t2')
     expect(result[0].task_type).toBe('initiative')
   })
 
   it('filters to regular tasks when typeFilter is task', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', custom_item_id: 0 }),
+      baseTask({ id: 't2', custom_item_id: 1004 })
+    ])
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, 'task', ['l1'])
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { typeFilter: 'task' })
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('t1')
     expect(result[0].task_type).toBe('task')
   })
 
-  it('fetches all provided list IDs in parallel', async () => {
-    mockGetMyTasksFromList.mockClear()
+  it('passes status filter to API', async () => {
+    mockGetMyTasks.mockResolvedValue([])
     const { fetchMyTasks } = await import('./tasks.js')
-    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, undefined, ['l1', 'l2', 'l3'])
-    expect(mockGetMyTasksFromList).toHaveBeenCalledTimes(3)
-    expect(mockGetMyTasksFromList).toHaveBeenCalledWith('l1')
-    expect(mockGetMyTasksFromList).toHaveBeenCalledWith('l2')
-    expect(mockGetMyTasksFromList).toHaveBeenCalledWith('l3')
+    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { statuses: ['in progress'] })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', expect.objectContaining({ statuses: ['in progress'] }))
+  })
+
+  it('passes listIds filter to API', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchMyTasks } = await import('./tasks.js')
+    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { listIds: ['list_x'] })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', expect.objectContaining({ listIds: ['list_x'] }))
+  })
+
+  it('calls getMyTasks with correct teamId', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchMyTasks } = await import('./tasks.js')
+    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'my_team' })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('my_team', expect.any(Object))
   })
 })

@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import { loadConfig } from './config.js'
-import { fetchMyTasks } from './commands/tasks.js'
+import { fetchMyTasks, printTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
@@ -46,11 +46,20 @@ program
 program
   .command('tasks')
   .description('List tasks assigned to me')
-  .action(async () => {
+  .option('--status <status>', 'Filter by status (e.g. "in progress")')
+  .option('--list <listId>', 'Filter by list ID')
+  .option('--space <spaceId>', 'Filter by space ID')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { status?: string; list?: string; space?: string; json?: boolean }) => {
     try {
       const config = loadConfig()
-      const tasks = await fetchMyTasks(config, 'task')
-      console.log(JSON.stringify(tasks, null, 2))
+      const tasks = await fetchMyTasks(config, {
+        typeFilter: 'task',
+        statuses: opts.status ? [opts.status] : undefined,
+        listIds: opts.list ? [opts.list] : undefined,
+        spaceIds: opts.space ? [opts.space] : undefined,
+      })
+      printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -60,11 +69,16 @@ program
 program
   .command('initiatives')
   .description('List initiatives assigned to me')
-  .action(async () => {
+  .option('--status <status>', 'Filter by status')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { status?: string; json?: boolean }) => {
     try {
       const config = loadConfig()
-      const tasks = await fetchMyTasks(config, 'initiative')
-      console.log(JSON.stringify(tasks, null, 2))
+      const tasks = await fetchMyTasks(config, {
+        typeFilter: 'initiative',
+        statuses: opts.status ? [opts.status] : undefined,
+      })
+      printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
