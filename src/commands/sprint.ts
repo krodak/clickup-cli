@@ -97,5 +97,5 @@ export async function runSprintCommand(
 
   const summaries = summarizeTasks(sprintTasks, opts.status)
 
-  await printTasks(summaries, opts.json ?? false)
+  await printTasks(summaries, opts.json ?? false, config)
 }
