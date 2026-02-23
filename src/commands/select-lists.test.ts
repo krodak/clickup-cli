@@ -18,7 +18,9 @@ describe('fetchAllLists', () => {
     vi.mocked(ClickUpClient).mockImplementation(() => ({
       getTeams: vi.fn().mockResolvedValue([{ id: 't1', name: 'Acme' }]),
       getSpaces: vi.fn().mockResolvedValue([{ id: 's1', name: 'Engineering' }]),
-      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }, { id: 'l2', name: 'Backlog' }])
+      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }, { id: 'l2', name: 'Backlog' }]),
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { fetchAllLists } = await import('./select-lists.js')
@@ -46,7 +48,9 @@ describe('fetchAllLists', () => {
         { id: 't2', name: 'Team 2' }
       ]),
       getSpaces: mockGetSpaces,
-      getLists: mockGetLists
+      getLists: mockGetLists,
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { fetchAllLists } = await import('./select-lists.js')
@@ -62,13 +66,33 @@ describe('fetchAllLists', () => {
     vi.mocked(ClickUpClient).mockImplementation(() => ({
       getTeams: vi.fn().mockResolvedValue([]),
       getSpaces: vi.fn(),
-      getLists: vi.fn()
+      getLists: vi.fn(),
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { fetchAllLists } = await import('./select-lists.js')
     const client = new ClickUpClient({ apiToken: 'pk_t' })
     const result = await fetchAllLists(client)
     expect(result).toHaveLength(0)
+  })
+
+  it('includes lists from folders alongside folderless lists', async () => {
+    const { ClickUpClient } = await import('../api.js')
+    vi.mocked(ClickUpClient).mockImplementation(() => ({
+      getTeams: vi.fn().mockResolvedValue([{ id: 't1', name: 'Acme' }]),
+      getSpaces: vi.fn().mockResolvedValue([{ id: 's1', name: 'Engineering' }]),
+      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Folderless List' }]),
+      getFolders: vi.fn().mockResolvedValue([{ id: 'f1', name: 'Q1 Work' }]),
+      getFolderLists: vi.fn().mockResolvedValue([{ id: 'l2', name: 'In Folder List' }])
+    }) as unknown as InstanceType<typeof ClickUpClient>)
+
+    const { fetchAllLists } = await import('./select-lists.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t' })
+    const result = await fetchAllLists(client)
+
+    expect(result).toHaveLength(2)
+    expect(result.map(r => r.listId)).toEqual(expect.arrayContaining(['l1', 'l2']))
   })
 })
 
@@ -85,7 +109,9 @@ describe('selectLists', () => {
     vi.mocked(ClickUpClient).mockImplementation(() => ({
       getTeams: vi.fn().mockResolvedValue([{ id: 't1', name: 'Acme' }]),
       getSpaces: vi.fn().mockResolvedValue([{ id: 's1', name: 'Eng' }]),
-      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }, { id: 'l2', name: 'Backlog' }])
+      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }, { id: 'l2', name: 'Backlog' }]),
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { selectLists } = await import('./select-lists.js')
@@ -107,7 +133,9 @@ describe('selectLists', () => {
     vi.mocked(ClickUpClient).mockImplementation(() => ({
       getTeams: vi.fn().mockResolvedValue([{ id: 't1', name: 'Acme' }]),
       getSpaces: vi.fn().mockResolvedValue([{ id: 's1', name: 'Eng' }]),
-      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }])
+      getLists: vi.fn().mockResolvedValue([{ id: 'l1', name: 'Sprint 1' }]),
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { selectLists } = await import('./select-lists.js')
@@ -120,7 +148,9 @@ describe('selectLists', () => {
     vi.mocked(ClickUpClient).mockImplementation(() => ({
       getTeams: vi.fn().mockResolvedValue([{ id: 't1', name: 'Acme' }]),
       getSpaces: vi.fn().mockResolvedValue([{ id: 's1', name: 'Eng' }]),
-      getLists: vi.fn().mockResolvedValue([])
+      getLists: vi.fn().mockResolvedValue([]),
+      getFolders: vi.fn().mockResolvedValue([]),
+      getFolderLists: vi.fn().mockResolvedValue([])
     }) as unknown as InstanceType<typeof ClickUpClient>)
 
     const { selectLists } = await import('./select-lists.js')

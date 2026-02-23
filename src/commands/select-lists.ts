@@ -16,8 +16,18 @@ export async function fetchAllLists(client: ClickUpClient): Promise<ListChoice[]
       const spaces = await client.getSpaces(team.id)
       const perSpace = await Promise.all(
         spaces.map(async space => {
-          const lists = await client.getLists(space.id)
-          return lists.map(list => ({
+          const [folderlessLists, folders] = await Promise.all([
+            client.getLists(space.id),
+            client.getFolders(space.id)
+          ])
+
+          const folderLists = await Promise.all(
+            folders.map(folder => client.getFolderLists(folder.id))
+          )
+
+          const allLists = [...folderlessLists, ...folderLists.flat()]
+
+          return allLists.map(list => ({
             teamName: team.name,
             spaceName: space.name,
             listId: list.id,

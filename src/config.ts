@@ -13,7 +13,7 @@ const CONFIG_PATH = join(homedir(), '.config', 'cu', 'config.json')
 export function loadConfig(): Config {
   if (!fs.existsSync(CONFIG_PATH)) {
     throw new Error(
-      `Config file not found at ${CONFIG_PATH}.\nCreate it with:\n{\n  "apiToken": "pk_...",\n  "teamId": "...",\n  "lists": ["list_id_1", "list_id_2"]\n}`
+      `Config file not found at ${CONFIG_PATH}.\nRun: cu init`
     )
   }
 
