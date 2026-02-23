@@ -118,6 +118,27 @@ export class ClickUpClient {
     })
   }
 
+  async getAssignedListIds(teamId: string): Promise<Set<string>> {
+    const me = await this.getMe()
+    const allTasks: Task[] = []
+    let page = 0
+    let lastPage = false
+
+    while (!lastPage) {
+      const qs = new URLSearchParams({
+        assignees: String(me.id),
+        subtasks: 'true',
+        page: String(page)
+      }).toString()
+      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(`/team/${teamId}/task?${qs}`)
+      allTasks.push(...(data.tasks ?? []))
+      lastPage = data.last_page ?? true
+      page++
+    }
+
+    return new Set(allTasks.map(t => t.list.id))
+  }
+
   async getTeams(): Promise<Team[]> {
     const data = await this.request<{ teams: Team[] }>('/team')
     return data.teams ?? []

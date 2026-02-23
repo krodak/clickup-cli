@@ -13,7 +13,10 @@ export async function fetchAllLists(client: ClickUpClient): Promise<ListChoice[]
 
   const perTeam = await Promise.all(
     teams.map(async team => {
-      const spaces = await client.getSpaces(team.id)
+      const [spaces, assignedListIds] = await Promise.all([
+        client.getSpaces(team.id),
+        client.getAssignedListIds(team.id)
+      ])
       const perSpace = await Promise.all(
         spaces.map(async space => {
           const [folderlessLists, folders] = await Promise.all([
@@ -27,12 +30,14 @@ export async function fetchAllLists(client: ClickUpClient): Promise<ListChoice[]
 
           const allLists = [...folderlessLists, ...folderLists.flat()]
 
-          return allLists.map(list => ({
-            teamName: team.name,
-            spaceName: space.name,
-            listId: list.id,
-            listName: list.name
-          }))
+          return allLists
+            .filter(list => assignedListIds.has(list.id))
+            .map(list => ({
+              teamName: team.name,
+              spaceName: space.name,
+              listId: list.id,
+              listName: list.name
+            }))
         })
       )
       return perSpace.flat()
