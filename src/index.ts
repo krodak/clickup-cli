@@ -19,6 +19,30 @@ program
   .version(version)
 
 program
+  .command('init')
+  .description('Set up cu for the first time')
+  .action(async () => {
+    try {
+      await runInitCommand()
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('lists')
+  .description('Select which ClickUp lists to track')
+  .action(async () => {
+    try {
+      await runListsCommand()
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
   .command('tasks')
   .description('List tasks assigned to me')
   .action(async () => {
@@ -74,30 +98,6 @@ program
       const config = loadConfig()
       const result = await createTask(config, opts)
       console.log(JSON.stringify(result, null, 2))
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
-
-program
-  .command('init')
-  .description('Set up cu for the first time')
-  .action(async () => {
-    try {
-      await runInitCommand()
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
-
-program
-  .command('lists')
-  .description('Update tracked ClickUp lists')
-  .action(async () => {
-    try {
-      await runListsCommand()
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
