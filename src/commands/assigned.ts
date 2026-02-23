@@ -8,6 +8,18 @@ import { summarize } from './tasks.js'
 
 const CLOSED_STATUSES = new Set(['done', 'closed', 'complete', 'completed'])
 
+const STATUS_ORDER: string[] = [
+  'code review',
+  'in review',
+  'review',
+  'in progress',
+  'to do',
+  'open',
+  'needs definition',
+  'backlog',
+  'blocked',
+]
+
 interface AssignedTaskJson {
   id: string
   name: string
@@ -37,8 +49,12 @@ interface GroupedTasks {
   tasks: Task[]
 }
 
+function statusSortKey(status: string): number {
+  const idx = STATUS_ORDER.indexOf(status.toLowerCase())
+  return idx === -1 ? STATUS_ORDER.length : idx
+}
+
 function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
-  const orderMap = new Map<string, number>()
   const groups = new Map<string, Task[]>()
 
   for (const task of tasks) {
@@ -49,7 +65,6 @@ function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
 
     if (!groups.has(status)) {
       groups.set(status, [])
-      orderMap.set(status, orderMap.size)
     }
     groups.get(status)!.push(task)
   }
@@ -59,7 +74,7 @@ function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
       const aIsClosed = CLOSED_STATUSES.has(a[0].toLowerCase())
       const bIsClosed = CLOSED_STATUSES.has(b[0].toLowerCase())
       if (aIsClosed !== bIsClosed) return aIsClosed ? 1 : -1
-      return orderMap.get(a[0])! - orderMap.get(b[0])!
+      return statusSortKey(a[0]) - statusSortKey(b[0])
     })
     .map(([status, tasks]) => ({ status, tasks }))
 }
