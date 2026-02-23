@@ -1,5 +1,5 @@
 import { ClickUpClient } from '../api.js'
-import type { Task, List } from '../api.js'
+import type { Task, List, Space } from '../api.js'
 import type { Config } from '../config.js'
 import { printTasks } from './tasks.js'
 
@@ -29,6 +29,27 @@ export function findActiveSprintList(lists: List[], today = new Date()): List | 
   return lists[lists.length - 1]
 }
 
+const NOISE_WORDS = new Set(['product', 'team', 'the', 'and', 'for', 'test'])
+
+export function extractSpaceKeywords(spaceName: string): string[] {
+  return spaceName
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .split(/\s+/)
+    .map(w => w.toLowerCase())
+    .filter(w => w.length >= 3 && !NOISE_WORDS.has(w))
+}
+
+export function findRelatedSpaces(mySpaceIds: Set<string>, allSpaces: Space[]): Space[] {
+  const mySpaces = allSpaces.filter(s => mySpaceIds.has(s.id))
+  const keywords = mySpaces.flatMap(s => extractSpaceKeywords(s.name))
+  if (keywords.length === 0) return allSpaces
+
+  return allSpaces.filter(s =>
+    mySpaceIds.has(s.id) ||
+    keywords.some(kw => s.name.toLowerCase().includes(kw))
+  )
+}
+
 function summarizeTasks(tasks: Task[], statusFilter?: string) {
   const filtered = statusFilter
     ? tasks.filter(t => t.status.status.toLowerCase() === statusFilter.toLowerCase())
@@ -52,9 +73,12 @@ export async function runSprintCommand(
 
   process.stderr.write('Detecting active sprint...\n')
 
-  const allSpaces = await client.getSpaces(config.teamId)
+  const [myTasks, allSpaces] = await Promise.all([
+    client.getMyTasks(config.teamId),
+    client.getSpaces(config.teamId),
+  ])
 
-  let spaces = allSpaces
+  let spaces: Space[]
   if (opts.space) {
     spaces = allSpaces.filter(s =>
       s.name.toLowerCase().includes(opts.space!.toLowerCase()) ||
@@ -63,6 +87,9 @@ export async function runSprintCommand(
     if (spaces.length === 0) {
       throw new Error(`No space matching "${opts.space}" found. Use \`cu spaces\` to list available spaces.`)
     }
+  } else {
+    const mySpaceIds = new Set(myTasks.map(t => t.space?.id).filter(Boolean) as string[])
+    spaces = findRelatedSpaces(mySpaceIds, allSpaces)
   }
 
   const foldersBySpace = await Promise.all(

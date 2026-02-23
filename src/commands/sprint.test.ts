@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseSprintDates, findActiveSprintList, runSprintCommand } from './sprint.js'
+import { parseSprintDates, findActiveSprintList, runSprintCommand, extractSpaceKeywords, findRelatedSpaces } from './sprint.js'
 import { ClickUpClient } from '../api.js'
 
 describe('parseSprintDates', () => {
@@ -58,10 +58,49 @@ describe('findActiveSprintList', () => {
   })
 })
 
+describe('extractSpaceKeywords', () => {
+  it('extracts meaningful words from space name', () => {
+    expect(extractSpaceKeywords('Product - Acme')).toEqual(['acme'])
+  })
+
+  it('filters out noise words', () => {
+    expect(extractSpaceKeywords('Product Team')).toEqual([])
+  })
+
+  it('handles emoji-prefixed names', () => {
+    const result = extractSpaceKeywords('Acme Roadmap')
+    expect(result).toContain('acme')
+    expect(result).toContain('roadmap')
+  })
+})
+
+describe('findRelatedSpaces', () => {
+  it('returns spaces matching keywords from my spaces', () => {
+    const allSpaces = [
+      { id: 's1', name: 'Product - Acme' },
+      { id: 's2', name: 'Acme Team' },
+      { id: 's3', name: 'Platform Team' },
+    ]
+    const result = findRelatedSpaces(new Set(['s1']), allSpaces)
+    expect(result.map(s => s.id)).toContain('s1')
+    expect(result.map(s => s.id)).toContain('s2')
+    expect(result.map(s => s.id)).not.toContain('s3')
+  })
+
+  it('falls back to all spaces when no keywords extracted', () => {
+    const allSpaces = [
+      { id: 's1', name: 'Product' },
+      { id: 's2', name: 'Team' },
+    ]
+    const result = findRelatedSpaces(new Set(['s1']), allSpaces)
+    expect(result).toHaveLength(2)
+  })
+})
+
 describe('runSprintCommand space handling', () => {
   const baseTask = {
     id: 't1', name: 'Task', status: { status: 'in progress', color: '#fff' },
-    assignees: [], url: 'https://app.clickup.com/t/t1',
+    assignees: [] as Array<{ id: number; username: string }>, url: 'https://app.clickup.com/t/t1',
     list: { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
     space: { id: 's1' },
   }
@@ -70,12 +109,14 @@ describe('runSprintCommand space handling', () => {
     vi.restoreAllMocks()
   })
 
-  it('searches all spaces and returns tasks via view API', async () => {
+  it('searches related spaces only and returns tasks via view API', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([baseTask])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
-      { id: 's1', name: 'Acme' },
-      { id: 's2', name: 'Platform' },
+      { id: 's1', name: 'Product - Acme' },
+      { id: 's2', name: 'Acme Team' },
+      { id: 's3', name: 'US Team' },
     ])
-    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
       { id: 'f1', name: 'Acme Sprint' },
     ])
     vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
@@ -92,9 +133,14 @@ describe('runSprintCommand space handling', () => {
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
     await runSprintCommand(config, {})
+
+    expect(mockGetFolders).toHaveBeenCalledWith('s1')
+    expect(mockGetFolders).toHaveBeenCalledWith('s2')
+    expect(mockGetFolders).not.toHaveBeenCalledWith('s3')
   })
 
   it('--space override filters by partial name', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Acme' },
       { id: 's2', name: 'Platform' },
@@ -120,6 +166,7 @@ describe('runSprintCommand space handling', () => {
   })
 
   it('throws when --space filter matches no spaces', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Acme' },
     ])
@@ -131,6 +178,7 @@ describe('runSprintCommand space handling', () => {
   })
 
   it('matches --space by exact ID', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Acme' },
       { id: 's2', name: 'Platform' },
