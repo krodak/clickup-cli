@@ -6,7 +6,10 @@
   "bin": {
     "cu": "./dist/index.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/index.ts",
@@ -14,6 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.3.0",
     "commander": "^12.0.0"
   },
   "engines": {

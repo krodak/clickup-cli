@@ -19,6 +19,21 @@ export interface CreateTaskOptions {
   status?: string
 }
 
+export interface Team {
+  id: string
+  name: string
+}
+
+export interface Space {
+  id: string
+  name: string
+}
+
+export interface List {
+  id: string
+  name: string
+}
+
 interface ClientConfig {
   apiToken: string
 }
@@ -96,5 +111,20 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify(options)
     })
+  }
+
+  async getTeams(): Promise<Team[]> {
+    const data = await this.request<{ teams: Team[] }>('/team')
+    return data.teams ?? []
+  }
+
+  async getSpaces(teamId: string): Promise<Space[]> {
+    const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space`)
+    return data.spaces ?? []
+  }
+
+  async getLists(spaceId: string): Promise<List[]> {
+    const data = await this.request<{ lists: List[] }>(`/space/${spaceId}/list`)
+    return data.lists ?? []
   }
 }
