@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.env
 .env
+.env.test
 DECISIONS.md
 PROGRESS.md
 docs/
