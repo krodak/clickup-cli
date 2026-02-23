@@ -34,6 +34,11 @@ export interface List {
   name: string
 }
 
+export interface Folder {
+  id: string
+  name: string
+}
+
 interface ClientConfig {
   apiToken: string
 }
@@ -119,12 +124,22 @@ export class ClickUpClient {
   }
 
   async getSpaces(teamId: string): Promise<Space[]> {
-    const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space`)
+    const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space?archived=false`)
     return data.spaces ?? []
   }
 
   async getLists(spaceId: string): Promise<List[]> {
-    const data = await this.request<{ lists: List[] }>(`/space/${spaceId}/list`)
+    const data = await this.request<{ lists: List[] }>(`/space/${spaceId}/list?archived=false`)
+    return data.lists ?? []
+  }
+
+  async getFolders(spaceId: string): Promise<Folder[]> {
+    const data = await this.request<{ folders: Folder[] }>(`/space/${spaceId}/folder?archived=false`)
+    return data.folders ?? []
+  }
+
+  async getFolderLists(folderId: string): Promise<List[]> {
+    const data = await this.request<{ lists: List[] }>(`/folder/${folderId}/list?archived=false`)
     return data.lists ?? []
   }
 }
