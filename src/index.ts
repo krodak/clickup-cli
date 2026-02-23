@@ -119,10 +119,10 @@ program
 program
   .command('create')
   .description('Create a new task')
-  .requiredOption('-l, --list <listId>', 'Target list ID')
+  .option('-l, --list <listId>', 'Target list ID (auto-detected from --parent if omitted)')
   .requiredOption('-n, --name <name>', 'Task name')
   .option('-d, --description <text>', 'Task description')
-  .option('-p, --parent <taskId>', 'Parent initiative task ID')
+  .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
   .option('-s, --status <status>', 'Initial status')
   .action(async (opts: CreateOptions) => {
     try {
