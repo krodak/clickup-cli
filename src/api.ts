@@ -125,11 +125,9 @@ export class ClickUpClient {
     let lastPage = false
 
     while (!lastPage) {
-      const qs = new URLSearchParams({
-        assignees: String(me.id),
-        subtasks: 'true',
-        page: String(page)
-      }).toString()
+      const params = new URLSearchParams({ subtasks: 'true', page: String(page) })
+      params.append('assignees[]', String(me.id))
+      const qs = params.toString()
       const data = await this.request<{ tasks: Task[]; last_page: boolean }>(`/team/${teamId}/task?${qs}`)
       allTasks.push(...(data.tasks ?? []))
       lastPage = data.last_page ?? true
