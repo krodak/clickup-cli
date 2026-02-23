@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { parseSprintDates, findActiveSprintList } from './sprint.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { parseSprintDates, findActiveSprintList, runSprintCommand } from './sprint.js'
+import { ClickUpClient } from '../api.js'
 
 describe('parseSprintDates', () => {
   it('parses M/D - M/D format', () => {
@@ -54,5 +55,85 @@ describe('findActiveSprintList', () => {
   it('returns single list when only one exists', () => {
     const lists = [{ id: 'l1', name: 'Sprint 1' }]
     expect(findActiveSprintList(lists, today)?.id).toBe('l1')
+  })
+})
+
+describe('runSprintCommand space handling', () => {
+  const baseTask = {
+    id: 't1', name: 'Task', status: { status: 'in progress', color: '#fff' },
+    assignees: [], url: 'https://app.clickup.com/t/t1',
+    list: { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
+    space: { id: 's1' },
+  }
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('auto-detects spaces from assigned tasks', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([baseTask])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Acme' },
+      { id: 's2', name: 'Platform' },
+    ])
+    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+      { id: 'f1', name: 'Acme Sprint' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, {})
+
+    // Only s1 (has tasks) should be searched, not s2 (no tasks)
+    expect(mockGetFolders).toHaveBeenCalledWith('s1')
+    expect(mockGetFolders).not.toHaveBeenCalledWith('s2')
+  })
+
+  it('--space override filters by partial name', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Acme' },
+      { id: 's2', name: 'Platform' },
+    ])
+    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+      { id: 'f1', name: 'Acme Sprint' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, { space: 'Kay' })
+
+    expect(mockGetFolders).toHaveBeenCalledWith('s1')
+    expect(mockGetFolders).not.toHaveBeenCalledWith('s2')
+  })
+
+  it('throws when --space filter matches no spaces', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Acme' },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await expect(runSprintCommand(config, { space: 'nonexistent' })).rejects.toThrow(
+      'No space matching "nonexistent" found'
+    )
+  })
+
+  it('matches --space by exact ID', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Acme' },
+      { id: 's2', name: 'Platform' },
+    ])
+    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await expect(runSprintCommand(config, { space: 's2' })).rejects.toThrow('No sprint list found')
+    expect(mockGetFolders).toHaveBeenCalledWith('s2')
+    expect(mockGetFolders).not.toHaveBeenCalledWith('s1')
   })
 })
