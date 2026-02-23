@@ -4,6 +4,7 @@ export interface Task {
   id: string
   name: string
   description?: string
+  text_content?: string
   status: { status: string; color: string }
   custom_item_id?: number
   assignees: Array<{ id: number; username: string }>
@@ -11,6 +12,13 @@ export interface Task {
   list: { id: string; name: string }
   space?: { id: string }
   parent?: string
+  priority?: { priority: string } | null
+  start_date?: string | null
+  due_date?: string | null
+  time_estimate?: number | null
+  time_spent?: number
+  tags?: Array<{ name: string }>
+  date_created?: string
   date_updated?: string
   locations?: Array<{ id: string; name: string }>
 }

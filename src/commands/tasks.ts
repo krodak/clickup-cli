@@ -57,7 +57,7 @@ export async function fetchMyTasks(config: Config, opts: FetchOptions = {}): Pro
   return filtered.map(summarize)
 }
 
-export async function printTasks(tasks: TaskSummary[], forceJson: boolean): Promise<void> {
+export async function printTasks(tasks: TaskSummary[], forceJson: boolean, config?: Config): Promise<void> {
   if (forceJson || !isTTY()) {
     console.log(JSON.stringify(tasks, null, 2))
     return
@@ -68,6 +68,10 @@ export async function printTasks(tasks: TaskSummary[], forceJson: boolean): Prom
     return
   }
 
+  const fetchTask = config
+    ? (id: string) => new ClickUpClient(config).getTask(id)
+    : undefined
+
   const selected = await interactiveTaskPicker(tasks)
-  await showDetailsAndOpen(selected)
+  await showDetailsAndOpen(selected, fetchTask)
 }

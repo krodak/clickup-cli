@@ -52,7 +52,7 @@ program
         listIds: opts.list ? [opts.list] : undefined,
         spaceIds: opts.space ? [opts.space] : undefined,
       })
-      await printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false, config)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -71,7 +71,7 @@ program
         typeFilter: 'initiative',
         statuses: opts.status ? [opts.status] : undefined,
       })
-      await printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false, config)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -167,7 +167,7 @@ program
     try {
       const config = loadConfig()
       const tasks = await fetchSubtasks(config, taskId)
-      await printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false, config)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -231,7 +231,7 @@ program
     try {
       const config = loadConfig()
       const tasks = await fetchInbox(config)
-      await printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false, config)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
