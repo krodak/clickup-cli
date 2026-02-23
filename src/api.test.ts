@@ -43,7 +43,7 @@ describe('ClickUpClient', () => {
     await client.getMyTasksFromList('list_1')
     expect(mockFetch).toHaveBeenCalledTimes(2)
     const secondCall = String(mockFetch.mock.calls[1][0])
-    expect(secondCall).toContain('assignees=42')
+    expect(secondCall).toContain('assignees%5B%5D=42')
   })
 
   it('updates task description', async () => {
