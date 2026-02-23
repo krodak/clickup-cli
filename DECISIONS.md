@@ -13,3 +13,5 @@ Architectural and implementation decisions made during planning and development 
 | 7 | Skill lives at `~/.config/opencode/skills/clickup/SKILL.md` | Skills directory pattern for Claude Code; outside project dir as it's user-level config |
 | 8 | ESM output (`"type": "module"`) | Node 20+ native, aligns with TypeScript `ESNext` module target; no CJS overhead |
 | 9 | Subtasks included by default (`subtasks: true`) | Tasks nested under initiatives are most relevant; can be revisited if too noisy |
+| 10 | Auto-paginate in `getTasksFromList` | ClickUp v2 caps at 100 tasks per page. Silently truncating would be worse than the extra API calls. Paginate until `last_page: true` in response. |
+| 11 | Remove `teamId` from `ClickUpClient` | Stored but never used. The `/user` endpoint returns the current user without needing teamId. May be re-added if workspace-level filtered search endpoint is needed later. |
