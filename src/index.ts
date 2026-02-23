@@ -49,7 +49,7 @@ program
   .action(async () => {
     try {
       const config = loadConfig()
-      const tasks = await fetchMyTasks(config)
+      const tasks = await fetchMyTasks(config, 'task')
       console.log(JSON.stringify(tasks, null, 2))
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
@@ -63,7 +63,7 @@ program
   .action(async () => {
     try {
       const config = loadConfig()
-      const tasks = await fetchMyTasks(config, 'Initiative')
+      const tasks = await fetchMyTasks(config, 'initiative')
       console.log(JSON.stringify(tasks, null, 2))
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
