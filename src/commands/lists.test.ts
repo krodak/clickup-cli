@@ -29,30 +29,33 @@ describe('runListsCommand', () => {
     await expect(runListsCommand()).rejects.toThrow('invalid JSON')
   })
 
-  it('writes updated config with selected lists', async () => {
-    const { loadConfig, writeConfig } = await import('../config.js')
-    vi.mocked(loadConfig).mockReturnValue({ apiToken: 'pk_t', lists: ['l1'] })
+  it('outputs selected lists count', async () => {
+    const { loadConfig } = await import('../config.js')
+    vi.mocked(loadConfig).mockReturnValue({ apiToken: 'pk_t', teamId: 'team_1' })
 
     const { selectLists } = await import('./select-lists.js')
     vi.mocked(selectLists).mockResolvedValue(['l1', 'l2', 'l3'])
 
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     const { runListsCommand } = await import('./lists.js')
     await runListsCommand()
+    writeSpy.mockRestore()
 
-    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({ apiToken: 'pk_t', lists: ['l1', 'l2', 'l3'] })
+    expect(vi.mocked(selectLists)).toHaveBeenCalledWith(expect.anything(), [])
   })
 
-  it('preserves existing token when updating lists', async () => {
-    const { loadConfig, writeConfig } = await import('../config.js')
-    vi.mocked(loadConfig).mockReturnValue({ apiToken: 'pk_original', lists: ['l1'] })
+  it('passes empty array as current lists to selectLists', async () => {
+    const { loadConfig } = await import('../config.js')
+    vi.mocked(loadConfig).mockReturnValue({ apiToken: 'pk_original', teamId: 'team_1' })
 
     const { selectLists } = await import('./select-lists.js')
     vi.mocked(selectLists).mockResolvedValue(['l2'])
 
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     const { runListsCommand } = await import('./lists.js')
     await runListsCommand()
+    writeSpy.mockRestore()
 
-    const written = vi.mocked(writeConfig).mock.calls[0][0]
-    expect(written.apiToken).toBe('pk_original')
+    expect(vi.mocked(selectLists)).toHaveBeenCalledWith(expect.anything(), [])
   })
 })

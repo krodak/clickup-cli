@@ -23,7 +23,7 @@ vi.mock('../api.js', () => ({
 describe('getTask', () => {
   it('returns full task details', async () => {
     const { getTask } = await import('./get.js')
-    const result = await getTask({ apiToken: 'pk_t', lists: [] }, 't1')
+    const result = await getTask({ apiToken: 'pk_t', teamId: 'team_1' }, 't1')
     expect(mockGetTask).toHaveBeenCalledWith('t1')
     expect(result.id).toBe('t1')
     expect(result.name).toBe('My Task')
@@ -32,7 +32,7 @@ describe('getTask', () => {
 
   it('passes the task id to the API', async () => {
     const { getTask } = await import('./get.js')
-    await getTask({ apiToken: 'pk_t', lists: [] }, 'abc123')
+    await getTask({ apiToken: 'pk_t', teamId: 'team_1' }, 'abc123')
     expect(mockGetTask).toHaveBeenCalledWith('abc123')
   })
 })

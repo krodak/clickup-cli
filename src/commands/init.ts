@@ -38,6 +38,6 @@ export async function runInitCommand(): Promise<void> {
 
   const lists = await selectLists(client, [])
 
-  writeConfig({ apiToken, lists })
+  writeConfig({ apiToken, teamId: lists[0] ?? '' })
   process.stdout.write(`Config written to ${configPath} (${lists.length} list${lists.length === 1 ? '' : 's'})\n`)
 }
