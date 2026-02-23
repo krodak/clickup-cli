@@ -84,3 +84,31 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('invalid JSON')
   })
 })
+
+describe('writeConfig', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.resetModules()
+  })
+
+  it('creates config directory if it does not exist', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const { writeConfig } = await import('./config.js')
+    writeConfig({ apiToken: 'pk_test', lists: ['l1'] })
+    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(
+      expect.stringContaining('cu'),
+      { recursive: true }
+    )
+  })
+
+  it('writes config as formatted JSON', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('./config.js')
+    writeConfig({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+    const written = String(vi.mocked(fs.writeFileSync).mock.calls[0][1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+  })
+})

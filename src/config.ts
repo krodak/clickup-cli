@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { homedir } from 'os'
-import { join } from 'path'
+import { dirname, join } from 'path'
 
 export interface Config {
   apiToken: string
@@ -44,4 +44,12 @@ export function loadConfig(): Config {
 
 export function getConfigPath(): string {
   return CONFIG_PATH
+}
+
+export function writeConfig(config: Config): void {
+  const dir = dirname(CONFIG_PATH)
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
+  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n', 'utf-8')
 }
