@@ -84,33 +84,21 @@ describe('ClickUpClient', () => {
   })
 
   it('getTeams returns team array', async () => {
-    mockFetch.mockReturnValue(Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ teams: [{ id: 't1', name: 'My Workspace' }] })
-    }))
+    mockFetch.mockReturnValue(mockResponse({ teams: [{ id: 't1', name: 'My Workspace' }] }))
     const teams = await client.getTeams()
     expect(teams).toEqual([{ id: 't1', name: 'My Workspace' }])
-    expect(String(mockFetch.mock.calls[0][0])).toContain('/team')
+    expect(String(mockFetch.mock.calls[0][0])).toMatch(/\/team$/)
   })
 
   it('getSpaces returns spaces for a team', async () => {
-    mockFetch.mockReturnValue(Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ spaces: [{ id: 's1', name: 'Engineering' }] })
-    }))
+    mockFetch.mockReturnValue(mockResponse({ spaces: [{ id: 's1', name: 'Engineering' }] }))
     const spaces = await client.getSpaces('t1')
     expect(spaces).toEqual([{ id: 's1', name: 'Engineering' }])
     expect(String(mockFetch.mock.calls[0][0])).toContain('/team/t1/space')
   })
 
   it('getLists returns lists for a space', async () => {
-    mockFetch.mockReturnValue(Promise.resolve({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ lists: [{ id: 'l1', name: 'Sprint 1' }] })
-    }))
+    mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
     const lists = await client.getLists('s1')
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
     expect(String(mockFetch.mock.calls[0][0])).toContain('/space/s1/list')
