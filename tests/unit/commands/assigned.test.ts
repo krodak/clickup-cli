@@ -81,15 +81,32 @@ describe('groupByStatus', () => {
     expect(statuses.indexOf('to do')).toBeLessThan(statuses.indexOf('closed'))
   })
 
-  it('preserves insertion order for active statuses', async () => {
+  it('sorts active statuses by pipeline stage (later stages first)', async () => {
     const { groupByStatus } = await import('../../../src/commands/assigned.js')
     const tasks = [
-      makeTask('t1', 'in progress'),
-      makeTask('t2', 'needs definition'),
+      makeTask('t1', 'needs definition'),
+      makeTask('t2', 'in progress'),
       makeTask('t3', 'to do'),
+      makeTask('t4', 'code review'),
     ]
     const groups = groupByStatus(tasks as never[], false)
-    expect(groups.map(g => g.status)).toEqual(['in progress', 'needs definition', 'to do'])
+    expect(groups.map(g => g.status)).toEqual([
+      'code review',
+      'in progress',
+      'to do',
+      'needs definition',
+    ])
+  })
+
+  it('puts unknown statuses after known ones but before closed', async () => {
+    const { groupByStatus } = await import('../../../src/commands/assigned.js')
+    const tasks = [
+      makeTask('t1', 'custom status'),
+      makeTask('t2', 'in progress'),
+      makeTask('t3', 'done'),
+    ]
+    const groups = groupByStatus(tasks as never[], true)
+    expect(groups.map(g => g.status)).toEqual(['in progress', 'custom status', 'done'])
   })
 
   it('returns empty array for no tasks', async () => {
