@@ -55,6 +55,12 @@ export interface Folder {
   name: string
 }
 
+export interface View {
+  id: string
+  name: string
+  type: string
+}
+
 interface ClientConfig {
   apiToken: string
 }
@@ -225,5 +231,26 @@ export class ClickUpClient {
   async getFolderLists(folderId: string): Promise<List[]> {
     const data = await this.request<{ lists: List[] }>(`/folder/${folderId}/list?archived=false`)
     return data.lists ?? []
+  }
+
+  async getListViews(listId: string): Promise<{ views: View[]; required_views: Record<string, View | null> }> {
+    return this.request<{ views: View[]; required_views: Record<string, View | null> }>(`/list/${listId}/view`)
+  }
+
+  async getViewTasks(viewId: string): Promise<Task[]> {
+    const allTasks: Task[] = []
+    let page = 0
+    let lastPage = false
+
+    while (!lastPage) {
+      const data = await this.request<{ tasks: Task[]; last_page: boolean }>(
+        `/view/${viewId}/task?page=${page}`
+      )
+      allTasks.push(...(data.tasks ?? []))
+      lastPage = data.last_page ?? true
+      page++
+    }
+
+    return allTasks
   }
 }

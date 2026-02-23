@@ -52,16 +52,10 @@ export async function runSprintCommand(
 
   process.stderr.write('Detecting active sprint...\n')
 
-  // Fetch all my tasks and all spaces in parallel
-  const [myTasks, allSpaces] = await Promise.all([
-    client.getMyTasks(config.teamId),
-    client.getSpaces(config.teamId),
-  ])
+  const allSpaces = await client.getSpaces(config.teamId)
 
-  // Determine which spaces to search
   let spaces = allSpaces
   if (opts.space) {
-    // Explicit --space override: filter by partial name or exact ID
     spaces = allSpaces.filter(s =>
       s.name.toLowerCase().includes(opts.space!.toLowerCase()) ||
       s.id === opts.space
@@ -69,21 +63,13 @@ export async function runSprintCommand(
     if (spaces.length === 0) {
       throw new Error(`No space matching "${opts.space}" found. Use \`cu spaces\` to list available spaces.`)
     }
-  } else {
-    // Auto-detect: only search spaces where I have assigned tasks
-    const mySpaceIds = new Set(myTasks.map(t => t.space?.id).filter(Boolean))
-    if (mySpaceIds.size > 0) {
-      spaces = allSpaces.filter(s => mySpaceIds.has(s.id))
-    }
   }
 
-  // Fetch all folders in parallel across relevant spaces
   const foldersBySpace = await Promise.all(
     spaces.map(space => client.getFolders(space.id))
   )
   const sprintFolders = foldersBySpace.flat().filter(f => f.name.toLowerCase().includes('sprint'))
 
-  // Fetch all sprint folder lists in parallel
   const listsByFolder = await Promise.all(
     sprintFolders.map(folder => client.getFolderLists(folder.id))
   )
@@ -97,8 +83,18 @@ export async function runSprintCommand(
 
   process.stderr.write(`Active sprint: ${activeList.name}\n`)
 
-  // Filter already-fetched tasks to those in the active sprint list
-  const sprintTasks = myTasks.filter(t => t.list.id === activeList.id)
+  const me = await client.getMe()
+  const viewData = await client.getListViews(activeList.id)
+  const listView = viewData.required_views?.list
+  let sprintTasks: Task[]
+
+  if (listView) {
+    const allViewTasks = await client.getViewTasks(listView.id)
+    sprintTasks = allViewTasks.filter(t => t.assignees.some(a => a.id === me.id))
+  } else {
+    sprintTasks = await client.getMyTasksFromList(activeList.id)
+  }
+
   const summaries = summarizeTasks(sprintTasks, opts.status)
 
   await printTasks(summaries, opts.json ?? false)
