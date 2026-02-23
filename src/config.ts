@@ -11,9 +11,7 @@ const CONFIG_PATH = join(homedir(), '.config', 'cu', 'config.json')
 
 export function loadConfig(): Config {
   if (!fs.existsSync(CONFIG_PATH)) {
-    throw new Error(
-      `Config file not found at ${CONFIG_PATH}.\nRun: cu init`
-    )
+    throw new Error(`Config file not found at ${CONFIG_PATH}.\nRun: cu init`)
   }
 
   const raw = fs.readFileSync(CONFIG_PATH, 'utf-8')
@@ -21,7 +19,9 @@ export function loadConfig(): Config {
   try {
     parsed = JSON.parse(raw) as Partial<Config>
   } catch {
-    throw new Error(`Config file at ${CONFIG_PATH} contains invalid JSON. Please check the file syntax.`)
+    throw new Error(
+      `Config file at ${CONFIG_PATH} contains invalid JSON. Please check the file syntax.`,
+    )
   }
 
   const apiToken = parsed.apiToken?.trim()

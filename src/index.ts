@@ -10,9 +10,9 @@ import { runInitCommand } from './commands/init.js'
 import { runSprintCommand } from './commands/sprint.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
-import { ClickUpClient } from './api.js'
 import { isTTY } from './output.js'
 import { fetchInbox } from './commands/inbox.js'
+import { listSpaces } from './commands/spaces.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -23,6 +23,7 @@ program
   .name('cu')
   .description('ClickUp CLI for AI agents')
   .version(version)
+  .allowExcessArguments(false)
 
 program
   .command('init')
@@ -113,16 +114,18 @@ program
   .option('-n, --name <text>', 'New task name')
   .option('-d, --description <text>', 'New description (markdown supported)')
   .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
-  .action(async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
-    try {
-      const config = loadConfig()
-      const result = await updateTask(config, taskId, opts)
-      console.log(JSON.stringify(result, null, 2))
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+  .action(
+    async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
+      try {
+        const config = loadConfig()
+        const result = await updateTask(config, taskId, opts)
+        console.log(JSON.stringify(result, null, 2))
+      } catch (err) {
+        console.error(err instanceof Error ? err.message : String(err))
+        process.exit(1)
+      }
+    },
+  )
 
 program
   .command('create')
@@ -198,25 +201,7 @@ program
   .action(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
     try {
       const config = loadConfig()
-      const client = new ClickUpClient(config)
-      let spaces = await client.getSpaces(config.teamId)
-
-      if (opts.name) {
-        const lower = opts.name.toLowerCase()
-        spaces = spaces.filter(s => s.name.toLowerCase().includes(lower))
-      }
-
-      if (opts.my) {
-        const tasks = await client.getMyTasks(config.teamId)
-        const mySpaceIds = new Set(tasks.map(t => t.space?.id).filter(Boolean))
-        spaces = spaces.filter(s => mySpaceIds.has(s.id))
-      }
-
-      if (!opts.json && isTTY()) {
-        spaces.forEach(s => console.log(`${s.id}  ${s.name}`))
-      } else {
-        console.log(JSON.stringify(spaces, null, 2))
-      }
+      await listSpaces(config, opts)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
