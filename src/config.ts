@@ -4,7 +4,7 @@ import { join } from 'path'
 
 export interface Config {
   apiToken: string
-  teamId: string
+  teamId?: string
   lists: string[]
 }
 
@@ -25,15 +25,19 @@ export function loadConfig(): Config {
     throw new Error(`Config file at ${CONFIG_PATH} contains invalid JSON. Please check the file syntax.`)
   }
 
-  if (!parsed.apiToken) throw new Error('Config missing required field: apiToken')
-  if (!parsed.teamId) throw new Error('Config missing required field: teamId')
+  const apiToken = parsed.apiToken?.trim()
+  if (!apiToken) throw new Error('Config missing required field: apiToken')
+  if (!apiToken.startsWith('pk_')) {
+    throw new Error('Config apiToken must start with pk_ (found: ' + apiToken.slice(0, 8) + '...)')
+  }
+
   if (!parsed.lists || !Array.isArray(parsed.lists) || parsed.lists.length === 0) {
     throw new Error('Config missing required field: lists (must be a non-empty array of list IDs)')
   }
 
   return {
-    apiToken: parsed.apiToken,
-    teamId: parsed.teamId,
+    apiToken,
+    ...(parsed.teamId ? { teamId: parsed.teamId } : {}),
     lists: parsed.lists
   }
 }
