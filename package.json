@@ -6,6 +6,7 @@
   "bin": {
     "cu": "./dist/index.js"
   },
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "tsup",
     "dev": "tsx src/index.ts",
