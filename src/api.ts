@@ -101,7 +101,7 @@ export class ClickUpClient {
 
   async getMyTasksFromList(listId: string): Promise<Task[]> {
     const me = await this.getMe()
-    return this.getTasksFromList(listId, { assignees: String(me.id) })
+    return this.getTasksFromList(listId, { 'assignees[]': String(me.id) })
   }
 
   async updateTaskDescription(taskId: string, description: string): Promise<Task> {
