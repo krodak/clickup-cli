@@ -1,16 +1,20 @@
 import { Command } from 'commander'
+import { createRequire } from 'module'
 import { loadConfig } from './config.js'
 import { fetchMyTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
 
+const require = createRequire(import.meta.url)
+const { version } = require('../package.json') as { version: string }
+
 const program = new Command()
 
 program
   .name('cu')
   .description('ClickUp CLI for AI agents')
-  .version('0.1.0')
+  .version(version)
 
 program
   .command('tasks')
