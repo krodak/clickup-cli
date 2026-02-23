@@ -7,7 +7,6 @@ import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
-import { runListsCommand } from './commands/lists.js'
 import { runSprintCommand } from './commands/sprint.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
@@ -31,18 +30,6 @@ program
   .action(async () => {
     try {
       await runInitCommand()
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
-
-program
-  .command('lists')
-  .description('Select which ClickUp lists to track')
-  .action(async () => {
-    try {
-      await runListsCommand()
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)

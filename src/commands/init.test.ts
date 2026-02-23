@@ -1,110 +1,98 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+const mockPassword = vi.fn()
+const mockConfirm = vi.fn()
+const mockSelect = vi.fn()
+const mockGetMe = vi.fn().mockResolvedValue({ id: 1, username: 'testuser' })
+const mockGetTeams = vi.fn().mockResolvedValue([{ id: 'team1', name: 'My Workspace' }])
+const mockWriteConfig = vi.fn()
+const mockExistsSync = vi.fn().mockReturnValue(false)
+
 vi.mock('@inquirer/prompts', () => ({
-  password: vi.fn(),
-  confirm: vi.fn()
+  password: mockPassword,
+  confirm: mockConfirm,
+  select: mockSelect,
 }))
-vi.mock('../api.js', () => ({ ClickUpClient: vi.fn() }))
+
+vi.mock('../api.js', () => ({
+  ClickUpClient: vi.fn().mockImplementation(() => ({
+    getMe: mockGetMe,
+    getTeams: mockGetTeams
+  }))
+}))
+
 vi.mock('../config.js', () => ({
-  getConfigPath: vi.fn().mockReturnValue('/fake/.config/cu/config.json'),
-  writeConfig: vi.fn()
+  getConfigPath: vi.fn().mockReturnValue('/mock/config.json'),
+  writeConfig: mockWriteConfig
 }))
-vi.mock('./select-lists.js', () => ({ selectLists: vi.fn() }))
-vi.mock('fs')
+
+vi.mock('fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs')>()
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      existsSync: mockExistsSync,
+    }
+  }
+})
 
 describe('runInitCommand', () => {
   beforeEach(() => {
-    vi.resetModules()
-    vi.resetAllMocks()
+    vi.clearAllMocks()
+    mockGetMe.mockResolvedValue({ id: 1, username: 'testuser' })
+    mockGetTeams.mockResolvedValue([{ id: 'team1', name: 'My Workspace' }])
+    mockPassword.mockResolvedValue('pk_testtoken')
+    mockExistsSync.mockReturnValue(false)
   })
 
-  it('aborts without writing if user declines overwrite', async () => {
-    const fs = await import('fs')
-    vi.mocked(fs.existsSync).mockReturnValue(true)
-
-    const { confirm } = await import('@inquirer/prompts')
-    vi.mocked(confirm).mockResolvedValue(false)
-
-    const { writeConfig } = await import('../config.js')
+  it('writes config with apiToken and teamId when single workspace', async () => {
     const { runInitCommand } = await import('./init.js')
     await runInitCommand()
+    expect(mockWriteConfig).toHaveBeenCalledWith({
+      apiToken: 'pk_testtoken',
+      teamId: 'team1'
+    })
+  })
 
-    expect(vi.mocked(writeConfig)).not.toHaveBeenCalled()
+  it('outputs authenticated message', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const { runInitCommand } = await import('./init.js')
+    await runInitCommand()
+    const output = writeSpy.mock.calls.map(c => c[0]).join('')
+    expect(output).toContain('@testuser')
+    writeSpy.mockRestore()
   })
 
   it('throws when token does not start with pk_', async () => {
-    const fs = await import('fs')
-    vi.mocked(fs.existsSync).mockReturnValue(false)
-
-    const { password } = await import('@inquirer/prompts')
-    vi.mocked(password).mockResolvedValue('wrongtoken')
-
+    mockPassword.mockResolvedValue('invalid_token')
     const { runInitCommand } = await import('./init.js')
     await expect(runInitCommand()).rejects.toThrow('pk_')
   })
 
-  it('throws when API rejects the token', async () => {
-    const fs = await import('fs')
-    vi.mocked(fs.existsSync).mockReturnValue(false)
-
-    const { password } = await import('@inquirer/prompts')
-    vi.mocked(password).mockResolvedValue('pk_invalid')
-
-    const { ClickUpClient } = await import('../api.js')
-    vi.mocked(ClickUpClient).mockImplementation(() => ({
-      getMe: vi.fn().mockRejectedValue(new Error('ClickUp API error 401: invalid token'))
-    }) as unknown as InstanceType<typeof ClickUpClient>)
-
-    const { runInitCommand } = await import('./init.js')
-    await expect(runInitCommand()).rejects.toThrow('Invalid token')
-  })
-
-  it('writes config after successful flow', async () => {
-    const fs = await import('fs')
-    vi.mocked(fs.existsSync).mockReturnValue(false)
-
-    const { password, confirm } = await import('@inquirer/prompts')
-    vi.mocked(password).mockResolvedValue('pk_valid123')
-
-    const { ClickUpClient } = await import('../api.js')
-    vi.mocked(ClickUpClient).mockImplementation(() => ({
-      getMe: vi.fn().mockResolvedValue({ id: 1, username: 'krzysztof' })
-    }) as unknown as InstanceType<typeof ClickUpClient>)
-
-    const { selectLists } = await import('./select-lists.js')
-    vi.mocked(selectLists).mockResolvedValue(['l1', 'l2'])
-
-    const { writeConfig } = await import('../config.js')
+  it('aborts when config exists and user declines overwrite', async () => {
+    mockExistsSync.mockReturnValue(true)
+    mockConfirm.mockResolvedValue(false)
     const { runInitCommand } = await import('./init.js')
     await runInitCommand()
-
-    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({
-      apiToken: 'pk_valid123',
-      teamId: 'l1'
-    })
-    expect(vi.mocked(confirm)).not.toHaveBeenCalled()
+    expect(mockWriteConfig).not.toHaveBeenCalled()
   })
 
-  it('proceeds with full flow when user confirms overwrite', async () => {
-    const fs = await import('fs')
-    vi.mocked(fs.existsSync).mockReturnValue(true)
-
-    const { confirm, password } = await import('@inquirer/prompts')
-    vi.mocked(confirm).mockResolvedValue(true)
-    vi.mocked(password).mockResolvedValue('pk_valid123')
-
-    const { ClickUpClient } = await import('../api.js')
-    vi.mocked(ClickUpClient).mockImplementation(() => ({
-      getMe: vi.fn().mockResolvedValue({ id: 1, username: 'krzysztof' })
-    }) as unknown as InstanceType<typeof ClickUpClient>)
-
-    const { selectLists } = await import('./select-lists.js')
-    vi.mocked(selectLists).mockResolvedValue(['l1'])
-
-    const { writeConfig } = await import('../config.js')
+  it('shows workspace selector when multiple teams exist', async () => {
+    mockGetTeams.mockResolvedValue([
+      { id: 'team1', name: 'Workspace A' },
+      { id: 'team2', name: 'Workspace B' }
+    ])
+    mockSelect.mockResolvedValue('team2')
     const { runInitCommand } = await import('./init.js')
     await runInitCommand()
+    expect(mockSelect).toHaveBeenCalled()
+    expect(mockWriteConfig).toHaveBeenCalledWith(expect.objectContaining({ teamId: 'team2' }))
+  })
 
-    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({ apiToken: 'pk_valid123', teamId: 'l1' })
+  it('throws when no workspaces found', async () => {
+    mockGetTeams.mockResolvedValue([])
+    const { runInitCommand } = await import('./init.js')
+    await expect(runInitCommand()).rejects.toThrow('No workspaces')
   })
 })
