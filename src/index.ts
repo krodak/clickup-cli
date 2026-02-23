@@ -9,6 +9,10 @@ import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
 import { runListsCommand } from './commands/lists.js'
 import { runSprintCommand } from './commands/sprint.js'
+import { fetchSubtasks } from './commands/subtasks.js'
+import { postComment } from './commands/comment.js'
+import { ClickUpClient } from './api.js'
+import { isTTY } from './output.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -145,6 +149,56 @@ program
     try {
       const config = loadConfig()
       await runSprintCommand(config, opts)
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('subtasks <taskId>')
+  .description('List subtasks of a task or initiative')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (taskId: string, opts: { json?: boolean }) => {
+    try {
+      const config = loadConfig()
+      const tasks = await fetchSubtasks(config, taskId)
+      printTasks(tasks, opts.json ?? false)
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('comment <taskId>')
+  .description('Post a comment on a task')
+  .requiredOption('-m, --message <text>', 'Comment text')
+  .action(async (taskId: string, opts: { message: string }) => {
+    try {
+      const config = loadConfig()
+      const result = await postComment(config, taskId, opts.message)
+      console.log(JSON.stringify(result, null, 2))
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('spaces')
+  .description('List spaces in your workspace')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { json?: boolean }) => {
+    try {
+      const config = loadConfig()
+      const client = new ClickUpClient(config)
+      const spaces = await client.getSpaces(config.teamId)
+      if (!opts.json && isTTY()) {
+        spaces.forEach(s => console.log(`${s.id}  ${s.name}`))
+      } else {
+        console.log(JSON.stringify(spaces, null, 2))
+      }
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
