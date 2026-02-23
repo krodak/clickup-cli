@@ -135,3 +135,114 @@ describe('ClickUpClient', () => {
     expect(String(mockFetch.mock.calls[0][0])).toContain('/folder/f1/list')
   })
 })
+
+describe('getMyTasks', () => {
+  let client: import('./api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('./api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('queries team task endpoint with assignees[] param', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
+    await client.getMyTasks('team1')
+    const url = String(mockFetch.mock.calls[1][0])
+    expect(url).toContain('/team/team1/task')
+    expect(url).toContain('assignees%5B%5D=42')
+  })
+
+  it('appends statuses[] filter when provided', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
+    await client.getMyTasks('team1', { statuses: ['in progress'] })
+    const url = String(mockFetch.mock.calls[1][0])
+    expect(url).toContain('statuses%5B%5D=in+progress')
+  })
+
+  it('appends list_ids[] filter when provided', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
+    await client.getMyTasks('team1', { listIds: ['list_abc'] })
+    const url = String(mockFetch.mock.calls[1][0])
+    expect(url).toContain('list_ids%5B%5D=list_abc')
+  })
+
+  it('paginates until last_page is true', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: [{ id: 't1', status: { status: 'open' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '', name: 't1' }], last_page: false }))
+      .mockReturnValueOnce(mockResponse({ tasks: [{ id: 't2', status: { status: 'open' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '', name: 't2' }], last_page: true }))
+    const tasks = await client.getMyTasks('team1')
+    expect(tasks).toHaveLength(2)
+    expect(tasks[0].id).toBe('t1')
+    expect(tasks[1].id).toBe('t2')
+  })
+})
+
+describe('updateTask', () => {
+  let client: import('./api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('./api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends PUT request with provided fields', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'Task', status: { status: 'done', color: '' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '' }))
+    await client.updateTask('t1', { status: 'done' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1'),
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ status: 'done' }) })
+    )
+  })
+
+  it('can update multiple fields at once', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'New name', status: { status: 'in progress', color: '' }, list: { id: 'l1', name: 'L1' }, assignees: [], url: '' }))
+    await client.updateTask('t1', { name: 'New name', status: 'in progress' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1'),
+      expect.objectContaining({ body: JSON.stringify({ name: 'New name', status: 'in progress' }) })
+    )
+  })
+})
+
+describe('postComment', () => {
+  let client: import('./api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('./api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('POSTs comment_text to task comment endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c1' }))
+    await client.postComment('t1', 'hello world')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/comment'),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ comment_text: 'hello world' }) })
+    )
+  })
+})
