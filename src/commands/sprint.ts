@@ -38,16 +38,18 @@ export async function runSprintCommand(
   process.stderr.write('Detecting active sprint...\n')
 
   const spaces = await client.getSpaces(config.teamId)
-  const sprintLists: List[] = []
 
-  for (const space of spaces) {
-    const folders = await client.getFolders(space.id)
-    const sprintFolders = folders.filter(f => f.name.toLowerCase().includes('sprint'))
-    for (const folder of sprintFolders) {
-      const lists = await client.getFolderLists(folder.id)
-      sprintLists.push(...lists)
-    }
-  }
+  // Fetch all folders in parallel across all spaces
+  const foldersBySpace = await Promise.all(
+    spaces.map(space => client.getFolders(space.id))
+  )
+  const sprintFolders = foldersBySpace.flat().filter(f => f.name.toLowerCase().includes('sprint'))
+
+  // Fetch all sprint folder lists in parallel
+  const listsByFolder = await Promise.all(
+    sprintFolders.map(folder => client.getFolderLists(folder.id))
+  )
+  const sprintLists = listsByFolder.flat()
 
   const activeList = findActiveSprintList(sprintLists)
 
