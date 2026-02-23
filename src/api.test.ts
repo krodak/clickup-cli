@@ -83,6 +83,23 @@ describe('ClickUpClient', () => {
     await expect(client.getTasksFromList('list_1')).rejects.toThrow('not valid JSON')
   })
 
+  it('getAssignedListIds returns set of list IDs from assigned tasks', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({
+        tasks: [
+          { id: 't1', list: { id: 'l1', name: 'Sprint 1' } },
+          { id: 't2', list: { id: 'l2', name: 'Backlog' } },
+          { id: 't3', list: { id: 'l1', name: 'Sprint 1' } }
+        ],
+        last_page: true
+      }))
+    const ids = await client.getAssignedListIds('team1')
+    expect(ids).toEqual(new Set(['l1', 'l2']))
+    expect(String(mockFetch.mock.calls[1][0])).toContain('/team/team1/task')
+    expect(String(mockFetch.mock.calls[1][0])).toContain('assignees=42')
+  })
+
   it('getTeams returns team array', async () => {
     mockFetch.mockReturnValue(mockResponse({ teams: [{ id: 't1', name: 'My Workspace' }] }))
     const teams = await client.getTeams()
