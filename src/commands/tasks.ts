@@ -1,4 +1,4 @@
-import { ClickUpClient } from '../api.js'
+import { ClickUpClient, Task } from '../api.js'
 import { Config } from '../config.js'
 
 export interface TaskSummary {
@@ -11,7 +11,7 @@ export interface TaskSummary {
   parent?: string
 }
 
-function summarize(task: import('../api.js').Task): TaskSummary {
+function summarize(task: Task): TaskSummary {
   return {
     id: task.id,
     name: task.name,
@@ -25,7 +25,7 @@ function summarize(task: import('../api.js').Task): TaskSummary {
 
 export async function fetchMyTasks(config: Config, typeFilter?: string): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
-  const allTasks: import('../api.js').Task[] = []
+  const allTasks: Task[] = []
 
   for (const listId of config.lists) {
     const tasks = await client.getMyTasksFromList(listId)
