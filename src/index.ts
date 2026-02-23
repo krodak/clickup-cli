@@ -81,11 +81,26 @@ program
 program
   .command('task <taskId>')
   .description('Get task details')
-  .action(async (taskId: string) => {
+  .option('--raw', 'Show full JSON response')
+  .action(async (taskId: string, opts: { raw?: boolean }) => {
     try {
       const config = loadConfig()
       const result = await getTask(config, taskId)
-      console.log(JSON.stringify(result, null, 2))
+      if (opts.raw || !isTTY()) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        const lines = [
+          `ID:          ${result.id}`,
+          `Name:        ${result.name}`,
+          `Status:      ${result.status?.status ?? 'unknown'}`,
+          `Type:        ${(result.custom_item_id ?? 0) !== 0 ? 'initiative' : 'task'}`,
+          `List:        ${result.list?.name ?? 'unknown'}`,
+          `URL:         ${result.url}`,
+          ...(result.parent ? [`Parent:      ${result.parent}`] : []),
+          ...(result.description ? ['', result.description] : []),
+        ]
+        console.log(lines.join('\n'))
+      }
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
