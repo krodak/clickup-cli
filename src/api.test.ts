@@ -97,7 +97,7 @@ describe('ClickUpClient', () => {
     const ids = await client.getAssignedListIds('team1')
     expect(ids).toEqual(new Set(['l1', 'l2']))
     expect(String(mockFetch.mock.calls[1][0])).toContain('/team/team1/task')
-    expect(String(mockFetch.mock.calls[1][0])).toContain('assignees=42')
+    expect(String(mockFetch.mock.calls[1][0])).toContain('assignees%5B%5D=42')
   })
 
   it('getTeams returns team array', async () => {
