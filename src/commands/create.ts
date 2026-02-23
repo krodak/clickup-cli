@@ -1,5 +1,5 @@
 import { ClickUpClient } from '../api.js'
-import { Config } from '../config.js'
+import type { Config } from '../config.js'
 
 export interface CreateOptions {
   list: string

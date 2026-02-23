@@ -1,5 +1,6 @@
-import { ClickUpClient, Task } from '../api.js'
-import { Config } from '../config.js'
+import { ClickUpClient } from '../api.js'
+import type { Task } from '../api.js'
+import type { Config } from '../config.js'
 
 export interface TaskSummary {
   id: string
