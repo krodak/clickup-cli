@@ -14,9 +14,21 @@ vi.mock('child_process', () => ({
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { confirm } from '@inquirer/prompts'
 import { execSync } from 'child_process'
+import type { Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 
-const makeTask = (overrides: Partial<TaskSummary> = {}): TaskSummary => ({
+const makeFullTask = (overrides: Partial<Task> = {}): Task => ({
+  id: 'abc123',
+  name: 'Fix the bug',
+  status: { status: 'in progress', color: '#fff' },
+  custom_item_id: 0,
+  assignees: [{ id: 1, username: 'Krzysztof Rodak' }],
+  url: 'https://app.clickup.com/t/abc123',
+  list: { id: 'l1', name: 'Sprint 1' },
+  ...overrides,
+})
+
+const makeSummary = (overrides: Partial<TaskSummary> = {}): TaskSummary => ({
   id: 'abc123',
   name: 'Fix the bug',
   status: 'in progress',
@@ -31,30 +43,52 @@ beforeEach(() => {
 })
 
 describe('formatTaskDetail', () => {
-  it('formats task detail block with all fields', async () => {
+  it('formats task detail with all populated fields', async () => {
     const { formatTaskDetail } = await import('./interactive.js')
-    const task = makeTask()
+    const task = makeFullTask({
+      priority: { priority: 'high' },
+      time_estimate: 115200000,
+      tags: [{ name: 'frontend' }],
+      text_content: 'Create generator at Plugins/KhasmGenerator',
+    })
     const result = formatTaskDetail(task)
-    expect(result).toContain('abc123')
     expect(result).toContain('Fix the bug')
+    expect(result).toContain('abc123')
     expect(result).toContain('in progress')
     expect(result).toContain('Sprint 1')
-    expect(result).toContain('https://app.clickup.com/t/abc123')
-    expect(result).toContain('Type:')
+    expect(result).toContain('Krzysztof Rodak')
+    expect(result).toContain('high')
+    expect(result).toContain('32h')
+    expect(result).toContain('frontend')
+    expect(result).toContain('Create generator at Plugins/KhasmGenerator')
+  })
+
+  it('omits empty fields', async () => {
+    const { formatTaskDetail } = await import('./interactive.js')
+    const task = makeFullTask({ priority: null, tags: [], assignees: [] })
+    const result = formatTaskDetail(task)
+    expect(result).not.toContain('Priority')
+    expect(result).not.toContain('Tags')
+    expect(result).not.toContain('Assignees')
   })
 
   it('includes parent when present', async () => {
     const { formatTaskDetail } = await import('./interactive.js')
-    const task = makeTask({ parent: 'parent_id' })
+    const task = makeFullTask({ parent: 'parent_id' })
     const result = formatTaskDetail(task)
     expect(result).toContain('parent_id')
   })
 
-  it('omits parent line when not present', async () => {
+  it('shows description preview truncated to 3 lines', async () => {
     const { formatTaskDetail } = await import('./interactive.js')
-    const task = makeTask()
+    const task = makeFullTask({
+      text_content: 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5',
+    })
     const result = formatTaskDetail(task)
-    expect(result).not.toContain('Parent:')
+    expect(result).toContain('Line 1')
+    expect(result).toContain('Line 3')
+    expect(result).toContain('2 more lines')
+    expect(result).not.toContain('Line 5')
   })
 })
 
@@ -72,17 +106,41 @@ describe('showDetailsAndOpen', () => {
     await showDetailsAndOpen([])
   })
 
-  it('prints task detail for each selected task', async () => {
+  it('fetches full task and prints detail', async () => {
     vi.mocked(confirm).mockResolvedValue(false)
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const { showDetailsAndOpen } = await import('./interactive.js')
-    const task = makeTask({ id: 'task_001', name: 'My Important Task' })
-    await showDetailsAndOpen([task])
+    const fullTask = makeFullTask({ id: 'task_001', name: 'My Important Task', text_content: 'Some desc' })
+    const fetchTask = vi.fn().mockResolvedValue(fullTask)
 
+    const { showDetailsAndOpen } = await import('./interactive.js')
+    const summary = makeSummary({ id: 'task_001', name: 'My Important Task' })
+    await showDetailsAndOpen([summary], fetchTask)
+
+    expect(fetchTask).toHaveBeenCalledWith('task_001')
     const output = logSpy.mock.calls.map(c => c.join(' ')).join('\n')
     expect(output).toContain('task_001')
     expect(output).toContain('My Important Task')
+    expect(output).toContain('Some desc')
+
+    logSpy.mockRestore()
+  })
+
+  it('prints separator between multiple tasks', async () => {
+    vi.mocked(confirm).mockResolvedValue(false)
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    const fetchTask = vi.fn()
+      .mockResolvedValueOnce(makeFullTask({ id: 't1', name: 'Task 1' }))
+      .mockResolvedValueOnce(makeFullTask({ id: 't2', name: 'Task 2' }))
+
+    const { showDetailsAndOpen } = await import('./interactive.js')
+    await showDetailsAndOpen([makeSummary({ id: 't1' }), makeSummary({ id: 't2' })], fetchTask)
+
+    const output = logSpy.mock.calls.map(c => c.join(' ')).join('\n')
+    expect(output).toContain('Task 1')
+    expect(output).toContain('Task 2')
+    expect(output).toContain('\u2500')
 
     logSpy.mockRestore()
   })
@@ -93,8 +151,8 @@ describe('showDetailsAndOpen', () => {
 
     const { showDetailsAndOpen } = await import('./interactive.js')
     const tasks = [
-      makeTask({ id: 't1', url: 'https://app.clickup.com/t/t1' }),
-      makeTask({ id: 't2', url: 'https://app.clickup.com/t/t2' }),
+      makeSummary({ id: 't1', url: 'https://app.clickup.com/t/t1' }),
+      makeSummary({ id: 't2', url: 'https://app.clickup.com/t/t2' }),
     ]
     await showDetailsAndOpen(tasks)
 
@@ -110,8 +168,7 @@ describe('showDetailsAndOpen', () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
     const { showDetailsAndOpen } = await import('./interactive.js')
-    const task = makeTask()
-    await showDetailsAndOpen([task])
+    await showDetailsAndOpen([makeSummary()])
 
     expect(execSync).not.toHaveBeenCalled()
 
