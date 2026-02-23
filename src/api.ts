@@ -9,6 +9,7 @@ export interface Task {
   assignees: Array<{ id: number; username: string }>
   url: string
   list: { id: string; name: string }
+  space?: { id: string }
   parent?: string
   date_updated?: string
   locations?: Array<{ id: string; name: string }>

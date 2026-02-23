@@ -16,11 +16,11 @@ Config: `~/.config/cu/config.json` - contains `apiToken` and `teamId`.
 |---------|-------------|
 | `cu tasks [--status s] [--list id] [--space id] [--json]` | My tasks (workspace-wide) |
 | `cu initiatives [--status s] [--json]` | My initiatives |
-| `cu sprint [--status s] [--json]` | My tasks in current sprint (auto-detected) |
+| `cu sprint [--status s] [--space name] [--json]` | My tasks in current sprint (auto-detected from my spaces) |
 | `cu inbox [--json]` | Tasks updated in last 7 days |
 | `cu task <id> [--raw]` | Task details |
 | `cu subtasks <id> [--json]` | Subtasks of a task/initiative |
-| `cu spaces [--json]` | List workspace spaces |
+| `cu spaces [--name partial] [--my] [--json]` | List/filter workspace spaces |
 
 ### Write
 
@@ -32,14 +32,15 @@ Config: `~/.config/cu/config.json` - contains `apiToken` and `teamId`.
 
 ## Output
 
-- **Terminal:** Pretty table. Use `--json` to get raw JSON.
+- **Terminal (TTY):** Interactive checkbox picker - select tasks with space, enter to confirm. Shows task detail, then prompts to open in browser. Use `--json` to get raw JSON instead.
 - **Piped (no TTY):** Always JSON - safe for `jq` and programmatic use.
+- **Agents should always use `--json`** to get machine-readable output.
 
 ## Key facts
 
 - Initiatives have `custom_item_id !== 0` in the API response (not a `task_type` field)
 - `--list` is optional in `cu create` when `--parent` is given (list auto-detected)
-- `cu sprint` detects active sprint from folder name containing "sprint" + date range in list name like "(2/12 - 2/25)"
+- `cu sprint` auto-detects spaces from assigned tasks, then finds sprint folders + date ranges like "(2/12 - 2/25)". Use `--space Acm` to narrow search.
 - All task IDs are stable alphanumeric strings (e.g. `abc123def`)
 
 ## Typical agent workflow
