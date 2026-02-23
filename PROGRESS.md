@@ -16,12 +16,26 @@ Track implementation progress for the `cu` ClickUp CLI.
 | Task 8: Global Install + README | ✅ complete | `cu` linked globally |
 | Task 9: ClickUp Skill for AI Agents | ✅ complete | ~/.config/opencode/skills/clickup/SKILL.md |
 
+## Pre-Publish Fix Pass
+
+| Fix | Status | Notes |
+|-----|--------|-------|
+| tsconfig: outDir + verbatimModuleSyntax | ✅ complete | Fixed mixed type/value imports in 4 files |
+| Config: pk_ validation + teamId optional | ✅ complete | +10 tests |
+| API: guard res.json() + fix as-string cast | ✅ complete | +1 test for non-JSON response |
+| Parallel list fetching (Promise.all) | ✅ complete | +1 multi-list test |
+| Input validation + SIGINT handler | ✅ complete | Empty description throws, SIGINT exits 130 |
+| Package polish: files field + version | ✅ complete | version read from package.json at runtime |
+| Test infra: globalSetup + fix process.cwd | ✅ complete | Smoke test: 3075ms -> 46ms |
+| DECISIONS.md + PROGRESS.md updated | ✅ complete | Entries 12-15 added |
+
 ## Final State
 
-- 18/18 tests passing
+- 25/25 tests passing
 - `cu` installed globally at `/Users/krzysztofrodak/.nvm/versions/node/v22.22.0/bin/cu`
 - Skill at `~/.config/opencode/skills/clickup/SKILL.md`
 - Config needed at `~/.config/cu/config.json` before first use
+- Ready to publish (`npm publish`)
 
 ## Context for Next Agent
 
