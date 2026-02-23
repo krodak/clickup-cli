@@ -100,6 +100,23 @@ describe('interactiveTaskPicker', () => {
   })
 })
 
+describe('groupedTaskPicker', () => {
+  it('returns empty array when all groups are empty', async () => {
+    const { groupedTaskPicker } = await import('../../src/interactive.js')
+    const result = await groupedTaskPicker([
+      { label: 'IN PROGRESS', tasks: [] },
+      { label: 'TO DO', tasks: [] },
+    ])
+    expect(result).toEqual([])
+  })
+
+  it('returns empty array when groups array is empty', async () => {
+    const { groupedTaskPicker } = await import('../../src/interactive.js')
+    const result = await groupedTaskPicker([])
+    expect(result).toEqual([])
+  })
+})
+
 describe('showDetailsAndOpen', () => {
   it('does nothing when no tasks selected', async () => {
     const { showDetailsAndOpen } = await import('../../src/interactive.js')

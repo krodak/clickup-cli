@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { checkbox, confirm } from '@inquirer/prompts'
+import { checkbox, confirm, Separator } from '@inquirer/prompts'
 import chalk from 'chalk'
 import type { Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
@@ -108,6 +108,31 @@ export async function interactiveTaskPicker(tasks: TaskSummary[]): Promise<TaskS
   })
 
   return tasks.filter(t => selected.includes(t.id))
+}
+
+export async function groupedTaskPicker(
+  groups: Array<{ label: string; tasks: TaskSummary[] }>,
+): Promise<TaskSummary[]> {
+  const allTasks = groups.flatMap(g => g.tasks)
+  const totalCount = allTasks.length
+  if (totalCount === 0) return []
+
+  const choices: Array<{ name: string; value: string } | Separator> = []
+  for (const group of groups) {
+    if (group.tasks.length === 0) continue
+    choices.push(new Separator(chalk.bold(`${group.label} (${group.tasks.length})`)))
+    for (const task of group.tasks) {
+      choices.push({ name: formatChoiceName(task), value: task.id })
+    }
+  }
+
+  const selected = await checkbox<string>({
+    message: `${totalCount} task(s) found. Select to view details / open in browser:`,
+    choices,
+    pageSize: 20,
+  })
+
+  return allTasks.filter(t => selected.includes(t.id))
 }
 
 export async function showDetailsAndOpen(
