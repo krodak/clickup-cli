@@ -150,7 +150,16 @@ cu create -l list_id_1 -n "Implement dark mode" -d "Support system preference" -
 - Run `cu tasks` first to get current task IDs before calling `cu update` or using `-p`
 - Task IDs are stable alphanumeric strings (e.g. `abc123`) - safe to use across commands
 
-A dedicated Claude Code skill is available at `~/.config/opencode/skills/clickup/SKILL.md` for agents using this CLI.
+### Claude Code skill
+
+A skill file is included at `skill/SKILL.md`. Install it so Claude Code can use `cu` autonomously:
+
+```bash
+mkdir -p ~/.config/opencode/skills/clickup
+cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
+```
+
+Once installed, Claude Code will automatically invoke the skill when you ask it to interact with ClickUp.
 
 ## Development
 
