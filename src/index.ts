@@ -13,6 +13,7 @@ import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
 import { ClickUpClient } from './api.js'
 import { isTTY } from './output.js'
+import { fetchInbox } from './commands/inbox.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -199,6 +200,21 @@ program
       } else {
         console.log(JSON.stringify(spaces, null, 2))
       }
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('inbox')
+  .description('Recently updated tasks assigned to me (last 7 days)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { json?: boolean }) => {
+    try {
+      const config = loadConfig()
+      const tasks = await fetchInbox(config)
+      printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
