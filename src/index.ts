@@ -52,7 +52,7 @@ program
         listIds: opts.list ? [opts.list] : undefined,
         spaceIds: opts.space ? [opts.space] : undefined,
       })
-      printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -71,7 +71,7 @@ program
         typeFilter: 'initiative',
         statuses: opts.status ? [opts.status] : undefined,
       })
-      printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -147,8 +147,9 @@ program
   .command('sprint')
   .description('List my tasks in the current active sprint (auto-detected)')
   .option('--status <status>', 'Filter by status')
+  .option('--space <nameOrId>', 'Narrow sprint search to a specific space (partial name or ID)')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { status?: string; json?: boolean }) => {
+  .action(async (opts: { status?: string; space?: string; json?: boolean }) => {
     try {
       const config = loadConfig()
       await runSprintCommand(config, opts)
@@ -166,7 +167,7 @@ program
     try {
       const config = loadConfig()
       const tasks = await fetchSubtasks(config, taskId)
-      printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
@@ -191,12 +192,26 @@ program
 program
   .command('spaces')
   .description('List spaces in your workspace')
+  .option('--name <partial>', 'Filter spaces by name (case-insensitive contains)')
+  .option('--my', 'Show only spaces where I have assigned tasks')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { json?: boolean }) => {
+  .action(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
     try {
       const config = loadConfig()
       const client = new ClickUpClient(config)
-      const spaces = await client.getSpaces(config.teamId)
+      let spaces = await client.getSpaces(config.teamId)
+
+      if (opts.name) {
+        const lower = opts.name.toLowerCase()
+        spaces = spaces.filter(s => s.name.toLowerCase().includes(lower))
+      }
+
+      if (opts.my) {
+        const tasks = await client.getMyTasks(config.teamId)
+        const mySpaceIds = new Set(tasks.map(t => t.space?.id).filter(Boolean))
+        spaces = spaces.filter(s => mySpaceIds.has(s.id))
+      }
+
       if (!opts.json && isTTY()) {
         spaces.forEach(s => console.log(`${s.id}  ${s.name}`))
       } else {
@@ -216,7 +231,7 @@ program
     try {
       const config = loadConfig()
       const tasks = await fetchInbox(config)
-      printTasks(tasks, opts.json ?? false)
+      await printTasks(tasks, opts.json ?? false)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
