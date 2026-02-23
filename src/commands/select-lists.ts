@@ -10,24 +10,26 @@ export interface ListChoice {
 
 export async function fetchAllLists(client: ClickUpClient): Promise<ListChoice[]> {
   const teams = await client.getTeams()
-  const choices: ListChoice[] = []
 
-  for (const team of teams) {
-    const spaces = await client.getSpaces(team.id)
-    for (const space of spaces) {
-      const lists = await client.getLists(space.id)
-      for (const list of lists) {
-        choices.push({
-          teamName: team.name,
-          spaceName: space.name,
-          listId: list.id,
-          listName: list.name
+  const perTeam = await Promise.all(
+    teams.map(async team => {
+      const spaces = await client.getSpaces(team.id)
+      const perSpace = await Promise.all(
+        spaces.map(async space => {
+          const lists = await client.getLists(space.id)
+          return lists.map(list => ({
+            teamName: team.name,
+            spaceName: space.name,
+            listId: list.id,
+            listName: list.name
+          }))
         })
-      }
-    }
-  }
+      )
+      return perSpace.flat()
+    })
+  )
 
-  return choices
+  return perTeam.flat()
 }
 
 export async function selectLists(client: ClickUpClient, currentListIds: string[]): Promise<string[]> {
