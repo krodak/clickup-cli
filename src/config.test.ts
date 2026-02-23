@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import fs from 'fs'
+import path from 'path'
+import os from 'os'
 
 vi.mock('fs')
 
@@ -97,18 +99,18 @@ describe('writeConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('./config.js')
     writeConfig({ apiToken: 'pk_test', lists: ['l1'] })
-    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(
-      expect.stringContaining('cu'),
-      { recursive: true }
-    )
+    const expectedDir = path.join(os.homedir(), '.config', 'cu')
+    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(expectedDir, { recursive: true })
   })
 
   it('writes config as formatted JSON', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     const { writeConfig } = await import('./config.js')
     writeConfig({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledTimes(1)
     const written = String(vi.mocked(fs.writeFileSync).mock.calls[0][1])
     const parsed = JSON.parse(written)
     expect(parsed).toEqual({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+    expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
   })
 })
