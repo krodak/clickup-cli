@@ -28,11 +28,12 @@ function summarize(task: Task): TaskSummary {
   }
 }
 
-export async function fetchMyTasks(config: Config, typeFilter?: 'task' | 'initiative'): Promise<TaskSummary[]> {
+export async function fetchMyTasks(config: Config, typeFilter?: 'task' | 'initiative', listIds?: string[]): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
 
+  const ids = listIds ?? []
   const results = await Promise.all(
-    config.lists.map(listId => client.getMyTasksFromList(listId))
+    ids.map(listId => client.getMyTasksFromList(listId))
   )
   const allTasks = results.flat()
 

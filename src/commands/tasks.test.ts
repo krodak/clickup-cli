@@ -14,13 +14,13 @@ vi.mock('../api.js', () => ({
 describe('fetchMyTasks', () => {
   it('returns all tasks when no type filter', async () => {
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', lists: ['l1'] })
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, undefined, ['l1'])
     expect(result).toHaveLength(2)
   })
 
   it('filters to initiatives when typeFilter is initiative', async () => {
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', lists: ['l1'] }, 'initiative')
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, 'initiative', ['l1'])
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('t2')
     expect(result[0].task_type).toBe('initiative')
@@ -28,16 +28,16 @@ describe('fetchMyTasks', () => {
 
   it('filters to regular tasks when typeFilter is task', async () => {
     const { fetchMyTasks } = await import('./tasks.js')
-    const result = await fetchMyTasks({ apiToken: 'pk_t', lists: ['l1'] }, 'task')
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, 'task', ['l1'])
     expect(result).toHaveLength(1)
     expect(result[0].id).toBe('t1')
     expect(result[0].task_type).toBe('task')
   })
 
-  it('fetches all configured lists in parallel', async () => {
+  it('fetches all provided list IDs in parallel', async () => {
     mockGetMyTasksFromList.mockClear()
     const { fetchMyTasks } = await import('./tasks.js')
-    await fetchMyTasks({ apiToken: 'pk_t', lists: ['l1', 'l2', 'l3'] })
+    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team_1' }, undefined, ['l1', 'l2', 'l3'])
     expect(mockGetMyTasksFromList).toHaveBeenCalledTimes(3)
     expect(mockGetMyTasksFromList).toHaveBeenCalledWith('l1')
     expect(mockGetMyTasksFromList).toHaveBeenCalledWith('l2')

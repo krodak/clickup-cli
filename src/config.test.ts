@@ -18,72 +18,63 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('Config file not found')
   })
 
-  it('returns parsed config when file exists', async () => {
-    const mockConfig = { apiToken: 'pk_test123', teamId: 'team_456', lists: ['list_1', 'list_2'] }
+  it('throws on invalid JSON', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig))
+    vi.mocked(fs.readFileSync).mockReturnValue('{ bad json }')
     const { loadConfig } = await import('./config.js')
-    expect(loadConfig()).toEqual(mockConfig)
-  })
-
-  it('returns config without teamId when omitted', async () => {
-    const mockConfig = { apiToken: 'pk_abc', lists: ['list_1'] }
-    vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig))
-    const { loadConfig } = await import('./config.js')
-    const config = loadConfig()
-    expect(config.apiToken).toBe('pk_abc')
-    expect(config.teamId).toBeUndefined()
+    expect(() => loadConfig()).toThrow('invalid JSON')
   })
 
   it('throws when apiToken is missing', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ lists: ['list_1'] }))
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ teamId: 'team_1' }))
     const { loadConfig } = await import('./config.js')
     expect(() => loadConfig()).toThrow('apiToken')
   })
 
   it('throws when apiToken does not start with pk_', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'wrongtoken', lists: ['list_1'] }))
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'wrongtoken', teamId: 'team_1' }))
     const { loadConfig } = await import('./config.js')
     expect(() => loadConfig()).toThrow('pk_')
   })
 
   it('trims whitespace from apiToken before pk_ check', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: '  pk_trimmed  ', lists: ['list_1'] }))
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: '  pk_trimmed  ', teamId: 'team_1' }))
     const { loadConfig } = await import('./config.js')
     const config = loadConfig()
     expect(config.apiToken).toBe('pk_trimmed')
   })
 
-  it('does not throw when teamId is omitted', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x', lists: ['list_1'] }))
-    const { loadConfig } = await import('./config.js')
-    expect(() => loadConfig()).not.toThrow()
-  })
-
-  it('throws when lists is missing', async () => {
+  it('throws when teamId is missing', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x' }))
     const { loadConfig } = await import('./config.js')
-    expect(() => loadConfig()).toThrow('lists')
+    expect(() => loadConfig()).toThrow('teamId')
   })
 
-  it('throws when lists is empty array', async () => {
+  it('throws when teamId is empty string', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x', lists: [] }))
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x', teamId: '' }))
     const { loadConfig } = await import('./config.js')
-    expect(() => loadConfig()).toThrow('lists')
+    expect(() => loadConfig()).toThrow('teamId')
   })
 
-  it('throws on invalid JSON', async () => {
+  it('loads valid config with teamId', async () => {
+    const mockConfig = { apiToken: 'pk_test123', teamId: 'team_456' }
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue('{ bad json }')
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig))
     const { loadConfig } = await import('./config.js')
-    expect(() => loadConfig()).toThrow('invalid JSON')
+    expect(loadConfig()).toEqual(mockConfig)
+  })
+
+  it('does not include lists field in returned config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1', lists: ['l1'] }))
+    const { loadConfig } = await import('./config.js')
+    const config = loadConfig()
+    expect(config).not.toHaveProperty('lists')
   })
 })
 
@@ -98,7 +89,7 @@ describe('writeConfig', () => {
   it('creates config directory if it does not exist', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('./config.js')
-    writeConfig({ apiToken: 'pk_test', lists: ['l1'] })
+    writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
     const expectedDir = path.join(os.homedir(), '.config', 'cu')
     expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(expectedDir, { recursive: true })
   })
@@ -106,11 +97,11 @@ describe('writeConfig', () => {
   it('writes config as formatted JSON', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     const { writeConfig } = await import('./config.js')
-    writeConfig({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+    writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledTimes(1)
     const written = String(vi.mocked(fs.writeFileSync).mock.calls[0][1])
     const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', lists: ['l1', 'l2'] })
+    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
   })
 })
