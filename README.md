@@ -1,59 +1,85 @@
 # cu - ClickUp CLI
 
-A minimal ClickUp CLI designed for use by AI agents (Claude Code, etc.) and humans alike. All output is JSON on stdout. Errors go to stderr with exit code 1.
+A minimal ClickUp CLI for AI agents and humans. JSON on stdout, errors on stderr, exit code 1 on failure.
+
+## Requirements
+
+- Node 20+
+- A ClickUp account with a personal API token (`pk_...`)
 
 ## Install
 
 ```bash
-git clone <repo>
-cd clickup-cli
-npm install
-npm run build
-npm link
+npm install -g clickup-cli
 ```
 
-Verify:
+Or from source:
 
 ```bash
-which cu
-cu --help
+git clone https://github.com/krodak/clickup-cli
+cd clickup-cli
+npm install && npm run build && npm link
 ```
 
-## Config
+## Configuration
 
 Create `~/.config/cu/config.json`:
 
 ```json
 {
   "apiToken": "pk_...",
-  "teamId": "1234567",
   "lists": ["list_id_1", "list_id_2"]
 }
 ```
 
-**Finding your teamId** - call the ClickUp API with your personal token:
+| Field | Required | Description |
+|-------|----------|-------------|
+| `apiToken` | yes | Your ClickUp personal API token (`pk_...`) |
+| `lists` | yes | Array of list IDs to scope all read operations to |
+| `teamId` | no | Workspace ID (reserved for future use) |
 
-```bash
-curl -s -H "Authorization: pk_..." https://api.clickup.com/api/v2/team | jq '.teams[] | {id, name}'
+### Getting your API token
+
+Settings - Apps - API Token in ClickUp, or:
+
+```
+https://app.clickup.com/settings/apps
 ```
 
-**Finding list IDs** - list spaces, then folders, then lists:
+### Finding your list IDs
+
+1. Get your workspace ID:
 
 ```bash
-curl -s -H "Authorization: pk_..." "https://api.clickup.com/api/v2/team/<teamId>/space?archived=false" | jq '.spaces[] | {id, name}'
+curl -s -H "Authorization: pk_..." https://api.clickup.com/api/v2/team \
+  | jq '.teams[] | {id, name}'
+```
+
+2. Get spaces in your workspace:
+
+```bash
+curl -s -H "Authorization: pk_..." \
+  "https://api.clickup.com/api/v2/team/<teamId>/space?archived=false" \
+  | jq '.spaces[] | {id, name}'
+```
+
+3. Get lists in a space:
+
+```bash
+curl -s -H "Authorization: pk_..." \
+  "https://api.clickup.com/api/v2/space/<spaceId>/list?archived=false" \
+  | jq '.lists[] | {id, name}'
 ```
 
 ## Commands
 
 ### `cu tasks`
 
-List all tasks assigned to you across the configured lists.
+List all tasks assigned to me across configured lists.
 
 ```bash
 cu tasks
 ```
-
-Output:
 
 ```json
 [
@@ -68,50 +94,41 @@ Output:
 ]
 ```
 
-Fields: `id`, `name`, `status`, `task_type`, `list`, `url`, `parent` (optional, present when task has a parent).
+Fields: `id`, `name`, `status`, `task_type`, `list`, `url`, `parent` (when task has a parent).
 
 ### `cu initiatives`
 
-List tasks of type `Initiative` assigned to you across the configured lists.
+List tasks of type `Initiative` assigned to me. Output format is identical to `cu tasks`.
 
 ```bash
 cu initiatives
 ```
 
-Output format is identical to `cu tasks`.
+> Initiatives are a custom task type in ClickUp. They appear here when `task_type === "Initiative"`.
 
 ### `cu update <taskId> -d <text>`
 
 Update the description of a task. Markdown is supported.
 
 ```bash
-cu update abc123 -d "## Summary\n\nFixed the regression introduced in PR #42."
+cu update abc123 -d "## Summary\n\nFixed the regression from PR #42."
 ```
-
-Flags:
 
 | Flag | Required | Description |
 |------|----------|-------------|
 | `-d, --description <text>` | yes | New description (markdown supported) |
 
-Output:
-
 ```json
-{
-  "id": "abc123",
-  "name": "Fix login bug"
-}
+{ "id": "abc123", "name": "Fix login bug" }
 ```
 
 ### `cu create -l <listId> -n <name> [options]`
 
-Create a new task in the specified list.
+Create a new task.
 
 ```bash
 cu create -l list_id_1 -n "Implement dark mode" -d "Support system preference" -s "open"
 ```
-
-Flags:
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -121,20 +138,24 @@ Flags:
 | `-p, --parent <taskId>` | no | Parent initiative task ID |
 | `-s, --status <status>` | no | Initial status (e.g. `open`, `in progress`) |
 
-Output:
-
 ```json
-{
-  "id": "xyz789",
-  "name": "Implement dark mode",
-  "url": "https://app.clickup.com/t/xyz789"
-}
+{ "id": "xyz789", "name": "Implement dark mode", "url": "https://app.clickup.com/t/xyz789" }
 ```
 
-## Notes for AI Agents
+## For AI Agents
 
-- All commands print JSON to stdout - pipe directly into `jq` or parse programmatically
-- All errors print a plain-text message to stderr and exit with code 1
-- The `lists` array in config scopes all read/list operations - only tasks in those lists are returned
-- Use `cu tasks` to get current task IDs before calling `cu update` or referencing a parent with `-p`
-- Task IDs are stable alphanumeric strings (e.g. `abc123`) - use them as-is across commands
+- All output is JSON on stdout - pipe directly to `jq` or parse programmatically
+- Errors print plain text to stderr and exit 1
+- The `lists` array in config scopes all read operations - only tasks in those lists are returned
+- Run `cu tasks` first to get current task IDs before calling `cu update` or using `-p`
+- Task IDs are stable alphanumeric strings (e.g. `abc123`) - safe to use across commands
+
+A dedicated Claude Code skill is available at `~/.config/opencode/skills/clickup/SKILL.md` for agents using this CLI.
+
+## Development
+
+```bash
+npm install
+npm test         # runs vitest (builds once via globalSetup, then runs all 25 tests)
+npm run build    # tsup -> dist/
+```
