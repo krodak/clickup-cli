@@ -104,6 +104,10 @@ export class ClickUpClient {
     return this.getTasksFromList(listId, { 'assignees[]': String(me.id) })
   }
 
+  async getTask(taskId: string): Promise<Task> {
+    return this.request<Task>(`/task/${taskId}`)
+  }
+
   async updateTaskDescription(taskId: string, description: string): Promise<Task> {
     return this.request<Task>(`/task/${taskId}`, {
       method: 'PUT',
