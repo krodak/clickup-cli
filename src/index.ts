@@ -2,7 +2,7 @@ import { Command } from 'commander'
 import { loadConfig } from './config.js'
 import { fetchMyTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
-import { createTask } from './commands/create.js'
+import { createTask, CreateOptions } from './commands/create.js'
 
 const program = new Command()
 
@@ -20,7 +20,7 @@ program
       const tasks = await fetchMyTasks(config)
       console.log(JSON.stringify(tasks, null, 2))
     } catch (err) {
-      console.error((err as Error).message)
+      console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
     }
   })
@@ -34,7 +34,7 @@ program
       const tasks = await fetchMyTasks(config, 'Initiative')
       console.log(JSON.stringify(tasks, null, 2))
     } catch (err) {
-      console.error((err as Error).message)
+      console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
     }
   })
@@ -49,7 +49,7 @@ program
       const result = await updateDescription(config, taskId, opts.description)
       console.log(JSON.stringify(result, null, 2))
     } catch (err) {
-      console.error((err as Error).message)
+      console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
     }
   })
@@ -62,13 +62,13 @@ program
   .option('-d, --description <text>', 'Task description')
   .option('-p, --parent <taskId>', 'Parent initiative task ID')
   .option('-s, --status <status>', 'Initial status')
-  .action(async (opts: { list: string; name: string; description?: string; parent?: string; status?: string }) => {
+  .action(async (opts: CreateOptions) => {
     try {
       const config = loadConfig()
       const result = await createTask(config, opts)
       console.log(JSON.stringify(result, null, 2))
     } catch (err) {
-      console.error((err as Error).message)
+      console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
     }
   })
