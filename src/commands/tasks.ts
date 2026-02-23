@@ -26,12 +26,11 @@ function summarize(task: Task): TaskSummary {
 
 export async function fetchMyTasks(config: Config, typeFilter?: string): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
-  const allTasks: Task[] = []
 
-  for (const listId of config.lists) {
-    const tasks = await client.getMyTasksFromList(listId)
-    allTasks.push(...tasks)
-  }
+  const results = await Promise.all(
+    config.lists.map(listId => client.getMyTasksFromList(listId))
+  )
+  const allTasks = results.flat()
 
   const filtered = typeFilter
     ? allTasks.filter(t => t.task_type === typeFilter)
