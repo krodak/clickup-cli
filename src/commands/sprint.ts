@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
-import type { List } from '../api.js'
+import type { Task, List } from '../api.js'
 import type { Config } from '../config.js'
-import { fetchMyTasks, printTasks } from './tasks.js'
+import { printTasks } from './tasks.js'
 
 export function parseSprintDates(name: string): { start: Date; end: Date } | null {
   // Match patterns like "(2/12 - 2/25)" or "(2/12-2/25)" with optional en-dash
@@ -29,17 +29,55 @@ export function findActiveSprintList(lists: List[], today = new Date()): List | 
   return lists[lists.length - 1]
 }
 
+function summarizeTasks(tasks: Task[], statusFilter?: string) {
+  const filtered = statusFilter
+    ? tasks.filter(t => t.status.status.toLowerCase() === statusFilter.toLowerCase())
+    : tasks
+  return filtered.map(t => ({
+    id: t.id,
+    name: t.name,
+    status: t.status.status,
+    task_type: (t.custom_item_id ?? 0) !== 0 ? 'initiative' : 'task',
+    list: t.list.name,
+    url: t.url,
+    ...(t.parent ? { parent: t.parent } : {})
+  }))
+}
+
 export async function runSprintCommand(
   config: Config,
-  opts: { status?: string; json?: boolean }
+  opts: { status?: string; json?: boolean; space?: string }
 ): Promise<void> {
   const client = new ClickUpClient(config)
 
   process.stderr.write('Detecting active sprint...\n')
 
-  const spaces = await client.getSpaces(config.teamId)
+  // Fetch all my tasks and all spaces in parallel
+  const [myTasks, allSpaces] = await Promise.all([
+    client.getMyTasks(config.teamId),
+    client.getSpaces(config.teamId),
+  ])
 
-  // Fetch all folders in parallel across all spaces
+  // Determine which spaces to search
+  let spaces = allSpaces
+  if (opts.space) {
+    // Explicit --space override: filter by partial name or exact ID
+    spaces = allSpaces.filter(s =>
+      s.name.toLowerCase().includes(opts.space!.toLowerCase()) ||
+      s.id === opts.space
+    )
+    if (spaces.length === 0) {
+      throw new Error(`No space matching "${opts.space}" found. Use \`cu spaces\` to list available spaces.`)
+    }
+  } else {
+    // Auto-detect: only search spaces where I have assigned tasks
+    const mySpaceIds = new Set(myTasks.map(t => t.space?.id).filter(Boolean))
+    if (mySpaceIds.size > 0) {
+      spaces = allSpaces.filter(s => mySpaceIds.has(s.id))
+    }
+  }
+
+  // Fetch all folders in parallel across relevant spaces
   const foldersBySpace = await Promise.all(
     spaces.map(space => client.getFolders(space.id))
   )
@@ -59,10 +97,9 @@ export async function runSprintCommand(
 
   process.stderr.write(`Active sprint: ${activeList.name}\n`)
 
-  const tasks = await fetchMyTasks(config, {
-    listIds: [activeList.id],
-    statuses: opts.status ? [opts.status] : undefined,
-  })
+  // Filter already-fetched tasks to those in the active sprint list
+  const sprintTasks = myTasks.filter(t => t.list.id === activeList.id)
+  const summaries = summarizeTasks(sprintTasks, opts.status)
 
-  printTasks(tasks, opts.json ?? false)
+  await printTasks(summaries, opts.json ?? false)
 }
