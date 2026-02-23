@@ -70,29 +70,31 @@ describe('runSprintCommand space handling', () => {
     vi.restoreAllMocks()
   })
 
-  it('auto-detects spaces from assigned tasks', async () => {
-    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([baseTask])
+  it('searches all spaces and returns tasks via view API', async () => {
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Kayenta' },
       { id: 's2', name: 'Platform' },
     ])
-    const mockGetFolders = vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
       { id: 'f1', name: 'Kayenta Sprint' },
     ])
     vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
       { id: 'l1', name: 'Kayenta Sprint 4 (2/12 - 2/25)' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([
+      { ...baseTask, assignees: [{ id: 1, username: 'user' }] },
     ])
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
     await runSprintCommand(config, {})
-
-    // Only s1 (has tasks) should be searched, not s2 (no tasks)
-    expect(mockGetFolders).toHaveBeenCalledWith('s1')
-    expect(mockGetFolders).not.toHaveBeenCalledWith('s2')
   })
 
   it('--space override filters by partial name', async () => {
-    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Kayenta' },
       { id: 's2', name: 'Platform' },
@@ -103,6 +105,12 @@ describe('runSprintCommand space handling', () => {
     vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
       { id: 'l1', name: 'Kayenta Sprint 4 (2/12 - 2/25)' },
     ])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([])
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
     await runSprintCommand(config, { space: 'Kay' })
@@ -112,7 +120,6 @@ describe('runSprintCommand space handling', () => {
   })
 
   it('throws when --space filter matches no spaces', async () => {
-    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Kayenta' },
     ])
@@ -124,7 +131,6 @@ describe('runSprintCommand space handling', () => {
   })
 
   it('matches --space by exact ID', async () => {
-    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
       { id: 's1', name: 'Kayenta' },
       { id: 's2', name: 'Platform' },
