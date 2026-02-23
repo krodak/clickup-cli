@@ -21,9 +21,29 @@ cd clickup-cli
 npm install && npm run build && npm link
 ```
 
-## Configuration
+## Getting started
 
-Create `~/.config/cu/config.json`:
+Run the guided setup:
+
+```bash
+cu init
+```
+
+This will:
+1. Ask for your ClickUp API token (`pk_...` from https://app.clickup.com/settings/apps)
+2. Verify the token against the API
+3. Show all lists in your workspace for selection
+4. Write `~/.config/cu/config.json`
+
+To update which lists are tracked at any time:
+
+```bash
+cu lists
+```
+
+### Manual configuration
+
+If you prefer to configure manually, create `~/.config/cu/config.json`:
 
 ```json
 {
@@ -38,15 +58,7 @@ Create `~/.config/cu/config.json`:
 | `lists` | yes | Array of list IDs to scope all read operations to |
 | `teamId` | no | Workspace ID (reserved for future use) |
 
-### Getting your API token
-
-Settings - Apps - API Token in ClickUp, or:
-
-```
-https://app.clickup.com/settings/apps
-```
-
-### Finding your list IDs
+To find list IDs manually:
 
 1. Get your workspace ID:
 
@@ -72,6 +84,22 @@ curl -s -H "Authorization: pk_..." \
 ```
 
 ## Commands
+
+### `cu init`
+
+Guided first-time setup. Prompts for your API token, verifies it, then shows all lists in your workspace for selection.
+
+```bash
+cu init
+```
+
+### `cu lists`
+
+Update which lists are tracked. Opens the same interactive picker as `cu init` with your current lists pre-selected.
+
+```bash
+cu lists
+```
 
 ### `cu tasks`
 
