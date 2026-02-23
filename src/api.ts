@@ -5,7 +5,7 @@ export interface Task {
   name: string
   description?: string
   status: { status: string; color: string }
-  task_type?: string
+  custom_item_id?: number
   assignees: Array<{ id: number; username: string }>
   url: string
   list: { id: string; name: string }
