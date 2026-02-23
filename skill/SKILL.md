@@ -9,7 +9,13 @@ description: Use when reading or writing ClickUp tasks, initiatives, or need to 
 
 `cu` is a CLI for ClickUp. JSON to stdout, errors to stderr with exit 1.
 
-## Config
+## Setup
+
+Run `cu init` for guided first-time setup (prompts for token, shows all workspace lists for selection).
+
+To update tracked lists at any time: `cu lists`
+
+### Manual config (optional)
 
 `~/.config/cu/config.json`:
 ```json
@@ -19,17 +25,11 @@ description: Use when reading or writing ClickUp tasks, initiatives, or need to 
 }
 ```
 
-`teamId` is optional. To find list IDs:
-```bash
-# Get workspace ID
-curl -s -H "Authorization: pk_..." https://api.clickup.com/api/v2/team | jq '.teams[] | {id, name}'
-# Get lists in a space
-curl -s -H "Authorization: pk_..." "https://api.clickup.com/api/v2/space/<spaceId>/list" | jq '.lists[] | {id, name}'
-```
-
 ## Commands
 
 ```bash
+cu init                                          # guided first-time setup
+cu lists                                         # update which lists are tracked
 cu tasks                                         # all tasks assigned to me
 cu initiatives                                   # Initiative-type tasks assigned to me
 cu update <taskId> --description "text"          # update description (markdown ok)
