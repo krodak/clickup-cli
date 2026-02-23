@@ -1,7 +1,8 @@
 import { ClickUpClient } from '../api.js'
 import type { Task, TaskFilters } from '../api.js'
 import type { Config } from '../config.js'
-import { formatTable, isTTY, TASK_COLUMNS } from '../output.js'
+import { isTTY } from '../output.js'
+import { interactiveTaskPicker, showDetailsAndOpen } from '../interactive.js'
 
 export interface TaskSummary {
   id: string
@@ -56,14 +57,17 @@ export async function fetchMyTasks(config: Config, opts: FetchOptions = {}): Pro
   return filtered.map(summarize)
 }
 
-export function printTasks(tasks: TaskSummary[], forceJson: boolean): void {
-  if (!forceJson && isTTY()) {
-    if (tasks.length === 0) {
-      console.log('No tasks found.')
-      return
-    }
-    console.log(formatTable(tasks as unknown as Record<string, unknown>[], TASK_COLUMNS))
-  } else {
+export async function printTasks(tasks: TaskSummary[], forceJson: boolean): Promise<void> {
+  if (forceJson || !isTTY()) {
     console.log(JSON.stringify(tasks, null, 2))
+    return
   }
+
+  if (tasks.length === 0) {
+    console.log('No tasks found.')
+    return
+  }
+
+  const selected = await interactiveTaskPicker(tasks)
+  await showDetailsAndOpen(selected)
 }
