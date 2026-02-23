@@ -18,13 +18,13 @@ export async function runInitCommand(): Promise<void> {
     }
   }
 
-  const apiToken = await password({ message: 'ClickUp API token (pk_...):' })
+  const apiToken = (await password({ message: 'ClickUp API token (pk_...):' })).trim()
 
-  if (!apiToken.trim().startsWith('pk_')) {
+  if (!apiToken.startsWith('pk_')) {
     throw new Error('Token must start with pk_')
   }
 
-  const client = new ClickUpClient({ apiToken: apiToken.trim() })
+  const client = new ClickUpClient({ apiToken })
 
   let username: string
   try {
@@ -38,6 +38,6 @@ export async function runInitCommand(): Promise<void> {
 
   const lists = await selectLists(client, [])
 
-  writeConfig({ apiToken: apiToken.trim(), lists })
+  writeConfig({ apiToken, lists })
   process.stdout.write(`Config written to ${configPath} (${lists.length} list${lists.length === 1 ? '' : 's'})\n`)
 }

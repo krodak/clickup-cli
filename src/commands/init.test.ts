@@ -63,7 +63,7 @@ describe('runInitCommand', () => {
     const fs = await import('fs')
     vi.mocked(fs.existsSync).mockReturnValue(false)
 
-    const { password } = await import('@inquirer/prompts')
+    const { password, confirm } = await import('@inquirer/prompts')
     vi.mocked(password).mockResolvedValue('pk_valid123')
 
     const { ClickUpClient } = await import('../api.js')
@@ -82,5 +82,29 @@ describe('runInitCommand', () => {
       apiToken: 'pk_valid123',
       lists: ['l1', 'l2']
     })
+    expect(vi.mocked(confirm)).not.toHaveBeenCalled()
+  })
+
+  it('proceeds with full flow when user confirms overwrite', async () => {
+    const fs = await import('fs')
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+
+    const { confirm, password } = await import('@inquirer/prompts')
+    vi.mocked(confirm).mockResolvedValue(true)
+    vi.mocked(password).mockResolvedValue('pk_valid123')
+
+    const { ClickUpClient } = await import('../api.js')
+    vi.mocked(ClickUpClient).mockImplementation(() => ({
+      getMe: vi.fn().mockResolvedValue({ id: 1, username: 'krzysztof' })
+    }) as unknown as InstanceType<typeof ClickUpClient>)
+
+    const { selectLists } = await import('./select-lists.js')
+    vi.mocked(selectLists).mockResolvedValue(['l1'])
+
+    const { writeConfig } = await import('../config.js')
+    const { runInitCommand } = await import('./init.js')
+    await runInitCommand()
+
+    expect(vi.mocked(writeConfig)).toHaveBeenCalledWith({ apiToken: 'pk_valid123', lists: ['l1'] })
   })
 })
