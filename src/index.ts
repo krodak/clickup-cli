@@ -74,4 +74,9 @@ program
     }
   })
 
+process.on('SIGINT', () => {
+  process.stderr.write('\nInterrupted\n')
+  process.exit(130)
+})
+
 program.parse()
