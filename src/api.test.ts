@@ -103,4 +103,18 @@ describe('ClickUpClient', () => {
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
     expect(String(mockFetch.mock.calls[0][0])).toContain('/space/s1/list')
   })
+
+  it('getFolders returns folders for a space', async () => {
+    mockFetch.mockReturnValue(mockResponse({ folders: [{ id: 'f1', name: 'Q1 Work' }] }))
+    const folders = await client.getFolders('s1')
+    expect(folders).toEqual([{ id: 'f1', name: 'Q1 Work' }])
+    expect(String(mockFetch.mock.calls[0][0])).toContain('/space/s1/folder')
+  })
+
+  it('getFolderLists returns lists for a folder', async () => {
+    mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
+    const lists = await client.getFolderLists('f1')
+    expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
+    expect(String(mockFetch.mock.calls[0][0])).toContain('/folder/f1/list')
+  })
 })
