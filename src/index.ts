@@ -5,6 +5,8 @@ import { fetchMyTasks } from './commands/tasks.js'
 import { updateDescription } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
+import { runInitCommand } from './commands/init.js'
+import { runListsCommand } from './commands/lists.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -72,6 +74,30 @@ program
       const config = loadConfig()
       const result = await createTask(config, opts)
       console.log(JSON.stringify(result, null, 2))
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('init')
+  .description('Set up cu for the first time')
+  .action(async () => {
+    try {
+      await runInitCommand()
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('lists')
+  .description('Update tracked ClickUp lists')
+  .action(async () => {
+    try {
+      await runListsCommand()
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
