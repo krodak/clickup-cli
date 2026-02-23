@@ -8,6 +8,7 @@ import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
 import { runListsCommand } from './commands/lists.js'
+import { runSprintCommand } from './commands/sprint.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -129,6 +130,21 @@ program
       const config = loadConfig()
       const result = await createTask(config, opts)
       console.log(JSON.stringify(result, null, 2))
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    }
+  })
+
+program
+  .command('sprint')
+  .description('List my tasks in the current active sprint (auto-detected)')
+  .option('--status <status>', 'Filter by status')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(async (opts: { status?: string; json?: boolean }) => {
+    try {
+      const config = loadConfig()
+      await runSprintCommand(config, opts)
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err))
       process.exit(1)
