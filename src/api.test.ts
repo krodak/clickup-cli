@@ -42,7 +42,7 @@ describe('ClickUpClient', () => {
       .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
     await client.getMyTasksFromList('list_1')
     expect(mockFetch).toHaveBeenCalledTimes(2)
-    const secondCall = mockFetch.mock.calls[1][0] as string
+    const secondCall = String(mockFetch.mock.calls[1][0])
     expect(secondCall).toContain('assignees=42')
   })
 
@@ -70,6 +70,16 @@ describe('ClickUpClient', () => {
 
   it('throws on API error with message', async () => {
     mockFetch.mockReturnValue(mockResponse({ err: 'Not found' }, false))
-    await expect(client.getTasksFromList('bad_list')).rejects.toThrow()
+    await expect(client.getTasksFromList('bad_list')).rejects.toThrow('Not found')
+  })
+
+  it('throws on non-JSON response body', async () => {
+    mockFetch.mockReturnValue(Promise.resolve({
+      ok: false,
+      status: 502,
+      statusText: 'Bad Gateway',
+      json: () => Promise.reject(new SyntaxError('Unexpected token'))
+    }))
+    await expect(client.getTasksFromList('list_1')).rejects.toThrow('not valid JSON')
   })
 })

@@ -40,7 +40,14 @@ export class ClickUpClient {
         ...options.headers
       }
     })
-    const data = await res.json() as Record<string, unknown>
+    // Trust boundary: ClickUp API responses are cast to T without runtime validation.
+    // res.json() is guarded against non-JSON bodies (e.g. HTML error pages from proxies).
+    let data: Record<string, unknown>
+    try {
+      data = await res.json() as Record<string, unknown>
+    } catch {
+      throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
+    }
     if (!res.ok) {
       const errMsg = (data.err ?? data.error ?? data.ECODE ?? res.statusText) as string
       throw new Error(`ClickUp API error ${res.status}: ${errMsg}`)
