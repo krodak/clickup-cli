@@ -19,15 +19,16 @@ All commands support `--help` for full flag details.
 
 ### Read
 
-| Command                                                   | What it returns                        |
-| --------------------------------------------------------- | -------------------------------------- |
-| `cu tasks [--status s] [--list id] [--space id] [--json]` | My tasks (workspace-wide)              |
-| `cu initiatives [--status s] [--json]`                    | My initiatives                         |
-| `cu sprint [--status s] [--space nameOrId] [--json]`      | Tasks in active sprint (auto-detected) |
-| `cu inbox [--json]`                                       | Tasks updated in last 7 days           |
-| `cu task <id> [--raw]`                                    | Single task details                    |
-| `cu subtasks <id> [--json]`                               | Subtasks of a task or initiative       |
-| `cu spaces [--name partial] [--my] [--json]`              | List/filter workspace spaces           |
+| Command                                                   | What it returns                           |
+| --------------------------------------------------------- | ----------------------------------------- |
+| `cu tasks [--status s] [--list id] [--space id] [--json]` | My tasks (workspace-wide)                 |
+| `cu initiatives [--status s] [--json]`                    | My initiatives                            |
+| `cu assigned [--include-closed] [--json]`                 | All my tasks grouped by status            |
+| `cu sprint [--status s] [--space nameOrId] [--json]`      | Tasks in active sprint (auto-detected)    |
+| `cu inbox [--days n] [--json]`                            | Tasks updated in last n days (default 30) |
+| `cu task <id> [--raw]`                                    | Single task details                       |
+| `cu subtasks <id> [--json]`                               | Subtasks of a task or initiative          |
+| `cu spaces [--name partial] [--my] [--json]`              | List/filter workspace spaces              |
 
 ### Write
 
