@@ -100,14 +100,15 @@ export async function runSprintCommand(
   const me = await client.getMe()
   const viewData = await client.getListViews(activeList.id)
   const listView = viewData.required_views?.list
-  let sprintTasks: Task[]
 
+  let allTasks: Task[]
   if (listView) {
-    const allViewTasks = await client.getViewTasks(listView.id)
-    sprintTasks = allViewTasks.filter(t => t.assignees.some(a => a.id === me.id))
+    allTasks = await client.getViewTasks(listView.id)
   } else {
-    sprintTasks = await client.getMyTasksFromList(activeList.id)
+    allTasks = await client.getTasksFromList(activeList.id)
   }
+
+  const sprintTasks = allTasks.filter(t => t.assignees.some(a => Number(a.id) === me.id))
 
   const filtered = opts.status
     ? sprintTasks.filter(t => t.status.status.toLowerCase() === opts.status!.toLowerCase())

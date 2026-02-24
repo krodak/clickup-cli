@@ -186,6 +186,56 @@ describe('runSprintCommand space handling', () => {
     )
   })
 
+  it('matches assignee when API returns string IDs', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([baseTask])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Product - Acme' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+      { id: 'f1', name: 'Acme Sprint' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([
+      { ...baseTask, assignees: [{ id: '1' as unknown as number, username: 'user' }] },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, {})
+  })
+
+  it('falls back to list tasks API when no view exists', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([baseTask])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Product - Acme' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+      { id: 'f1', name: 'Acme Sprint' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Acme Sprint 4 (3/1 - 3/14)' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: {},
+    })
+    const mockGetTasksFromList = vi
+      .spyOn(ClickUpClient.prototype, 'getTasksFromList')
+      .mockResolvedValue([{ ...baseTask, assignees: [{ id: 1, username: 'user' }] }])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, {})
+
+    expect(mockGetTasksFromList).toHaveBeenCalledWith('l1')
+  })
+
   it('matches --space by exact ID', async () => {
     vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
     vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
