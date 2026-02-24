@@ -16,7 +16,9 @@ export async function listSpaces(
 
   if (opts.my) {
     const tasks = await client.getMyTasks(config.teamId)
-    const mySpaceIds = new Set(tasks.map(t => t.space?.id).filter(Boolean))
+    const mySpaceIds = new Set(
+      tasks.map(t => t.space?.id).filter((id): id is string => Boolean(id)),
+    )
     spaces = spaces.filter(s => mySpaceIds.has(s.id))
   }
 

@@ -75,7 +75,9 @@ export async function runSprintCommand(
       )
     }
   } else {
-    const mySpaceIds = new Set(myTasks.map(t => t.space?.id).filter(Boolean) as string[])
+    const mySpaceIds = new Set(
+      myTasks.map(t => t.space?.id).filter((id): id is string => Boolean(id)),
+    )
     spaces = findRelatedSpaces(mySpaceIds, allSpaces)
   }
 
