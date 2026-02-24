@@ -32,13 +32,20 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('apiToken')
   })
 
-  it('throws when apiToken does not start with pk_', async () => {
+  it('throws when apiToken does not start with pk_ without leaking token', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify({ apiToken: 'wrongtoken', teamId: 'team_1' }),
+      JSON.stringify({ apiToken: 'sk_secret_value_here', teamId: 'team_1' }),
     )
     const { loadConfig } = await import('../../src/config.js')
     expect(() => loadConfig()).toThrow('pk_')
+    try {
+      loadConfig()
+    } catch (e) {
+      const msg = (e as Error).message
+      expect(msg).not.toContain('sk_secret')
+      expect(msg).not.toContain('secret_value')
+    }
   })
 
   it('trims whitespace from apiToken before pk_ check', async () => {
@@ -105,7 +112,7 @@ describe('writeConfig', () => {
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledTimes(1)
-    const written = String(vi.mocked(fs.writeFileSync).mock.calls[0][1])
+    const written = String(vi.mocked(fs.writeFileSync).mock.calls[0]![1])
     const parsed = JSON.parse(written)
     expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()

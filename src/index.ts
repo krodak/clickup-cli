@@ -44,34 +44,46 @@ program
   .option('--status <status>', 'Filter by status (e.g. "in progress")')
   .option('--list <listId>', 'Filter by list ID')
   .option('--space <spaceId>', 'Filter by space ID')
+  .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { status?: string; list?: string; space?: string; json?: boolean }) => {
-    try {
-      const config = loadConfig()
-      const tasks = await fetchMyTasks(config, {
-        typeFilter: 'task',
-        statuses: opts.status ? [opts.status] : undefined,
-        listIds: opts.list ? [opts.list] : undefined,
-        spaceIds: opts.space ? [opts.space] : undefined,
-      })
-      await printTasks(tasks, opts.json ?? false, config)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+  .action(
+    async (opts: {
+      status?: string
+      list?: string
+      space?: string
+      name?: string
+      json?: boolean
+    }) => {
+      try {
+        const config = loadConfig()
+        const tasks = await fetchMyTasks(config, {
+          typeFilter: 'task',
+          statuses: opts.status ? [opts.status] : undefined,
+          listIds: opts.list ? [opts.list] : undefined,
+          spaceIds: opts.space ? [opts.space] : undefined,
+          name: opts.name,
+        })
+        await printTasks(tasks, opts.json ?? false, config)
+      } catch (err) {
+        console.error(err instanceof Error ? err.message : String(err))
+        process.exit(1)
+      }
+    },
+  )
 
 program
   .command('initiatives')
   .description('List initiatives assigned to me')
   .option('--status <status>', 'Filter by status')
+  .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { status?: string; json?: boolean }) => {
+  .action(async (opts: { status?: string; name?: string; json?: boolean }) => {
     try {
       const config = loadConfig()
       const tasks = await fetchMyTasks(config, {
         typeFilter: 'initiative',
         statuses: opts.status ? [opts.status] : undefined,
+        name: opts.name,
       })
       await printTasks(tasks, opts.json ?? false, config)
     } catch (err) {
@@ -218,6 +230,10 @@ program
     try {
       const config = loadConfig()
       const days = Number(opts.days ?? 30)
+      if (!Number.isFinite(days) || days <= 0) {
+        console.error('Error: --days must be a positive number')
+        process.exit(1)
+      }
       const tasks = await fetchInbox(config, days)
       await printInbox(tasks, opts.json ?? false, config)
     } catch (err) {

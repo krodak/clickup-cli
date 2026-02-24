@@ -8,6 +8,7 @@ export interface Column<T> {
 }
 
 export function isTTY(): boolean {
+  if ('NO_COLOR' in process.env) return false
   return Boolean(process.stdout.isTTY)
 }
 
