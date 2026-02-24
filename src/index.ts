@@ -18,6 +18,7 @@ import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
 import { runAssignedCommand } from './commands/assigned.js'
 import { openTask } from './commands/open.js'
+import { runSummaryCommand } from './commands/summary.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -289,6 +290,23 @@ program
     wrapAction(async (query: string, opts: { json?: boolean }) => {
       const config = loadConfig()
       await openTask(config, query, opts)
+    }),
+  )
+
+program
+  .command('summary')
+  .description('Daily standup summary: completed, in-progress, overdue')
+  .option('--hours <n>', 'Completed-tasks lookback in hours', '24')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { hours?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const hours = Number(opts.hours ?? 24)
+      if (!Number.isFinite(hours) || hours <= 0) {
+        console.error('Error: --hours must be a positive number')
+        process.exit(1)
+      }
+      await runSummaryCommand(config, { hours, json: opts.json ?? false })
     }),
   )
 
