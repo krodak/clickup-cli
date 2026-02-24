@@ -19,6 +19,7 @@ import { listSpaces } from './commands/spaces.js'
 import { runAssignedCommand } from './commands/assigned.js'
 import { openTask } from './commands/open.js'
 import { runSummaryCommand } from './commands/summary.js'
+import { fetchOverdueTasks } from './commands/overdue.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -307,6 +308,18 @@ program
         process.exit(1)
       }
       await runSummaryCommand(config, { hours, json: opts.json ?? false })
+    }),
+  )
+
+program
+  .command('overdue')
+  .description('List tasks that are past their due date')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const tasks = await fetchOverdueTasks(config)
+      await printTasks(tasks, opts.json ?? false, config)
     }),
   )
 
