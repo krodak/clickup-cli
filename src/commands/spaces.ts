@@ -1,6 +1,6 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY } from '../output.js'
+import { isTTY, formatTable } from '../output.js'
 
 export async function listSpaces(
   config: Config,
@@ -23,7 +23,14 @@ export async function listSpaces(
   }
 
   if (!opts.json && isTTY()) {
-    spaces.forEach(s => console.log(`${s.id}  ${s.name}`))
+    const table = formatTable(
+      spaces.map(s => ({ id: s.id, name: s.name })),
+      [
+        { key: 'id', label: 'ID' },
+        { key: 'name', label: 'NAME' },
+      ],
+    )
+    console.log(table)
   } else {
     console.log(JSON.stringify(spaces, null, 2))
   }
