@@ -4,13 +4,13 @@ A ClickUp CLI for AI agents and humans. Two operating modes: interactive tables 
 
 ## Requirements
 
-- Node 20+
+- Node 22+
 - A ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps)
 
 ## Install
 
 ```bash
-npm install -g clickup-cli
+npm install -g @krodak/clickup-cli
 ```
 
 ## Getting started
@@ -67,6 +67,34 @@ cu update abc123 -s "done"
 
 Write commands (`update`, `create`, `comment`) always return JSON, no `--json` flag needed.
 
+## AI Agents Skill
+
+A skill file is included at `skill/SKILL.md` that teaches AI agents how to use `cu`. Install it for your agent of choice:
+
+### OpenCode
+
+```bash
+mkdir -p ~/.config/opencode/skills/clickup
+cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
+```
+
+### Claude Code
+
+```bash
+mkdir -p ~/.claude/skills/clickup
+cp skill/SKILL.md ~/.claude/skills/clickup/SKILL.md
+```
+
+Then reference it in your `CLAUDE.md` or project instructions.
+
+### Codex
+
+Copy the contents of `skill/SKILL.md` into your Codex system prompt or project instructions file.
+
+### Other agents
+
+The skill file is a standalone markdown document. Feed it to any agent that supports custom instructions or tool documentation.
+
 ## Config
 
 `~/.config/cu/config.json`:
@@ -112,12 +140,23 @@ cu sprint --status "in progress"
 cu sprint --json
 ```
 
+### `cu assigned`
+
+All tasks assigned to me, grouped by pipeline stage (code review, in progress, to do, etc.).
+
+```bash
+cu assigned
+cu assigned --include-closed
+cu assigned --json
+```
+
 ### `cu inbox`
 
-Tasks assigned to me that were updated in the last 7 days, newest first.
+Tasks assigned to me that were recently updated, grouped by time period (today, yesterday, last 7 days, etc.). Default lookback is 30 days.
 
 ```bash
 cu inbox
+cu inbox --days 7
 cu inbox --json
 ```
 
@@ -214,13 +253,4 @@ npm install
 npm test          # unit tests (vitest, tests/unit/)
 npm run test:e2e  # e2e tests (tests/e2e/, requires CLICKUP_API_TOKEN in .env.test)
 npm run build     # tsup -> dist/
-```
-
-### Claude Code skill
-
-A skill file is included at `skill/SKILL.md`. Install it so Claude Code can use `cu` autonomously:
-
-```bash
-mkdir -p ~/.config/opencode/skills/clickup
-cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
 ```
