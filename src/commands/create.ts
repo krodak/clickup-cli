@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { CreateTaskOptions } from '../api.js'
 import type { Config } from '../config.js'
-import { parsePriority, parseDueDate } from './update.js'
+import { parsePriority, parseDueDate, parseAssigneeId } from './update.js'
 
 export interface CreateOptions {
   list?: string
@@ -32,24 +32,22 @@ export async function createTask(
 
   const payload: CreateTaskOptions = {
     name: options.name,
-    ...(options.description ? { description: options.description } : {}),
-    ...(options.parent ? { parent: options.parent } : {}),
-    ...(options.status ? { status: options.status } : {}),
+    ...(options.description !== undefined ? { description: options.description } : {}),
+    ...(options.parent !== undefined ? { parent: options.parent } : {}),
+    ...(options.status !== undefined ? { status: options.status } : {}),
   }
 
-  if (options.priority) {
+  if (options.priority !== undefined) {
     payload.priority = parsePriority(options.priority)
   }
-  if (options.dueDate) {
+  if (options.dueDate !== undefined) {
     payload.due_date = parseDueDate(options.dueDate)
     payload.due_date_time = false
   }
-  if (options.assignee) {
-    const id = Number(options.assignee)
-    if (!Number.isInteger(id)) throw new Error('Assignee must be a numeric user ID')
-    payload.assignees = [id]
+  if (options.assignee !== undefined) {
+    payload.assignees = [parseAssigneeId(options.assignee)]
   }
-  if (options.tags) {
+  if (options.tags !== undefined) {
     payload.tags = options.tags.split(',').map(t => t.trim())
   }
 

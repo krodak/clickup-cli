@@ -57,11 +57,13 @@ describe('updateTask', () => {
     )
   })
 
-  it('throws when description is empty string', async () => {
+  it('allows empty description to clear the field', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
-    await expect(
-      updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { description: '' }),
-    ).rejects.toThrow('at least one')
+    const result = await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
+      description: '',
+    })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { description: '' })
+    expect(result.id).toBe('t1')
   })
 })
 
@@ -100,9 +102,27 @@ describe('parseDueDate', () => {
     expect(result).toBe(new Date('2025-03-15').getTime())
   })
 
-  it('throws on invalid date', async () => {
+  it('throws on invalid date format', async () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
-    expect(() => parseDueDate('not-a-date')).toThrow('Invalid date')
+    expect(() => parseDueDate('not-a-date')).toThrow('YYYY-MM-DD')
+  })
+
+  it('throws on partial date', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    expect(() => parseDueDate('2025-02')).toThrow('YYYY-MM-DD')
+    expect(() => parseDueDate('2025')).toThrow('YYYY-MM-DD')
+  })
+})
+
+describe('parseAssigneeId', () => {
+  it('parses numeric string to number', async () => {
+    const { parseAssigneeId } = await import('../../../src/commands/update.js')
+    expect(parseAssigneeId('12345')).toBe(12345)
+  })
+
+  it('throws on non-numeric string', async () => {
+    const { parseAssigneeId } = await import('../../../src/commands/update.js')
+    expect(() => parseAssigneeId('abc')).toThrow('numeric user ID')
   })
 })
 
@@ -159,6 +179,6 @@ describe('updateDescription (backward compat)', () => {
     const { updateDescription } = await import('../../../src/commands/update.js')
     await expect(
       updateDescription({ apiToken: 'pk_t', teamId: 'team1' }, 't1', '   '),
-    ).rejects.toThrow('at least one')
+    ).rejects.toThrow('empty')
   })
 })
