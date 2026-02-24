@@ -95,12 +95,12 @@ program
 program
   .command('task <taskId>')
   .description('Get task details')
-  .option('--raw', 'Show full JSON response')
+  .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: { raw?: boolean }) => {
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
       const config = loadConfig()
       const result = await getTask(config, taskId)
-      if (opts.raw || !isTTY()) {
+      if (opts.json || !isTTY()) {
         console.log(JSON.stringify(result, null, 2))
       } else {
         const lines = [
