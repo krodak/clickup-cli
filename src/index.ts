@@ -25,6 +25,7 @@ import {
   setConfigValue,
   configPath as getConfigFilePath,
 } from './commands/config.js'
+import { assignTask } from './commands/assign.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -325,6 +326,27 @@ program
       const config = loadConfig()
       const tasks = await fetchOverdueTasks(config)
       await printTasks(tasks, opts.json ?? false, config)
+    }),
+  )
+
+program
+  .command('assign <taskId>')
+  .description('Assign or unassign users from a task')
+  .option('--to <userId>', 'Add assignee (user ID or "me")')
+  .option('--remove <userId>', 'Remove assignee (user ID or "me")')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { to?: string; remove?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const result = await assignTask(config, taskId, opts)
+      if (opts.json || !isTTY()) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        const parts: string[] = []
+        if (opts.to) parts.push(`Assigned ${opts.to} to task ${taskId}`)
+        if (opts.remove) parts.push(`Removed ${opts.remove} from task ${taskId}`)
+        console.log(parts.join('; '))
+      }
     }),
   )
 
