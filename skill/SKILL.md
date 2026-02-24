@@ -33,6 +33,9 @@ All commands support `--help` for full flag details.
 | `cu comments <id> [--json]`                                                | List comments on a task                            |
 | `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                       |
 | `cu lists <spaceId> [--name partial] [--json]`                             | List all lists in a space (including folder lists) |
+| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                 |
+| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue    |
+| `cu overdue [--json]`                                                      | Tasks past their due date                          |
 
 ### Write
 
@@ -41,6 +44,9 @@ All commands support `--help` for full flag details.
 | `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id]`                               | Update task fields                           |
 | `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--tags t]` | Create task (list auto-detected from parent) |
 | `cu comment <id> -m text`                                                                                                    | Post comment on task                         |
+| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                            | Assign/unassign users from a task            |
+| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                     | Manage CLI config                            |
+| `cu completion <shell>`                                                                                                      | Output shell completions (bash/zsh/fish)     |
 
 ## Output modes
 
@@ -60,6 +66,10 @@ All commands support `--help` for full flag details.
 - `--priority` accepts names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)
 - `--due-date` accepts `YYYY-MM-DD` format
 - `--assignee` takes a numeric user ID (use `cu task <id> --json` to find assignee IDs)
+- `cu assign` supports `me` as a shorthand for your own user ID
+- `cu open` tries task ID lookup first, then falls back to name search
+- `cu summary` categories: completed (done/complete/closed within N hours), in progress, overdue
+- `cu overdue` excludes done/complete/closed tasks, sorted most overdue first
 - `--tags` accepts comma-separated tag names (e.g. `--tags "bug,frontend"`)
 - `cu lists <spaceId>` discovers list IDs needed for `--list` and `cu create -l`
 - Strict argument parsing - excess/unknown arguments are rejected
@@ -103,4 +113,20 @@ cu comment abc123def -m "Completed in PR #42"
 
 # Discover lists in a space
 cu lists <spaceId> --json
+
+# Open a task in the browser
+cu open abc123def
+
+# Standup summary
+cu summary --json
+
+# Check overdue tasks
+cu overdue --json
+
+# Assign yourself to a task
+cu assign abc123def --to me
+
+# Check/set config
+cu config get teamId
+cu config set apiToken pk_example_token
 ```
