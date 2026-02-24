@@ -19,6 +19,13 @@ export interface FetchOptions extends TaskFilters {
   name?: string
 }
 
+const DONE_PATTERNS = ['done', 'complete', 'closed']
+
+export function isDoneStatus(status: string): boolean {
+  const lower = status.toLowerCase()
+  return DONE_PATTERNS.some(p => lower.includes(p))
+}
+
 function isInitiative(task: Task): boolean {
   return (task.custom_item_id ?? 0) !== 0
 }
