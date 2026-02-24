@@ -1,21 +1,42 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
 vi.mock('fs')
 
+const savedEnv: Record<string, string | undefined> = {}
+
+function clearConfigEnv() {
+  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'XDG_CONFIG_HOME']) {
+    savedEnv[key] = process.env[key]
+    delete process.env[key]
+  }
+}
+
+function restoreConfigEnv() {
+  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'XDG_CONFIG_HOME']) {
+    if (savedEnv[key] === undefined) delete process.env[key]
+    else process.env[key] = savedEnv[key]
+  }
+}
+
 describe('loadConfig', () => {
   beforeEach(() => {
     vi.mocked(fs.existsSync).mockReset()
     vi.mocked(fs.readFileSync).mockReset()
     vi.resetModules()
+    clearConfigEnv()
   })
 
-  it('throws with path hint when config file does not exist', async () => {
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('throws with path hint when config file does not exist and no env vars', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false)
     const { loadConfig } = await import('../../src/config.js')
-    expect(() => loadConfig()).toThrow('Config file not found')
+    expect(() => loadConfig()).toThrow('apiToken')
   })
 
   it('throws on invalid JSON', async () => {
@@ -89,6 +110,48 @@ describe('loadConfig', () => {
     const config = loadConfig()
     expect(config).not.toHaveProperty('lists')
   })
+
+  it('uses CU_API_TOKEN env var over config file', async () => {
+    process.env.CU_API_TOKEN = 'pk_env_token'
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_file_token', teamId: 'team_1' }),
+    )
+    vi.resetModules()
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.apiToken).toBe('pk_env_token')
+  })
+
+  it('uses CU_TEAM_ID env var over config file', async () => {
+    process.env.CU_TEAM_ID = 'env_team'
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_test', teamId: 'file_team' }),
+    )
+    vi.resetModules()
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.teamId).toBe('env_team')
+  })
+
+  it('loads config entirely from env vars without config file', async () => {
+    process.env.CU_API_TOKEN = 'pk_full_env'
+    process.env.CU_TEAM_ID = 'team_env'
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.resetModules()
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.apiToken).toBe('pk_full_env')
+    expect(config.teamId).toBe('team_env')
+  })
+
+  it('respects XDG_CONFIG_HOME for config path', async () => {
+    process.env.XDG_CONFIG_HOME = '/tmp/custom-config'
+    vi.resetModules()
+    const { getConfigPath } = await import('../../src/config.js')
+    expect(getConfigPath()).toBe('/tmp/custom-config/cu/config.json')
+  })
 })
 
 describe('writeConfig', () => {
@@ -97,6 +160,11 @@ describe('writeConfig', () => {
     vi.mocked(fs.mkdirSync).mockReset()
     vi.mocked(fs.writeFileSync).mockReset()
     vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
   })
 
   it('creates config directory if it does not exist', async () => {
