@@ -122,6 +122,14 @@ When both are set, the config file is not required. Useful for CI/CD and contain
 
 ## Commands
 
+### `cu init`
+
+First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cu/config.json`.
+
+```bash
+cu init
+```
+
 ### `cu tasks`
 
 List tasks assigned to me.
@@ -376,14 +384,6 @@ cu completion fish > ~/.config/fish/completions/cu.fish
 ```
 
 Completions cover all commands, flags, and known values (priority levels, status names, config keys).
-
-### `cu init`
-
-First-time setup. Run to create or overwrite `~/.config/cu/config.json`.
-
-```bash
-cu init
-```
 
 ## Development
 
