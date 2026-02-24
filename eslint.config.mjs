@@ -25,7 +25,6 @@ export default defineConfig(
       ],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/require-await': 'off',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       'no-control-regex': 'off',
     },
   },

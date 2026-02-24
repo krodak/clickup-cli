@@ -1,5 +1,5 @@
 vi.mock('@inquirer/prompts', async importOriginal => {
-  const actual = (await importOriginal()) as Record<string, unknown>
+  const actual: Record<string, unknown> = await importOriginal()
   return {
     ...actual,
     confirm: vi.fn(),

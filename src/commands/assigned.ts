@@ -8,7 +8,7 @@ import { summarize } from './tasks.js'
 
 const CLOSED_STATUSES = new Set(['done', 'closed', 'complete', 'completed'])
 
-const STATUS_ORDER: string[] = [
+const STATUS_ORDER = [
   'code review',
   'in review',
   'review',
@@ -18,7 +18,7 @@ const STATUS_ORDER: string[] = [
   'needs definition',
   'backlog',
   'blocked',
-]
+] as const
 
 interface AssignedTaskJson {
   id: string
@@ -50,7 +50,7 @@ interface GroupedTasks {
 }
 
 function statusSortKey(status: string): number {
-  const idx = STATUS_ORDER.indexOf(status.toLowerCase())
+  const idx = (STATUS_ORDER as readonly string[]).indexOf(status.toLowerCase())
   return idx === -1 ? STATUS_ORDER.length : idx
 }
 

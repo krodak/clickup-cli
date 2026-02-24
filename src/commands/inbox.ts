@@ -19,7 +19,7 @@ interface TimePeriodDef {
   label: string
 }
 
-const TIME_PERIODS: TimePeriodDef[] = [
+const TIME_PERIODS: readonly TimePeriodDef[] = [
   { key: 'today', label: 'Today' },
   { key: 'yesterday', label: 'Yesterday' },
   { key: 'last_7_days', label: 'Last 7 days' },
