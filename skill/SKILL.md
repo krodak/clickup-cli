@@ -11,7 +11,9 @@ Keywords: ClickUp, task management, sprint, initiative, project management, agil
 
 ## Setup
 
-Config at `~/.config/cu/config.json` with `apiToken` and `teamId`. Run `cu init` to set up.
+Config at `~/.config/cu/config.json` (or `$XDG_CONFIG_HOME/cu/config.json`) with `apiToken` and `teamId`. Run `cu init` to set up.
+
+Alternatively, set `CU_API_TOKEN` and `CU_TEAM_ID` environment variables (overrides config file, no file needed when both are set).
 
 ## Commands
 
@@ -19,16 +21,16 @@ All commands support `--help` for full flag details.
 
 ### Read
 
-| Command                                                   | What it returns                           |
-| --------------------------------------------------------- | ----------------------------------------- |
-| `cu tasks [--status s] [--list id] [--space id] [--json]` | My tasks (workspace-wide)                 |
-| `cu initiatives [--status s] [--json]`                    | My initiatives                            |
-| `cu assigned [--include-closed] [--json]`                 | All my tasks grouped by status            |
-| `cu sprint [--status s] [--space nameOrId] [--json]`      | Tasks in active sprint (auto-detected)    |
-| `cu inbox [--days n] [--json]`                            | Tasks updated in last n days (default 30) |
-| `cu task <id> [--raw]`                                    | Single task details                       |
-| `cu subtasks <id> [--json]`                               | Subtasks of a task or initiative          |
-| `cu spaces [--name partial] [--my] [--json]`              | List/filter workspace spaces              |
+| Command                                                              | What it returns                           |
+| -------------------------------------------------------------------- | ----------------------------------------- |
+| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]` | My tasks (workspace-wide)                 |
+| `cu initiatives [--status s] [--name q] [--json]`                    | My initiatives                            |
+| `cu assigned [--include-closed] [--json]`                            | All my tasks grouped by status            |
+| `cu sprint [--status s] [--space nameOrId] [--json]`                 | Tasks in active sprint (auto-detected)    |
+| `cu inbox [--days n] [--json]`                                       | Tasks updated in last n days (default 30) |
+| `cu task <id> [--json]`                                              | Single task details                       |
+| `cu subtasks <id> [--json]`                                          | Subtasks of a task or initiative          |
+| `cu spaces [--name partial] [--my] [--json]`                         | List/filter workspace spaces              |
 
 ### Write
 
@@ -43,6 +45,7 @@ All commands support `--help` for full flag details.
 - **TTY (terminal)**: Interactive picker UI. Use `--json` to bypass.
 - **Piped / non-TTY**: Always JSON. This is what agents get by default.
 - **Agents should always pass `--json`** to guarantee machine-readable output.
+- Set `NO_COLOR` to disable color/interactive mode.
 
 ## Key facts
 
@@ -50,6 +53,7 @@ All commands support `--help` for full flag details.
 - Initiatives are detected via `custom_item_id !== 0` (not `task_type`)
 - `--list` is optional in `cu create` when `--parent` is given (list auto-detected from parent)
 - `cu sprint` auto-detects active sprint from spaces where user has tasks, using view API and date range parsing from sprint names like "Acme Sprint 4 (3/1 - 3/14)"
+- `--name` on tasks/initiatives filters by partial name match (case-insensitive)
 - `--space` on sprint/tasks accepts partial name match (e.g. `--space Acm`)
 - Strict argument parsing - excess/unknown arguments are rejected
 - Errors go to stderr with exit code 1
@@ -64,7 +68,7 @@ cu tasks --status "in progress" --json
 cu sprint --json | jq '.[].name'
 
 # Get full details on a task
-cu task abc123def --raw
+cu task abc123def --json
 
 # List subtasks of an initiative
 cu subtasks abc123def --json
