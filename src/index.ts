@@ -18,6 +18,15 @@ import { runAssignedCommand } from './commands/assigned.js'
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
 
+function wrapAction<T extends unknown[]>(fn: (...args: T) => Promise<void>): (...args: T) => void {
+  return (...args: T) => {
+    fn(...args).catch((err: unknown) => {
+      console.error(err instanceof Error ? err.message : String(err))
+      process.exit(1)
+    })
+  }
+}
+
 const program = new Command()
 
 program
@@ -29,14 +38,11 @@ program
 program
   .command('init')
   .description('Set up cu for the first time')
-  .action(async () => {
-    try {
+  .action(
+    wrapAction(async () => {
       await runInitCommand()
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('tasks')
@@ -47,14 +53,14 @@ program
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    async (opts: {
-      status?: string
-      list?: string
-      space?: string
-      name?: string
-      json?: boolean
-    }) => {
-      try {
+    wrapAction(
+      async (opts: {
+        status?: string
+        list?: string
+        space?: string
+        name?: string
+        json?: boolean
+      }) => {
         const config = loadConfig()
         const tasks = await fetchMyTasks(config, {
           typeFilter: 'task',
@@ -64,11 +70,8 @@ program
           name: opts.name,
         })
         await printTasks(tasks, opts.json ?? false, config)
-      } catch (err) {
-        console.error(err instanceof Error ? err.message : String(err))
-        process.exit(1)
-      }
-    },
+      },
+    ),
   )
 
 program
@@ -77,8 +80,8 @@ program
   .option('--status <status>', 'Filter by status')
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { status?: string; name?: string; json?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (opts: { status?: string; name?: string; json?: boolean }) => {
       const config = loadConfig()
       const tasks = await fetchMyTasks(config, {
         typeFilter: 'initiative',
@@ -86,18 +89,15 @@ program
         name: opts.name,
       })
       await printTasks(tasks, opts.json ?? false, config)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('task <taskId>')
   .description('Get task details')
   .option('--raw', 'Show full JSON response')
-  .action(async (taskId: string, opts: { raw?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (taskId: string, opts: { raw?: boolean }) => {
       const config = loadConfig()
       const result = await getTask(config, taskId)
       if (opts.raw || !isTTY()) {
@@ -115,11 +115,8 @@ program
         ]
         console.log(lines.join('\n'))
       }
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('update <taskId>')
@@ -128,16 +125,13 @@ program
   .option('-d, --description <text>', 'New description (markdown supported)')
   .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
   .action(
-    async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
-      try {
+    wrapAction(
+      async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
         const config = loadConfig()
         const result = await updateTask(config, taskId, opts)
         console.log(JSON.stringify(result, null, 2))
-      } catch (err) {
-        console.error(err instanceof Error ? err.message : String(err))
-        process.exit(1)
-      }
-    },
+      },
+    ),
   )
 
 program
@@ -148,16 +142,13 @@ program
   .option('-d, --description <text>', 'Task description')
   .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
   .option('-s, --status <status>', 'Initial status')
-  .action(async (opts: CreateOptions) => {
-    try {
+  .action(
+    wrapAction(async (opts: CreateOptions) => {
       const config = loadConfig()
       const result = await createTask(config, opts)
       console.log(JSON.stringify(result, null, 2))
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('sprint')
@@ -165,45 +156,36 @@ program
   .option('--status <status>', 'Filter by status')
   .option('--space <nameOrId>', 'Narrow sprint search to a specific space (partial name or ID)')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { status?: string; space?: string; json?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (opts: { status?: string; space?: string; json?: boolean }) => {
       const config = loadConfig()
       await runSprintCommand(config, opts)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('subtasks <taskId>')
   .description('List subtasks of a task or initiative')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (taskId: string, opts: { json?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
       const config = loadConfig()
       const tasks = await fetchSubtasks(config, taskId)
       await printTasks(tasks, opts.json ?? false, config)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('comment <taskId>')
   .description('Post a comment on a task')
   .requiredOption('-m, --message <text>', 'Comment text')
-  .action(async (taskId: string, opts: { message: string }) => {
-    try {
+  .action(
+    wrapAction(async (taskId: string, opts: { message: string }) => {
       const config = loadConfig()
       const result = await postComment(config, taskId, opts.message)
       console.log(JSON.stringify(result, null, 2))
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('spaces')
@@ -211,23 +193,20 @@ program
   .option('--name <partial>', 'Filter spaces by name (case-insensitive contains)')
   .option('--my', 'Show only spaces where I have assigned tasks')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
       const config = loadConfig()
       await listSpaces(config, opts)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('inbox')
   .description('Recently updated tasks grouped by time period')
   .option('--json', 'Force JSON output even in terminal')
   .option('--days <n>', 'Lookback period in days', '30')
-  .action(async (opts: { json?: boolean; days?: string }) => {
-    try {
+  .action(
+    wrapAction(async (opts: { json?: boolean; days?: string }) => {
       const config = loadConfig()
       const days = Number(opts.days ?? 30)
       if (!Number.isFinite(days) || days <= 0) {
@@ -236,26 +215,20 @@ program
       }
       const tasks = await fetchInbox(config, days)
       await printInbox(tasks, opts.json ?? false, config)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 program
   .command('assigned')
   .description('Show all tasks assigned to me, grouped by status')
   .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
-  .action(async (opts: { includeClosed?: boolean; json?: boolean }) => {
-    try {
+  .action(
+    wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
       const config = loadConfig()
       await runAssignedCommand(config, opts)
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
-    }
-  })
+    }),
+  )
 
 process.on('SIGINT', () => {
   process.stderr.write('\nInterrupted\n')
