@@ -17,6 +17,7 @@ import { isTTY } from './output.js'
 import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
 import { runAssignedCommand } from './commands/assigned.js'
+import { openTask } from './commands/open.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -277,6 +278,17 @@ program
     wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
       const config = loadConfig()
       await runAssignedCommand(config, opts)
+    }),
+  )
+
+program
+  .command('open <query>')
+  .description('Open a task in the browser by ID or name')
+  .option('--json', 'Output task JSON instead of opening')
+  .action(
+    wrapAction(async (query: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await openTask(config, query, opts)
     }),
   )
 
