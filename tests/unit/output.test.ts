@@ -43,7 +43,7 @@ describe('formatTable', () => {
       [{ id: 'abc' }],
       [
         { key: 'id', label: 'ID' },
-        { key: 'missing', label: 'MISSING' },
+        { key: 'missing' as 'id', label: 'MISSING' },
       ],
     )
     expect(result).toContain('abc')
@@ -90,5 +90,27 @@ describe('formatTable', () => {
 describe('isTTY', () => {
   it('returns a boolean', () => {
     expect(typeof isTTY()).toBe('boolean')
+  })
+
+  it('returns false when NO_COLOR is set', () => {
+    const original = process.env.NO_COLOR
+    try {
+      process.env.NO_COLOR = '1'
+      expect(isTTY()).toBe(false)
+    } finally {
+      if (original === undefined) delete process.env.NO_COLOR
+      else process.env.NO_COLOR = original
+    }
+  })
+
+  it('returns false when NO_COLOR is empty string', () => {
+    const original = process.env.NO_COLOR
+    try {
+      process.env.NO_COLOR = ''
+      expect(isTTY()).toBe(false)
+    } finally {
+      if (original === undefined) delete process.env.NO_COLOR
+      else process.env.NO_COLOR = original
+    }
   })
 })

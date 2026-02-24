@@ -27,7 +27,7 @@ export function loadConfig(): Config {
   const apiToken = parsed.apiToken?.trim()
   if (!apiToken) throw new Error('Config missing required field: apiToken')
   if (!apiToken.startsWith('pk_')) {
-    throw new Error('Config apiToken must start with pk_ (found: ' + apiToken.slice(0, 8) + '...)')
+    throw new Error('Config apiToken must start with pk_. The configured token does not.')
   }
 
   const teamId = parsed.teamId?.trim()

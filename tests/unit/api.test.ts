@@ -31,7 +31,7 @@ describe('ClickUpClient', () => {
     )
     const tasks = await client.getTasksFromList('list_1')
     expect(tasks).toHaveLength(1)
-    expect(tasks[0].id).toBe('t1')
+    expect(tasks[0]!.id).toBe('t1')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/list/list_1/task'),
       expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'pk_test' }) }),
@@ -44,7 +44,7 @@ describe('ClickUpClient', () => {
       .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
     await client.getMyTasksFromList('list_1')
     expect(mockFetch).toHaveBeenCalledTimes(2)
-    const secondCall = String(mockFetch.mock.calls[1][0])
+    const secondCall = String(mockFetch.mock.calls[1]![0])
     expect(secondCall).toContain('assignees%5B%5D=42')
   })
 
@@ -129,35 +129,35 @@ describe('ClickUpClient', () => {
     mockFetch.mockReturnValue(mockResponse({ teams: [{ id: 't1', name: 'My Workspace' }] }))
     const teams = await client.getTeams()
     expect(teams).toEqual([{ id: 't1', name: 'My Workspace' }])
-    expect(String(mockFetch.mock.calls[0][0])).toMatch(/\/team$/)
+    expect(String(mockFetch.mock.calls[0]![0])).toMatch(/\/team$/)
   })
 
   it('getSpaces returns spaces for a team', async () => {
     mockFetch.mockReturnValue(mockResponse({ spaces: [{ id: 's1', name: 'Engineering' }] }))
     const spaces = await client.getSpaces('t1')
     expect(spaces).toEqual([{ id: 's1', name: 'Engineering' }])
-    expect(String(mockFetch.mock.calls[0][0])).toContain('/team/t1/space')
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/team/t1/space')
   })
 
   it('getLists returns lists for a space', async () => {
     mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
     const lists = await client.getLists('s1')
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
-    expect(String(mockFetch.mock.calls[0][0])).toContain('/space/s1/list')
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/space/s1/list')
   })
 
   it('getFolders returns folders for a space', async () => {
     mockFetch.mockReturnValue(mockResponse({ folders: [{ id: 'f1', name: 'Q1 Work' }] }))
     const folders = await client.getFolders('s1')
     expect(folders).toEqual([{ id: 'f1', name: 'Q1 Work' }])
-    expect(String(mockFetch.mock.calls[0][0])).toContain('/space/s1/folder')
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/space/s1/folder')
   })
 
   it('getFolderLists returns lists for a folder', async () => {
     mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
     const lists = await client.getFolderLists('f1')
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
-    expect(String(mockFetch.mock.calls[0][0])).toContain('/folder/f1/list')
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/folder/f1/list')
   })
 })
 
@@ -180,7 +180,7 @@ describe('getMyTasks', () => {
       .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
       .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
     await client.getMyTasks('team1')
-    const url = String(mockFetch.mock.calls[1][0])
+    const url = String(mockFetch.mock.calls[1]![0])
     expect(url).toContain('/team/team1/task')
     expect(url).toContain('assignees%5B%5D=42')
   })
@@ -190,7 +190,7 @@ describe('getMyTasks', () => {
       .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
       .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
     await client.getMyTasks('team1', { statuses: ['in progress'] })
-    const url = String(mockFetch.mock.calls[1][0])
+    const url = String(mockFetch.mock.calls[1]![0])
     expect(url).toContain('statuses%5B%5D=in+progress')
   })
 
@@ -199,7 +199,7 @@ describe('getMyTasks', () => {
       .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
       .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
     await client.getMyTasks('team1', { listIds: ['list_abc'] })
-    const url = String(mockFetch.mock.calls[1][0])
+    const url = String(mockFetch.mock.calls[1]![0])
     expect(url).toContain('list_ids%5B%5D=list_abc')
   })
 
@@ -238,8 +238,8 @@ describe('getMyTasks', () => {
       )
     const tasks = await client.getMyTasks('team1')
     expect(tasks).toHaveLength(2)
-    expect(tasks[0].id).toBe('t1')
-    expect(tasks[1].id).toBe('t2')
+    expect(tasks[0]!.id).toBe('t1')
+    expect(tasks[1]!.id).toBe('t2')
   })
 })
 

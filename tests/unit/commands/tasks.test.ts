@@ -45,8 +45,8 @@ describe('fetchMyTasks', () => {
       { typeFilter: 'initiative' },
     )
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('t2')
-    expect(result[0].task_type).toBe('initiative')
+    expect(result[0]!.id).toBe('t2')
+    expect(result[0]!.task_type).toBe('initiative')
   })
 
   it('filters to regular tasks when typeFilter is task', async () => {
@@ -57,8 +57,8 @@ describe('fetchMyTasks', () => {
     const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
     const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { typeFilter: 'task' })
     expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('t1')
-    expect(result[0].task_type).toBe('task')
+    expect(result[0]!.id).toBe('t1')
+    expect(result[0]!.task_type).toBe('task')
   })
 
   it('passes status filter to API', async () => {
@@ -86,5 +86,49 @@ describe('fetchMyTasks', () => {
     const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
     await fetchMyTasks({ apiToken: 'pk_t', teamId: 'my_team' })
     expect(mockGetMyTasks).toHaveBeenCalledWith('my_team', expect.any(Object))
+  })
+
+  it('filters tasks by partial name (case-insensitive)', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug' }),
+      baseTask({ id: 't2', name: 'Add search feature' }),
+      baseTask({ id: 't3', name: 'Refactor LOGIN module' }),
+    ])
+    const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { name: 'login' })
+    expect(result).toHaveLength(2)
+    expect(result.map(t => t.id)).toEqual(['t1', 't3'])
+  })
+
+  it('returns all tasks when name filter is not provided', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug' }),
+      baseTask({ id: 't2', name: 'Add search feature' }),
+    ])
+    const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
+    const result = await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' })
+    expect(result).toHaveLength(2)
+  })
+
+  it('combines name filter with type filter', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug', custom_item_id: 0 }),
+      baseTask({ id: 't2', name: 'Login initiative', custom_item_id: 1004 }),
+      baseTask({ id: 't3', name: 'Add search feature', custom_item_id: 0 }),
+    ])
+    const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
+    const result = await fetchMyTasks(
+      { apiToken: 'pk_t', teamId: 'team1' },
+      { typeFilter: 'task', name: 'login' },
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('t1')
+  })
+
+  it('does not pass name filter to API call', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
+    await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { name: 'test' })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', {})
   })
 })

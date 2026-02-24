@@ -28,10 +28,11 @@ vi.mock('../../../src/config.js', () => ({
 
 vi.mock('fs', async importOriginal => {
   const actual = await importOriginal<typeof import('fs')>()
+  const mod = actual as Record<string, unknown>
   return {
     ...actual,
     default: {
-      ...actual.default,
+      ...(mod['default'] as Record<string, unknown>),
       existsSync: mockExistsSync,
     },
   }

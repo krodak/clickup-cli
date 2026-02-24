@@ -63,9 +63,9 @@ describe('fetchInbox', () => {
     ])
     const { fetchInbox } = await import('../../../src/commands/inbox.js')
     const result = await fetchInbox({ apiToken: 'pk_t', teamId: 'team1' })
-    expect(result[0].id).toBe('t2')
-    expect(result[1].id).toBe('t3')
-    expect(result[2].id).toBe('t1')
+    expect(result[0]!.id).toBe('t2')
+    expect(result[1]!.id).toBe('t3')
+    expect(result[2]!.id).toBe('t1')
   })
 
   it('returns empty array when no recent tasks', async () => {
@@ -88,8 +88,8 @@ describe('fetchInbox', () => {
     mockGetMyTasks.mockResolvedValue([makeTask('t1', now - 1000)])
     const { fetchInbox } = await import('../../../src/commands/inbox.js')
     const result = await fetchInbox({ apiToken: 'pk_t', teamId: 'team1' })
-    expect(result[0]).toHaveProperty('date_updated')
-    expect(result[0].date_updated).toBe(String(now - 1000))
+    expect(result[0]!).toHaveProperty('date_updated')
+    expect(result[0]!.date_updated).toBe(String(now - 1000))
   })
 })
 
@@ -164,11 +164,11 @@ describe('groupTasks', () => {
 
     const groups: GroupedInbox = groupTasks(tasks, now)
     expect(groups.today).toHaveLength(1)
-    expect(groups.today[0].id).toBe('t1')
+    expect(groups.today[0]!.id).toBe('t1')
     expect(groups.yesterday).toHaveLength(1)
-    expect(groups.yesterday[0].id).toBe('t2')
+    expect(groups.yesterday[0]!.id).toBe('t2')
     expect(groups.last_7_days).toHaveLength(1)
-    expect(groups.last_7_days[0].id).toBe('t3')
+    expect(groups.last_7_days[0]!.id).toBe('t3')
   })
 
   it('returns empty arrays for periods with no tasks', async () => {

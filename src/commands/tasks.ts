@@ -16,6 +16,7 @@ export interface TaskSummary {
 
 export interface FetchOptions extends TaskFilters {
   typeFilter?: 'task' | 'initiative'
+  name?: string
 }
 
 function isInitiative(task: Task): boolean {
@@ -39,16 +40,21 @@ export async function fetchMyTasks(
   opts: FetchOptions = {},
 ): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
-  const { typeFilter, ...apiFilters } = opts
+  const { typeFilter, name, ...apiFilters } = opts
 
   const allTasks = await client.getMyTasks(config.teamId, apiFilters)
 
-  const filtered =
+  let filtered =
     typeFilter === 'initiative'
       ? allTasks.filter(isInitiative)
       : typeFilter === 'task'
         ? allTasks.filter(t => !isInitiative(t))
         : allTasks
+
+  if (name) {
+    const query = name.toLowerCase()
+    filtered = filtered.filter(t => t.name.toLowerCase().includes(query))
+  }
 
   return filtered.map(summarize)
 }

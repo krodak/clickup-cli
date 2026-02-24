@@ -12,7 +12,7 @@ describe.skipIf(!TOKEN)('sprint detection e2e', () => {
   beforeAll(async () => {
     client = new ClickUpClient({ apiToken: TOKEN! })
     const teams = await client.getTeams()
-    teamId = teams[0].id
+    teamId = teams[0]!.id
   })
 
   it('finds sprint folders in at least one space', async () => {
