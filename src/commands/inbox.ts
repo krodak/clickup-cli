@@ -116,9 +116,10 @@ export async function printInbox(
     return
   }
 
-  const pickerGroups = TIME_PERIODS
-    .filter(def => groups[def.key].length > 0)
-    .map(def => ({ label: def.label, tasks: groups[def.key] }))
+  const pickerGroups = TIME_PERIODS.filter(def => groups[def.key].length > 0).map(def => ({
+    label: def.label,
+    tasks: groups[def.key],
+  }))
 
   const fetchTask = config
     ? (() => {
