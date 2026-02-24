@@ -48,6 +48,6 @@ export function printComments(comments: CommentSummary[], forceJson: boolean): v
     if (i > 0) console.log(separator)
     console.log(`${chalk.bold(c.user)}  ${chalk.dim(formatDate(c.date))}`)
     console.log(c.text)
-    console.log('')
+    if (i < comments.length - 1) console.log('')
   }
 }

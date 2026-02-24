@@ -22,9 +22,10 @@ export async function fetchLists(
   }
 
   const folders = await client.getFolders(spaceId)
-  for (const folder of folders) {
-    const folderLists = await client.getFolderLists(folder.id)
-    for (const list of folderLists) {
+  const folderListArrays = await Promise.all(folders.map(f => client.getFolderLists(f.id)))
+  for (let i = 0; i < folders.length; i++) {
+    const folder = folders[i]!
+    for (const list of folderListArrays[i]!) {
       results.push({ id: list.id, name: list.name, folder: folder.name })
     }
   }

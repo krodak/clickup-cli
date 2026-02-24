@@ -1,28 +1,35 @@
 import { ClickUpClient } from '../api.js'
-import type { UpdateTaskOptions } from '../api.js'
+import type { UpdateTaskOptions, Priority } from '../api.js'
 import type { Config } from '../config.js'
 
-export type { UpdateTaskOptions }
-
-const PRIORITY_MAP: Record<string, number> = {
+const PRIORITY_MAP = {
   urgent: 1,
   high: 2,
   normal: 3,
   low: 4,
-}
+} as const satisfies Record<string, Priority>
 
-export function parsePriority(value: string): number {
-  const named = PRIORITY_MAP[value.toLowerCase()]
+export function parsePriority(value: string): Priority {
+  const named = PRIORITY_MAP[value.toLowerCase() as keyof typeof PRIORITY_MAP]
   if (named !== undefined) return named
   const num = Number(value)
-  if (Number.isInteger(num) && num >= 1 && num <= 4) return num
+  if (Number.isInteger(num) && num >= 1 && num <= 4) return num as Priority
   throw new Error('Priority must be urgent, high, normal, low, or 1-4')
 }
 
 export function parseDueDate(value: string): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error('Date must be in YYYY-MM-DD format')
+  }
   const date = new Date(value)
   if (isNaN(date.getTime())) throw new Error(`Invalid date: ${value}`)
   return date.getTime()
+}
+
+export function parseAssigneeId(value: string): number {
+  const id = Number(value)
+  if (!Number.isInteger(id)) throw new Error('Assignee must be a numeric user ID')
+  return id
 }
 
 export interface UpdateCommandOptions {
@@ -36,20 +43,29 @@ export interface UpdateCommandOptions {
 
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
   const payload: UpdateTaskOptions = {}
-  if (opts.name) payload.name = opts.name
-  if (opts.description) payload.description = opts.description
-  if (opts.status) payload.status = opts.status
-  if (opts.priority) payload.priority = parsePriority(opts.priority)
-  if (opts.dueDate) {
+  if (opts.name !== undefined) payload.name = opts.name
+  if (opts.description !== undefined) payload.description = opts.description
+  if (opts.status !== undefined) payload.status = opts.status
+  if (opts.priority !== undefined) payload.priority = parsePriority(opts.priority)
+  if (opts.dueDate !== undefined) {
     payload.due_date = parseDueDate(opts.dueDate)
     payload.due_date_time = false
   }
-  if (opts.assignee) {
-    const id = Number(opts.assignee)
-    if (!Number.isInteger(id)) throw new Error('Assignee must be a numeric user ID')
-    payload.assignees = { add: [id] }
+  if (opts.assignee !== undefined) {
+    payload.assignees = { add: [parseAssigneeId(opts.assignee)] }
   }
   return payload
+}
+
+function hasUpdateFields(options: UpdateTaskOptions): boolean {
+  return (
+    options.name !== undefined ||
+    options.description !== undefined ||
+    options.status !== undefined ||
+    options.priority !== undefined ||
+    options.due_date !== undefined ||
+    options.assignees !== undefined
+  )
 }
 
 export async function updateTask(
@@ -57,8 +73,7 @@ export async function updateTask(
   taskId: string,
   options: UpdateTaskOptions,
 ): Promise<{ id: string; name: string }> {
-  const hasAny = Object.values(options).some(v => v !== undefined && String(v).trim() !== '')
-  if (!hasAny)
+  if (!hasUpdateFields(options))
     throw new Error(
       'Provide at least one of: --name, --description, --status, --priority, --due-date, --assignee',
     )
@@ -73,5 +88,6 @@ export async function updateDescription(
   taskId: string,
   description: string,
 ): Promise<{ id: string; name: string }> {
+  if (!description.trim()) throw new Error('Description cannot be empty')
   return updateTask(config, taskId, { description })
 }

@@ -31,11 +31,13 @@ export interface TaskFilters {
   subtasks?: boolean
 }
 
+export type Priority = 1 | 2 | 3 | 4
+
 export interface UpdateTaskOptions {
   name?: string
   description?: string
   status?: string
-  priority?: number | null
+  priority?: Priority | null
   due_date?: number
   due_date_time?: boolean
   assignees?: { add?: number[]; rem?: number[] }
@@ -46,7 +48,7 @@ export interface CreateTaskOptions {
   description?: string
   parent?: string
   status?: string
-  priority?: number | null
+  priority?: Priority | null
   due_date?: number
   due_date_time?: boolean
   assignees?: number[]
@@ -77,6 +79,13 @@ export interface View {
   id: string
   name: string
   type: string
+}
+
+export interface Comment {
+  id: string
+  comment_text: string
+  user: { username: string }
+  date: string
 }
 
 interface ClientConfig {
@@ -180,19 +189,8 @@ export class ClickUpClient {
     })
   }
 
-  async getTaskComments(
-    taskId: string,
-  ): Promise<
-    Array<{ id: string; comment_text: string; user: { username: string }; date: string }>
-  > {
-    const data = await this.request<{
-      comments: Array<{
-        id: string
-        comment_text: string
-        user: { username: string }
-        date: string
-      }>
-    }>(`/task/${taskId}/comment`)
+  async getTaskComments(taskId: string): Promise<Comment[]> {
+    const data = await this.request<{ comments: Comment[] }>(`/task/${taskId}/comment`)
     return data.comments ?? []
   }
 

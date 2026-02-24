@@ -30,6 +30,14 @@ function wrapAction<T extends unknown[]>(fn: (...args: T) => Promise<void>): (..
   }
 }
 
+interface TaskFilterOpts {
+  status?: string
+  list?: string
+  space?: string
+  name?: string
+  json?: boolean
+}
+
 const program = new Command()
 
 program
@@ -56,25 +64,17 @@ program
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(
-      async (opts: {
-        status?: string
-        list?: string
-        space?: string
-        name?: string
-        json?: boolean
-      }) => {
-        const config = loadConfig()
-        const tasks = await fetchMyTasks(config, {
-          typeFilter: 'task',
-          statuses: opts.status ? [opts.status] : undefined,
-          listIds: opts.list ? [opts.list] : undefined,
-          spaceIds: opts.space ? [opts.space] : undefined,
-          name: opts.name,
-        })
-        await printTasks(tasks, opts.json ?? false, config)
-      },
-    ),
+    wrapAction(async (opts: TaskFilterOpts) => {
+      const config = loadConfig()
+      const tasks = await fetchMyTasks(config, {
+        typeFilter: 'task',
+        statuses: opts.status ? [opts.status] : undefined,
+        listIds: opts.list ? [opts.list] : undefined,
+        spaceIds: opts.space ? [opts.space] : undefined,
+        name: opts.name,
+      })
+      await printTasks(tasks, opts.json ?? false, config)
+    }),
   )
 
 program
@@ -86,25 +86,17 @@ program
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(
-      async (opts: {
-        status?: string
-        list?: string
-        space?: string
-        name?: string
-        json?: boolean
-      }) => {
-        const config = loadConfig()
-        const tasks = await fetchMyTasks(config, {
-          typeFilter: 'initiative',
-          statuses: opts.status ? [opts.status] : undefined,
-          listIds: opts.list ? [opts.list] : undefined,
-          spaceIds: opts.space ? [opts.space] : undefined,
-          name: opts.name,
-        })
-        await printTasks(tasks, opts.json ?? false, config)
-      },
-    ),
+    wrapAction(async (opts: TaskFilterOpts) => {
+      const config = loadConfig()
+      const tasks = await fetchMyTasks(config, {
+        typeFilter: 'initiative',
+        statuses: opts.status ? [opts.status] : undefined,
+        listIds: opts.list ? [opts.list] : undefined,
+        spaceIds: opts.space ? [opts.space] : undefined,
+        name: opts.name,
+      })
+      await printTasks(tasks, opts.json ?? false, config)
+    }),
   )
 
 program
@@ -147,7 +139,11 @@ program
       const config = loadConfig()
       const payload = buildUpdatePayload(opts)
       const result = await updateTask(config, taskId, payload)
-      console.log(JSON.stringify(result, null, 2))
+      if (isTTY()) {
+        console.log(`Updated task ${result.id}: "${result.name}"`)
+      } else {
+        console.log(JSON.stringify(result, null, 2))
+      }
     }),
   )
 
@@ -167,7 +163,11 @@ program
     wrapAction(async (opts: CreateOptions) => {
       const config = loadConfig()
       const result = await createTask(config, opts)
-      console.log(JSON.stringify(result, null, 2))
+      if (isTTY()) {
+        console.log(`Created task ${result.id}: "${result.name}" - ${result.url}`)
+      } else {
+        console.log(JSON.stringify(result, null, 2))
+      }
     }),
   )
 
@@ -204,7 +204,11 @@ program
     wrapAction(async (taskId: string, opts: { message: string }) => {
       const config = loadConfig()
       const result = await postComment(config, taskId, opts.message)
-      console.log(JSON.stringify(result, null, 2))
+      if (isTTY()) {
+        console.log(`Comment posted (id: ${result.id})`)
+      } else {
+        console.log(JSON.stringify(result, null, 2))
+      }
     }),
   )
 
