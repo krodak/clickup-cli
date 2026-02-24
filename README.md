@@ -38,10 +38,11 @@ Pass `--json` to any list command to bypass interactive mode and get raw JSON ou
 
 When output is piped (no TTY), all list commands output JSON arrays to stdout. No interactive UI is shown.
 
-- `cu task <id> --raw` returns the full JSON response for a single task.
+- `cu task <id> --json` returns the full JSON response for a single task.
 - All list commands output JSON arrays.
 - Errors go to stderr with exit code 1.
 - Write commands (`update`, `create`, `comment`) always output JSON regardless of mode.
+- Set `NO_COLOR` to disable color output.
 
 ## For AI agents
 
@@ -52,7 +53,7 @@ Always use the `--json` flag or pipe output to ensure you get JSON. Parse with `
 cu tasks --status "in progress" --json | jq '.[] | {id, name}'
 
 # Get full task details as JSON
-cu task abc123 --raw | jq '{id, name, status}'
+cu task abc123 --json | jq '{id, name, status}'
 
 # Check current sprint
 cu sprint --json | jq '.[] | select(.status != "done")'
@@ -97,7 +98,9 @@ The skill file is a standalone markdown document. Feed it to any agent that supp
 
 ## Config
 
-`~/.config/cu/config.json`:
+### Config file
+
+`~/.config/cu/config.json` (or `$XDG_CONFIG_HOME/cu/config.json`):
 
 ```json
 {
@@ -105,6 +108,17 @@ The skill file is a standalone markdown document. Feed it to any agent that supp
   "teamId": "12345678"
 }
 ```
+
+### Environment variables
+
+Environment variables override config file values:
+
+| Variable       | Description                        |
+| -------------- | ---------------------------------- |
+| `CU_API_TOKEN` | ClickUp personal API token (`pk_`) |
+| `CU_TEAM_ID`   | Workspace (team) ID                |
+
+When both are set, the config file is not required. Useful for CI/CD and containerized agents.
 
 ## Commands
 
@@ -115,6 +129,7 @@ List tasks assigned to me.
 ```bash
 cu tasks
 cu tasks --status "in progress"
+cu tasks --name "login"
 cu tasks --list <listId>
 cu tasks --space <spaceId>
 cu tasks --json          # force JSON output
@@ -127,6 +142,9 @@ List initiatives assigned to me.
 ```bash
 cu initiatives
 cu initiatives --status "to do"
+cu initiatives --name "auth"
+cu initiatives --list <listId>
+cu initiatives --space <spaceId>
 cu initiatives --json
 ```
 
@@ -166,7 +184,7 @@ Get task details. Pretty summary in terminal, JSON when piped.
 
 ```bash
 cu task abc123
-cu task abc123 --raw     # full JSON response
+cu task abc123 --json    # full JSON response
 ```
 
 ### `cu subtasks <id>`
@@ -186,14 +204,20 @@ Update a task. Provide at least one option.
 cu update abc123 -s "in progress"
 cu update abc123 -n "New task name"
 cu update abc123 -d "Updated description with **markdown**"
-cu update abc123 -n "New name" -s "done"
+cu update abc123 --priority high
+cu update abc123 --due-date 2025-03-15
+cu update abc123 --assignee 12345
+cu update abc123 -n "New name" -s "done" --priority urgent
 ```
 
-| Flag                       | Description                                 |
-| -------------------------- | ------------------------------------------- |
-| `-n, --name <text>`        | New task name                               |
-| `-d, --description <text>` | New description (markdown supported)        |
-| `-s, --status <status>`    | New status (e.g. `"in progress"`, `"done"`) |
+| Flag                       | Description                                          |
+| -------------------------- | ---------------------------------------------------- |
+| `-n, --name <text>`        | New task name                                        |
+| `-d, --description <text>` | New description (markdown supported)                 |
+| `-s, --status <status>`    | New status (e.g. `"in progress"`, `"done"`)          |
+| `--priority <level>`       | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
+| `--due-date <date>`        | Due date (`YYYY-MM-DD`)                              |
+| `--assignee <userId>`      | Add assignee by numeric user ID                      |
 
 ### `cu create`
 
@@ -203,15 +227,21 @@ Create a new task. If `--parent` is given, list is auto-detected from the parent
 cu create -n "Fix login bug" -l <listId>
 cu create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
 cu create -n "Task" -l <listId> -d "desc" -s "open"
+cu create -n "Task" -l <listId> --priority high --due-date 2025-06-01
+cu create -n "Task" -l <listId> --assignee 12345 --tags "bug,frontend"
 ```
 
-| Flag                       | Required         | Description                      |
-| -------------------------- | ---------------- | -------------------------------- |
-| `-n, --name <name>`        | yes              | Task name                        |
-| `-l, --list <listId>`      | if no `--parent` | Target list ID                   |
-| `-p, --parent <taskId>`    | no               | Parent task (list auto-detected) |
-| `-d, --description <text>` | no               | Description (markdown)           |
-| `-s, --status <status>`    | no               | Initial status                   |
+| Flag                       | Required         | Description                                          |
+| -------------------------- | ---------------- | ---------------------------------------------------- |
+| `-n, --name <name>`        | yes              | Task name                                            |
+| `-l, --list <listId>`      | if no `--parent` | Target list ID                                       |
+| `-p, --parent <taskId>`    | no               | Parent task (list auto-detected)                     |
+| `-d, --description <text>` | no               | Description (markdown)                               |
+| `-s, --status <status>`    | no               | Initial status                                       |
+| `--priority <level>`       | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
+| `--due-date <date>`        | no               | Due date (`YYYY-MM-DD`)                              |
+| `--assignee <userId>`      | no               | Assignee by numeric user ID                          |
+| `--tags <tags>`            | no               | Comma-separated tag names                            |
 
 ### `cu comment <id>`
 
@@ -220,6 +250,30 @@ Post a comment on a task.
 ```bash
 cu comment abc123 -m "Addressed in PR #42"
 ```
+
+### `cu comments <id>`
+
+List comments on a task. Formatted view in terminal, JSON when piped.
+
+```bash
+cu comments abc123
+cu comments abc123 --json
+```
+
+### `cu lists <spaceId>`
+
+List all lists in a space, including lists inside folders. Useful for discovering list IDs needed by `--list` filter and `cu create -l`.
+
+```bash
+cu lists <spaceId>
+cu lists <spaceId> --name "sprint"    # filter by partial name
+cu lists <spaceId> --json
+```
+
+| Flag               | Description                        |
+| ------------------ | ---------------------------------- |
+| `--name <partial>` | Filter lists by partial name match |
+| `--json`           | Force JSON output                  |
 
 ### `cu spaces`
 
