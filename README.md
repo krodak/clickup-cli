@@ -25,7 +25,7 @@ Prompts for your API token, verifies it, auto-detects your workspace, and writes
 
 ### Interactive TTY mode (for humans)
 
-When run in a terminal (TTY detected), list commands (`cu tasks`, `cu initiatives`, `cu sprint`, `cu inbox`, `cu subtasks`) display:
+When run in a terminal (TTY detected), list commands (`cu tasks`, `cu initiatives`, `cu sprint`, `cu inbox`, `cu subtasks`, `cu overdue`) display:
 
 1. A formatted table with auto-sized columns showing task ID, name, status, type, list, and URL.
 2. An interactive checkbox picker (powered by @inquirer/prompts) - navigate with arrow keys, toggle selection with space, confirm with enter.
@@ -41,7 +41,7 @@ When output is piped (no TTY), all list commands output JSON arrays to stdout. N
 - `cu task <id> --json` returns the full JSON response for a single task.
 - All list commands output JSON arrays.
 - Errors go to stderr with exit code 1.
-- Write commands (`update`, `create`, `comment`) always output JSON regardless of mode.
+- Write commands (`update`, `create`, `comment`, `assign`) always output JSON regardless of mode.
 - Set `NO_COLOR` to disable color output.
 
 ## For AI agents
@@ -291,6 +291,91 @@ cu spaces --json
 | `--name <partial>` | Filter spaces by partial name match |
 | `--my`             | Show only spaces you belong to      |
 | `--json`           | Force JSON output                   |
+
+### `cu open <query>`
+
+Open a task in the browser. Accepts a task ID or partial name.
+
+```bash
+cu open abc123                # open by task ID
+cu open "login bug"           # search by name, open first match
+cu open abc123 --json         # output task JSON instead of opening
+```
+
+If the query matches multiple tasks by name, all matches are listed and the first is opened.
+
+### `cu summary`
+
+Daily standup helper. Shows tasks grouped into: recently completed, in progress, and overdue.
+
+```bash
+cu summary
+cu summary --hours 48         # extend completed window to 48 hours
+cu summary --json
+```
+
+| Flag          | Description                                        |
+| ------------- | -------------------------------------------------- |
+| `--hours <n>` | Lookback for recently completed tasks (default 24) |
+| `--json`      | Force JSON output                                  |
+
+### `cu overdue`
+
+List tasks that are past their due date (excludes done/closed tasks).
+
+```bash
+cu overdue
+cu overdue --json
+```
+
+Tasks are sorted by due date ascending (most overdue first).
+
+### `cu assign <id>`
+
+Assign or unassign users from a task. Supports `me` as shorthand for your user ID.
+
+```bash
+cu assign abc123 --to 12345          # add assignee
+cu assign abc123 --to me             # assign yourself
+cu assign abc123 --remove 12345      # remove assignee
+cu assign abc123 --to me --remove 67890  # both at once
+cu assign abc123 --to me --json      # output updated task JSON
+```
+
+| Flag                | Description                       |
+| ------------------- | --------------------------------- |
+| `--to <userId>`     | Add assignee (user ID or `me`)    |
+| `--remove <userId>` | Remove assignee (user ID or `me`) |
+| `--json`            | Force JSON output                 |
+
+### `cu config`
+
+Manage CLI configuration.
+
+```bash
+cu config get apiToken        # print a config value
+cu config set teamId 12345    # set a config value
+cu config path                # print config file path
+```
+
+Valid keys: `apiToken`, `teamId`. Setting `apiToken` validates the `pk_` prefix.
+
+### `cu completion <shell>`
+
+Output shell completion script. Supports `bash`, `zsh`, and `fish`.
+
+```bash
+# Bash - add to ~/.bashrc
+eval "$(cu completion bash)"
+
+# Zsh - add to ~/.zshrc
+eval "$(cu completion zsh)"
+
+# Fish - save to completions directory
+cu completion fish > ~/.config/fish/completions/cu.fish
+```
+
+Completions cover all commands, flags, and known values (priority levels, status names, config keys).
 
 ### `cu init`
 
