@@ -11,7 +11,7 @@ export interface SummaryResult {
   overdue: TaskSummary[]
 }
 
-const IN_PROGRESS_PATTERNS = ['in progress', 'in review', 'doing']
+const IN_PROGRESS_PATTERNS = ['in progress', 'in review', 'code review', 'doing']
 
 function isCompletedRecently(task: Task, cutoff: number): boolean {
   if (!isDoneStatus(task.status.status)) return false

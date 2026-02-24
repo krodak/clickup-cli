@@ -80,9 +80,10 @@ describe('categorizeTasks', () => {
       makeTask('t1', 'in progress'),
       makeTask('t2', 'in review'),
       makeTask('t3', 'doing'),
+      makeTask('t4', 'code review'),
     ]
     const result = categorizeTasks(tasks, 24)
-    expect(result.inProgress).toHaveLength(3)
+    expect(result.inProgress).toHaveLength(4)
   })
 
   it('matches in-progress status patterns case-insensitively', async () => {
