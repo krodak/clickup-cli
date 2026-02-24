@@ -179,8 +179,9 @@ describe('showDetailsAndOpen', () => {
     await showDetailsAndOpen(tasks)
 
     expect(execFileSync).toHaveBeenCalledTimes(2)
-    expect(execFileSync).toHaveBeenCalledWith('open', ['https://app.clickup.com/t/t1'])
-    expect(execFileSync).toHaveBeenCalledWith('open', ['https://app.clickup.com/t/t2'])
+    const calls = vi.mocked(execFileSync).mock.calls
+    expect(calls[0]![1]).toEqual(['https://app.clickup.com/t/t1'])
+    expect(calls[1]![1]).toEqual(['https://app.clickup.com/t/t2'])
 
     vi.mocked(console.log).mockRestore()
   })
