@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import type { Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 
-function openUrl(url: string): void {
+export function openUrl(url: string): void {
   switch (process.platform) {
     case 'darwin':
       execFileSync('open', [url])
