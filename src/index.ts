@@ -2,7 +2,8 @@ import { Command } from 'commander'
 import { createRequire } from 'module'
 import { loadConfig } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
-import { updateTask } from './commands/update.js'
+import { updateTask, buildUpdatePayload } from './commands/update.js'
+import type { UpdateCommandOptions } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
@@ -10,6 +11,8 @@ import { runInitCommand } from './commands/init.js'
 import { runSprintCommand } from './commands/sprint.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
+import { fetchComments, printComments } from './commands/comments.js'
+import { fetchLists, printLists } from './commands/lists.js'
 import { isTTY } from './output.js'
 import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
@@ -78,18 +81,30 @@ program
   .command('initiatives')
   .description('List initiatives assigned to me')
   .option('--status <status>', 'Filter by status')
+  .option('--list <listId>', 'Filter by list ID')
+  .option('--space <spaceId>', 'Filter by space ID')
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (opts: { status?: string; name?: string; json?: boolean }) => {
-      const config = loadConfig()
-      const tasks = await fetchMyTasks(config, {
-        typeFilter: 'initiative',
-        statuses: opts.status ? [opts.status] : undefined,
-        name: opts.name,
-      })
-      await printTasks(tasks, opts.json ?? false, config)
-    }),
+    wrapAction(
+      async (opts: {
+        status?: string
+        list?: string
+        space?: string
+        name?: string
+        json?: boolean
+      }) => {
+        const config = loadConfig()
+        const tasks = await fetchMyTasks(config, {
+          typeFilter: 'initiative',
+          statuses: opts.status ? [opts.status] : undefined,
+          listIds: opts.list ? [opts.list] : undefined,
+          spaceIds: opts.space ? [opts.space] : undefined,
+          name: opts.name,
+        })
+        await printTasks(tasks, opts.json ?? false, config)
+      },
+    ),
   )
 
 program
@@ -120,18 +135,20 @@ program
 
 program
   .command('update <taskId>')
-  .description('Update a task (name, description, or status)')
+  .description('Update a task')
   .option('-n, --name <text>', 'New task name')
   .option('-d, --description <text>', 'New description (markdown supported)')
   .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
+  .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
+  .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
+  .option('--assignee <userId>', 'Add assignee by user ID')
   .action(
-    wrapAction(
-      async (taskId: string, opts: { name?: string; description?: string; status?: string }) => {
-        const config = loadConfig()
-        const result = await updateTask(config, taskId, opts)
-        console.log(JSON.stringify(result, null, 2))
-      },
-    ),
+    wrapAction(async (taskId: string, opts: UpdateCommandOptions) => {
+      const config = loadConfig()
+      const payload = buildUpdatePayload(opts)
+      const result = await updateTask(config, taskId, payload)
+      console.log(JSON.stringify(result, null, 2))
+    }),
   )
 
 program
@@ -142,6 +159,10 @@ program
   .option('-d, --description <text>', 'Task description')
   .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
   .option('-s, --status <status>', 'Initial status')
+  .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
+  .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
+  .option('--assignee <userId>', 'Assignee user ID')
+  .option('--tags <tags>', 'Comma-separated tag names')
   .action(
     wrapAction(async (opts: CreateOptions) => {
       const config = loadConfig()
@@ -184,6 +205,31 @@ program
       const config = loadConfig()
       const result = await postComment(config, taskId, opts.message)
       console.log(JSON.stringify(result, null, 2))
+    }),
+  )
+
+program
+  .command('comments <taskId>')
+  .description('List comments on a task')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const comments = await fetchComments(config, taskId)
+      printComments(comments, opts.json ?? false)
+    }),
+  )
+
+program
+  .command('lists <spaceId>')
+  .description('List all lists in a space (including lists inside folders)')
+  .option('--name <partial>', 'Filter by name (case-insensitive contains)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const lists = await fetchLists(config, spaceId, { name: opts.name })
+      printLists(lists, opts.json ?? false)
     }),
   )
 

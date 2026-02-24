@@ -35,6 +35,10 @@ export interface UpdateTaskOptions {
   name?: string
   description?: string
   status?: string
+  priority?: number | null
+  due_date?: number
+  due_date_time?: boolean
+  assignees?: { add?: number[]; rem?: number[] }
 }
 
 export interface CreateTaskOptions {
@@ -42,6 +46,11 @@ export interface CreateTaskOptions {
   description?: string
   parent?: string
   status?: string
+  priority?: number | null
+  due_date?: number
+  due_date_time?: boolean
+  assignees?: number[]
+  tags?: string[]
 }
 
 export interface Team {
@@ -169,6 +178,22 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify({ comment_text: commentText }),
     })
+  }
+
+  async getTaskComments(
+    taskId: string,
+  ): Promise<
+    Array<{ id: string; comment_text: string; user: { username: string }; date: string }>
+  > {
+    const data = await this.request<{
+      comments: Array<{
+        id: string
+        comment_text: string
+        user: { username: string }
+        date: string
+      }>
+    }>(`/task/${taskId}/comment`)
+    return data.comments ?? []
   }
 
   async getTasksFromList(listId: string, params: Record<string, string> = {}): Promise<Task[]> {
