@@ -65,6 +65,89 @@ describe('updateTask', () => {
   })
 })
 
+describe('parsePriority', () => {
+  it('parses named priorities', async () => {
+    const { parsePriority } = await import('../../../src/commands/update.js')
+    expect(parsePriority('urgent')).toBe(1)
+    expect(parsePriority('high')).toBe(2)
+    expect(parsePriority('normal')).toBe(3)
+    expect(parsePriority('low')).toBe(4)
+  })
+
+  it('parses numeric priorities', async () => {
+    const { parsePriority } = await import('../../../src/commands/update.js')
+    expect(parsePriority('1')).toBe(1)
+    expect(parsePriority('4')).toBe(4)
+  })
+
+  it('is case-insensitive', async () => {
+    const { parsePriority } = await import('../../../src/commands/update.js')
+    expect(parsePriority('URGENT')).toBe(1)
+    expect(parsePriority('High')).toBe(2)
+  })
+
+  it('throws on invalid priority', async () => {
+    const { parsePriority } = await import('../../../src/commands/update.js')
+    expect(() => parsePriority('5')).toThrow('Priority must be')
+    expect(() => parsePriority('invalid')).toThrow('Priority must be')
+  })
+})
+
+describe('parseDueDate', () => {
+  it('parses YYYY-MM-DD format', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-03-15')
+    expect(result).toBe(new Date('2025-03-15').getTime())
+  })
+
+  it('throws on invalid date', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    expect(() => parseDueDate('not-a-date')).toThrow('Invalid date')
+  })
+})
+
+describe('buildUpdatePayload', () => {
+  it('builds payload with priority', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ priority: 'high' })
+    expect(payload).toEqual({ priority: 2 })
+  })
+
+  it('builds payload with due date', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ dueDate: '2025-06-01' })
+    expect(payload.due_date).toBe(new Date('2025-06-01').getTime())
+    expect(payload.due_date_time).toBe(false)
+  })
+
+  it('builds payload with assignee', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ assignee: '12345' })
+    expect(payload.assignees).toEqual({ add: [12345] })
+  })
+
+  it('builds payload with all fields', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({
+      name: 'New name',
+      status: 'done',
+      priority: 'urgent',
+      dueDate: '2025-01-01',
+      assignee: '99',
+    })
+    expect(payload.name).toBe('New name')
+    expect(payload.status).toBe('done')
+    expect(payload.priority).toBe(1)
+    expect(payload.due_date).toBe(new Date('2025-01-01').getTime())
+    expect(payload.assignees).toEqual({ add: [99] })
+  })
+
+  it('throws on non-numeric assignee', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    expect(() => buildUpdatePayload({ assignee: 'abc' })).toThrow('numeric user ID')
+  })
+})
+
 describe('updateDescription (backward compat)', () => {
   it('delegates to updateTask with description', async () => {
     const { updateDescription } = await import('../../../src/commands/update.js')
