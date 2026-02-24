@@ -53,7 +53,7 @@
     "@inquirer/testing": "^3.3.0",
     "@types/node": "^20.0.0",
     "dotenv": "^17.3.1",
-    "eslint": "^10.0.1",
+    "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
     "tsup": "^8.0.0",
