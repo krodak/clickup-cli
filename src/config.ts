@@ -1,51 +1,66 @@
 import fs from 'fs'
 import { homedir } from 'os'
-import { dirname, join } from 'path'
+import { join } from 'path'
 
 export interface Config {
   apiToken: string
   teamId: string
 }
 
-const CONFIG_PATH = join(homedir(), '.config', 'cu', 'config.json')
+function configDir(): string {
+  const xdg = process.env.XDG_CONFIG_HOME
+  if (xdg) return join(xdg, 'cu')
+  return join(homedir(), '.config', 'cu')
+}
+
+function configPath(): string {
+  return join(configDir(), 'config.json')
+}
 
 export function loadConfig(): Config {
-  if (!fs.existsSync(CONFIG_PATH)) {
-    throw new Error(`Config file not found at ${CONFIG_PATH}.\nRun: cu init`)
+  const envToken = process.env.CU_API_TOKEN?.trim()
+  const envTeamId = process.env.CU_TEAM_ID?.trim()
+
+  let fileToken: string | undefined
+  let fileTeamId: string | undefined
+
+  const path = configPath()
+  if (fs.existsSync(path)) {
+    const raw = fs.readFileSync(path, 'utf-8')
+    let parsed: Partial<Config>
+    try {
+      parsed = JSON.parse(raw) as Partial<Config>
+    } catch {
+      throw new Error(`Config file at ${path} contains invalid JSON. Please check the file syntax.`)
+    }
+    fileToken = parsed.apiToken?.trim()
+    fileTeamId = parsed.teamId?.trim()
   }
 
-  const raw = fs.readFileSync(CONFIG_PATH, 'utf-8')
-  let parsed: Partial<Config>
-  try {
-    parsed = JSON.parse(raw) as Partial<Config>
-  } catch {
-    throw new Error(
-      `Config file at ${CONFIG_PATH} contains invalid JSON. Please check the file syntax.`,
-    )
+  const apiToken = envToken || fileToken
+  if (!apiToken) {
+    throw new Error('Config missing required field: apiToken.\nSet CU_API_TOKEN or run: cu init')
   }
-
-  const apiToken = parsed.apiToken?.trim()
-  if (!apiToken) throw new Error('Config missing required field: apiToken')
   if (!apiToken.startsWith('pk_')) {
     throw new Error('Config apiToken must start with pk_. The configured token does not.')
   }
 
-  const teamId = parsed.teamId?.trim()
+  const teamId = envTeamId || fileTeamId
   if (!teamId) {
-    throw new Error('Config missing required field: teamId. Run: cu init')
+    throw new Error('Config missing required field: teamId.\nSet CU_TEAM_ID or run: cu init')
   }
 
   return { apiToken, teamId }
 }
 
 export function getConfigPath(): string {
-  return CONFIG_PATH
+  return configPath()
 }
 
 export function writeConfig(config: Config): void {
-  const dir = dirname(CONFIG_PATH)
+  const dir = configDir()
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
   }
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2) + '\n', 'utf-8')
+  fs.writeFileSync(join(dir, 'config.json'), JSON.stringify(config, null, 2) + '\n', 'utf-8')
 }
