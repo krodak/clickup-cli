@@ -26,6 +26,7 @@ import {
   configPath as getConfigFilePath,
 } from './commands/config.js'
 import { assignTask } from './commands/assign.js'
+import { generateCompletion } from './commands/completion.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -379,6 +380,16 @@ configCmd
   .action(
     wrapAction(async () => {
       console.log(getConfigFilePath())
+    }),
+  )
+
+program
+  .command('completion <shell>')
+  .description('Output shell completion script (bash, zsh, fish)')
+  .action(
+    wrapAction(async (shell: string) => {
+      const script = generateCompletion(shell)
+      process.stdout.write(script)
     }),
   )
 
