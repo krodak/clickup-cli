@@ -53,6 +53,16 @@ export function loadConfig(): Config {
   return { apiToken, teamId }
 }
 
+export function loadRawConfig(): Partial<Config> {
+  const path = configPath()
+  if (!fs.existsSync(path)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(path, 'utf-8')) as Partial<Config>
+  } catch {
+    return {}
+  }
+}
+
 export function getConfigPath(): string {
   return configPath()
 }

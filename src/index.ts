@@ -20,6 +20,11 @@ import { runAssignedCommand } from './commands/assigned.js'
 import { openTask } from './commands/open.js'
 import { runSummaryCommand } from './commands/summary.js'
 import { fetchOverdueTasks } from './commands/overdue.js'
+import {
+  getConfigValue,
+  setConfigValue,
+  configPath as getConfigFilePath,
+} from './commands/config.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -320,6 +325,38 @@ program
       const config = loadConfig()
       const tasks = await fetchOverdueTasks(config)
       await printTasks(tasks, opts.json ?? false, config)
+    }),
+  )
+
+const configCmd = program.command('config').description('Manage CLI configuration')
+
+configCmd
+  .command('get <key>')
+  .description('Print a config value')
+  .action(
+    wrapAction(async (key: string) => {
+      const value = getConfigValue(key)
+      if (value !== undefined) {
+        console.log(value)
+      }
+    }),
+  )
+
+configCmd
+  .command('set <key> <value>')
+  .description('Set a config value')
+  .action(
+    wrapAction(async (key: string, value: string) => {
+      setConfigValue(key, value)
+    }),
+  )
+
+configCmd
+  .command('path')
+  .description('Print config file path')
+  .action(
+    wrapAction(async () => {
+      console.log(getConfigFilePath())
     }),
   )
 
