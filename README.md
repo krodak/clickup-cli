@@ -9,8 +9,17 @@ A ClickUp CLI for AI agents and humans. Two operating modes: interactive tables 
 
 ## Install
 
+### npm
+
 ```bash
 npm install -g @krodak/clickup-cli
+```
+
+### Homebrew
+
+```bash
+brew tap krodak/tap
+brew install clickup-cli
 ```
 
 ## Getting started
