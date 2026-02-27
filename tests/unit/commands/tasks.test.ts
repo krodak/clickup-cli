@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mockGetMyTasks = vi.fn()
 
@@ -6,6 +6,27 @@ vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
   })),
+}))
+
+const mockIsTTY = vi.fn<() => boolean>()
+const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
+
+vi.mock('../../../src/output.js', async importOriginal => {
+  const orig = await importOriginal<typeof import('../../../src/output.js')>()
+  return {
+    ...orig,
+    isTTY: (...args: Parameters<typeof orig.isTTY>) => mockIsTTY(...args),
+    shouldOutputJson: (...args: Parameters<typeof orig.shouldOutputJson>) =>
+      mockShouldOutputJson(...args),
+  }
+})
+
+const mockInteractiveTaskPicker = vi.fn()
+const mockShowDetailsAndOpen = vi.fn()
+
+vi.mock('../../../src/interactive.js', () => ({
+  interactiveTaskPicker: (...args: unknown[]) => mockInteractiveTaskPicker(...args),
+  showDetailsAndOpen: (...args: unknown[]) => mockShowDetailsAndOpen(...args),
 }))
 
 const baseTask = (overrides: object = {}) => ({
@@ -130,5 +151,67 @@ describe('fetchMyTasks', () => {
     const { fetchMyTasks } = await import('../../../src/commands/tasks.js')
     await fetchMyTasks({ apiToken: 'pk_t', teamId: 'team1' }, { name: 'test' })
     expect(mockGetMyTasks).toHaveBeenCalledWith('team1', {})
+  })
+})
+
+describe('printTasks', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>
+
+  const sampleTasks = [
+    {
+      id: 't1',
+      name: 'Task One',
+      status: 'open',
+      task_type: 'task' as const,
+      list: 'L1',
+      url: 'http://cu/t1',
+    },
+  ]
+
+  beforeEach(() => {
+    mockIsTTY.mockReset()
+    mockShouldOutputJson.mockReset()
+    mockInteractiveTaskPicker.mockReset()
+    mockShowDetailsAndOpen.mockReset()
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    logSpy.mockRestore()
+    delete process.env['CU_OUTPUT']
+  })
+
+  it('outputs markdown when piped and forceJson is false', async () => {
+    mockShouldOutputJson.mockReturnValue(false)
+    mockIsTTY.mockReturnValue(false)
+    const { printTasks } = await import('../../../src/commands/tasks.js')
+    await printTasks(sampleTasks, false)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(output).toContain('|')
+    expect(output).toContain('Task One')
+    expect(output).not.toContain('"id"')
+  })
+
+  it('outputs JSON when forceJson is true', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockIsTTY.mockReturnValue(false)
+    const { printTasks } = await import('../../../src/commands/tasks.js')
+    await printTasks(sampleTasks, true)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    const parsed: unknown = JSON.parse(output)
+    expect(parsed).toEqual(sampleTasks)
+  })
+
+  it('outputs JSON when CU_OUTPUT=json', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockIsTTY.mockReturnValue(false)
+    const { printTasks } = await import('../../../src/commands/tasks.js')
+    await printTasks(sampleTasks, false)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    const parsed: unknown = JSON.parse(output)
+    expect(parsed).toBeTruthy()
   })
 })
