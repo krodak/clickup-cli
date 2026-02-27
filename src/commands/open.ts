@@ -3,7 +3,8 @@ import type { Task } from '../api.js'
 import type { Config } from '../config.js'
 import { fetchMyTasks } from './tasks.js'
 import { openUrl } from '../interactive.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatTaskDetailMarkdown } from '../markdown.js'
 
 export interface OpenOptions {
   json?: boolean
@@ -29,13 +30,13 @@ export async function openTask(
     }
 
     if (task) {
-      if (opts.json) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(task, null, 2))
+      } else if (!isTTY()) {
+        console.log(formatTaskDetailMarkdown(task))
       } else {
-        if (isTTY()) {
-          console.log(task.name)
-          console.log(task.url)
-        }
+        console.log(task.name)
+        console.log(task.url)
         openUrl(task.url)
       }
       return task
@@ -58,16 +59,20 @@ export async function openTask(
     console.log('Opening first match...')
   }
 
-  if (opts.json) {
+  if (shouldOutputJson(opts.json ?? false)) {
     const fullTask = await client.getTask(first.id)
     console.log(JSON.stringify(fullTask, null, 2))
     return fullTask
   }
 
-  if (isTTY()) {
-    console.log(first.name)
-    console.log(first.url)
+  if (!isTTY()) {
+    const fullTask = await client.getTask(first.id)
+    console.log(formatTaskDetailMarkdown(fullTask))
+    return fullTask
   }
+
+  console.log(first.name)
+  console.log(first.url)
   openUrl(first.url)
 
   return {
