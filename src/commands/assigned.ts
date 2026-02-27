@@ -1,7 +1,8 @@
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { groupedTaskPicker, showDetailsAndOpen } from '../interactive.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize } from './tasks.js'
@@ -87,12 +88,21 @@ export async function runAssignedCommand(
   const allTasks = await client.getMyTasks(config.teamId)
   const groups = groupByStatus(allTasks, opts.includeClosed ?? false)
 
-  if (opts.json || !isTTY()) {
+  if (shouldOutputJson(opts.json ?? false)) {
     const result: Record<string, AssignedTaskJson[]> = {}
     for (const group of groups) {
       result[group.status.toLowerCase()] = group.tasks.map(t => toJsonTask(t, summarize(t)))
     }
     console.log(JSON.stringify(result, null, 2))
+    return
+  }
+
+  if (!isTTY()) {
+    const mdGroups = groups.map(g => ({
+      label: g.status,
+      tasks: g.tasks.map(t => summarize(t)),
+    }))
+    console.log(formatGroupedTasksMarkdown(mdGroups))
     return
   }
 

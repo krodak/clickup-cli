@@ -175,4 +175,39 @@ describe('runAssignedCommand', () => {
     const hasNoTasks = calls.some((c: unknown[]) => String(c[0]).includes('No tasks found'))
     expect(hasNoTasks).toBe(true)
   })
+
+  it('outputs markdown grouped by status when piped (non-TTY)', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      makeTask('t1', 'in progress'),
+      makeTask('t2', 'to do'),
+      makeTask('t3', 'in progress'),
+    ])
+    vi.stubGlobal('process', {
+      ...process,
+      stdout: { ...process.stdout, isTTY: undefined },
+    })
+    const { runAssignedCommand } = await import('../../../src/commands/assigned.js')
+    await runAssignedCommand({ apiToken: 'pk_t', teamId: 'team1' }, {})
+
+    const logged = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string
+    expect(logged).toContain('## in progress')
+    expect(logged).toContain('## to do')
+    expect(logged).toContain('| ID |')
+    expect(logged).toContain('t1')
+    expect(logged).toContain('t2')
+    expect(logged).toContain('t3')
+  })
+
+  it('outputs markdown with no tasks message when piped and empty', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    vi.stubGlobal('process', {
+      ...process,
+      stdout: { ...process.stdout, isTTY: undefined },
+    })
+    const { runAssignedCommand } = await import('../../../src/commands/assigned.js')
+    await runAssignedCommand({ apiToken: 'pk_t', teamId: 'team1' }, {})
+
+    const logged = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string
+    expect(logged).toBe('No tasks found.')
+  })
 })
