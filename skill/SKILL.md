@@ -51,8 +51,9 @@ All commands support `--help` for full flag details.
 ## Output modes
 
 - **TTY (terminal)**: Interactive picker UI. Use `--json` to bypass.
-- **Piped / non-TTY**: Always JSON. This is what agents get by default.
-- **Agents should always pass `--json`** to guarantee machine-readable output.
+- **Piped / non-TTY**: Markdown by default, optimized for agent context windows. Use `--json` for structured JSON output.
+- **`cu task <id>`**: When piped, outputs a Markdown summary. Use `--json` for the full raw API object with all fields (custom fields, checklists, etc.).
+- Set `CU_OUTPUT=json` environment variable to always get JSON when piped.
 - Set `NO_COLOR` to disable color/interactive mode.
 
 ## Key facts
@@ -79,22 +80,25 @@ All commands support `--help` for full flag details.
 
 ```bash
 # List my in-progress tasks
-cu tasks --status "in progress" --json
+cu tasks --status "in progress"
 
 # Find tasks by partial name
-cu tasks --name "login" --json
+cu tasks --name "login"
 
-# Check current sprint
+# Check current sprint (--json for piping to jq)
 cu sprint --json | jq '.[].name'
 
-# Get full details on a task
+# Get task summary (markdown with key fields)
+cu task abc123def
+
+# Get full raw API object (--json for all fields: custom fields, checklists, etc.)
 cu task abc123def --json
 
 # List subtasks of an initiative
-cu subtasks abc123def --json
+cu subtasks abc123def
 
 # Read comments on a task
-cu comments abc123def --json
+cu comments abc123def
 
 # Update task status
 cu update abc123def -s "done"
@@ -112,16 +116,16 @@ cu create -n "Fix bug" -l <listId> --priority urgent --tags "bug,frontend"
 cu comment abc123def -m "Completed in PR #42"
 
 # Discover lists in a space
-cu lists <spaceId> --json
+cu lists <spaceId>
 
 # Open a task in the browser
 cu open abc123def
 
 # Standup summary
-cu summary --json
+cu summary
 
 # Check overdue tasks
-cu overdue --json
+cu overdue
 
 # Assign yourself to a task
 cu assign abc123def --to me

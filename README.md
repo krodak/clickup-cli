@@ -1,6 +1,6 @@
 # cu - ClickUp CLI
 
-A ClickUp CLI built for AI agents that also works well for humans. Outputs JSON when piped, interactive tables when run in a terminal.
+A ClickUp CLI built for AI agents that also works well for humans. Outputs Markdown when piped (optimized for AI context windows), interactive tables when run in a terminal.
 
 ## Quick start
 
@@ -81,9 +81,9 @@ cu update abc123 -s "done"        # update status
 cu assign abc123 --to me          # assign yourself
 ```
 
-Pass `--json` to any command to get raw JSON output instead of the interactive UI.
+Pass `--json` to any read command to force JSON output instead of the default format.
 
-When output is piped (no TTY), all commands automatically output JSON. Write commands (`update`, `create`, `comment`, `assign`) always return JSON regardless of mode.
+When output is piped (no TTY), all commands output **Markdown** by default - optimized for AI agent context windows. Pass `--json` to any command for JSON output. Set `CU_OUTPUT=json` environment variable to always get JSON when piped.
 
 ## Commands
 
@@ -161,6 +161,8 @@ Get task details. Pretty summary in terminal, JSON when piped.
 cu task abc123
 cu task abc123 --json
 ```
+
+**Note:** When piped, `cu task` outputs a structured Markdown summary of the task. For the full raw API response with all fields (custom fields, checklists, etc.), use `--json`.
 
 ### `cu subtasks <id>`
 
@@ -360,10 +362,11 @@ cu completion fish > ~/.config/fish/completions/cu.fish          # Fish
 
 Environment variables override config file values:
 
-| Variable       | Description                        |
-| -------------- | ---------------------------------- |
-| `CU_API_TOKEN` | ClickUp personal API token (`pk_`) |
-| `CU_TEAM_ID`   | Workspace (team) ID                |
+| Variable       | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `CU_API_TOKEN` | ClickUp personal API token (`pk_`)                                |
+| `CU_TEAM_ID`   | Workspace (team) ID                                               |
+| `CU_OUTPUT`    | Set to `json` to force JSON output when piped (default: markdown) |
 
 When both are set, the config file is not required. Useful for CI/CD and containerized agents.
 
