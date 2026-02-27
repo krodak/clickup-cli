@@ -96,14 +96,31 @@ Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
 2. Commit the version bump
 3. Tag: `git tag v<version>`
 4. Push commit and tag: `git push origin main --tags`
-5. CI handles: typecheck, test, build, and `npm publish --provenance`
+5. CI handles: typecheck, test, build, and `npm publish`
+6. After npm publish succeeds, update the Homebrew tap (see below)
 
 Do NOT publish manually. Do NOT use `NODE_AUTH_TOKEN` - the release pipeline uses OIDC trusted publishers for authentication.
+
+### npm Trusted Publishers Requirements
+
+The release workflow uses OIDC trusted publishing, which requires npm CLI 11.5.1+ (ships with Node 24+). The `release.yml` workflow MUST use `node-version: '24'` or higher. Node 22 ships with npm 10.x which does not support trusted publishers and will fail with `E404` / expired token errors.
+
+The trusted publisher must be configured on npmjs.com under the package settings (Trusted Publisher - GitHub Actions) with: workflow filename = `release.yml` (case-sensitive, exact match).
+
+### Homebrew Tap Update
+
+After npm publish succeeds for a new version, the Homebrew formula must be updated manually:
+
+1. Get the new tarball sha256: `curl -sL https://registry.npmjs.org/@krodak/clickup-cli/-/<version>.tgz | shasum -a 256`
+2. Update `Formula/clickup-cli.rb` in the `krodak/homebrew-tap` repo:
+   - Update the `url` to point to the new version tarball
+   - Update the `sha256` to match
+3. Push to `krodak/homebrew-tap`
 
 ## CI Pipelines
 
 - **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build
-- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance
+- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish (Node 24+ required for trusted publishers)
 - **Dependabot** - weekly updates for npm and GitHub Actions dependencies
 
 ## Testing Guidelines
