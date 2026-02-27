@@ -223,6 +223,39 @@ describe('runSummaryCommand', () => {
     expect(parsed.completed).toHaveLength(0)
   })
 
+  it('outputs markdown when piped (non-TTY, no --json)', async () => {
+    const pastDue = String(now - 1000)
+    mockGetMyTasks.mockResolvedValue([
+      makeTask('t1', 'done', { date_updated: String(now) }),
+      makeTask('t2', 'in progress', { due_date: pastDue }),
+    ])
+
+    const outputMod = await import('../../../src/output.js')
+    vi.mocked(outputMod.isTTY).mockReturnValue(false)
+
+    const { runSummaryCommand } = await import('../../../src/commands/summary.js')
+    await runSummaryCommand({ apiToken: 'pk_t', teamId: 'team1' }, { hours: 24, json: false })
+
+    const logged = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string
+    expect(logged).toContain('## Completed Recently')
+    expect(logged).toContain('## In Progress')
+    expect(logged).toContain('| ID |')
+    expect(() => JSON.parse(logged) as unknown).toThrow()
+  })
+
+  it('outputs "No tasks found." in markdown when all buckets empty and piped', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+
+    const outputMod = await import('../../../src/output.js')
+    vi.mocked(outputMod.isTTY).mockReturnValue(false)
+
+    const { runSummaryCommand } = await import('../../../src/commands/summary.js')
+    await runSummaryCommand({ apiToken: 'pk_t', teamId: 'team1' }, { hours: 24, json: false })
+
+    const logged = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string
+    expect(logged).toBe('No tasks found.')
+  })
+
   it('outputs TTY format with section headers', async () => {
     mockGetMyTasks.mockResolvedValue([makeTask('t1', 'in progress')])
 
