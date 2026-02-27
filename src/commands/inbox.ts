@@ -1,7 +1,8 @@
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { groupedTaskPicker, showDetailsAndOpen } from '../interactive.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize } from './tasks.js'
@@ -100,7 +101,7 @@ export async function printInbox(
   const now = Date.now()
   const groups = groupTasks(tasks, now)
 
-  if (forceJson || !isTTY()) {
+  if (shouldOutputJson(forceJson)) {
     const jsonGroups: Record<string, InboxTaskSummary[]> = {}
     for (const { key } of TIME_PERIODS) {
       if (groups[key].length > 0) {
@@ -108,6 +109,14 @@ export async function printInbox(
       }
     }
     console.log(JSON.stringify(jsonGroups, null, 2))
+    return
+  }
+  if (!isTTY()) {
+    const mdGroups = TIME_PERIODS.filter(p => groups[p.key].length > 0).map(p => ({
+      label: p.label,
+      tasks: groups[p.key] as TaskSummary[],
+    }))
+    console.log(formatGroupedTasksMarkdown(mdGroups))
     return
   }
 
