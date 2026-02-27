@@ -1,94 +1,25 @@
 # cu - ClickUp CLI
 
-A ClickUp CLI for AI agents and humans. Two operating modes: interactive tables with a task picker in terminals, raw JSON when piped.
+A ClickUp CLI built for AI agents that also works well for humans. Outputs JSON when piped, interactive tables when run in a terminal.
 
-## Requirements
-
-- Node 22+
-- A ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps)
-
-## Install
-
-### npm
+## Quick start
 
 ```bash
-npm install -g @krodak/clickup-cli
+npm install -g @krodak/clickup-cli   # or: brew tap krodak/tap && brew install clickup-cli
+cu init                               # walks you through API token + workspace setup
 ```
 
-### Homebrew
+You need Node 22+ and a ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps).
 
-```bash
-brew tap krodak/tap
-brew install clickup-cli
-```
+## Using with AI agents
 
-## Getting started
+This is the primary use case. Install the tool, install the skill file, and your agent knows how to work with ClickUp.
 
-```bash
-cu init
-```
+### 1. Install the skill
 
-Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cu/config.json`.
+The repo includes a skill file at `skill/SKILL.md` that teaches agents all available commands and when to use them.
 
-## Operating Modes
-
-### Interactive TTY mode (for humans)
-
-When run in a terminal (TTY detected), list commands (`cu tasks`, `cu initiatives`, `cu sprint`, `cu inbox`, `cu subtasks`, `cu overdue`) display:
-
-1. A formatted table with auto-sized columns showing task ID, name, status, type, list, and URL.
-2. An interactive checkbox picker (powered by @inquirer/prompts) - navigate with arrow keys, toggle selection with space, confirm with enter.
-3. For selected tasks, a rich detail view showing: name (bold/underlined), ID, status, type, list, assignees, priority, dates, estimate, tracked time, tags, parent, URL, and a description preview (first 3 lines).
-4. A prompt to open the selected tasks in the browser.
-
-Pass `--json` to any list command to bypass interactive mode and get raw JSON output in a terminal.
-
-### JSON piped mode (for AI agents and scripts)
-
-When output is piped (no TTY), all list commands output JSON arrays to stdout. No interactive UI is shown.
-
-- `cu task <id> --json` returns the full JSON response for a single task.
-- All list commands output JSON arrays.
-- Errors go to stderr with exit code 1.
-- Write commands (`update`, `create`, `comment`, `assign`) always output JSON regardless of mode.
-- Set `NO_COLOR` to disable color output.
-
-## For AI agents
-
-Always use the `--json` flag or pipe output to ensure you get JSON. Parse with `jq` or programmatically.
-
-```bash
-# List my in-progress tasks
-cu tasks --status "in progress" --json | jq '.[] | {id, name}'
-
-# Get full task details as JSON
-cu task abc123 --json | jq '{id, name, status}'
-
-# Check current sprint
-cu sprint --json | jq '.[] | select(.status != "done")'
-
-# Create subtask under initiative
-INITIATIVE_ID=$(cu initiatives --json | jq -r '.[0].id')
-cu create -n "New subtask" -p "$INITIATIVE_ID"
-
-# Update status when done
-cu update abc123 -s "done"
-```
-
-Write commands (`update`, `create`, `comment`) always return JSON, no `--json` flag needed.
-
-## AI Agents Skill
-
-A skill file is included at `skill/SKILL.md` that teaches AI agents how to use `cu`. Install it for your agent of choice:
-
-### OpenCode
-
-```bash
-mkdir -p ~/.config/opencode/skills/clickup
-cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
-```
-
-### Claude Code
+**Claude Code:**
 
 ```bash
 mkdir -p ~/.claude/skills/clickup
@@ -97,39 +28,66 @@ cp skill/SKILL.md ~/.claude/skills/clickup/SKILL.md
 
 Then reference it in your `CLAUDE.md` or project instructions.
 
-### Codex
+**OpenCode:**
 
-Copy the contents of `skill/SKILL.md` into your Codex system prompt or project instructions file.
-
-### Other agents
-
-The skill file is a standalone markdown document. Feed it to any agent that supports custom instructions or tool documentation.
-
-## Config
-
-### Config file
-
-`~/.config/cu/config.json` (or `$XDG_CONFIG_HOME/cu/config.json`):
-
-```json
-{
-  "apiToken": "pk_...",
-  "teamId": "12345678"
-}
+```bash
+mkdir -p ~/.config/opencode/skills/clickup
+cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
 ```
 
-### Environment variables
+**Codex / other agents:**
 
-Environment variables override config file values:
+Copy the contents of `skill/SKILL.md` into your system prompt or project instructions. It's a standalone markdown document.
 
-| Variable       | Description                        |
-| -------------- | ---------------------------------- |
-| `CU_API_TOKEN` | ClickUp personal API token (`pk_`) |
-| `CU_TEAM_ID`   | Workspace (team) ID                |
+### 2. Talk to your agent
 
-When both are set, the config file is not required. Useful for CI/CD and containerized agents.
+Once the skill is installed, you just tell the agent what you need in plain language. It figures out which `cu` commands to run.
+
+```
+"Read the description of task <id>, do the work, then mark it in review and leave a comment with the commit hash."
+
+"Check all subtasks under initiative <id> and improve their descriptions based on what's in the codebase."
+
+"What's my standup summary? What did I finish yesterday, what's in progress, what's overdue?"
+
+"Do exploratory work for task <id>, update the description with your findings, and flag blockers in a comment."
+
+"Create a subtask under <id> for the edge case we just found."
+
+"Check my sprint and tell me what's overdue."
+```
+
+You don't need to learn the CLI commands yourself. The agent handles it.
+
+### Why a CLI and not MCP?
+
+A CLI + skill file has fewer moving parts. No extra server process, no protocol layer. The agent already knows how to run shell commands - the skill file just teaches it which ones exist. This matches what Peter Steinberger and the OpenClaw project have found: for tool-use with coding agents, CLI + instructions tends to work better than MCP in practice.
+
+### Scoped output
+
+Most commands return only your tasks by default. `cu tasks`, `cu sprint`, `cu overdue`, `cu summary` all scope to what's assigned to you. `cu spaces --my` filters to spaces where you have tasks. This keeps output small and relevant - important when it's going into an agent's context window.
+
+## Using from the terminal
+
+When you run `cu` in a terminal directly, you get an interactive mode with tables and a task picker.
+
+```bash
+cu tasks                          # interactive table with checkbox picker
+cu sprint                         # your sprint tasks, auto-detected
+cu summary                        # standup helper: completed / in progress / overdue
+cu overdue                        # tasks past their due date
+cu open "login bug"               # fuzzy search, opens in browser
+cu update abc123 -s "done"        # update status
+cu assign abc123 --to me          # assign yourself
+```
+
+Pass `--json` to any command to get raw JSON output instead of the interactive UI.
+
+When output is piped (no TTY), all commands automatically output JSON. Write commands (`update`, `create`, `comment`, `assign`) always return JSON regardless of mode.
 
 ## Commands
+
+20 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -149,7 +107,7 @@ cu tasks --status "in progress"
 cu tasks --name "login"
 cu tasks --list <listId>
 cu tasks --space <spaceId>
-cu tasks --json          # force JSON output
+cu tasks --json
 ```
 
 ### `cu initiatives`
@@ -201,7 +159,7 @@ Get task details. Pretty summary in terminal, JSON when piped.
 
 ```bash
 cu task abc123
-cu task abc123 --json    # full JSON response
+cu task abc123 --json
 ```
 
 ### `cu subtasks <id>`
@@ -283,7 +241,7 @@ List all lists in a space, including lists inside folders. Useful for discoverin
 
 ```bash
 cu lists <spaceId>
-cu lists <spaceId> --name "sprint"    # filter by partial name
+cu lists <spaceId> --name "sprint"
 cu lists <spaceId> --json
 ```
 
@@ -298,8 +256,8 @@ List spaces in your workspace. Useful for getting space IDs for the `--space` fi
 
 ```bash
 cu spaces
-cu spaces --name "eng"   # filter by partial name match (case-insensitive)
-cu spaces --my            # show only spaces you are a member of
+cu spaces --name "eng"
+cu spaces --my
 cu spaces --json
 ```
 
@@ -314,9 +272,9 @@ cu spaces --json
 Open a task in the browser. Accepts a task ID or partial name.
 
 ```bash
-cu open abc123                # open by task ID
-cu open "login bug"           # search by name, open first match
-cu open abc123 --json         # output task JSON instead of opening
+cu open abc123
+cu open "login bug"
+cu open abc123 --json
 ```
 
 If the query matches multiple tasks by name, all matches are listed and the first is opened.
@@ -327,7 +285,7 @@ Daily standup helper. Shows tasks grouped into: recently completed, in progress,
 
 ```bash
 cu summary
-cu summary --hours 48         # extend completed window to 48 hours
+cu summary --hours 48
 cu summary --json
 ```
 
@@ -338,25 +296,23 @@ cu summary --json
 
 ### `cu overdue`
 
-List tasks that are past their due date (excludes done/closed tasks).
+List tasks that are past their due date (excludes done/closed tasks). Sorted most overdue first.
 
 ```bash
 cu overdue
 cu overdue --json
 ```
 
-Tasks are sorted by due date ascending (most overdue first).
-
 ### `cu assign <id>`
 
 Assign or unassign users from a task. Supports `me` as shorthand for your user ID.
 
 ```bash
-cu assign abc123 --to 12345          # add assignee
-cu assign abc123 --to me             # assign yourself
-cu assign abc123 --remove 12345      # remove assignee
-cu assign abc123 --to me --remove 67890  # both at once
-cu assign abc123 --to me --json      # output updated task JSON
+cu assign abc123 --to 12345
+cu assign abc123 --to me
+cu assign abc123 --remove 12345
+cu assign abc123 --to me --remove 67890
+cu assign abc123 --to me --json
 ```
 
 | Flag                | Description                       |
@@ -370,9 +326,9 @@ cu assign abc123 --to me --json      # output updated task JSON
 Manage CLI configuration.
 
 ```bash
-cu config get apiToken        # print a config value
-cu config set teamId 12345    # set a config value
-cu config path                # print config file path
+cu config get apiToken
+cu config set teamId 12345
+cu config path
 ```
 
 Valid keys: `apiToken`, `teamId`. Setting `apiToken` validates the `pk_` prefix.
@@ -382,17 +338,34 @@ Valid keys: `apiToken`, `teamId`. Setting `apiToken` validates the `pk_` prefix.
 Output shell completion script. Supports `bash`, `zsh`, and `fish`.
 
 ```bash
-# Bash - add to ~/.bashrc
-eval "$(cu completion bash)"
-
-# Zsh - add to ~/.zshrc
-eval "$(cu completion zsh)"
-
-# Fish - save to completions directory
-cu completion fish > ~/.config/fish/completions/cu.fish
+eval "$(cu completion bash)"                                    # Bash
+eval "$(cu completion zsh)"                                     # Zsh
+cu completion fish > ~/.config/fish/completions/cu.fish          # Fish
 ```
 
-Completions cover all commands, flags, and known values (priority levels, status names, config keys).
+## Config
+
+### Config file
+
+`~/.config/cu/config.json` (or `$XDG_CONFIG_HOME/cu/config.json`):
+
+```json
+{
+  "apiToken": "pk_...",
+  "teamId": "12345678"
+}
+```
+
+### Environment variables
+
+Environment variables override config file values:
+
+| Variable       | Description                        |
+| -------------- | ---------------------------------- |
+| `CU_API_TOKEN` | ClickUp personal API token (`pk_`) |
+| `CU_TEAM_ID`   | Workspace (team) ID                |
+
+When both are set, the config file is not required. Useful for CI/CD and containerized agents.
 
 ## Development
 
