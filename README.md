@@ -12,7 +12,7 @@ npm install -g @krodak/clickup-cli   # or: brew tap krodak/tap && brew install c
 cu init                               # walks you through API token + workspace setup
 ```
 
-You need Node 22+ and a ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps).
+You need a ClickUp personal API token (`pk_...` from https://app.clickup.com/settings/apps).
 
 ## Using with AI agents
 
