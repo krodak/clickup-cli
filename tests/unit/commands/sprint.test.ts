@@ -12,10 +12,10 @@ describe('parseSprintDates', () => {
   it('parses M/D - M/D format', () => {
     const result = parseSprintDates('Acme Sprint 4 (3/1 - 3/14)')
     expect(result).not.toBeNull()
-    expect(result!.start.getMonth()).toBe(1) // Feb = month index 1
-    expect(result!.start.getDate()).toBe(12)
-    expect(result!.end.getMonth()).toBe(1)
-    expect(result!.end.getDate()).toBe(25)
+    expect(result!.start.getMonth()).toBe(2) // Mar = month index 2
+    expect(result!.start.getDate()).toBe(1)
+    expect(result!.end.getMonth()).toBe(2)
+    expect(result!.end.getDate()).toBe(14)
   })
 
   it('parses format without spaces around dash', () => {
@@ -33,13 +33,13 @@ describe('parseSprintDates', () => {
 })
 
 describe('findActiveSprintList', () => {
-  const today = new Date('2026-02-20')
+  const today = new Date('2026-03-05')
 
   it('returns list whose date range includes today', () => {
     const lists = [
       { id: 'l1', name: 'Sprint 3 (1/1 - 2/10)' },
-      { id: 'l2', name: 'Sprint 4 (2/12 - 2/25)' },
-      { id: 'l3', name: 'Sprint 5 (2/26 - 3/11)' },
+      { id: 'l2', name: 'Sprint 4 (3/1 - 3/14)' },
+      { id: 'l3', name: 'Sprint 5 (3/15 - 3/28)' },
     ]
     const result = findActiveSprintList(lists, today)
     expect(result?.id).toBe('l2')
@@ -168,7 +168,7 @@ describe('runSprintCommand space handling', () => {
     vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([])
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
-    await runSprintCommand(config, { space: 'Kay' })
+    await runSprintCommand(config, { space: 'Acm' })
 
     expect(mockGetFolders).toHaveBeenCalledWith('s1')
     expect(mockGetFolders).not.toHaveBeenCalledWith('s2')
@@ -176,9 +176,7 @@ describe('runSprintCommand space handling', () => {
 
   it('throws when --space filter matches no spaces', async () => {
     vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
-    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
-      { id: 's1', name: 'Acme' },
-    ])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([{ id: 's1', name: 'Acme' }])
 
     const config = { apiToken: 'pk_test', teamId: 'team1' }
     await expect(runSprintCommand(config, { space: 'nonexistent' })).rejects.toThrow(
