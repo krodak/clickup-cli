@@ -1,7 +1,8 @@
 import { ClickUpClient } from '../api.js'
 import type { Task, TaskFilters } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatTasksMarkdown } from '../markdown.js'
 import { interactiveTaskPicker, showDetailsAndOpen } from '../interactive.js'
 
 export interface TaskSummary {
@@ -71,8 +72,12 @@ export async function printTasks(
   forceJson: boolean,
   config?: Config,
 ): Promise<void> {
-  if (forceJson || !isTTY()) {
+  if (shouldOutputJson(forceJson)) {
     console.log(JSON.stringify(tasks, null, 2))
+    return
+  }
+  if (!isTTY()) {
+    console.log(formatTasksMarkdown(tasks))
     return
   }
 
