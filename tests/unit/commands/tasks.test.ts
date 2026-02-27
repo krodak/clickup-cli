@@ -25,8 +25,8 @@ const mockInteractiveTaskPicker = vi.fn()
 const mockShowDetailsAndOpen = vi.fn()
 
 vi.mock('../../../src/interactive.js', () => ({
-  interactiveTaskPicker: (...args: unknown[]) => mockInteractiveTaskPicker(...args),
-  showDetailsAndOpen: (...args: unknown[]) => mockShowDetailsAndOpen(...args),
+  interactiveTaskPicker: (...args: unknown[]) => mockInteractiveTaskPicker(...args) as unknown,
+  showDetailsAndOpen: (...args: unknown[]) => mockShowDetailsAndOpen(...args) as unknown,
 }))
 
 const baseTask = (overrides: object = {}) => ({

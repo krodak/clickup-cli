@@ -66,7 +66,6 @@ describe('listSpaces', () => {
     await listSpaces(config, { json: true })
 
     const output = logSpy.mock.calls[0]![0] as string
-    expect(() => JSON.parse(output)).not.toThrow()
     const parsed = JSON.parse(output) as typeof sampleSpaces
     expect(parsed).toEqual(sampleSpaces)
   })
