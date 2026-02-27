@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY, formatTable } from '../output.js'
+import { formatSpacesMarkdown } from '../markdown.js'
+import { isTTY, shouldOutputJson, formatTable } from '../output.js'
 
 export async function listSpaces(
   config: Config,
@@ -22,7 +23,11 @@ export async function listSpaces(
     spaces = spaces.filter(s => mySpaceIds.has(s.id))
   }
 
-  if (!opts.json && isTTY()) {
+  if (shouldOutputJson(opts.json ?? false)) {
+    console.log(JSON.stringify(spaces, null, 2))
+  } else if (!isTTY()) {
+    console.log(formatSpacesMarkdown(spaces.map(s => ({ id: s.id, name: s.name }))))
+  } else {
     const table = formatTable(
       spaces.map(s => ({ id: s.id, name: s.name })),
       [
@@ -31,7 +36,5 @@ export async function listSpaces(
       ],
     )
     console.log(table)
-  } else {
-    console.log(JSON.stringify(spaces, null, 2))
   }
 }
