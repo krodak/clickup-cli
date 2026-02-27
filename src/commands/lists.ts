@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY, formatTable } from '../output.js'
+import { isTTY, shouldOutputJson, formatTable } from '../output.js'
+import { formatListsMarkdown } from '../markdown.js'
 
 export interface ListSummary {
   id: string
@@ -39,8 +40,12 @@ export async function fetchLists(
 }
 
 export function printLists(lists: ListSummary[], forceJson: boolean): void {
-  if (forceJson || !isTTY()) {
+  if (shouldOutputJson(forceJson)) {
     console.log(JSON.stringify(lists, null, 2))
+    return
+  }
+  if (!isTTY()) {
+    console.log(formatListsMarkdown(lists))
     return
   }
 
