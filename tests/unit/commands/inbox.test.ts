@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { InboxTaskSummary, TimePeriod, GroupedInbox } from '../../../src/commands/inbox.js'
 
 const mockGetMyTasks = vi.fn()
@@ -7,6 +7,27 @@ vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
   })),
+}))
+
+const mockIsTTY = vi.fn<() => boolean>()
+const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
+
+vi.mock('../../../src/output.js', async importOriginal => {
+  const orig = await importOriginal<typeof import('../../../src/output.js')>()
+  return {
+    ...orig,
+    isTTY: (...args: Parameters<typeof orig.isTTY>) => mockIsTTY(...args),
+    shouldOutputJson: (...args: Parameters<typeof orig.shouldOutputJson>) =>
+      mockShouldOutputJson(...args),
+  }
+})
+
+const mockGroupedTaskPicker = vi.fn()
+const mockShowDetailsAndOpen = vi.fn()
+
+vi.mock('../../../src/interactive.js', () => ({
+  groupedTaskPicker: (...args: unknown[]) => mockGroupedTaskPicker(...args) as unknown,
+  showDetailsAndOpen: (...args: unknown[]) => mockShowDetailsAndOpen(...args) as unknown,
 }))
 
 const makeTask = (id: string, date_updated: number, overrides = {}) => ({
@@ -185,5 +206,100 @@ describe('groupTasks', () => {
     for (const period of periods) {
       expect(groups[period]).toHaveLength(0)
     }
+  })
+})
+
+describe('printInbox', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>
+
+  const now = Date.now()
+  const todayStart = new Date(now)
+  todayStart.setHours(0, 0, 0, 0)
+
+  const makeSummary = (id: string, dateUpdated: number): InboxTaskSummary => ({
+    id,
+    name: `Task ${id}`,
+    status: 'open',
+    task_type: 'task',
+    list: 'L1',
+    url: `http://cu/${id}`,
+    date_updated: String(dateUpdated),
+  })
+
+  const sampleTasks: InboxTaskSummary[] = [
+    makeSummary('t1', todayStart.getTime() + 1000),
+    makeSummary('t2', todayStart.getTime() - 12 * 60 * 60 * 1000),
+  ]
+
+  beforeEach(() => {
+    mockIsTTY.mockReset()
+    mockShouldOutputJson.mockReset()
+    mockGroupedTaskPicker.mockReset()
+    mockShowDetailsAndOpen.mockReset()
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    logSpy.mockRestore()
+  })
+
+  it('outputs markdown when piped and forceJson is false', async () => {
+    mockShouldOutputJson.mockReturnValue(false)
+    mockIsTTY.mockReturnValue(false)
+    const { printInbox } = await import('../../../src/commands/inbox.js')
+    await printInbox(sampleTasks, false)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(output).toContain('|')
+    expect(output).toContain('Task t1')
+    expect(output).toContain('## ')
+    expect(output).not.toContain('"id"')
+  })
+
+  it('outputs JSON when forceJson is true', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockIsTTY.mockReturnValue(false)
+    const { printInbox } = await import('../../../src/commands/inbox.js')
+    await printInbox(sampleTasks, true)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(() => {
+      JSON.parse(output)
+    }).not.toThrow()
+    expect(output).toContain('"id"')
+  })
+
+  it('outputs JSON when CU_OUTPUT=json via shouldOutputJson', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockIsTTY.mockReturnValue(false)
+    const { printInbox } = await import('../../../src/commands/inbox.js')
+    await printInbox(sampleTasks, false)
+    expect(logSpy).toHaveBeenCalledOnce()
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(() => {
+      JSON.parse(output)
+    }).not.toThrow()
+  })
+
+  it('markdown output includes group headers from TIME_PERIODS labels', async () => {
+    mockShouldOutputJson.mockReturnValue(false)
+    mockIsTTY.mockReturnValue(false)
+    const { printInbox } = await import('../../../src/commands/inbox.js')
+    await printInbox(sampleTasks, false)
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(output).toContain('## Today')
+    expect(output).toContain('## Yesterday')
+  })
+
+  it('markdown output omits empty groups', async () => {
+    mockShouldOutputJson.mockReturnValue(false)
+    mockIsTTY.mockReturnValue(false)
+    const { printInbox } = await import('../../../src/commands/inbox.js')
+    const todayOnly = [makeSummary('t1', todayStart.getTime() + 1000)]
+    await printInbox(todayOnly, false)
+    const output = logSpy.mock.calls[0]![0] as string
+    expect(output).toContain('## Today')
+    expect(output).not.toContain('## Yesterday')
+    expect(output).not.toContain('## Last 7 days')
   })
 })
