@@ -1,8 +1,11 @@
 # cu - ClickUp CLI
 
-A ClickUp CLI built for AI agents that also works well for humans. Outputs Markdown when piped (optimized for AI context windows), interactive tables when run in a terminal.
+> A ClickUp CLI built for AI agents that also works well for humans. Outputs Markdown when piped (optimized for AI context windows), interactive tables when run in a terminal.
 
-## Quick start
+[![npm](https://img.shields.io/npm/v/@krodak/clickup-cli)](https://www.npmjs.com/package/@krodak/clickup-cli)
+[![node](https://img.shields.io/node/v/@krodak/clickup-cli)](https://nodejs.org)
+[![license](https://img.shields.io/npm/l/@krodak/clickup-cli)](./LICENSE)
+[![CI](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml)
 
 ```bash
 npm install -g @krodak/clickup-cli   # or: brew tap krodak/tap && brew install clickup-cli
