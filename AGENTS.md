@@ -96,7 +96,7 @@ Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
 2. Commit the version bump: `git commit -m "bump v0.X.0"`
 3. Tag: `git tag v0.X.0`
 4. Push commit and tag: `git push origin main --tags`
-5. CI handles: typecheck, test, build, and `npm publish --provenance`
+5. CI handles: typecheck, test, build, `npm publish --provenance`, and GitHub Release creation (auto-generated notes)
 6. After npm publish succeeds, update the Homebrew formula in `krodak/homebrew-tap`:
    - Get the sha256: `curl -sL "https://registry.npmjs.org/@krodak/clickup-cli/-/clickup-cli-0.X.0.tgz" | shasum -a 256`
    - Update `Formula/clickup-cli.rb` with new version URL and sha256
@@ -111,7 +111,7 @@ The release workflow uses `--ignore-scripts` to skip the `prepublishOnly` hook d
 ## CI Pipelines
 
 - **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build. Uses Node 22.
-- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance. **Must use Node 24** for OIDC.
+- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance, and GitHub Release creation. **Must use Node 24** for OIDC.
 - **Dependabot** - weekly updates for npm and GitHub Actions dependencies
 
 ## Testing Guidelines
