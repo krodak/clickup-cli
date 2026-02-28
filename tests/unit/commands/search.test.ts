@@ -78,6 +78,17 @@ describe('searchTasks', () => {
     expect(result[0]!.status).toBe('in progress')
   })
 
+  it('filters by status with fuzzy matching', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug', status: { status: 'in progress', color: '' } }),
+      baseTask({ id: 't2', name: 'Fix login form', status: { status: 'open', color: '' } }),
+    ])
+    const { searchTasks } = await import('../../../src/commands/search.js')
+    const result = await searchTasks(config, 'login', { status: 'prog' })
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('t1')
+  })
+
   it('returns TaskSummary objects', async () => {
     mockGetMyTasks.mockResolvedValue([baseTask({ id: 't1', name: 'Fix login bug' })])
     const { searchTasks } = await import('../../../src/commands/search.js')

@@ -360,7 +360,7 @@ program
 
 program
   .command('search <query>')
-  .description('Search tasks by name across the workspace')
+  .description('Search my tasks by name')
   .option('--status <status>', 'Filter by status')
   .option('--json', 'Force JSON output even in terminal')
   .action(

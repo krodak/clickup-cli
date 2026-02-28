@@ -81,7 +81,7 @@ export function formatCustomFieldValue(field: CustomField): string | null {
       })
     }
     case 'checkbox':
-      return field.value ? 'Yes' : 'No'
+      return field.value === true || field.value === 'true' ? 'Yes' : 'No'
     default:
       return stringifyFieldValue(field.value)
   }
