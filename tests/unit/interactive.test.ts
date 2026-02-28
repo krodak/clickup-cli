@@ -14,7 +14,7 @@ vi.mock('node:child_process', () => ({
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { confirm } from '@inquirer/prompts'
 import { execFileSync } from 'node:child_process'
-import type { Task } from '../../src/api.js'
+import type { CustomField, Task } from '../../src/api.js'
 import type { TaskSummary } from '../../src/commands/tasks.js'
 
 const makeFullTask = (overrides: Partial<Task> = {}): Task => ({
@@ -40,6 +40,192 @@ const makeSummary = (overrides: Partial<TaskSummary> = {}): TaskSummary => ({
 
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+describe('formatCustomFieldValue', () => {
+  it('returns null for null value', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = { id: 'f1', name: 'Test', type: 'short_text', value: null }
+    expect(formatCustomFieldValue(field)).toBeNull()
+  })
+
+  it('returns null for undefined value', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = { id: 'f1', name: 'Test', type: 'short_text', value: undefined }
+    expect(formatCustomFieldValue(field)).toBeNull()
+  })
+
+  it('resolves drop_down option name by id', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Sprint',
+      type: 'drop_down',
+      value: 2,
+      type_config: {
+        options: [
+          { id: 1, name: 'Sprint 1' },
+          { id: 2, name: 'Sprint 2' },
+        ],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBe('Sprint 2')
+  })
+
+  it('joins labels option names with comma', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Tags',
+      type: 'labels',
+      value: [1, 3],
+      type_config: {
+        options: [
+          { id: 1, name: 'Bug' },
+          { id: 2, name: 'Feature' },
+          { id: 3, name: 'Urgent' },
+        ],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBe('Bug, Urgent')
+  })
+
+  it('returns string for number type', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = { id: 'f1', name: 'Points', type: 'number', value: 42 }
+    expect(formatCustomFieldValue(field)).toBe('42')
+  })
+
+  it('formats checkbox as Yes/No', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const checked: CustomField = { id: 'f1', name: 'Done', type: 'checkbox', value: true }
+    const unchecked: CustomField = { id: 'f2', name: 'Done', type: 'checkbox', value: false }
+    expect(formatCustomFieldValue(checked)).toBe('Yes')
+    expect(formatCustomFieldValue(unchecked)).toBe('No')
+  })
+
+  it('formats date as locale string', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Target',
+      type: 'date',
+      value: 1704067200000,
+    }
+    const result = formatCustomFieldValue(field)
+    expect(result).toContain('2024')
+    expect(result).toContain('Jan')
+  })
+
+  it('returns stringified value for drop_down without type_config options', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Sprint',
+      type: 'drop_down',
+      value: 2,
+    }
+    expect(formatCustomFieldValue(field)).toBe('2')
+  })
+
+  it('returns stringified value for drop_down when no option matches', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Sprint',
+      type: 'drop_down',
+      value: 999,
+      type_config: {
+        options: [
+          { id: 1, name: 'Sprint 1' },
+          { id: 2, name: 'Sprint 2' },
+        ],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBe('999')
+  })
+
+  it('returns stringified value for labels when value is not an array', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Tags',
+      type: 'labels',
+      value: 'not-an-array',
+      type_config: {
+        options: [{ id: 1, name: 'Bug' }],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBe('not-an-array')
+  })
+
+  it('returns stringified value for labels without type_config options', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Tags',
+      type: 'labels',
+      value: [1, 2],
+    }
+    expect(formatCustomFieldValue(field)).toBe('[1,2]')
+  })
+
+  it('returns null for labels when no ids match any options', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Tags',
+      type: 'labels',
+      value: [99, 100],
+      type_config: {
+        options: [
+          { id: 1, name: 'Bug' },
+          { id: 2, name: 'Feature' },
+        ],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBeNull()
+  })
+
+  it('returns stringified value for date when value is not a finite number', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Target',
+      type: 'date',
+      value: 'not-a-date',
+    }
+    expect(formatCustomFieldValue(field)).toBe('not-a-date')
+  })
+
+  it('returns JSON stringified value for default branch with object value', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Metadata',
+      type: 'unknown_type',
+      value: { key: 'val' },
+    }
+    expect(formatCustomFieldValue(field)).toBe('{"key":"val"}')
+  })
+
+  it('returns boolean string for default branch with boolean value', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const trueField: CustomField = {
+      id: 'f1',
+      name: 'Flag',
+      type: 'unknown_type',
+      value: true,
+    }
+    const falseField: CustomField = {
+      id: 'f2',
+      name: 'Flag',
+      type: 'unknown_type',
+      value: false,
+    }
+    expect(formatCustomFieldValue(trueField)).toBe('true')
+    expect(formatCustomFieldValue(falseField)).toBe('false')
+  })
 })
 
 describe('formatTaskDetail', () => {
@@ -77,6 +263,21 @@ describe('formatTaskDetail', () => {
     const task = makeFullTask({ parent: 'parent_id' })
     const result = formatTaskDetail(task)
     expect(result).toContain('parent_id')
+  })
+
+  it('includes custom fields section when present', async () => {
+    const { formatTaskDetail } = await import('../../src/interactive.js')
+    const task = makeFullTask({
+      custom_fields: [
+        { id: 'f1', name: 'Points', type: 'number', value: 5 },
+        { id: 'f2', name: 'Empty', type: 'short_text', value: null },
+      ],
+    })
+    const result = formatTaskDetail(task)
+    expect(result).toContain('Custom Fields')
+    expect(result).toContain('Points')
+    expect(result).toContain('5')
+    expect(result).not.toContain('Empty')
   })
 
   it('shows description preview truncated to 3 lines', async () => {

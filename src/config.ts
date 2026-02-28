@@ -70,7 +70,11 @@ export function getConfigPath(): string {
 export function writeConfig(config: Config): void {
   const dir = configDir()
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   }
-  fs.writeFileSync(join(dir, 'config.json'), JSON.stringify(config, null, 2) + '\n', 'utf-8')
+  const filePath = join(dir, 'config.json')
+  fs.writeFileSync(filePath, JSON.stringify(config, null, 2) + '\n', {
+    encoding: 'utf-8',
+    mode: 0o600,
+  })
 }

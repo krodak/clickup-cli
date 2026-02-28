@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { UpdateTaskOptions, Priority } from '../api.js'
 import type { Config } from '../config.js'
+import { matchStatus } from '../status.js'
 
 const PRIORITY_MAP = {
   urgent: 1,
@@ -68,6 +69,29 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
   )
 }
 
+async function resolveStatus(
+  client: ClickUpClient,
+  taskId: string,
+  statusInput: string,
+): Promise<string> {
+  const task = await client.getTask(taskId)
+  if (!task.space) return statusInput
+
+  const space = await client.getSpaceWithStatuses(task.space.id)
+  const available = space.statuses.map(s => s.status)
+  const matched = matchStatus(statusInput, available)
+
+  if (!matched) {
+    throw new Error(`No matching status for "${statusInput}". Available: ${available.join(', ')}`)
+  }
+
+  if (matched.toLowerCase() !== statusInput.toLowerCase()) {
+    process.stderr.write(`Status matched: "${statusInput}" -> "${matched}"\n`)
+  }
+
+  return matched
+}
+
 export async function updateTask(
   config: Config,
   taskId: string,
@@ -79,6 +103,11 @@ export async function updateTask(
     )
 
   const client = new ClickUpClient(config)
+
+  if (options.status !== undefined) {
+    options.status = await resolveStatus(client, taskId, options.status)
+  }
+
   const task = await client.updateTask(taskId, options)
   return { id: task.id, name: task.name }
 }

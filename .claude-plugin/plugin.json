@@ -1,0 +1,11 @@
+{
+  "name": "clickup-cli",
+  "description": "Claude Code skills for the cu (ClickUp CLI) tool - manage tasks, sprints, initiatives, and comments",
+  "version": "0.6.1",
+  "author": {
+    "name": "Krzysztof Rodak"
+  },
+  "homepage": "https://github.com/krodak/clickup-cli",
+  "repository": "https://github.com/krodak/clickup-cli",
+  "license": "MIT"
+}

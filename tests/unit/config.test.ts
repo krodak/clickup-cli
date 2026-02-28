@@ -172,17 +172,22 @@ describe('writeConfig', () => {
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
     const expectedDir = path.join(os.homedir(), '.config', 'cu')
-    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(expectedDir, { recursive: true })
+    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(expectedDir, {
+      recursive: true,
+      mode: 0o700,
+    })
   })
 
-  it('writes config as formatted JSON', async () => {
+  it('writes config as formatted JSON with restricted permissions', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledTimes(1)
-    const written = String(vi.mocked(fs.writeFileSync).mock.calls[0]![1])
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
     const parsed = JSON.parse(written)
     expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+    expect(call[2]).toEqual({ encoding: 'utf-8', mode: 0o600 })
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
   })
 })
