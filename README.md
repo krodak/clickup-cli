@@ -91,7 +91,7 @@ cu assign abc123 --to me          # assign yourself
 
 Pass `--json` to any command to get raw JSON output instead of the interactive UI.
 
-When output is piped (no TTY), all commands automatically output JSON. Write commands (`update`, `create`, `comment`, `assign`) always return JSON regardless of mode.
+When output is piped (no TTY), all commands automatically output JSON. All commands support `--json` to force JSON output even in a terminal.
 
 ## Commands
 
@@ -200,6 +200,7 @@ cu update abc123 --priority high
 cu update abc123 --due-date 2025-03-15
 cu update abc123 --assignee 12345
 cu update abc123 -n "New name" -s "done" --priority urgent
+cu update abc123 -s "in progress" --json
 ```
 
 | Flag                       | Description                                                                 |
@@ -210,6 +211,7 @@ cu update abc123 -n "New name" -s "done" --priority urgent
 | `--priority <level>`       | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
 | `--due-date <date>`        | Due date (`YYYY-MM-DD`)                                                     |
 | `--assignee <userId>`      | Add assignee by numeric user ID                                             |
+| `--json`                   | Force JSON output even in terminal                                          |
 
 ### `cu create`
 
@@ -221,6 +223,7 @@ cu create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
 cu create -n "Task" -l <listId> -d "desc" -s "open"
 cu create -n "Task" -l <listId> --priority high --due-date 2025-06-01
 cu create -n "Task" -l <listId> --assignee 12345 --tags "bug,frontend"
+cu create -n "Fix bug" -l <listId> --json
 ```
 
 | Flag                       | Required         | Description                                          |
@@ -234,6 +237,7 @@ cu create -n "Task" -l <listId> --assignee 12345 --tags "bug,frontend"
 | `--due-date <date>`        | no               | Due date (`YYYY-MM-DD`)                              |
 | `--assignee <userId>`      | no               | Assignee by numeric user ID                          |
 | `--tags <tags>`            | no               | Comma-separated tag names                            |
+| `--json`                   | no               | Force JSON output even in terminal                   |
 
 ### `cu comment <id>`
 
@@ -307,12 +311,13 @@ If the query matches multiple tasks by name, all matches are listed and the firs
 
 ### `cu search <query>`
 
-Search tasks by name. Supports multi-word queries with case-insensitive matching.
+Search my tasks by name. Supports multi-word queries with case-insensitive matching. Status filter supports fuzzy matching.
 
 ```bash
 cu search "login bug"
 cu search auth
 cu search "payment flow" --json
+cu search auth --status "prog"     # fuzzy matches "in progress"
 ```
 
 ### `cu summary`

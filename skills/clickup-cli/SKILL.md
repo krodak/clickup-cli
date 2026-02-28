@@ -21,43 +21,43 @@ All commands support `--help` for full flag details.
 
 ### Read
 
-| Command                                                                    | What it returns                                     |
-| -------------------------------------------------------------------------- | --------------------------------------------------- |
-| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]`       | My tasks (workspace-wide)                           |
-| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--json]` | My initiatives                                      |
-| `cu assigned [--include-closed] [--json]`                                  | All my tasks grouped by status                      |
-| `cu sprint [--status s] [--space nameOrId] [--json]`                       | Tasks in active sprint (auto-detected)              |
-| `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)           |
-| `cu task <id> [--json]`                                                    | Single task details                                 |
-| `cu subtasks <id> [--json]`                                                | Subtasks of a task or initiative                    |
-| `cu comments <id> [--json]`                                                | List comments on a task                             |
-| `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                        |
-| `cu lists <spaceId> [--name partial] [--json]`                             | List all lists in a space (including folder lists)  |
-| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                  |
-| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue     |
-| `cu overdue [--json]`                                                      | Tasks past their due date                           |
-| `cu search <query> [--status s] [--json]`                                  | Search tasks by name (multi-word, case-insensitive) |
-| `cu activity <id> [--json]`                                                | Task details + comment history combined             |
-| `cu auth [--json]`                                                         | Check authentication status                         |
-| `cu sprints [--space nameOrId] [--json]`                                   | List all sprints (marks active with \*)             |
+| Command                                                                    | What it returns                                    |
+| -------------------------------------------------------------------------- | -------------------------------------------------- |
+| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]`       | My tasks (workspace-wide)                          |
+| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--json]` | My initiatives                                     |
+| `cu assigned [--include-closed] [--json]`                                  | All my tasks grouped by status                     |
+| `cu sprint [--status s] [--space nameOrId] [--json]`                       | Tasks in active sprint (auto-detected)             |
+| `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)          |
+| `cu task <id> [--json]`                                                    | Single task details                                |
+| `cu subtasks <id> [--json]`                                                | Subtasks of a task or initiative                   |
+| `cu comments <id> [--json]`                                                | List comments on a task                            |
+| `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                       |
+| `cu lists <spaceId> [--name partial] [--json]`                             | List all lists in a space (including folder lists) |
+| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                 |
+| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue    |
+| `cu overdue [--json]`                                                      | Tasks past their due date                          |
+| `cu search <query> [--status s] [--json]`                                  | Search my tasks by name (multi-word, fuzzy status) |
+| `cu activity <id> [--json]`                                                | Task details + comment history combined            |
+| `cu auth [--json]`                                                         | Check authentication status                        |
+| `cu sprints [--space nameOrId] [--json]`                                   | List all sprints (marks active with \*)            |
 
 ### Write
 
-| Command                                                                                                                      | What it does                                 |
-| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id]`                               | Update task fields                           |
-| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--tags t]` | Create task (list auto-detected from parent) |
-| `cu comment <id> -m text`                                                                                                    | Post comment on task                         |
-| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                            | Assign/unassign users from a task            |
-| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                     | Manage CLI config                            |
-| `cu completion <shell>`                                                                                                      | Output shell completions (bash/zsh/fish)     |
+| Command                                                                                                                               | What it does                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--json]`                               | Update task fields                           |
+| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--tags t] [--json]` | Create task (list auto-detected from parent) |
+| `cu comment <id> -m text`                                                                                                             | Post comment on task                         |
+| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                     | Assign/unassign users from a task            |
+| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                              | Manage CLI config                            |
+| `cu completion <shell>`                                                                                                               | Output shell completions (bash/zsh/fish)     |
 
 ## Output modes
 
 - **TTY (terminal)**: Interactive picker UI. Use `--json` to bypass.
 - **Piped / non-TTY**: Always JSON. This is what agents get by default.
 - **Agents should always pass `--json`** to guarantee machine-readable output.
-- Set `NO_COLOR` to disable color/interactive mode.
+- Set `NO_COLOR` to disable color output (tables still render, just without color).
 
 ## Key facts
 
@@ -79,7 +79,7 @@ All commands support `--help` for full flag details.
 - Strict argument parsing - excess/unknown arguments are rejected
 - `cu update -s` supports fuzzy status matching (exact > starts-with > contains). Prints matched status to stderr when fuzzy-resolved.
 - `cu task` shows custom fields in detail view (read-only)
-- `cu search` matches all query words against task name (case-insensitive)
+- `cu search` matches all query words against task name (case-insensitive). `--status` supports fuzzy matching.
 - Errors go to stderr with exit code 1
 
 ## Agent workflow example
