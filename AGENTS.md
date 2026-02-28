@@ -92,18 +92,26 @@ Before committing, verify all of these pass:
 
 Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
 
-1. Bump version: `npm version patch|minor|major --no-git-tag-version`
-2. Commit the version bump
-3. Tag: `git tag v<version>`
+1. Bump version: `npm version <0.X.0> --no-git-tag-version` (use explicit version, not patch/minor/major - those auto-increment from current, which may not be what you want)
+2. Commit the version bump: `git commit -m "bump v0.X.0"`
+3. Tag: `git tag v0.X.0`
 4. Push commit and tag: `git push origin main --tags`
 5. CI handles: typecheck, test, build, and `npm publish --provenance`
+6. After npm publish succeeds, update the Homebrew formula in `krodak/homebrew-tap`:
+   - Get the sha256: `curl -sL "https://registry.npmjs.org/@krodak/clickup-cli/-/clickup-cli-0.X.0.tgz" | shasum -a 256`
+   - Update `Formula/clickup-cli.rb` with new version URL and sha256
+   - Commit and push to `krodak/homebrew-tap`
 
 Do NOT publish manually. Do NOT use `NODE_AUTH_TOKEN` - the release pipeline uses OIDC trusted publishers for authentication.
 
+**CRITICAL: The release workflow MUST use Node 24 (not 22).** Node 22 ships npm 10 which has broken OIDC trusted publisher support. Node 24 ships npm 11 which works. If the release fails with "Access token expired or revoked", check the node-version in `release.yml`.
+
+The release workflow uses `--ignore-scripts` to skip the `prepublishOnly` hook during publish (the CI steps already ran typecheck/test/build). This avoids redundant work and keeps the OIDC token fresh.
+
 ## CI Pipelines
 
-- **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build
-- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance
+- **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build. Uses Node 22.
+- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance. **Must use Node 24** for OIDC.
 - **Dependabot** - weekly updates for npm and GitHub Actions dependencies
 
 ## Testing Guidelines
