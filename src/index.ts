@@ -14,7 +14,7 @@ import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
 import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
-import { formatCustomFieldValue } from './interactive.js'
+import { formatTaskDetail } from './interactive.js'
 import { isTTY } from './output.js'
 import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
@@ -144,26 +144,7 @@ program
       if (opts.json || !isTTY()) {
         console.log(JSON.stringify(result, null, 2))
       } else {
-        const lines = [
-          `ID:          ${result.id}`,
-          `Name:        ${result.name}`,
-          `Status:      ${result.status?.status ?? 'unknown'}`,
-          `Type:        ${(result.custom_item_id ?? 0) !== 0 ? 'initiative' : 'task'}`,
-          `List:        ${result.list?.name ?? 'unknown'}`,
-          `URL:         ${result.url}`,
-          ...(result.parent ? [`Parent:      ${result.parent}`] : []),
-          ...(result.custom_fields?.length
-            ? [
-                '',
-                ...result.custom_fields
-                  .map(f => ({ name: f.name, value: formatCustomFieldValue(f) }))
-                  .filter((f): f is { name: string; value: string } => f.value !== null)
-                  .map(f => `  ${f.name}: ${f.value}`),
-              ]
-            : []),
-          ...(result.description ? ['', result.description] : []),
-        ]
-        console.log(lines.join('\n'))
+        console.log(formatTaskDetail(result))
       }
     }),
   )
@@ -177,15 +158,16 @@ program
   .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
   .option('--assignee <userId>', 'Add assignee by user ID')
+  .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: UpdateCommandOptions) => {
+    wrapAction(async (taskId: string, opts: UpdateCommandOptions & { json?: boolean }) => {
       const config = loadConfig()
       const payload = buildUpdatePayload(opts)
       const result = await updateTask(config, taskId, payload)
-      if (isTTY()) {
-        console.log(`Updated task ${result.id}: "${result.name}"`)
-      } else {
+      if (opts.json || !isTTY()) {
         console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Updated task ${result.id}: "${result.name}"`)
       }
     }),
   )
@@ -202,14 +184,15 @@ program
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
   .option('--assignee <userId>', 'Assignee user ID')
   .option('--tags <tags>', 'Comma-separated tag names')
+  .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (opts: CreateOptions) => {
+    wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
       const config = loadConfig()
       const result = await createTask(config, opts)
-      if (isTTY()) {
-        console.log(`Created task ${result.id}: "${result.name}" - ${result.url}`)
-      } else {
+      if (opts.json || !isTTY()) {
         console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Created task ${result.id}: "${result.name}" - ${result.url}`)
       }
     }),
   )
