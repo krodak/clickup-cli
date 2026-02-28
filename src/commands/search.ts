@@ -1,5 +1,6 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
+import { matchStatus } from '../status.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize } from './tasks.js'
 
@@ -28,8 +29,16 @@ export async function searchTasks(
   })
 
   if (opts.status) {
-    const statusLower = opts.status.toLowerCase()
-    matched = matched.filter(t => t.status.status.toLowerCase() === statusLower)
+    const availableStatuses = [...new Set(allTasks.map(t => t.status.status))]
+    const resolved = matchStatus(opts.status, availableStatuses)
+    if (resolved) {
+      if (resolved.toLowerCase() !== opts.status.toLowerCase()) {
+        process.stderr.write(`Status matched: "${opts.status}" -> "${resolved}"\n`)
+      }
+      matched = matched.filter(t => t.status.status.toLowerCase() === resolved.toLowerCase())
+    } else {
+      matched = matched.filter(t => t.status.status.toLowerCase() === opts.status!.toLowerCase())
+    }
   }
 
   return matched.map(summarize)

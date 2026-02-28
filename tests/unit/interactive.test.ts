@@ -100,8 +100,12 @@ describe('formatCustomFieldValue', () => {
     const { formatCustomFieldValue } = await import('../../src/interactive.js')
     const checked: CustomField = { id: 'f1', name: 'Done', type: 'checkbox', value: true }
     const unchecked: CustomField = { id: 'f2', name: 'Done', type: 'checkbox', value: false }
+    const stringTrue: CustomField = { id: 'f3', name: 'Done', type: 'checkbox', value: 'true' }
+    const stringFalse: CustomField = { id: 'f4', name: 'Done', type: 'checkbox', value: 'false' }
     expect(formatCustomFieldValue(checked)).toBe('Yes')
     expect(formatCustomFieldValue(unchecked)).toBe('No')
+    expect(formatCustomFieldValue(stringTrue)).toBe('Yes')
+    expect(formatCustomFieldValue(stringFalse)).toBe('No')
   })
 
   it('formats date as locale string', async () => {

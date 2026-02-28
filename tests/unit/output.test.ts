@@ -92,22 +92,12 @@ describe('isTTY', () => {
     expect(typeof isTTY()).toBe('boolean')
   })
 
-  it('returns false when NO_COLOR is set', () => {
+  it('is not affected by NO_COLOR (color suppression is handled by chalk)', () => {
     const original = process.env.NO_COLOR
+    const wasTTY = process.stdout.isTTY
     try {
       process.env.NO_COLOR = '1'
-      expect(isTTY()).toBe(false)
-    } finally {
-      if (original === undefined) delete process.env.NO_COLOR
-      else process.env.NO_COLOR = original
-    }
-  })
-
-  it('returns false when NO_COLOR is empty string', () => {
-    const original = process.env.NO_COLOR
-    try {
-      process.env.NO_COLOR = ''
-      expect(isTTY()).toBe(false)
+      expect(isTTY()).toBe(Boolean(wasTTY))
     } finally {
       if (original === undefined) delete process.env.NO_COLOR
       else process.env.NO_COLOR = original
