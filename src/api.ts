@@ -1,6 +1,16 @@
 const BASE_URL = 'https://api.clickup.com/api/v2'
 const MAX_PAGES = 100
 
+export interface CustomField {
+  id: string
+  name: string
+  type: string
+  value: unknown
+  type_config?: {
+    options?: Array<{ id: number; name: string; orderindex?: number }>
+  }
+}
+
 export interface Task {
   id: string
   name: string
@@ -22,6 +32,7 @@ export interface Task {
   date_created?: string
   date_updated?: string
   locations?: Array<{ id: string; name: string }>
+  custom_fields?: CustomField[]
 }
 
 export interface TaskFilters {
@@ -63,6 +74,15 @@ export interface Team {
 export interface Space {
   id: string
   name: string
+}
+
+export interface SpaceStatus {
+  status: string
+  color: string
+}
+
+export interface SpaceWithStatuses extends Space {
+  statuses: SpaceStatus[]
 }
 
 export interface List {
@@ -229,6 +249,10 @@ export class ClickUpClient {
   async getTeams(): Promise<Team[]> {
     const data = await this.request<{ teams: Team[] }>('/team')
     return data.teams ?? []
+  }
+
+  async getSpaceWithStatuses(spaceId: string): Promise<SpaceWithStatuses> {
+    return this.request<SpaceWithStatuses>(`/space/${spaceId}`)
   }
 
   async getSpaces(teamId: string): Promise<Space[]> {

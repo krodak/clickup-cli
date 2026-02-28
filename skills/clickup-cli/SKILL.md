@@ -21,21 +21,25 @@ All commands support `--help` for full flag details.
 
 ### Read
 
-| Command                                                                    | What it returns                                    |
-| -------------------------------------------------------------------------- | -------------------------------------------------- |
-| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]`       | My tasks (workspace-wide)                          |
-| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--json]` | My initiatives                                     |
-| `cu assigned [--include-closed] [--json]`                                  | All my tasks grouped by status                     |
-| `cu sprint [--status s] [--space nameOrId] [--json]`                       | Tasks in active sprint (auto-detected)             |
-| `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)          |
-| `cu task <id> [--json]`                                                    | Single task details                                |
-| `cu subtasks <id> [--json]`                                                | Subtasks of a task or initiative                   |
-| `cu comments <id> [--json]`                                                | List comments on a task                            |
-| `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                       |
-| `cu lists <spaceId> [--name partial] [--json]`                             | List all lists in a space (including folder lists) |
-| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                 |
-| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue    |
-| `cu overdue [--json]`                                                      | Tasks past their due date                          |
+| Command                                                                    | What it returns                                     |
+| -------------------------------------------------------------------------- | --------------------------------------------------- |
+| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]`       | My tasks (workspace-wide)                           |
+| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--json]` | My initiatives                                      |
+| `cu assigned [--include-closed] [--json]`                                  | All my tasks grouped by status                      |
+| `cu sprint [--status s] [--space nameOrId] [--json]`                       | Tasks in active sprint (auto-detected)              |
+| `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)           |
+| `cu task <id> [--json]`                                                    | Single task details                                 |
+| `cu subtasks <id> [--json]`                                                | Subtasks of a task or initiative                    |
+| `cu comments <id> [--json]`                                                | List comments on a task                             |
+| `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                        |
+| `cu lists <spaceId> [--name partial] [--json]`                             | List all lists in a space (including folder lists)  |
+| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                  |
+| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue     |
+| `cu overdue [--json]`                                                      | Tasks past their due date                           |
+| `cu search <query> [--status s] [--json]`                                  | Search tasks by name (multi-word, case-insensitive) |
+| `cu activity <id> [--json]`                                                | Task details + comment history combined             |
+| `cu auth [--json]`                                                         | Check authentication status                         |
+| `cu sprints [--space nameOrId] [--json]`                                   | List all sprints (marks active with \*)             |
 
 ### Write
 
@@ -73,6 +77,9 @@ All commands support `--help` for full flag details.
 - `--tags` accepts comma-separated tag names (e.g. `--tags "bug,frontend"`)
 - `cu lists <spaceId>` discovers list IDs needed for `--list` and `cu create -l`
 - Strict argument parsing - excess/unknown arguments are rejected
+- `cu update -s` supports fuzzy status matching (exact > starts-with > contains). Prints matched status to stderr when fuzzy-resolved.
+- `cu task` shows custom fields in detail view (read-only)
+- `cu search` matches all query words against task name (case-insensitive)
 - Errors go to stderr with exit code 1
 
 ## Agent workflow example
@@ -129,4 +136,14 @@ cu assign abc123def --to me
 # Check/set config
 cu config get teamId
 cu config set apiToken pk_example_token
+
+cu search "login bug" --json
+
+cu activity abc123def --json
+
+cu auth --json
+
+cu sprints --json
+
+cu update abc123def -s "prog"
 ```

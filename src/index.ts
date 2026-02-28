@@ -9,10 +9,12 @@ import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
 import { runSprintCommand } from './commands/sprint.js'
+import { listSprints } from './commands/sprints.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
 import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
+import { formatCustomFieldValue } from './interactive.js'
 import { isTTY } from './output.js'
 import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
@@ -26,7 +28,10 @@ import {
   configPath as getConfigFilePath,
 } from './commands/config.js'
 import { assignTask } from './commands/assign.js'
+import { fetchActivity, printActivity } from './commands/activity.js'
 import { generateCompletion } from './commands/completion.js'
+import { checkAuth } from './commands/auth.js'
+import { searchTasks } from './commands/search.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -62,6 +67,25 @@ program
   .action(
     wrapAction(async () => {
       await runInitCommand()
+    }),
+  )
+
+program
+  .command('auth')
+  .description('Validate API token and show current user')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await checkAuth(config)
+      if (opts.json || !isTTY()) {
+        console.log(JSON.stringify(result, null, 2))
+      } else if (result.authenticated && result.user) {
+        console.log(`Authenticated as @${result.user.username} (id: ${result.user.id})`)
+      } else {
+        console.error(`Authentication failed: ${result.error ?? 'unknown error'}`)
+        process.exit(1)
+      }
     }),
   )
 
@@ -128,6 +152,15 @@ program
           `List:        ${result.list?.name ?? 'unknown'}`,
           `URL:         ${result.url}`,
           ...(result.parent ? [`Parent:      ${result.parent}`] : []),
+          ...(result.custom_fields?.length
+            ? [
+                '',
+                ...result.custom_fields
+                  .map(f => ({ name: f.name, value: formatCustomFieldValue(f) }))
+                  .filter((f): f is { name: string; value: string } => f.value !== null)
+                  .map(f => `  ${f.name}: ${f.value}`),
+              ]
+            : []),
           ...(result.description ? ['', result.description] : []),
         ]
         console.log(lines.join('\n'))
@@ -195,6 +228,18 @@ program
   )
 
 program
+  .command('sprints')
+  .description('List all sprints in sprint folders')
+  .option('--space <nameOrId>', 'Filter by space (partial name or ID)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { space?: string; json?: boolean }) => {
+      const config = loadConfig()
+      await listSprints(config, opts)
+    }),
+  )
+
+program
   .command('subtasks <taskId>')
   .description('List subtasks of a task or initiative')
   .option('--json', 'Force JSON output even in terminal')
@@ -231,6 +276,18 @@ program
       const config = loadConfig()
       const comments = await fetchComments(config, taskId)
       printComments(comments, opts.json ?? false)
+    }),
+  )
+
+program
+  .command('activity <taskId>')
+  .description('Show task details and comments combined')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await fetchActivity(config, taskId)
+      printActivity(result, opts.json ?? false)
     }),
   )
 
@@ -298,6 +355,19 @@ program
     wrapAction(async (query: string, opts: { json?: boolean }) => {
       const config = loadConfig()
       await openTask(config, query, opts)
+    }),
+  )
+
+program
+  .command('search <query>')
+  .description('Search tasks by name across the workspace')
+  .option('--status <status>', 'Filter by status')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (query: string, opts: { status?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const tasks = await searchTasks(config, query, { status: opts.status })
+      await printTasks(tasks, opts.json ?? false, config)
     }),
   )
 

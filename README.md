@@ -17,13 +17,21 @@ This is the primary use case. Install the tool, install the skill file, and your
 
 ### 1. Install the skill
 
-The repo includes a skill file at `skill/SKILL.md` that teaches agents all available commands and when to use them.
+The repo includes a skill file at `skills/clickup-cli/SKILL.md` that teaches agents all available commands and when to use them. It's also packaged as a Claude Code plugin.
 
-**Claude Code:**
+**Claude Code (plugin - recommended):**
+
+The repo ships as a Claude Code plugin. Point Claude Code at the repo or installed npm package:
+
+```bash
+claude --plugin-dir ./node_modules/@krodak/clickup-cli
+```
+
+Or copy the skill manually:
 
 ```bash
 mkdir -p ~/.claude/skills/clickup
-cp skill/SKILL.md ~/.claude/skills/clickup/SKILL.md
+cp skills/clickup-cli/SKILL.md ~/.claude/skills/clickup/SKILL.md
 ```
 
 Then reference it in your `CLAUDE.md` or project instructions.
@@ -32,12 +40,12 @@ Then reference it in your `CLAUDE.md` or project instructions.
 
 ```bash
 mkdir -p ~/.config/opencode/skills/clickup
-cp skill/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
+cp skills/clickup-cli/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
 ```
 
 **Codex / other agents:**
 
-Copy the contents of `skill/SKILL.md` into your system prompt or project instructions. It's a standalone markdown document.
+Copy the contents of `skills/clickup-cli/SKILL.md` into your system prompt or project instructions. It's a standalone markdown document.
 
 ### 2. Talk to your agent
 
@@ -87,7 +95,7 @@ When output is piped (no TTY), all commands automatically output JSON. Write com
 
 ## Commands
 
-20 commands total. All support `--help` for full flag details.
+24 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -133,6 +141,15 @@ cu sprint --status "in progress"
 cu sprint --json
 ```
 
+### `cu sprints`
+
+List all sprints across sprint folders. Marks the currently active sprint.
+
+```bash
+cu sprints
+cu sprints --json
+```
+
 ### `cu assigned`
 
 All tasks assigned to me, grouped by pipeline stage (code review, in progress, to do, etc.).
@@ -155,7 +172,7 @@ cu inbox --json
 
 ### `cu task <id>`
 
-Get task details. Pretty summary in terminal, JSON when piped.
+Get task details including custom fields. Pretty summary in terminal, JSON when piped.
 
 ```bash
 cu task abc123
@@ -185,14 +202,14 @@ cu update abc123 --assignee 12345
 cu update abc123 -n "New name" -s "done" --priority urgent
 ```
 
-| Flag                       | Description                                          |
-| -------------------------- | ---------------------------------------------------- |
-| `-n, --name <text>`        | New task name                                        |
-| `-d, --description <text>` | New description (markdown supported)                 |
-| `-s, --status <status>`    | New status (e.g. `"in progress"`, `"done"`)          |
-| `--priority <level>`       | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
-| `--due-date <date>`        | Due date (`YYYY-MM-DD`)                              |
-| `--assignee <userId>`      | Add assignee by numeric user ID                      |
+| Flag                       | Description                                                                 |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `-n, --name <text>`        | New task name                                                               |
+| `-d, --description <text>` | New description (markdown supported)                                        |
+| `-s, --status <status>`    | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`) |
+| `--priority <level>`       | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
+| `--due-date <date>`        | Due date (`YYYY-MM-DD`)                                                     |
+| `--assignee <userId>`      | Add assignee by numeric user ID                                             |
 
 ### `cu create`
 
@@ -233,6 +250,15 @@ List comments on a task. Formatted view in terminal, JSON when piped.
 ```bash
 cu comments abc123
 cu comments abc123 --json
+```
+
+### `cu activity <id>`
+
+View task details and comment history together. Combines `cu task` and `cu comments` into a single view.
+
+```bash
+cu activity abc123
+cu activity abc123 --json
 ```
 
 ### `cu lists <spaceId>`
@@ -279,6 +305,16 @@ cu open abc123 --json
 
 If the query matches multiple tasks by name, all matches are listed and the first is opened.
 
+### `cu search <query>`
+
+Search tasks by name. Supports multi-word queries with case-insensitive matching.
+
+```bash
+cu search "login bug"
+cu search auth
+cu search "payment flow" --json
+```
+
 ### `cu summary`
 
 Daily standup helper. Shows tasks grouped into: recently completed, in progress, and overdue.
@@ -320,6 +356,15 @@ cu assign abc123 --to me --json
 | `--to <userId>`     | Add assignee (user ID or `me`)    |
 | `--remove <userId>` | Remove assignee (user ID or `me`) |
 | `--json`            | Force JSON output                 |
+
+### `cu auth`
+
+Check authentication status. Validates your API token and shows your user info.
+
+```bash
+cu auth
+cu auth --json
+```
 
 ### `cu config`
 

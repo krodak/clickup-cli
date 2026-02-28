@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { checkbox, confirm, Separator } from '@inquirer/prompts'
 import chalk from 'chalk'
-import type { Task } from './api.js'
+import type { CustomField, Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 
 export function openUrl(url: string): void {
@@ -47,6 +47,46 @@ function descriptionPreview(text: string, maxLines = 3): string {
   return result
 }
 
+function stringifyFieldValue(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return JSON.stringify(value)
+}
+
+export function formatCustomFieldValue(field: CustomField): string | null {
+  if (field.value === null || field.value === undefined) return null
+
+  const options = field.type_config?.options
+
+  switch (field.type) {
+    case 'drop_down': {
+      if (!options) return stringifyFieldValue(field.value)
+      const match = options.find(o => o.id === Number(field.value))
+      return match?.name ?? stringifyFieldValue(field.value)
+    }
+    case 'labels': {
+      if (!Array.isArray(field.value) || !options) return stringifyFieldValue(field.value)
+      const names = (field.value as number[])
+        .map(id => options.find(o => o.id === id)?.name)
+        .filter((n): n is string => n !== undefined)
+      return names.length > 0 ? names.join(', ') : null
+    }
+    case 'date': {
+      const ts = Number(field.value)
+      if (!Number.isFinite(ts)) return stringifyFieldValue(field.value)
+      return new Date(ts).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    }
+    case 'checkbox':
+      return field.value ? 'Yes' : 'No'
+    default:
+      return stringifyFieldValue(field.value)
+  }
+}
+
 export function formatTaskDetail(task: Task): string {
   const lines: string[] = []
   const isInitiative = (task.custom_item_id ?? 0) !== 0
@@ -78,6 +118,19 @@ export function formatTaskDetail(task: Task): string {
   for (const [label, value] of fields) {
     if (!value) continue
     lines.push(`  ${chalk.bold(label.padEnd(maxLabel + 1))} ${value}`)
+  }
+
+  if (task.custom_fields?.length) {
+    const formatted = task.custom_fields
+      .map(f => [f.name, formatCustomFieldValue(f)] as const)
+      .filter((pair): pair is [string, string] => pair[1] !== null)
+    if (formatted.length > 0) {
+      lines.push('')
+      lines.push(chalk.bold('Custom Fields'))
+      for (const [name, value] of formatted) {
+        lines.push(`  ${chalk.bold(name)}  ${value}`)
+      }
+    }
   }
 
   if (task.text_content?.trim()) {
