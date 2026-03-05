@@ -11,6 +11,12 @@ export function isTTY(): boolean {
   return Boolean(process.stdout.isTTY)
 }
 
+export function shouldOutputJson(forceJson: boolean): boolean {
+  if (forceJson) return true
+  if (process.env['CU_OUTPUT'] === 'json') return true
+  return false
+}
+
 function cell(value: string, width: number): string {
   if (value.length > width) return value.slice(0, width - 1) + '…'
   return value.padEnd(width)

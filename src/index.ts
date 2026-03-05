@@ -15,7 +15,14 @@ import { postComment } from './commands/comment.js'
 import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
 import { formatTaskDetail } from './interactive.js'
-import { isTTY } from './output.js'
+import { isTTY, shouldOutputJson } from './output.js'
+import {
+  formatTaskDetailMarkdown,
+  formatUpdateConfirmation,
+  formatCreateConfirmation,
+  formatCommentConfirmation,
+  formatAssignConfirmation,
+} from './markdown.js'
 import { fetchInbox, printInbox } from './commands/inbox.js'
 import { listSpaces } from './commands/spaces.js'
 import { runAssignedCommand } from './commands/assigned.js'
@@ -141,8 +148,10 @@ program
     wrapAction(async (taskId: string, opts: { json?: boolean }) => {
       const config = loadConfig()
       const result = await getTask(config, taskId)
-      if (opts.json || !isTTY()) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
+      } else if (!isTTY()) {
+        console.log(formatTaskDetailMarkdown(result))
       } else {
         console.log(formatTaskDetail(result))
       }
@@ -164,10 +173,10 @@ program
       const config = loadConfig()
       const payload = buildUpdatePayload(opts)
       const result = await updateTask(config, taskId, payload)
-      if (opts.json || !isTTY()) {
+      if (shouldOutputJson(false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
-        console.log(`Updated task ${result.id}: "${result.name}"`)
+        console.log(formatUpdateConfirmation(result.id, result.name))
       }
     }),
   )
@@ -189,10 +198,10 @@ program
     wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
       const config = loadConfig()
       const result = await createTask(config, opts)
-      if (opts.json || !isTTY()) {
+      if (shouldOutputJson(false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
-        console.log(`Created task ${result.id}: "${result.name}" - ${result.url}`)
+        console.log(formatCreateConfirmation(result.id, result.name, result.url))
       }
     }),
   )
@@ -242,10 +251,10 @@ program
     wrapAction(async (taskId: string, opts: { message: string }) => {
       const config = loadConfig()
       const result = await postComment(config, taskId, opts.message)
-      if (isTTY()) {
-        console.log(`Comment posted (id: ${result.id})`)
-      } else {
+      if (shouldOutputJson(false)) {
         console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(formatCommentConfirmation(result.id))
       }
     }),
   )
@@ -393,13 +402,10 @@ program
     wrapAction(async (taskId: string, opts: { to?: string; remove?: string; json?: boolean }) => {
       const config = loadConfig()
       const result = await assignTask(config, taskId, opts)
-      if (opts.json || !isTTY()) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
-        const parts: string[] = []
-        if (opts.to) parts.push(`Assigned ${opts.to} to task ${taskId}`)
-        if (opts.remove) parts.push(`Removed ${opts.remove} from task ${taskId}`)
-        console.log(parts.join('; '))
+        console.log(formatAssignConfirmation(taskId, { to: opts.to, remove: opts.remove }))
       }
     }),
   )

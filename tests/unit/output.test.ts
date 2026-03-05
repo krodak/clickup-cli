@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatTable, isTTY } from '../../src/output.js'
+import { formatTable, isTTY, shouldOutputJson } from '../../src/output.js'
 
 describe('formatTable', () => {
   it('includes column labels in output', () => {
@@ -84,6 +84,55 @@ describe('formatTable', () => {
     const result = formatTable([{ name: longName }], [{ key: 'name', label: 'NAME', maxWidth: 60 }])
     expect(result).toContain('…')
     expect(result).not.toContain(longName)
+  })
+})
+
+describe('shouldOutputJson', () => {
+  it('returns true when forceJson is true', () => {
+    expect(shouldOutputJson(true)).toBe(true)
+  })
+
+  it('returns false when forceJson is false (regardless of TTY)', () => {
+    const originalIsTTY = process.stdout.isTTY
+    try {
+      process.stdout.isTTY = false as unknown as true
+      expect(shouldOutputJson(false)).toBe(false)
+    } finally {
+      process.stdout.isTTY = originalIsTTY
+    }
+  })
+
+  it('returns true when CU_OUTPUT=json env var is set', () => {
+    const original = process.env['CU_OUTPUT']
+    try {
+      process.env['CU_OUTPUT'] = 'json'
+      expect(shouldOutputJson(false)).toBe(true)
+    } finally {
+      if (original === undefined) delete process.env['CU_OUTPUT']
+      else process.env['CU_OUTPUT'] = original
+    }
+  })
+
+  it('returns false when CU_OUTPUT is not set', () => {
+    const original = process.env['CU_OUTPUT']
+    try {
+      delete process.env['CU_OUTPUT']
+      expect(shouldOutputJson(false)).toBe(false)
+    } finally {
+      if (original === undefined) delete process.env['CU_OUTPUT']
+      else process.env['CU_OUTPUT'] = original
+    }
+  })
+
+  it('returns true when forceJson is true AND CU_OUTPUT=json', () => {
+    const original = process.env['CU_OUTPUT']
+    try {
+      process.env['CU_OUTPUT'] = 'json'
+      expect(shouldOutputJson(true)).toBe(true)
+    } finally {
+      if (original === undefined) delete process.env['CU_OUTPUT']
+      else process.env['CU_OUTPUT'] = original
+    }
   })
 })
 

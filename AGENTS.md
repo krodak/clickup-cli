@@ -97,20 +97,31 @@ Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
 3. Tag: `git tag v0.X.0`
 4. Push commit and tag: `git push origin main --tags`
 5. CI handles: typecheck, test, build, `npm publish --provenance`, and GitHub Release creation (auto-generated notes)
-6. After npm publish succeeds, update the Homebrew formula in `krodak/homebrew-tap`:
-   - Get the sha256: `curl -sL "https://registry.npmjs.org/@krodak/clickup-cli/-/clickup-cli-0.X.0.tgz" | shasum -a 256`
-   - Update `Formula/clickup-cli.rb` with new version URL and sha256
-   - Commit and push to `krodak/homebrew-tap`
+6. After npm publish succeeds, update the Homebrew tap (see below)
 
 Do NOT publish manually. Do NOT use `NODE_AUTH_TOKEN` - the release pipeline uses OIDC trusted publishers for authentication.
 
-**CRITICAL: The release workflow MUST use Node 24 (not 22).** Node 22 ships npm 10 which has broken OIDC trusted publisher support. Node 24 ships npm 11 which works. If the release fails with "Access token expired or revoked", check the node-version in `release.yml`.
+### npm Trusted Publishers Requirements
+
+The release workflow uses OIDC trusted publishing, which requires npm CLI 11.5.1+ (ships with Node 24+). The `release.yml` workflow MUST use `node-version: '24'` or higher. Node 22 ships with npm 10.x which does not support trusted publishers and will fail with `E404` / expired token errors.
+
+The trusted publisher must be configured on npmjs.com under the package settings (Trusted Publisher - GitHub Actions) with: workflow filename = `release.yml` (case-sensitive, exact match).
 
 The release workflow uses `--ignore-scripts` to skip the `prepublishOnly` hook during publish (the CI steps already ran typecheck/test/build). This avoids redundant work and keeps the OIDC token fresh.
 
+### Homebrew Tap Update
+
+After npm publish succeeds for a new version, the Homebrew formula must be updated manually:
+
+1. Get the new tarball sha256: `curl -sL https://registry.npmjs.org/@krodak/clickup-cli/-/<version>.tgz | shasum -a 256`
+2. Update `Formula/clickup-cli.rb` in the `krodak/homebrew-tap` repo:
+   - Update the `url` to point to the new version tarball
+   - Update the `sha256` to match
+3. Push to `krodak/homebrew-tap`
+
 ## CI Pipelines
 
-- **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build. Uses Node 22.
+- **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build
 - **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance, and GitHub Release creation. **Must use Node 24** for OIDC.
 - **Dependabot** - weekly updates for npm and GitHub Actions dependencies
 

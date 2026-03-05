@@ -18,8 +18,15 @@ vi.mock('../../../src/interactive.js', () => ({
 }))
 
 const mockIsTTY = vi.fn()
+const mockShouldOutputJson = vi.fn()
 vi.mock('../../../src/output.js', () => ({
   isTTY: mockIsTTY,
+  shouldOutputJson: mockShouldOutputJson,
+}))
+
+const mockFormatTaskDetailMarkdown = vi.fn()
+vi.mock('../../../src/markdown.js', () => ({
+  formatTaskDetailMarkdown: mockFormatTaskDetailMarkdown,
 }))
 
 const config = { apiToken: 'pk_test', teamId: 'team_1' }
@@ -52,10 +59,15 @@ describe('openTask', () => {
     mockOpenUrl.mockReset()
     mockIsTTY.mockReset()
     mockIsTTY.mockReturnValue(false)
+    mockShouldOutputJson.mockReset()
+    mockShouldOutputJson.mockReturnValue(false)
+    mockFormatTaskDetailMarkdown.mockReset()
+    mockFormatTaskDetailMarkdown.mockReturnValue('# Markdown')
     vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 
   it('opens a task by ID directly', async () => {
+    mockIsTTY.mockReturnValue(true)
     mockGetTask.mockResolvedValue(fakeTask)
     const { openTask } = await import('../../../src/commands/open.js')
     const result = await openTask(config, 'abc123')
@@ -65,6 +77,7 @@ describe('openTask', () => {
   })
 
   it('outputs JSON when --json flag is set', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
     mockGetTask.mockResolvedValue(fakeTask)
     const { openTask } = await import('../../../src/commands/open.js')
     const result = await openTask(config, 'abc123', { json: true })
@@ -91,7 +104,7 @@ describe('openTask', () => {
     const { openTask } = await import('../../../src/commands/open.js')
     const result = await openTask(config, 'loginbug')
     expect(result.id).toBe('abc123')
-    expect(mockOpenUrl).toHaveBeenCalledWith('https://app.clickup.com/t/abc123')
+    expect(mockFormatTaskDetailMarkdown).toHaveBeenCalled()
   })
 
   it('searches by name when query contains spaces', async () => {
@@ -101,7 +114,7 @@ describe('openTask', () => {
     const { openTask } = await import('../../../src/commands/open.js')
     const result = await openTask(config, 'Fix login')
     expect(result.id).toBe('abc123')
-    expect(mockOpenUrl).toHaveBeenCalledWith('https://app.clickup.com/t/abc123')
+    expect(mockFormatTaskDetailMarkdown).toHaveBeenCalled()
   })
 
   it('throws when no tasks match the name query', async () => {
@@ -130,6 +143,7 @@ describe('openTask', () => {
   })
 
   it('returns JSON for name search with --json', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
     mockGetMe.mockResolvedValue({ id: 42, username: 'me' })
     mockGetMyTasks.mockResolvedValue([
       {
@@ -149,12 +163,13 @@ describe('openTask', () => {
     expect(result.id).toBe('abc123')
   })
 
-  it('does not print task info in non-TTY mode', async () => {
+  it('outputs markdown in non-TTY mode', async () => {
     mockIsTTY.mockReturnValue(false)
     mockGetTask.mockResolvedValue(fakeTask)
     const { openTask } = await import('../../../src/commands/open.js')
     await openTask(config, 'abc123')
-    expect(console.log).not.toHaveBeenCalledWith('Fix login bug')
-    expect(mockOpenUrl).toHaveBeenCalledWith('https://app.clickup.com/t/abc123')
+    expect(mockFormatTaskDetailMarkdown).toHaveBeenCalledWith(fakeTask)
+    expect(console.log).toHaveBeenCalledWith('# Markdown')
+    expect(mockOpenUrl).not.toHaveBeenCalled()
   })
 })

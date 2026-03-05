@@ -1,7 +1,8 @@
 import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatCommentsMarkdown } from '../markdown.js'
 
 export interface CommentSummary {
   id: string
@@ -32,8 +33,12 @@ export async function fetchComments(config: Config, taskId: string): Promise<Com
 }
 
 export function printComments(comments: CommentSummary[], forceJson: boolean): void {
-  if (forceJson || !isTTY()) {
+  if (shouldOutputJson(forceJson)) {
     console.log(JSON.stringify(comments, null, 2))
+    return
+  }
+  if (!isTTY()) {
+    console.log(formatCommentsMarkdown(comments))
     return
   }
 

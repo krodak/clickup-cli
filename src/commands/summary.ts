@@ -1,7 +1,8 @@
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
-import { isTTY, formatTable, TASK_COLUMNS } from '../output.js'
+import { formatGroupedTasksMarkdown } from '../markdown.js'
+import { isTTY, shouldOutputJson, formatTable, TASK_COLUMNS } from '../output.js'
 import { summarize, isDoneStatus } from './tasks.js'
 import type { TaskSummary } from './tasks.js'
 
@@ -74,8 +75,18 @@ export async function runSummaryCommand(
   const allTasks = await client.getMyTasks(config.teamId)
   const result = categorizeTasks(allTasks, opts.hours)
 
-  if (opts.json || !isTTY()) {
+  if (shouldOutputJson(opts.json)) {
     console.log(JSON.stringify(result, null, 2))
+    return
+  }
+
+  if (!isTTY()) {
+    const mdGroups = [
+      { label: 'Completed Recently', tasks: result.completed },
+      { label: 'In Progress', tasks: result.inProgress },
+      { label: 'Overdue', tasks: result.overdue },
+    ]
+    console.log(formatGroupedTasksMarkdown(mdGroups))
     return
   }
 
