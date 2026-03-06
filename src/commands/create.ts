@@ -32,7 +32,7 @@ export async function createTask(
 
   const payload: CreateTaskOptions = {
     name: options.name,
-    ...(options.description !== undefined ? { description: options.description } : {}),
+    ...(options.description !== undefined ? { markdown_content: options.description } : {}),
     ...(options.parent !== undefined ? { parent: options.parent } : {}),
     ...(options.status !== undefined ? { status: options.status } : {}),
   }

@@ -45,12 +45,12 @@ describe('updateTask', () => {
     mockGetSpaceWithStatuses.mockClear()
   })
 
-  it('calls API with task id and description', async () => {
+  it('calls API with task id and markdown_content', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     const result = await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
-      description: 'new desc',
+      markdown_content: 'new desc',
     })
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { description: 'new desc' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { markdown_content: 'new desc' })
     expect(result.id).toBe('t1')
   })
 
@@ -82,12 +82,12 @@ describe('updateTask', () => {
     )
   })
 
-  it('allows empty description to clear the field', async () => {
+  it('allows empty markdown_content to clear the field', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     const result = await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
-      description: '',
+      markdown_content: '',
     })
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { description: '' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { markdown_content: '' })
     expect(result.id).toBe('t1')
   })
 })
@@ -152,6 +152,13 @@ describe('parseAssigneeId', () => {
 })
 
 describe('buildUpdatePayload', () => {
+  it('maps description to markdown_content', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ description: '# Heading\n\nSome **bold** text' })
+    expect(payload.markdown_content).toBe('# Heading\n\nSome **bold** text')
+    expect(payload.description).toBeUndefined()
+  })
+
   it('builds payload with priority', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ priority: 'high' })
@@ -238,10 +245,10 @@ describe('fuzzy status matching', () => {
 })
 
 describe('updateDescription (backward compat)', () => {
-  it('delegates to updateTask with description', async () => {
+  it('delegates to updateTask with markdown_content', async () => {
     const { updateDescription } = await import('../../../src/commands/update.js')
     await updateDescription({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'new description')
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { description: 'new description' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { markdown_content: 'new description' })
   })
 
   it('throws when description is only whitespace', async () => {

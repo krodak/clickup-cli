@@ -186,7 +186,7 @@ program
   .description('Create a new task')
   .option('-l, --list <listId>', 'Target list ID (auto-detected from --parent if omitted)')
   .requiredOption('-n, --name <name>', 'Task name')
-  .option('-d, --description <text>', 'Task description')
+  .option('-d, --description <text>', 'Task description (markdown supported)')
   .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
   .option('-s, --status <status>', 'Initial status')
   .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')

@@ -47,6 +47,7 @@ export type Priority = 1 | 2 | 3 | 4
 export interface UpdateTaskOptions {
   name?: string
   description?: string
+  markdown_content?: string
   status?: string
   priority?: Priority | null
   due_date?: number
@@ -57,6 +58,7 @@ export interface UpdateTaskOptions {
 export interface CreateTaskOptions {
   name: string
   description?: string
+  markdown_content?: string
   parent?: string
   status?: string
   priority?: Priority | null
@@ -230,8 +232,8 @@ export class ClickUpClient {
     return this.request<Task>(`/task/${taskId}`)
   }
 
-  async updateTaskDescription(taskId: string, description: string): Promise<Task> {
-    return this.updateTask(taskId, { description })
+  async updateTaskMarkdown(taskId: string, markdown: string): Promise<Task> {
+    return this.updateTask(taskId, { markdown_content: markdown })
   }
 
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {
