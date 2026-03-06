@@ -82,13 +82,18 @@ function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
 
 export async function runAssignedCommand(
   config: Config,
-  opts: { includeClosed?: boolean; json?: boolean },
+  opts: { status?: string; includeClosed?: boolean; json?: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
   const allTasks = await client.getMyTasks(config.teamId, {
     includeClosed: opts.includeClosed,
   })
-  const groups = groupByStatus(allTasks, opts.includeClosed ?? false)
+  let groups = groupByStatus(allTasks, opts.includeClosed ?? false)
+
+  if (opts.status) {
+    const lower = opts.status.toLowerCase()
+    groups = groups.filter(g => g.status.toLowerCase() === lower)
+  }
 
   if (shouldOutputJson(opts.json ?? false)) {
     const result: Record<string, AssignedTaskJson[]> = {}

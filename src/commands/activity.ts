@@ -4,7 +4,8 @@ import type { Task } from '../api.js'
 import type { Config } from '../config.js'
 import type { CommentSummary } from './comments.js'
 import { formatTaskDetail } from '../interactive.js'
-import { isTTY } from '../output.js'
+import { isTTY, shouldOutputJson } from '../output.js'
+import { formatTaskDetailMarkdown, formatCommentsMarkdown } from '../markdown.js'
 
 export interface ActivityResult {
   task: Task
@@ -37,8 +38,15 @@ export async function fetchActivity(config: Config, taskId: string): Promise<Act
 }
 
 export function printActivity(result: ActivityResult, forceJson: boolean): void {
-  if (forceJson || !isTTY()) {
+  if (shouldOutputJson(forceJson)) {
     console.log(JSON.stringify(result, null, 2))
+    return
+  }
+
+  if (!isTTY()) {
+    const taskMd = formatTaskDetailMarkdown(result.task)
+    const commentsMd = formatCommentsMarkdown(result.comments)
+    console.log(`${taskMd}\n\n## Comments\n\n${commentsMd}`)
     return
   }
 

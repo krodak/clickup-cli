@@ -34,25 +34,25 @@ All commands support `--help` for full flag details.
 
 ### Read
 
-| Command                                                                    | What it returns                                    |
-| -------------------------------------------------------------------------- | -------------------------------------------------- |
-| `cu tasks [--status s] [--name q] [--list id] [--space id] [--json]`       | My tasks (workspace-wide)                          |
-| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--json]` | My initiatives                                     |
-| `cu assigned [--include-closed] [--json]`                                  | All my tasks grouped by status                     |
-| `cu sprint [--status s] [--space nameOrId] [--json]`                       | Tasks in active sprint (auto-detected)             |
-| `cu sprints [--space nameOrId] [--json]`                                   | List all sprints (marks active with \*)            |
-| `cu search <query> [--status s] [--json]`                                  | Search my tasks by name (multi-word, fuzzy status) |
-| `cu task <id> [--json]`                                                    | Single task details                                |
-| `cu subtasks <id> [--include-closed] [--json]`                             | Subtasks of a task or initiative                   |
-| `cu comments <id> [--json]`                                                | Comments on a task                                 |
-| `cu activity <id> [--json]`                                                | Task details + comment history combined            |
-| `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)          |
-| `cu summary [--hours n] [--json]`                                          | Standup helper: completed, in-progress, overdue    |
-| `cu overdue [--json]`                                                      | Tasks past their due date                          |
-| `cu spaces [--name partial] [--my] [--json]`                               | List/filter workspace spaces                       |
-| `cu lists <spaceId> [--name partial] [--json]`                             | Lists in a space (including folder lists)          |
-| `cu open <query> [--json]`                                                 | Open task in browser by ID or name                 |
-| `cu auth [--json]`                                                         | Check authentication status                        |
+| Command                                                                                       | What it returns                                    |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `cu tasks [--status s] [--name q] [--list id] [--space id] [--include-closed] [--json]`       | My tasks (workspace-wide)                          |
+| `cu initiatives [--status s] [--name q] [--list id] [--space id] [--include-closed] [--json]` | My initiatives                                     |
+| `cu assigned [--status s] [--include-closed] [--json]`                                        | All my tasks grouped by status                     |
+| `cu sprint [--status s] [--space nameOrId] [--include-closed] [--json]`                       | Tasks in active sprint (auto-detected)             |
+| `cu sprints [--space nameOrId] [--json]`                                                      | List all sprints (marks active with \*)            |
+| `cu search <query> [--status s] [--include-closed] [--json]`                                  | Search my tasks by name (multi-word, fuzzy status) |
+| `cu task <id> [--json]`                                                                       | Single task details                                |
+| `cu subtasks <id> [--status s] [--name q] [--include-closed] [--json]`                        | Subtasks of a task or initiative                   |
+| `cu comments <id> [--json]`                                                                   | Comments on a task                                 |
+| `cu activity <id> [--json]`                                                                   | Task details + comment history combined            |
+| `cu inbox [--days n] [--json]`                                                                | Tasks updated in last n days (default 30)          |
+| `cu summary [--hours n] [--json]`                                                             | Standup helper: completed, in-progress, overdue    |
+| `cu overdue [--json]`                                                                         | Tasks past their due date                          |
+| `cu spaces [--name partial] [--my] [--json]`                                                  | List/filter workspace spaces                       |
+| `cu lists <spaceId> [--name partial] [--json]`                                                | Lists in a space (including folder lists)          |
+| `cu open <query> [--json]`                                                                    | Open task in browser by ID or name                 |
+| `cu auth [--json]`                                                                            | Check authentication status                        |
 
 ### Write
 
@@ -68,32 +68,32 @@ All commands support `--help` for full flag details.
 
 ## Quick Reference
 
-| Topic               | Detail                                                                            |
-| ------------------- | --------------------------------------------------------------------------------- |
-| Task IDs            | Stable alphanumeric strings (e.g. `abc123def`)                                    |
-| Initiatives         | Detected via `custom_item_id !== 0`                                               |
-| `--list` on create  | Optional when `--parent` is given (auto-detected)                                 |
-| `--status`          | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.           |
-| `--priority`        | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                        |
-| `--due-date`        | `YYYY-MM-DD` format                                                               |
-| `--assignee`        | Numeric user ID (find via `cu task <id> --json`)                                  |
-| `--tags`            | Comma-separated (e.g. `--tags "bug,frontend"`)                                    |
-| `--time-estimate`   | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                  |
-| `--custom-item-id`  | Custom task type ID (e.g. `1` for initiative)                                     |
-| `--on` / `--blocks` | Task dependency direction (used with `cu depend`)                                 |
-| `--space`           | Partial name match or exact ID                                                    |
-| `--name`            | Partial match, case-insensitive                                                   |
-| `--include-closed`  | Include closed/done tasks (on `subtasks` and `assigned`)                          |
-| `cu assign --to me` | Shorthand for your own user ID                                                    |
-| `cu search`         | Matches all query words against task name, case-insensitive                       |
-| `cu sprint`         | Auto-detects active sprint via view API and date range parsing                    |
-| `cu summary`        | Categories: completed (done/complete/closed within N hours), in progress, overdue |
-| `cu overdue`        | Excludes closed tasks, sorted most overdue first                                  |
-| `cu open`           | Tries task ID first, falls back to name search                                    |
-| `cu task`           | Shows custom fields in detail view                                                |
-| `cu lists`          | Discovers list IDs needed for `--list` and `cu create -l`                         |
-| Errors              | stderr with exit code 1                                                           |
-| Parsing             | Strict - excess/unknown arguments rejected                                        |
+| Topic               | Detail                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| Task IDs            | Stable alphanumeric strings (e.g. `abc123def`)                                                    |
+| Initiatives         | Detected via `custom_item_id !== 0`                                                               |
+| `--list` on create  | Optional when `--parent` is given (auto-detected)                                                 |
+| `--status`          | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                           |
+| `--priority`        | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                        |
+| `--due-date`        | `YYYY-MM-DD` format                                                                               |
+| `--assignee`        | Numeric user ID (find via `cu task <id> --json`)                                                  |
+| `--tags`            | Comma-separated (e.g. `--tags "bug,frontend"`)                                                    |
+| `--time-estimate`   | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                  |
+| `--custom-item-id`  | Custom task type ID (e.g. `1` for initiative)                                                     |
+| `--on` / `--blocks` | Task dependency direction (used with `cu depend`)                                                 |
+| `--space`           | Partial name match or exact ID                                                                    |
+| `--name`            | Partial match, case-insensitive                                                                   |
+| `--include-closed`  | Include closed/done tasks (on `tasks`, `initiatives`, `assigned`, `subtasks`, `sprint`, `search`) |
+| `cu assign --to me` | Shorthand for your own user ID                                                                    |
+| `cu search`         | Matches all query words against task name, case-insensitive                                       |
+| `cu sprint`         | Auto-detects active sprint via view API and date range parsing                                    |
+| `cu summary`        | Categories: completed (done/complete/closed within N hours), in progress, overdue                 |
+| `cu overdue`        | Excludes closed tasks, sorted most overdue first                                                  |
+| `cu open`           | Tries task ID first, falls back to name search                                                    |
+| `cu task`           | Shows custom fields in detail view                                                                |
+| `cu lists`          | Discovers list IDs needed for `--list` and `cu create -l`                                         |
+| Errors              | stderr with exit code 1                                                                           |
+| Parsing             | Strict - excess/unknown arguments rejected                                                        |
 
 ## Agent Workflow Examples
 

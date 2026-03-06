@@ -6,6 +6,7 @@ import { summarize } from './tasks.js'
 
 export interface SearchOptions {
   status?: string
+  includeClosed?: boolean
 }
 
 export async function searchTasks(
@@ -19,7 +20,9 @@ export async function searchTasks(
   }
 
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId)
+  const allTasks = await client.getMyTasks(config.teamId, {
+    includeClosed: opts.includeClosed,
+  })
 
   const words = trimmed.toLowerCase().split(/\s+/)
 

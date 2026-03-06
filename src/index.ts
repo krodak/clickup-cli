@@ -59,6 +59,7 @@ interface TaskFilterOpts {
   list?: string
   space?: string
   name?: string
+  includeClosed?: boolean
   json?: boolean
 }
 
@@ -87,13 +88,12 @@ program
     wrapAction(async (opts: { json?: boolean }) => {
       const config = loadConfig()
       const result = await checkAuth(config)
-      if (opts.json || !isTTY()) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
       } else if (result.authenticated && result.user) {
         console.log(`Authenticated as @${result.user.username} (id: ${result.user.id})`)
       } else {
-        console.error(`Authentication failed: ${result.error ?? 'unknown error'}`)
-        process.exit(1)
+        throw new Error(`Authentication failed: ${result.error ?? 'unknown error'}`)
       }
     }),
   )
@@ -105,6 +105,7 @@ program
   .option('--list <listId>', 'Filter by list ID')
   .option('--space <spaceId>', 'Filter by space ID')
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
+  .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (opts: TaskFilterOpts) => {
@@ -115,6 +116,7 @@ program
         listIds: opts.list ? [opts.list] : undefined,
         spaceIds: opts.space ? [opts.space] : undefined,
         name: opts.name,
+        includeClosed: opts.includeClosed,
       })
       await printTasks(tasks, opts.json ?? false, config)
     }),
@@ -127,6 +129,7 @@ program
   .option('--list <listId>', 'Filter by list ID')
   .option('--space <spaceId>', 'Filter by space ID')
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
+  .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (opts: TaskFilterOpts) => {
@@ -137,6 +140,7 @@ program
         listIds: opts.list ? [opts.list] : undefined,
         spaceIds: opts.space ? [opts.space] : undefined,
         name: opts.name,
+        includeClosed: opts.includeClosed,
       })
       await printTasks(tasks, opts.json ?? false, config)
     }),
@@ -176,7 +180,7 @@ program
       const config = loadConfig()
       const payload = buildUpdatePayload(opts)
       const result = await updateTask(config, taskId, payload)
-      if (shouldOutputJson(false)) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
         console.log(formatUpdateConfirmation(result.id, result.name))
@@ -203,7 +207,7 @@ program
     wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
       const config = loadConfig()
       const result = await createTask(config, opts)
-      if (shouldOutputJson(false)) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
         console.log(formatCreateConfirmation(result.id, result.name, result.url))
@@ -216,12 +220,20 @@ program
   .description('List my tasks in the current active sprint (auto-detected)')
   .option('--status <status>', 'Filter by status')
   .option('--space <nameOrId>', 'Narrow sprint search to a specific space (partial name or ID)')
+  .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (opts: { status?: string; space?: string; json?: boolean }) => {
-      const config = loadConfig()
-      await runSprintCommand(config, opts)
-    }),
+    wrapAction(
+      async (opts: {
+        status?: string
+        space?: string
+        includeClosed?: boolean
+        json?: boolean
+      }) => {
+        const config = loadConfig()
+        await runSprintCommand(config, opts)
+      },
+    ),
   )
 
 program
@@ -239,25 +251,41 @@ program
 program
   .command('subtasks <taskId>')
   .description('List subtasks of a task or initiative')
+  .option('--status <status>', 'Filter by status')
+  .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--include-closed', 'Include closed/done subtasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: { includeClosed?: boolean; json?: boolean }) => {
-      const config = loadConfig()
-      const tasks = await fetchSubtasks(config, taskId, { includeClosed: opts.includeClosed })
-      await printTasks(tasks, opts.json ?? false, config)
-    }),
+    wrapAction(
+      async (
+        taskId: string,
+        opts: { status?: string; name?: string; includeClosed?: boolean; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        let tasks = await fetchSubtasks(config, taskId, { includeClosed: opts.includeClosed })
+        if (opts.status) {
+          const lower = opts.status.toLowerCase()
+          tasks = tasks.filter(t => t.status.toLowerCase() === lower)
+        }
+        if (opts.name) {
+          const query = opts.name.toLowerCase()
+          tasks = tasks.filter(t => t.name.toLowerCase().includes(query))
+        }
+        await printTasks(tasks, opts.json ?? false, config)
+      },
+    ),
   )
 
 program
   .command('comment <taskId>')
   .description('Post a comment on a task')
   .requiredOption('-m, --message <text>', 'Comment text')
+  .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: { message: string }) => {
+    wrapAction(async (taskId: string, opts: { message: string; json?: boolean }) => {
       const config = loadConfig()
       const result = await postComment(config, taskId, opts.message)
-      if (shouldOutputJson(false)) {
+      if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
       } else {
         console.log(formatCommentConfirmation(result.id))
@@ -325,8 +353,7 @@ program
       const config = loadConfig()
       const days = Number(opts.days ?? 30)
       if (!Number.isFinite(days) || days <= 0) {
-        console.error('Error: --days must be a positive number')
-        process.exit(1)
+        throw new Error('--days must be a positive number')
       }
       const tasks = await fetchInbox(config, days)
       await printInbox(tasks, opts.json ?? false, config)
@@ -336,10 +363,11 @@ program
 program
   .command('assigned')
   .description('Show all tasks assigned to me, grouped by status')
+  .option('--status <status>', 'Show only tasks with this status')
   .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
+    wrapAction(async (opts: { status?: string; includeClosed?: boolean; json?: boolean }) => {
       const config = loadConfig()
       await runAssignedCommand(config, opts)
     }),
@@ -360,13 +388,19 @@ program
   .command('search <query>')
   .description('Search my tasks by name')
   .option('--status <status>', 'Filter by status')
+  .option('--include-closed', 'Include done/closed tasks in search')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (query: string, opts: { status?: string; json?: boolean }) => {
-      const config = loadConfig()
-      const tasks = await searchTasks(config, query, { status: opts.status })
-      await printTasks(tasks, opts.json ?? false, config)
-    }),
+    wrapAction(
+      async (query: string, opts: { status?: string; includeClosed?: boolean; json?: boolean }) => {
+        const config = loadConfig()
+        const tasks = await searchTasks(config, query, {
+          status: opts.status,
+          includeClosed: opts.includeClosed,
+        })
+        await printTasks(tasks, opts.json ?? false, config)
+      },
+    ),
   )
 
 program
@@ -379,8 +413,7 @@ program
       const config = loadConfig()
       const hours = Number(opts.hours ?? 24)
       if (!Number.isFinite(hours) || hours <= 0) {
-        console.error('Error: --hours must be a positive number')
-        process.exit(1)
+        throw new Error('--hours must be a positive number')
       }
       await runSummaryCommand(config, { hours, json: opts.json ?? false })
     }),

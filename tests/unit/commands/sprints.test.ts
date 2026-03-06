@@ -45,10 +45,10 @@ describe('listSprints', () => {
     await listSprints(baseConfig)
 
     const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string
-    const parsed = JSON.parse(output) as Array<{ id: string; folder: string }>
-    expect(parsed).toHaveLength(2)
-    expect(parsed[0]!.folder).toBe('Acme Sprint')
-    expect(parsed[1]!.folder).toBe('Acme Sprint')
+    expect(output).toContain('Sprint 1')
+    expect(output).toContain('Sprint 2')
+    expect(output).toContain('l1')
+    expect(output).toContain('l2')
   })
 
   it('JSON output includes all sprint info fields', async () => {
@@ -61,7 +61,7 @@ describe('listSprints', () => {
       { id: 'l1', name: 'Sprint 1 (1/1 - 1/14)' },
     ])
 
-    await listSprints(baseConfig, { space: 'Acme' })
+    await listSprints(baseConfig, { space: 'Acme', json: true })
 
     const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string
     const parsed = JSON.parse(output) as Array<Record<string, unknown>>
@@ -94,7 +94,7 @@ describe('listSprints', () => {
       { id: 'l3', name: 'Sprint Future (12/30 - 12/31)' },
     ])
 
-    await listSprints(baseConfig, { space: 'Acme' })
+    await listSprints(baseConfig, { space: 'Acme', json: true })
 
     const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string
     const parsed = JSON.parse(output) as Array<{ id: string; active: boolean }>

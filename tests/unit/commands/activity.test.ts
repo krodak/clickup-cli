@@ -79,7 +79,7 @@ describe('printActivity', () => {
     expect(output).toContain('No comments.')
   })
 
-  it('outputs JSON when non-TTY even without forceJson', async () => {
+  it('outputs markdown when non-TTY without forceJson', async () => {
     const outputModule = await import('../../../src/output.js')
     vi.spyOn(outputModule, 'isTTY').mockReturnValue(false)
     const { printActivity } = await import('../../../src/commands/activity.js')
@@ -87,7 +87,11 @@ describe('printActivity', () => {
 
     printActivity(result, false)
 
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify(result, null, 2))
+    const output = logSpy.mock.calls[0]?.[0] as string
+    expect(output).toContain('# My Task')
+    expect(output).toContain('## Comments')
+    expect(output).toContain('alice')
+    expect(output).toContain('First comment')
   })
 })
 

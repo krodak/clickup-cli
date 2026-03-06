@@ -118,6 +118,7 @@ cu tasks --status "in progress"
 cu tasks --name "login"
 cu tasks --list <listId>
 cu tasks --space <spaceId>
+cu tasks --include-closed
 cu tasks --json
 ```
 
@@ -131,6 +132,7 @@ cu initiatives --status "to do"
 cu initiatives --name "auth"
 cu initiatives --list <listId>
 cu initiatives --space <spaceId>
+cu initiatives --include-closed
 cu initiatives --json
 ```
 
@@ -141,6 +143,7 @@ List my tasks in the currently active sprint (auto-detected from sprint folder d
 ```bash
 cu sprint
 cu sprint --status "in progress"
+cu sprint --include-closed
 cu sprint --json
 ```
 
@@ -159,6 +162,7 @@ All tasks assigned to me, grouped by pipeline stage (code review, in progress, t
 
 ```bash
 cu assigned
+cu assigned --status "in progress"
 cu assigned --include-closed
 cu assigned --json
 ```
@@ -190,6 +194,8 @@ List subtasks of a task or initiative.
 
 ```bash
 cu subtasks abc123
+cu subtasks abc123 --status "in progress"
+cu subtasks abc123 --name "auth"
 cu subtasks abc123 --include-closed
 cu subtasks abc123 --json
 ```
@@ -330,6 +336,7 @@ cu search "login bug"
 cu search auth
 cu search "payment flow" --json
 cu search auth --status "prog"     # fuzzy matches "in progress"
+cu search "old task" --include-closed
 ```
 
 ### `cu summary`

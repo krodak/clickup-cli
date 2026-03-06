@@ -27,6 +27,8 @@ export async function listSpaces(
     console.log(JSON.stringify(spaces, null, 2))
   } else if (!isTTY()) {
     console.log(formatSpacesMarkdown(spaces.map(s => ({ id: s.id, name: s.name }))))
+  } else if (spaces.length === 0) {
+    console.log('No spaces found.')
   } else {
     const table = formatTable(
       spaces.map(s => ({ id: s.id, name: s.name })),

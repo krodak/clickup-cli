@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Task, List, Space } from '../api.js'
 import type { Config } from '../config.js'
-import { printTasks, summarize } from './tasks.js'
+import { printTasks, summarize, isDoneStatus } from './tasks.js'
 
 export function parseSprintDates(name: string): { start: Date; end: Date } | null {
   // Match patterns like "(2/12 - 2/25)" or "(2/12-2/25)" with optional en-dash
@@ -53,7 +53,7 @@ export function findRelatedSpaces(mySpaceIds: Set<string>, allSpaces: Space[]): 
 
 export async function runSprintCommand(
   config: Config,
-  opts: { status?: string; json?: boolean; space?: string },
+  opts: { status?: string; json?: boolean; space?: string; includeClosed?: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
 
@@ -108,7 +108,11 @@ export async function runSprintCommand(
     allTasks = await client.getTasksFromList(activeList.id)
   }
 
-  const sprintTasks = allTasks.filter(t => t.assignees.some(a => Number(a.id) === me.id))
+  let sprintTasks = allTasks.filter(t => t.assignees.some(a => Number(a.id) === me.id))
+
+  if (!opts.includeClosed) {
+    sprintTasks = sprintTasks.filter(t => !isDoneStatus(t.status.status))
+  }
 
   const filtered = opts.status
     ? sprintTasks.filter(t => t.status.status.toLowerCase() === opts.status!.toLowerCase())

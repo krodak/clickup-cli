@@ -2,8 +2,10 @@ import { ClickUpClient } from '../api.js'
 import type { List, Space } from '../api.js'
 import type { Config } from '../config.js'
 import { parseSprintDates, findRelatedSpaces } from './sprint.js'
-import { formatTable, isTTY } from '../output.js'
+import { formatTable, isTTY, shouldOutputJson } from '../output.js'
 import type { Column } from '../output.js'
+import { formatMarkdownTable } from '../markdown.js'
+import type { MarkdownColumn } from '../markdown.js'
 
 export interface SprintInfo {
   id: string
@@ -88,7 +90,7 @@ export async function listSprints(
     allSprints.push(...buildSprintInfos(lists, folder.name, today))
   }
 
-  if (opts.json || !isTTY()) {
+  if (shouldOutputJson(opts.json ?? false)) {
     console.log(JSON.stringify(allSprints, null, 2))
     return
   }
@@ -107,6 +109,16 @@ export async function listSprints(
       dates: dateStr,
     }
   })
+
+  if (!isTTY()) {
+    const mdColumns: MarkdownColumn<SprintRow>[] = [
+      { key: 'id', label: 'ID' },
+      { key: 'sprint', label: 'Sprint' },
+      { key: 'dates', label: 'Dates' },
+    ]
+    console.log(formatMarkdownTable(rows, mdColumns))
+    return
+  }
 
   console.log(formatTable(rows, SPRINT_COLUMNS))
 }
