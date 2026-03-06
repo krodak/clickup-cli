@@ -29,6 +29,18 @@ describe('createTask', () => {
     expect(result.id).toBe('t_new')
   })
 
+  it('sends description as markdown_content', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Task', description: '# Heading\n\nSome **bold** text' },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith('l1', {
+      name: 'Task',
+      markdown_content: '# Heading\n\nSome **bold** text',
+    })
+  })
+
   it('creates a task with parent initiative', async () => {
     const { createTask } = await import('../../../src/commands/create.js')
     await createTask(

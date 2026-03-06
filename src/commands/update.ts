@@ -59,7 +59,7 @@ export interface UpdateCommandOptions {
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
   const payload: UpdateTaskOptions = {}
   if (opts.name !== undefined) payload.name = opts.name
-  if (opts.description !== undefined) payload.description = opts.description
+  if (opts.description !== undefined) payload.markdown_content = opts.description
   if (opts.status !== undefined) payload.status = opts.status
   if (opts.priority !== undefined) payload.priority = parsePriority(opts.priority)
   if (opts.dueDate !== undefined) {
@@ -79,6 +79,7 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
   return (
     options.name !== undefined ||
     options.description !== undefined ||
+    options.markdown_content !== undefined ||
     options.status !== undefined ||
     options.priority !== undefined ||
     options.due_date !== undefined ||
@@ -136,5 +137,5 @@ export async function updateDescription(
   description: string,
 ): Promise<{ id: string; name: string }> {
   if (!description.trim()) throw new Error('Description cannot be empty')
-  return updateTask(config, taskId, { description })
+  return updateTask(config, taskId, { markdown_content: description })
 }

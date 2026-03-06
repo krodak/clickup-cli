@@ -48,14 +48,14 @@ describe('ClickUpClient', () => {
     expect(secondCall).toContain('assignees%5B%5D=42')
   })
 
-  it('updates task description', async () => {
+  it('updates task markdown content', async () => {
     mockFetch.mockReturnValue(mockResponse({ id: 't1', description: 'updated' }))
-    await client.updateTaskDescription('t1', 'updated description')
+    await client.updateTaskMarkdown('t1', '# Updated markdown')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/task/t1'),
       expect.objectContaining({
         method: 'PUT',
-        body: JSON.stringify({ description: 'updated description' }),
+        body: JSON.stringify({ markdown_content: '# Updated markdown' }),
       }),
     )
   })
