@@ -58,7 +58,30 @@ describe('fetchSubtasks', () => {
     expect(mockGetTasksFromList).toHaveBeenCalledWith(
       'l1',
       expect.objectContaining({ parent: 'p1' }),
+      { includeClosed: undefined },
     )
+  })
+
+  it('passes includeClosed option to API', async () => {
+    mockGetTask.mockResolvedValue({
+      id: 'p1',
+      name: 'Parent',
+      list: { id: 'l1', name: 'Roadmap' },
+      status: { status: 'open', color: '' },
+      assignees: [],
+      url: '',
+    })
+    mockGetTasksFromList.mockResolvedValue([baseTask({ status: { status: 'done', color: '' } })])
+    const { fetchSubtasks } = await import('../../../src/commands/subtasks.js')
+    const result = await fetchSubtasks({ apiToken: 'pk_t', teamId: 'team1' }, 'p1', {
+      includeClosed: true,
+    })
+    expect(mockGetTasksFromList).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({ parent: 'p1' }),
+      { includeClosed: true },
+    )
+    expect(result).toHaveLength(1)
   })
 
   it('returns mapped subtask summaries', async () => {

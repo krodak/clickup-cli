@@ -85,7 +85,9 @@ export async function runAssignedCommand(
   opts: { includeClosed?: boolean; json?: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId)
+  const allTasks = await client.getMyTasks(config.teamId, {
+    includeClosed: opts.includeClosed,
+  })
   const groups = groupByStatus(allTasks, opts.includeClosed ?? false)
 
   if (shouldOutputJson(opts.json ?? false)) {

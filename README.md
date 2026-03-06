@@ -190,6 +190,7 @@ List subtasks of a task or initiative.
 
 ```bash
 cu subtasks abc123
+cu subtasks abc123 --include-closed
 cu subtasks abc123 --json
 ```
 

@@ -162,6 +162,23 @@ describe('runAssignedCommand', () => {
     expect(parsed).toHaveProperty('done')
   })
 
+  it('passes includeClosed to the API when flag is set', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { runAssignedCommand } = await import('../../../src/commands/assigned.js')
+    await runAssignedCommand(
+      { apiToken: 'pk_t', teamId: 'team1' },
+      { json: true, includeClosed: true },
+    )
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { includeClosed: true })
+  })
+
+  it('does not pass includeClosed to API by default', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { runAssignedCommand } = await import('../../../src/commands/assigned.js')
+    await runAssignedCommand({ apiToken: 'pk_t', teamId: 'team1' }, { json: true })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { includeClosed: undefined })
+  })
+
   it('prints no tasks message when empty', async () => {
     mockGetMyTasks.mockResolvedValue([])
     vi.stubGlobal('process', {

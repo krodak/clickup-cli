@@ -43,7 +43,7 @@ All commands support `--help` for full flag details.
 | `cu sprints [--space nameOrId] [--json]`                                   | List all sprints (marks active with \*)            |
 | `cu search <query> [--status s] [--json]`                                  | Search my tasks by name (multi-word, fuzzy status) |
 | `cu task <id> [--json]`                                                    | Single task details                                |
-| `cu subtasks <id> [--json]`                                                | Subtasks of a task or initiative                   |
+| `cu subtasks <id> [--include-closed] [--json]`                             | Subtasks of a task or initiative                   |
 | `cu comments <id> [--json]`                                                | Comments on a task                                 |
 | `cu activity <id> [--json]`                                                | Task details + comment history combined            |
 | `cu inbox [--days n] [--json]`                                             | Tasks updated in last n days (default 30)          |
@@ -79,6 +79,7 @@ All commands support `--help` for full flag details.
 | `--tags`            | Comma-separated (e.g. `--tags "bug,frontend"`)                                    |
 | `--space`           | Partial name match or exact ID                                                    |
 | `--name`            | Partial match, case-insensitive                                                   |
+| `--include-closed`  | Include closed/done tasks (on `subtasks` and `assigned`)                          |
 | `cu assign --to me` | Shorthand for your own user ID                                                    |
 | `cu search`         | Matches all query words against task name, case-insensitive                       |
 | `cu sprint`         | Auto-detects active sprint via view API and date range parsing                    |
@@ -96,7 +97,8 @@ All commands support `--help` for full flag details.
 
 ```bash
 cu task abc123def                   # markdown summary
-cu subtasks abc123def               # child tasks
+cu subtasks abc123def               # child tasks (open only)
+cu subtasks abc123def --include-closed  # all child tasks
 cu comments abc123def               # discussion
 cu activity abc123def               # task + comments combined
 ```

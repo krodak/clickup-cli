@@ -234,11 +234,12 @@ program
 program
   .command('subtasks <taskId>')
   .description('List subtasks of a task or initiative')
+  .option('--include-closed', 'Include closed/done subtasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+    wrapAction(async (taskId: string, opts: { includeClosed?: boolean; json?: boolean }) => {
       const config = loadConfig()
-      const tasks = await fetchSubtasks(config, taskId)
+      const tasks = await fetchSubtasks(config, taskId, { includeClosed: opts.includeClosed })
       await printTasks(tasks, opts.json ?? false, config)
     }),
   )

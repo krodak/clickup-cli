@@ -40,6 +40,7 @@ export interface TaskFilters {
   listIds?: string[]
   spaceIds?: string[]
   subtasks?: boolean
+  includeClosed?: boolean
 }
 
 export type Priority = 1 | 2 | 3 | 4
@@ -183,6 +184,7 @@ export class ClickUpClient {
     const baseParams = new URLSearchParams({
       subtasks: String(filters.subtasks ?? true),
     })
+    if (filters.includeClosed) baseParams.set('include_closed', 'true')
     baseParams.append('assignees[]', String(me.id))
     for (const s of filters.statuses ?? []) baseParams.append('statuses[]', s)
     for (const id of filters.listIds ?? []) baseParams.append('list_ids[]', id)
@@ -214,9 +216,15 @@ export class ClickUpClient {
     return data.comments ?? []
   }
 
-  async getTasksFromList(listId: string, params: Record<string, string> = {}): Promise<Task[]> {
+  async getTasksFromList(
+    listId: string,
+    params: Record<string, string> = {},
+    options: { includeClosed?: boolean } = {},
+  ): Promise<Task[]> {
     return this.paginate(page => {
-      const qs = new URLSearchParams({ subtasks: 'true', page: String(page), ...params }).toString()
+      const base: Record<string, string> = { subtasks: 'true', page: String(page), ...params }
+      if (options.includeClosed) base['include_closed'] = 'true'
+      const qs = new URLSearchParams(base).toString()
       return `/list/${listId}/task?${qs}`
     })
   }
