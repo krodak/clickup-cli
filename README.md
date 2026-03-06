@@ -153,6 +153,7 @@ List all sprints across sprint folders. Marks the currently active sprint.
 
 ```bash
 cu sprints
+cu sprints --space "Engineering"
 cu sprints --json
 ```
 
@@ -263,6 +264,7 @@ Post a comment on a task.
 
 ```bash
 cu comment abc123 -m "Addressed in PR #42"
+cu comment abc123 -m "Done" --json
 ```
 
 ### `cu comments <id>`
@@ -309,11 +311,11 @@ cu spaces --my
 cu spaces --json
 ```
 
-| Flag               | Description                         |
-| ------------------ | ----------------------------------- |
-| `--name <partial>` | Filter spaces by partial name match |
-| `--my`             | Show only spaces you belong to      |
-| `--json`           | Force JSON output                   |
+| Flag               | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `--name <partial>` | Filter spaces by partial name match          |
+| `--my`             | Show only spaces where I have assigned tasks |
+| `--json`           | Force JSON output                            |
 
 ### `cu open <query>`
 

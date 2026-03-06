@@ -56,15 +56,15 @@ All commands support `--help` for full flag details.
 
 ### Write
 
-| Command                                                                                                                                                                        | What it does                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--json]`                                                    | Update task fields                           |
-| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--tags t] [--custom-item-id n] [--json]` | Create task (list auto-detected from parent) |
-| `cu comment <id> -m text`                                                                                                                                                      | Post comment on task                         |
-| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                              | Assign/unassign users                        |
-| `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                           | Add/remove task dependencies                 |
-| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                       | Manage CLI config                            |
-| `cu completion <shell>`                                                                                                                                                        | Shell completions (bash/zsh/fish)            |
+| Command                                                                                                                                                                        | What it does                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--json]`                                                    | Update task fields (desc supports markdown) |
+| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
+| `cu comment <id> -m text [--json]`                                                                                                                                             | Post comment on task                        |
+| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                              | Assign/unassign users                       |
+| `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                           | Add/remove task dependencies                |
+| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                       | Manage CLI config                           |
+| `cu completion <shell>`                                                                                                                                                        | Shell completions (bash/zsh/fish)           |
 
 ## Quick Reference
 
