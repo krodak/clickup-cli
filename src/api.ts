@@ -52,6 +52,7 @@ export interface UpdateTaskOptions {
   priority?: Priority | null
   due_date?: number
   due_date_time?: boolean
+  time_estimate?: number
   assignees?: { add?: number[]; rem?: number[] }
 }
 
@@ -63,8 +64,10 @@ export interface CreateTaskOptions {
   priority?: Priority | null
   due_date?: number
   due_date_time?: boolean
+  time_estimate?: number
   assignees?: number[]
   tags?: string[]
+  custom_item_id?: number
 }
 
 export interface Team {
@@ -295,5 +298,30 @@ export class ClickUpClient {
 
   async getViewTasks(viewId: string): Promise<Task[]> {
     return this.paginate(page => `/view/${viewId}/task?page=${page}`)
+  }
+
+  async addDependency(
+    taskId: string,
+    opts: { dependsOn?: string; dependencyOf?: string },
+  ): Promise<void> {
+    const body: Record<string, string> = {}
+    if (opts.dependsOn) body.depends_on = opts.dependsOn
+    if (opts.dependencyOf) body.dependency_of = opts.dependencyOf
+    await this.request(`/task/${taskId}/dependency`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async deleteDependency(
+    taskId: string,
+    opts: { dependsOn?: string; dependencyOf?: string },
+  ): Promise<void> {
+    const params = new URLSearchParams()
+    if (opts.dependsOn) params.set('depends_on', opts.dependsOn)
+    if (opts.dependencyOf) params.set('dependency_of', opts.dependencyOf)
+    await this.request(`/task/${taskId}/dependency?${params.toString()}`, {
+      method: 'DELETE',
+    })
   }
 }

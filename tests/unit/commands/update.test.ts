@@ -151,6 +151,42 @@ describe('parseAssigneeId', () => {
   })
 })
 
+describe('parseTimeEstimate', () => {
+  it('parses hours only', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('2h')).toBe(2 * 60 * 60 * 1000)
+  })
+
+  it('parses minutes only', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('30m')).toBe(30 * 60 * 1000)
+  })
+
+  it('parses combined hours and minutes', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('1h30m')).toBe(90 * 60 * 1000)
+  })
+
+  it('parses raw milliseconds', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('3600000')).toBe(3600000)
+  })
+
+  it('is case-insensitive', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('2H')).toBe(2 * 60 * 60 * 1000)
+    expect(parseTimeEstimate('30M')).toBe(30 * 60 * 1000)
+    expect(parseTimeEstimate('1H30M')).toBe(90 * 60 * 1000)
+  })
+
+  it('throws on invalid format', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(() => parseTimeEstimate('abc')).toThrow('duration')
+    expect(() => parseTimeEstimate('-1')).toThrow('duration')
+    expect(() => parseTimeEstimate('0')).toThrow('duration')
+  })
+})
+
 describe('buildUpdatePayload', () => {
   it('builds payload with priority', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
@@ -185,6 +221,12 @@ describe('buildUpdatePayload', () => {
     expect(payload.priority).toBe(1)
     expect(payload.due_date).toBe(new Date('2025-01-01').getTime())
     expect(payload.assignees).toEqual({ add: [99] })
+  })
+
+  it('builds payload with time estimate', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ timeEstimate: '2h' })
+    expect(payload.time_estimate).toBe(2 * 60 * 60 * 1000)
   })
 
   it('throws on non-numeric assignee', async () => {

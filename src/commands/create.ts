@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { CreateTaskOptions } from '../api.js'
 import type { Config } from '../config.js'
-import { parsePriority, parseDueDate, parseAssigneeId } from './update.js'
+import { parsePriority, parseDueDate, parseAssigneeId, parseTimeEstimate } from './update.js'
 
 export interface CreateOptions {
   list?: string
@@ -13,6 +13,8 @@ export interface CreateOptions {
   dueDate?: string
   assignee?: string
   tags?: string
+  customItemId?: string
+  timeEstimate?: string
 }
 
 export async function createTask(
@@ -49,6 +51,15 @@ export async function createTask(
   }
   if (options.tags !== undefined) {
     payload.tags = options.tags.split(',').map(t => t.trim())
+  }
+  if (options.customItemId !== undefined) {
+    const id = Number(options.customItemId)
+    if (!Number.isInteger(id) || id < 0)
+      throw new Error('Custom item ID must be a non-negative integer')
+    payload.custom_item_id = id
+  }
+  if (options.timeEstimate !== undefined) {
+    payload.time_estimate = parseTimeEstimate(options.timeEstimate)
   }
 
   const task = await client.createTask(listId, payload)

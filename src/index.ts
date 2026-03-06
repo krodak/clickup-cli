@@ -39,6 +39,8 @@ import { fetchActivity, printActivity } from './commands/activity.js'
 import { generateCompletion } from './commands/completion.js'
 import { checkAuth } from './commands/auth.js'
 import { searchTasks } from './commands/search.js'
+import { manageDependency } from './commands/depend.js'
+import type { DependOptions } from './commands/depend.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -166,6 +168,7 @@ program
   .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
   .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
+  .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
   .option('--assignee <userId>', 'Add assignee by user ID')
   .option('--json', 'Force JSON output even in terminal')
   .action(
@@ -193,6 +196,8 @@ program
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
   .option('--assignee <userId>', 'Assignee user ID')
   .option('--tags <tags>', 'Comma-separated tag names')
+  .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
+  .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
@@ -407,6 +412,25 @@ program
         console.log(JSON.stringify(result, null, 2))
       } else {
         console.log(formatAssignConfirmation(taskId, { to: opts.to, remove: opts.remove }))
+      }
+    }),
+  )
+
+program
+  .command('depend <taskId>')
+  .description('Add or remove task dependencies')
+  .option('--on <taskId>', 'Task that this task depends on (waiting on)')
+  .option('--blocks <taskId>', 'Task that this task blocks')
+  .option('--remove', 'Remove the dependency instead of adding it')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: DependOptions & { json?: boolean }) => {
+      const config = loadConfig()
+      const message = await manageDependency(config, taskId, opts)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ taskId, ...opts, message }, null, 2))
+      } else {
+        console.log(message)
       }
     }),
   )

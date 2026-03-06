@@ -98,7 +98,7 @@ When output is piped (no TTY), all commands output **Markdown** by default - opt
 
 ## Commands
 
-24 commands total. All support `--help` for full flag details.
+25 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -206,18 +206,20 @@ cu update abc123 --priority high
 cu update abc123 --due-date 2025-03-15
 cu update abc123 --assignee 12345
 cu update abc123 -n "New name" -s "done" --priority urgent
+cu update abc123 --time-estimate 2h
 cu update abc123 -s "in progress" --json
 ```
 
-| Flag                       | Description                                                                 |
-| -------------------------- | --------------------------------------------------------------------------- |
-| `-n, --name <text>`        | New task name                                                               |
-| `-d, --description <text>` | New description (markdown supported)                                        |
-| `-s, --status <status>`    | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`) |
-| `--priority <level>`       | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
-| `--due-date <date>`        | Due date (`YYYY-MM-DD`)                                                     |
-| `--assignee <userId>`      | Add assignee by numeric user ID                                             |
-| `--json`                   | Force JSON output even in terminal                                          |
+| Flag                         | Description                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `-n, --name <text>`          | New task name                                                               |
+| `-d, --description <text>`   | New description (markdown supported)                                        |
+| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`) |
+| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
+| `--due-date <date>`          | Due date (`YYYY-MM-DD`)                                                     |
+| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
+| `--assignee <userId>`        | Add assignee by numeric user ID                                             |
+| `--json`                     | Force JSON output even in terminal                                          |
 
 ### `cu create`
 
@@ -229,21 +231,25 @@ cu create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
 cu create -n "Task" -l <listId> -d "desc" -s "open"
 cu create -n "Task" -l <listId> --priority high --due-date 2025-06-01
 cu create -n "Task" -l <listId> --assignee 12345 --tags "bug,frontend"
+cu create -n "Initiative" -l <listId> --custom-item-id 1
+cu create -n "Task" -l <listId> --time-estimate 2h
 cu create -n "Fix bug" -l <listId> --json
 ```
 
-| Flag                       | Required         | Description                                          |
-| -------------------------- | ---------------- | ---------------------------------------------------- |
-| `-n, --name <name>`        | yes              | Task name                                            |
-| `-l, --list <listId>`      | if no `--parent` | Target list ID                                       |
-| `-p, --parent <taskId>`    | no               | Parent task (list auto-detected)                     |
-| `-d, --description <text>` | no               | Description (markdown)                               |
-| `-s, --status <status>`    | no               | Initial status                                       |
-| `--priority <level>`       | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
-| `--due-date <date>`        | no               | Due date (`YYYY-MM-DD`)                              |
-| `--assignee <userId>`      | no               | Assignee by numeric user ID                          |
-| `--tags <tags>`            | no               | Comma-separated tag names                            |
-| `--json`                   | no               | Force JSON output even in terminal                   |
+| Flag                         | Required         | Description                                          |
+| ---------------------------- | ---------------- | ---------------------------------------------------- |
+| `-n, --name <name>`          | yes              | Task name                                            |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID                                       |
+| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                     |
+| `-d, --description <text>`   | no               | Description (markdown)                               |
+| `-s, --status <status>`      | no               | Initial status                                       |
+| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
+| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`)                              |
+| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)      |
+| `--assignee <userId>`        | no               | Assignee by numeric user ID                          |
+| `--tags <tags>`              | no               | Comma-separated tag names                            |
+| `--custom-item-id <id>`      | no               | Custom task type ID (for creating initiatives)       |
+| `--json`                     | no               | Force JSON output even in terminal                   |
 
 ### `cu comment <id>`
 
@@ -367,6 +373,25 @@ cu assign abc123 --to me --json
 | `--to <userId>`     | Add assignee (user ID or `me`)    |
 | `--remove <userId>` | Remove assignee (user ID or `me`) |
 | `--json`            | Force JSON output                 |
+
+### `cu depend <id>`
+
+Add or remove task dependencies. Set a task as waiting on or blocking another task.
+
+```bash
+cu depend abc123 --on def456          # abc123 depends on (waits for) def456
+cu depend abc123 --blocks def456      # abc123 blocks def456
+cu depend abc123 --on def456 --remove # remove the dependency
+cu depend abc123 --blocks def456 --remove
+cu depend abc123 --on def456 --json
+```
+
+| Flag                | Description                                 |
+| ------------------- | ------------------------------------------- |
+| `--on <taskId>`     | Task that this task depends on (waiting on) |
+| `--blocks <taskId>` | Task that this task blocks                  |
+| `--remove`          | Remove the dependency instead of adding it  |
+| `--json`            | Force JSON output                           |
 
 ### `cu auth`
 

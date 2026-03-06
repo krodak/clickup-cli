@@ -33,6 +33,19 @@ export function parseAssigneeId(value: string): number {
   return id
 }
 
+export function parseTimeEstimate(value: string): number {
+  const pattern = /^(?:(\d+)h)?(?:(\d+)m)?$/i
+  const match = value.match(pattern)
+  if (match && (match[1] || match[2])) {
+    const hours = Number(match[1] ?? 0)
+    const minutes = Number(match[2] ?? 0)
+    return (hours * 60 + minutes) * 60 * 1000
+  }
+  const ms = Number(value)
+  if (Number.isFinite(ms) && ms > 0) return ms
+  throw new Error('Time estimate must be a duration (e.g. "2h", "30m", "1h30m") or milliseconds')
+}
+
 export interface UpdateCommandOptions {
   name?: string
   description?: string
@@ -40,6 +53,7 @@ export interface UpdateCommandOptions {
   priority?: string
   dueDate?: string
   assignee?: string
+  timeEstimate?: string
 }
 
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
@@ -55,6 +69,9 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
   if (opts.assignee !== undefined) {
     payload.assignees = { add: [parseAssigneeId(opts.assignee)] }
   }
+  if (opts.timeEstimate !== undefined) {
+    payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
+  }
   return payload
 }
 
@@ -65,6 +82,7 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.status !== undefined ||
     options.priority !== undefined ||
     options.due_date !== undefined ||
+    options.time_estimate !== undefined ||
     options.assignees !== undefined
   )
 }
@@ -99,7 +117,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options))
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --assignee',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee',
     )
 
   const client = new ClickUpClient(config)

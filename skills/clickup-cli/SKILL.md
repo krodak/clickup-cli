@@ -56,14 +56,15 @@ All commands support `--help` for full flag details.
 
 ### Write
 
-| Command                                                                                                                               | What it does                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--json]`                               | Update task fields                           |
-| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--assignee id] [--tags t] [--json]` | Create task (list auto-detected from parent) |
-| `cu comment <id> -m text`                                                                                                             | Post comment on task                         |
-| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                     | Assign/unassign users                        |
-| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                              | Manage CLI config                            |
-| `cu completion <shell>`                                                                                                               | Shell completions (bash/zsh/fish)            |
+| Command                                                                                                                                                                        | What it does                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--json]`                                                    | Update task fields                           |
+| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--tags t] [--custom-item-id n] [--json]` | Create task (list auto-detected from parent) |
+| `cu comment <id> -m text`                                                                                                                                                      | Post comment on task                         |
+| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                              | Assign/unassign users                        |
+| `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                           | Add/remove task dependencies                 |
+| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                       | Manage CLI config                            |
+| `cu completion <shell>`                                                                                                                                                        | Shell completions (bash/zsh/fish)            |
 
 ## Quick Reference
 
@@ -77,6 +78,9 @@ All commands support `--help` for full flag details.
 | `--due-date`        | `YYYY-MM-DD` format                                                               |
 | `--assignee`        | Numeric user ID (find via `cu task <id> --json`)                                  |
 | `--tags`            | Comma-separated (e.g. `--tags "bug,frontend"`)                                    |
+| `--time-estimate`   | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                  |
+| `--custom-item-id`  | Custom task type ID (e.g. `1` for initiative)                                     |
+| `--on` / `--blocks` | Task dependency direction (used with `cu depend`)                                 |
 | `--space`           | Partial name match or exact ID                                                    |
 | `--name`            | Partial match, case-insensitive                                                   |
 | `--include-closed`  | Include closed/done tasks (on `subtasks` and `assigned`)                          |
@@ -121,10 +125,14 @@ cu inbox --days 7                   # recently updated
 ```bash
 cu update abc123def -s "done"
 cu update abc123def --priority high --due-date 2025-03-15
+cu update abc123def --time-estimate 2h
 cu create -n "Fix the thing" -p abc123def
 cu create -n "Fix bug" -l <listId> --priority urgent --tags "bug,frontend"
+cu create -n "Q3 Roadmap" -l <listId> --custom-item-id 1  # create initiative
 cu comment abc123def -m "Completed in PR #42"
 cu assign abc123def --to me
+cu depend task3 --on task2            # task3 waits for task2
+cu depend task1 --blocks task2        # task1 blocks task2
 ```
 
 ### Discover workspace structure

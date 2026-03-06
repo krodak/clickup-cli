@@ -130,4 +130,38 @@ describe('createTask', () => {
       ),
     ).rejects.toThrow('numeric user ID')
   })
+
+  it('passes custom_item_id to API', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Initiative', customItemId: '1' },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({ name: 'Initiative', custom_item_id: 1 }),
+    )
+  })
+
+  it('throws on invalid custom_item_id', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await expect(
+      createTask(
+        { apiToken: 'pk_t', teamId: 'tm_1' },
+        { list: 'l1', name: 'Task', customItemId: 'abc' },
+      ),
+    ).rejects.toThrow('non-negative integer')
+  })
+
+  it('passes time_estimate to API as milliseconds', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Task', timeEstimate: '2h' },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({ name: 'Task', time_estimate: 2 * 60 * 60 * 1000 }),
+    )
+  })
 })
