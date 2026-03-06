@@ -75,6 +75,12 @@ describe('updateTask', () => {
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { name: 'New name', status: 'in progress' })
   })
 
+  it('calls API with parent update', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: 'parent123' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: 'parent123' })
+  })
+
   it('throws when no fields provided', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     await expect(updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {})).rejects.toThrow(
@@ -234,6 +240,12 @@ describe('buildUpdatePayload', () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ timeEstimate: '2h' })
     expect(payload.time_estimate).toBe(2 * 60 * 60 * 1000)
+  })
+
+  it('builds payload with parent', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ parent: 'parent456' })
+    expect(payload).toEqual({ parent: 'parent456' })
   })
 
   it('throws on non-numeric assignee', async () => {

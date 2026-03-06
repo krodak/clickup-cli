@@ -215,6 +215,7 @@ cu update abc123 --due-date 2025-03-15
 cu update abc123 --assignee 12345
 cu update abc123 -n "New name" -s "done" --priority urgent
 cu update abc123 --time-estimate 2h
+cu update abc123 --parent parentTaskId   # make it a subtask
 cu update abc123 -s "in progress" --json
 ```
 
@@ -227,6 +228,7 @@ cu update abc123 -s "in progress" --json
 | `--due-date <date>`          | Due date (`YYYY-MM-DD`)                                                     |
 | `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
 | `--assignee <userId>`        | Add assignee by numeric user ID                                             |
+| `--parent <taskId>`          | Set parent task (makes this a subtask)                                      |
 | `--json`                     | Force JSON output even in terminal                                          |
 
 ### `cu create`

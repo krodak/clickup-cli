@@ -176,6 +176,7 @@ program
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
   .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
   .option('--assignee <userId>', 'Add assignee by user ID')
+  .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (taskId: string, opts: UpdateCommandOptions & { json?: boolean }) => {

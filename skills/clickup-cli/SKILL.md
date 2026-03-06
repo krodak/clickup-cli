@@ -58,7 +58,7 @@ All commands support `--help` for full flag details.
 
 | Command                                                                                                                                                                        | What it does                                |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--json]`                                                    | Update task fields (desc supports markdown) |
+| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
 | `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
 | `cu comment <id> -m text [--json]`                                                                                                                                             | Post comment on task                        |
 | `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                              | Assign/unassign users                       |
@@ -128,6 +128,7 @@ cu inbox --days 7                   # recently updated
 cu update abc123def -s "done"
 cu update abc123def --priority high --due-date 2025-03-15
 cu update abc123def --time-estimate 2h
+cu update abc123def --parent parentId    # make it a subtask
 cu create -n "Fix the thing" -p abc123def
 cu create -n "Fix bug" -l <listId> --priority urgent --tags "bug,frontend"
 cu create -n "Q3 Roadmap" -l <listId> --custom-item-id 1  # create initiative

@@ -54,6 +54,7 @@ export interface UpdateCommandOptions {
   dueDate?: string
   assignee?: string
   timeEstimate?: string
+  parent?: string
 }
 
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
@@ -72,6 +73,7 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
   if (opts.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
   }
+  if (opts.parent !== undefined) payload.parent = opts.parent
   return payload
 }
 
@@ -84,7 +86,8 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.priority !== undefined ||
     options.due_date !== undefined ||
     options.time_estimate !== undefined ||
-    options.assignees !== undefined
+    options.assignees !== undefined ||
+    options.parent !== undefined
   )
 }
 
@@ -118,7 +121,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options))
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent',
     )
 
   const client = new ClickUpClient(config)

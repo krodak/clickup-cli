@@ -56,6 +56,7 @@ export interface UpdateTaskOptions {
   due_date_time?: boolean
   time_estimate?: number
   assignees?: { add?: number[]; rem?: number[] }
+  parent?: string
 }
 
 export interface CreateTaskOptions {
