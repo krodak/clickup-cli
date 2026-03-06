@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, initiatives, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items.'
+description: 'Use when managing ClickUp tasks, initiatives, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config.'
 ---
 
 # ClickUp CLI (`cu`)
@@ -129,7 +129,8 @@ cu assign abc123def --to me
 
 ```bash
 cu spaces                           # all spaces
-cu lists <spaceId>                  # lists in a space (needed for --list flag)
+cu spaces --name "Engineering"      # find space ID by name
+cu lists <spaceId>                  # lists in a space (needs ID from cu spaces)
 cu sprints                          # all sprints across folders
 cu auth                             # verify token works
 ```
