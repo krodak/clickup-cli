@@ -5,9 +5,7 @@ import { isTTY, shouldOutputJson } from '../output.js'
 import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { groupedTaskPicker, showDetailsAndOpen } from '../interactive.js'
 import type { TaskSummary } from './tasks.js'
-import { summarize } from './tasks.js'
-
-const CLOSED_STATUSES = new Set(['done', 'closed', 'complete', 'completed'])
+import { summarize, isDoneStatus } from './tasks.js'
 
 const STATUS_ORDER = [
   'code review',
@@ -21,29 +19,7 @@ const STATUS_ORDER = [
   'blocked',
 ] as const
 
-interface AssignedTaskJson {
-  id: string
-  name: string
-  status: string
-  task_type: 'task' | 'initiative'
-  list: string
-  url: string
-  priority: string | null
-  due_date: string | null
-}
-
-function toJsonTask(task: Task, summary: TaskSummary): AssignedTaskJson {
-  return {
-    id: summary.id,
-    name: summary.name,
-    status: summary.status,
-    task_type: summary.task_type,
-    list: summary.list,
-    url: summary.url,
-    priority: task.priority?.priority ?? null,
-    due_date: task.due_date ?? null,
-  }
-}
+type AssignedTaskJson = TaskSummary
 
 interface GroupedTasks {
   status: string
@@ -60,9 +36,7 @@ function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
 
   for (const task of tasks) {
     const status = task.status.status
-    const key = status.toLowerCase()
-
-    if (!includeClosed && CLOSED_STATUSES.has(key)) continue
+    if (!includeClosed && isDoneStatus(status)) continue
 
     if (!groups.has(status)) {
       groups.set(status, [])
@@ -72,8 +46,8 @@ function groupByStatus(tasks: Task[], includeClosed: boolean): GroupedTasks[] {
 
   return Array.from(groups.entries())
     .sort((a, b) => {
-      const aIsClosed = CLOSED_STATUSES.has(a[0].toLowerCase())
-      const bIsClosed = CLOSED_STATUSES.has(b[0].toLowerCase())
+      const aIsClosed = isDoneStatus(a[0])
+      const bIsClosed = isDoneStatus(b[0])
       if (aIsClosed !== bIsClosed) return aIsClosed ? 1 : -1
       return statusSortKey(a[0]) - statusSortKey(b[0])
     })
@@ -98,7 +72,7 @@ export async function runAssignedCommand(
   if (shouldOutputJson(opts.json ?? false)) {
     const result: Record<string, AssignedTaskJson[]> = {}
     for (const group of groups) {
-      result[group.status.toLowerCase()] = group.tasks.map(t => toJsonTask(t, summarize(t)))
+      result[group.status.toLowerCase()] = group.tasks.map(summarize)
     }
     console.log(JSON.stringify(result, null, 2))
     return
@@ -126,5 +100,5 @@ export async function runAssignedCommand(
   await showDetailsAndOpen(selected, (id: string) => client.getTask(id))
 }
 
-export { groupByStatus, CLOSED_STATUSES }
+export { groupByStatus }
 export type { GroupedTasks, AssignedTaskJson }

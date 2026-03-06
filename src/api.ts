@@ -15,6 +15,7 @@ export interface Task {
   id: string
   name: string
   description?: string
+  markdown_content?: string
   text_content?: string
   status: { status: string; color: string }
   custom_item_id?: number
@@ -240,7 +241,7 @@ export class ClickUpClient {
   }
 
   async getTask(taskId: string): Promise<Task> {
-    return this.request<Task>(`/task/${taskId}`)
+    return this.request<Task>(`/task/${taskId}?include_markdown_description=true`)
   }
 
   async updateTaskMarkdown(taskId: string, markdown: string): Promise<Task> {
@@ -300,6 +301,14 @@ export class ClickUpClient {
 
   async getViewTasks(viewId: string): Promise<Task[]> {
     return this.paginate(page => `/view/${viewId}/task?page=${page}`)
+  }
+
+  async addTaskToList(taskId: string, listId: string): Promise<void> {
+    await this.request(`/list/${listId}/task/${taskId}`, { method: 'POST' })
+  }
+
+  async removeTaskFromList(taskId: string, listId: string): Promise<void> {
+    await this.request(`/list/${listId}/task/${taskId}`, { method: 'DELETE' })
   }
 
   async addDependency(

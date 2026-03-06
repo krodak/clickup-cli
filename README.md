@@ -98,7 +98,7 @@ When output is piped (no TTY), all commands output **Markdown** by default - opt
 
 ## Commands
 
-25 commands total. All support `--help` for full flag details.
+27 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -175,6 +175,7 @@ Tasks assigned to me that were recently updated, grouped by time period (today, 
 ```bash
 cu inbox
 cu inbox --days 7
+cu inbox --include-closed
 cu inbox --json
 ```
 
@@ -358,10 +359,11 @@ cu summary --json
 
 ### `cu overdue`
 
-List tasks that are past their due date (excludes done/closed tasks). Sorted most overdue first.
+List tasks that are past their due date (excludes done/closed tasks by default). Sorted most overdue first.
 
 ```bash
 cu overdue
+cu overdue --include-closed
 cu overdue --json
 ```
 
@@ -401,6 +403,23 @@ cu depend abc123 --on def456 --json
 | `--blocks <taskId>` | Task that this task blocks                  |
 | `--remove`          | Remove the dependency instead of adding it  |
 | `--json`            | Force JSON output                           |
+
+### `cu move <id>`
+
+Add or remove a task from a list. Tasks can belong to multiple lists in ClickUp.
+
+```bash
+cu move abc123 --to <listId>                    # add task to a list
+cu move abc123 --remove <listId>                # remove task from a list
+cu move abc123 --to <newListId> --remove <oldListId>  # move between lists
+cu move abc123 --to <listId> --json
+```
+
+| Flag                | Description                |
+| ------------------- | -------------------------- |
+| `--to <listId>`     | Add task to this list      |
+| `--remove <listId>` | Remove task from this list |
+| `--json`            | Force JSON output          |
 
 ### `cu auth`
 

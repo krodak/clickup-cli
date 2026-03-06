@@ -10,6 +10,8 @@ export interface TaskSummary {
   name: string
   status: string
   task_type: 'task' | 'initiative'
+  priority: string
+  due_date: string
   list: string
   url: string
   parent?: string
@@ -31,12 +33,23 @@ function isInitiative(task: Task): boolean {
   return (task.custom_item_id ?? 0) !== 0
 }
 
+function formatDueDate(ms: string | null | undefined): string {
+  if (!ms) return ''
+  const d = new Date(Number(ms))
+  const year = d.getUTCFullYear()
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function summarize(task: Task): TaskSummary {
   return {
     id: task.id,
     name: task.name,
     status: task.status.status,
     task_type: isInitiative(task) ? 'initiative' : 'task',
+    priority: task.priority?.priority ?? 'none',
+    due_date: formatDueDate(task.due_date),
     list: task.list.name,
     url: task.url,
     ...(task.parent ? { parent: task.parent } : {}),

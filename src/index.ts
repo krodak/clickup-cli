@@ -41,6 +41,8 @@ import { checkAuth } from './commands/auth.js'
 import { searchTasks } from './commands/search.js'
 import { manageDependency } from './commands/depend.js'
 import type { DependOptions } from './commands/depend.js'
+import { moveTask } from './commands/move.js'
+import type { MoveOptions } from './commands/move.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -346,16 +348,17 @@ program
 program
   .command('inbox')
   .description('Recently updated tasks grouped by time period')
+  .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .option('--days <n>', 'Lookback period in days', '30')
   .action(
-    wrapAction(async (opts: { json?: boolean; days?: string }) => {
+    wrapAction(async (opts: { includeClosed?: boolean; json?: boolean; days?: string }) => {
       const config = loadConfig()
       const days = Number(opts.days ?? 30)
       if (!Number.isFinite(days) || days <= 0) {
         throw new Error('--days must be a positive number')
       }
-      const tasks = await fetchInbox(config, days)
+      const tasks = await fetchInbox(config, days, { includeClosed: opts.includeClosed })
       await printInbox(tasks, opts.json ?? false, config)
     }),
   )
@@ -422,11 +425,12 @@ program
 program
   .command('overdue')
   .description('List tasks that are past their due date')
+  .option('--include-closed', 'Include done/closed overdue tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (opts: { json?: boolean }) => {
+    wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
       const config = loadConfig()
-      const tasks = await fetchOverdueTasks(config)
+      const tasks = await fetchOverdueTasks(config, { includeClosed: opts.includeClosed })
       await printTasks(tasks, opts.json ?? false, config)
     }),
   )
@@ -460,6 +464,24 @@ program
     wrapAction(async (taskId: string, opts: DependOptions & { json?: boolean }) => {
       const config = loadConfig()
       const message = await manageDependency(config, taskId, opts)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ taskId, ...opts, message }, null, 2))
+      } else {
+        console.log(message)
+      }
+    }),
+  )
+
+program
+  .command('move <taskId>')
+  .description('Add or remove a task from a list')
+  .option('--to <listId>', 'Add task to this list')
+  .option('--remove <listId>', 'Remove task from this list')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: MoveOptions & { json?: boolean }) => {
+      const config = loadConfig()
+      const message = await moveTask(config, taskId, opts)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify({ taskId, ...opts, message }, null, 2))
       } else {

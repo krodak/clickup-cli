@@ -49,5 +49,7 @@ export const TASK_COLUMNS: Column<TaskSummary>[] = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: 'NAME', maxWidth: 60 },
   { key: 'status', label: 'STATUS' },
+  { key: 'priority', label: 'PRIORITY' },
+  { key: 'due_date', label: 'DUE' },
   { key: 'list', label: 'LIST' },
 ]

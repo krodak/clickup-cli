@@ -27,6 +27,8 @@ const TASK_MD_COLUMNS: MarkdownColumn<TaskSummary>[] = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: 'Name' },
   { key: 'status', label: 'Status' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'due_date', label: 'Due' },
   { key: 'list', label: 'List' },
 ]
 
@@ -126,8 +128,9 @@ export function formatTaskDetailMarkdown(task: Task): string {
     }
   }
 
-  if (task.description) {
-    lines.push('', '## Description', '', task.description)
+  const descriptionContent = task.markdown_content ?? task.description
+  if (descriptionContent) {
+    lines.push('', '## Description', '', descriptionContent)
   }
 
   return lines.join('\n')

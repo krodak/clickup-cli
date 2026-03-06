@@ -82,9 +82,16 @@ export function groupTasks(tasks: InboxTaskSummary[], now: number): GroupedInbox
   return groups
 }
 
-export async function fetchInbox(config: Config, days: number = 30): Promise<InboxTaskSummary[]> {
+export async function fetchInbox(
+  config: Config,
+  days: number = 30,
+  opts: { includeClosed?: boolean } = {},
+): Promise<InboxTaskSummary[]> {
   const client = new ClickUpClient(config)
-  const tasks = await client.getMyTasks(config.teamId, { subtasks: true })
+  const tasks = await client.getMyTasks(config.teamId, {
+    subtasks: true,
+    includeClosed: opts.includeClosed,
+  })
 
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
   return tasks

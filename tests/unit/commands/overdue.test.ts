@@ -121,14 +121,17 @@ describe('fetchOverdueTasks', () => {
     mockGetMyTasks.mockResolvedValue([makeTask('t1', 'in progress', { due_date: pastDue })])
     const { fetchOverdueTasks } = await import('../../../src/commands/overdue.js')
     const result = await fetchOverdueTasks({ apiToken: 'pk_t', teamId: 'team1' })
-    expect(result[0]).toEqual({
-      id: 't1',
-      name: 'Task t1',
-      status: 'in progress',
-      task_type: 'task',
-      list: 'L1',
-      url: 'http://cu/t1',
-    })
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        id: 't1',
+        name: 'Task t1',
+        status: 'in progress',
+        task_type: 'task',
+        priority: 'none',
+        list: 'L1',
+        url: 'http://cu/t1',
+      }),
+    )
   })
 
   it('includes overdue tasks with non-closed statuses', async () => {

@@ -163,6 +163,8 @@ describe('printTasks', () => {
       name: 'Task One',
       status: 'open',
       task_type: 'task' as const,
+      priority: 'none',
+      due_date: '',
       list: 'L1',
       url: 'http://cu/t1',
     },

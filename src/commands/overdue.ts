@@ -9,13 +9,16 @@ function isOverdue(task: Task, now: number): boolean {
   return Number(task.due_date) < now
 }
 
-export async function fetchOverdueTasks(config: Config): Promise<TaskSummary[]> {
+export async function fetchOverdueTasks(
+  config: Config,
+  opts: { includeClosed?: boolean } = {},
+): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId)
+  const allTasks = await client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed })
   const now = Date.now()
 
   return allTasks
-    .filter(t => isOverdue(t, now) && !isDoneStatus(t.status.status))
+    .filter(t => isOverdue(t, now) && (opts.includeClosed || !isDoneStatus(t.status.status)))
     .sort((a, b) => Number(a.due_date) - Number(b.due_date))
     .map(summarize)
 }

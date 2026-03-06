@@ -69,7 +69,16 @@ npm run format:check # Prettier check
 1. Create `src/commands/<name>.ts` with the command logic
 2. Register the command in `src/index.ts` using Commander
 3. Create `tests/unit/commands/<name>.test.ts` with unit tests
-4. Update README.md with the new command's documentation
+4. Update `README.md` with the new command's documentation
+5. Update `skills/clickup-cli/SKILL.md` with the new command
+
+## Modifying Commands
+
+When adding or changing flags, output formats, or behavior on any command:
+
+1. Update `README.md` to reflect the change
+2. Update `skills/clickup-cli/SKILL.md` to reflect the change
+3. Update the command count in `README.md` if commands were added/removed
 
 ## ClickUp API
 

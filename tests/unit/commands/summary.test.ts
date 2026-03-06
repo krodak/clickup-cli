@@ -256,6 +256,13 @@ describe('runSummaryCommand', () => {
     expect(logged).toBe('No tasks found.')
   })
 
+  it('passes includeClosed: true to getMyTasks', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { runSummaryCommand } = await import('../../../src/commands/summary.js')
+    await runSummaryCommand({ apiToken: 'pk_t', teamId: 'team1' }, { hours: 24, json: true })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { includeClosed: true })
+  })
+
   it('outputs TTY format with section headers', async () => {
     mockGetMyTasks.mockResolvedValue([makeTask('t1', 'in progress')])
 

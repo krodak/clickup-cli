@@ -93,13 +93,16 @@ describe('searchTasks', () => {
     mockGetMyTasks.mockResolvedValue([baseTask({ id: 't1', name: 'Fix login bug' })])
     const { searchTasks } = await import('../../../src/commands/search.js')
     const result = await searchTasks(config, 'login')
-    expect(result[0]).toEqual({
-      id: 't1',
-      name: 'Fix login bug',
-      status: 'open',
-      task_type: 'task',
-      list: 'L1',
-      url: 'http://cu/t1',
-    })
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        id: 't1',
+        name: 'Fix login bug',
+        status: 'open',
+        task_type: 'task',
+        priority: 'none',
+        list: 'L1',
+        url: 'http://cu/t1',
+      }),
+    )
   })
 })

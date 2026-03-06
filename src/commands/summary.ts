@@ -72,7 +72,7 @@ export async function runSummaryCommand(
   opts: { hours: number; json: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId)
+  const allTasks = await client.getMyTasks(config.teamId, { includeClosed: true })
   const result = categorizeTasks(allTasks, opts.hours)
 
   if (shouldOutputJson(opts.json)) {

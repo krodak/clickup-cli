@@ -71,14 +71,15 @@ describe('formatTasksMarkdown', () => {
         name: 'My task',
         status: 'open',
         task_type: 'task',
+        priority: 'high',
+        due_date: '2025-03-15',
         list: 'Sprint 1',
         url: 'https://example.com',
       },
     ]
     const result = formatTasksMarkdown(tasks)
-    expect(result).toContain('| ID | Name | Status | List |')
-    expect(result).toContain('| --- | --- | --- | --- |')
-    expect(result).toContain('| abc | My task | open | Sprint 1 |')
+    expect(result).toContain('| ID | Name | Status | Priority | Due | List |')
+    expect(result).toContain('| abc | My task | open | high | 2025-03-15 | Sprint 1 |')
   })
 
   it('returns no-tasks message for empty array', () => {
@@ -152,6 +153,8 @@ describe('formatGroupedTasksMarkdown', () => {
             name: 'Task A',
             status: 'open',
             task_type: 'task' as const,
+            priority: 'none',
+            due_date: '',
             list: 'Backlog',
             url: 'https://example.com/a',
           },
@@ -160,7 +163,7 @@ describe('formatGroupedTasksMarkdown', () => {
     ]
     const result = formatGroupedTasksMarkdown(groups)
     expect(result).toContain('## Sprint 1')
-    expect(result).toContain('| a | Task A | open | Backlog |')
+    expect(result).toContain('| a | Task A | open | none |  | Backlog |')
   })
 
   it('skips empty groups', () => {
@@ -174,6 +177,8 @@ describe('formatGroupedTasksMarkdown', () => {
             name: 'Task B',
             status: 'done',
             task_type: 'task' as const,
+            priority: 'none',
+            due_date: '',
             list: 'Dev',
             url: 'https://example.com/b',
           },
