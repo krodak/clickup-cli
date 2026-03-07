@@ -298,6 +298,29 @@ export class ClickUpClient {
     await this.request(`/list/${listId}/task/${taskId}`, { method: 'DELETE' })
   }
 
+  async setCustomFieldValue(taskId: string, fieldId: string, value: unknown): Promise<void> {
+    await this.request(`/task/${taskId}/field/${fieldId}`, {
+      method: 'POST',
+      body: JSON.stringify({ value }),
+    })
+  }
+
+  async removeCustomFieldValue(taskId: string, fieldId: string): Promise<void> {
+    await this.request(`/task/${taskId}/field/${fieldId}`, { method: 'DELETE' })
+  }
+
+  async deleteTask(taskId: string): Promise<void> {
+    await this.request(`/task/${taskId}`, { method: 'DELETE' })
+  }
+
+  async addTagToTask(taskId: string, tagName: string): Promise<void> {
+    await this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: 'POST' })
+  }
+
+  async removeTagFromTask(taskId: string, tagName: string): Promise<void> {
+    await this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: 'DELETE' })
+  }
+
   async addDependency(
     taskId: string,
     opts: { dependsOn?: string; dependencyOf?: string },

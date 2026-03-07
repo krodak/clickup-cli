@@ -236,6 +236,106 @@ describe('updateTask', () => {
   })
 })
 
+describe('custom fields', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('setCustomFieldValue sends POST with value body', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.setCustomFieldValue('t1', 'field_abc', 'hello')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/field/field_abc'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ value: 'hello' }),
+      }),
+    )
+  })
+
+  it('removeCustomFieldValue sends DELETE to field endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.removeCustomFieldValue('t1', 'field_abc')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/field/field_abc'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('deleteTask', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends DELETE to task endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteTask('t1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.clickup.com/api/v2/task/t1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('task tags', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('addTagToTask sends POST to tag endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.addTagToTask('t1', 'urgent')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/tag/urgent'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('removeTagFromTask sends DELETE to tag endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.removeTagFromTask('t1', 'urgent')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/tag/urgent'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('addTagToTask URL-encodes tag names with spaces', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.addTagToTask('t1', 'needs review')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/t1/tag/needs%20review')
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 
