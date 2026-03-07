@@ -105,8 +105,9 @@ Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
 2. Commit the version bump: `git commit -m "bump v0.X.0"`
 3. Tag: `git tag v0.X.0`
 4. Push commit and tag: `git push origin main --tags`
-5. CI handles: typecheck, test, build, `npm publish --provenance`, and GitHub Release creation (auto-generated notes)
-6. After npm publish succeeds, update the Homebrew tap (see below)
+5. CI handles: typecheck, test, build, `npm publish --provenance`, and GitHub Release creation (empty auto-generated notes)
+6. Update the GitHub Release with hand-written release notes via `gh release edit v0.X.0 --notes "..."` - the CI-generated notes are just a changelog link, not useful
+7. After npm publish succeeds, update the Homebrew tap (see below)
 
 Do NOT publish manually. Do NOT use `NODE_AUTH_TOKEN` - the release pipeline uses OIDC trusted publishers for authentication.
 
