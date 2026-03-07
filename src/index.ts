@@ -44,6 +44,8 @@ import type { DependOptions } from './commands/depend.js'
 import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
 import { setCustomField } from './commands/field.js'
+import { deleteTaskCommand } from './commands/delete.js'
+import { manageTags } from './commands/tag.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -532,6 +534,44 @@ program
         }
       },
     ),
+  )
+
+program
+  .command('delete <taskId>')
+  .description('Delete a task (requires confirmation)')
+  .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { confirm?: boolean; json?: boolean }) => {
+      const config = loadConfig()
+      const result = await deleteTaskCommand(config, taskId, opts)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Deleted task ${result.taskId}`)
+      }
+    }),
+  )
+
+program
+  .command('tag <taskId>')
+  .description('Add or remove tags from a task')
+  .option('--add <tags>', 'Comma-separated tag names to add')
+  .option('--remove <tags>', 'Comma-separated tag names to remove')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { add?: string; remove?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const result = await manageTags(config, taskId, opts)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        const parts: string[] = []
+        if (result.added.length > 0) parts.push(`Added tags: ${result.added.join(', ')}`)
+        if (result.removed.length > 0) parts.push(`Removed tags: ${result.removed.join(', ')}`)
+        console.log(parts.join('; '))
+      }
+    }),
   )
 
 const configCmd = program.command('config').description('Manage CLI configuration')
