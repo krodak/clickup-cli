@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks initiatives task update create sprint sprints subtasks comment comments activity lists spaces inbox assigned open search summary overdue assign depend move config completion"
+  local commands="init auth tasks initiatives task update create sprint sprints subtasks comment comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -98,6 +98,15 @@ function bashCompletion(): string {
     move)
       COMPREPLY=($(compgen -W "--to --remove --json" -- "$cur"))
       ;;
+    field)
+      COMPREPLY=($(compgen -W "--set --remove --json" -- "$cur"))
+      ;;
+    delete)
+      COMPREPLY=($(compgen -W "--confirm --json" -- "$cur"))
+      ;;
+    tag)
+      COMPREPLY=($(compgen -W "--add --remove --json" -- "$cur"))
+      ;;
     config)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "get set path" -- "$cur"))
@@ -149,6 +158,9 @@ _cu() {
     'assign:Assign or unassign users from a task'
     'depend:Add or remove task dependencies'
     'move:Add or remove a task from a list'
+    'field:Set or remove a custom field value on a task'
+    'delete:Delete a task'
+    'tag:Add or remove tags from a task'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -315,6 +327,26 @@ _cu() {
             '--remove[Remove task from this list]:list_id:' \\
             '--json[Force JSON output]'
           ;;
+        field)
+          _arguments \\
+            '1:task_id:' \\
+            '--set[Set field name and value]:name_and_value:' \\
+            '--remove[Remove field value by name]:field_name:' \\
+            '--json[Force JSON output]'
+          ;;
+        delete)
+          _arguments \\
+            '1:task_id:' \\
+            '--confirm[Skip confirmation prompt]' \\
+            '--json[Force JSON output]'
+          ;;
+        tag)
+          _arguments \\
+            '1:task_id:' \\
+            '--add[Comma-separated tag names to add]:tags:' \\
+            '--remove[Comma-separated tag names to remove]:tags:' \\
+            '--json[Force JSON output]'
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -380,6 +412,9 @@ complete -c cu -n __fish_use_subcommand -a overdue -d 'List tasks that are past 
 complete -c cu -n __fish_use_subcommand -a assign -d 'Assign or unassign users from a task'
 complete -c cu -n __fish_use_subcommand -a depend -d 'Add or remove task dependencies'
 complete -c cu -n __fish_use_subcommand -a move -d 'Add or remove a task from a list'
+complete -c cu -n __fish_use_subcommand -a field -d 'Set or remove a custom field value on a task'
+complete -c cu -n __fish_use_subcommand -a delete -d 'Delete a task'
+complete -c cu -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
 complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -476,6 +511,17 @@ complete -c cu -n '__fish_seen_subcommand_from depend' -l json -d 'Force JSON ou
 complete -c cu -n '__fish_seen_subcommand_from move' -l to -d 'Add task to this list'
 complete -c cu -n '__fish_seen_subcommand_from move' -l remove -d 'Remove task from this list'
 complete -c cu -n '__fish_seen_subcommand_from move' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from field' -l set -d 'Set field name and value'
+complete -c cu -n '__fish_seen_subcommand_from field' -l remove -d 'Remove field value by name'
+complete -c cu -n '__fish_seen_subcommand_from field' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from delete' -l confirm -d 'Skip confirmation prompt'
+complete -c cu -n '__fish_seen_subcommand_from delete' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from tag' -l add -d 'Comma-separated tag names to add'
+complete -c cu -n '__fish_seen_subcommand_from tag' -l remove -d 'Comma-separated tag names to remove'
+complete -c cu -n '__fish_seen_subcommand_from tag' -l json -d 'Force JSON output'
 
 complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'
