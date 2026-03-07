@@ -104,6 +104,23 @@ describe('fetchInbox', () => {
     expect(result).toHaveLength(0)
   })
 
+  it('passes includeClosed to getMyTasks when set', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchInbox } = await import('../../../src/commands/inbox.js')
+    await fetchInbox({ apiToken: 'pk_t', teamId: 'team1' }, 30, { includeClosed: true })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { subtasks: true, includeClosed: true })
+  })
+
+  it('does not pass includeClosed when not set', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchInbox } = await import('../../../src/commands/inbox.js')
+    await fetchInbox({ apiToken: 'pk_t', teamId: 'team1' }, 30)
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', {
+      subtasks: true,
+      includeClosed: undefined,
+    })
+  })
+
   it('includes date_updated in returned summaries', async () => {
     const now = Date.now()
     mockGetMyTasks.mockResolvedValue([makeTask('t1', now - 1000)])

@@ -35,6 +35,20 @@ describe('fetchOverdueTasks', () => {
     mockGetMe.mockReset().mockResolvedValue({ id: 42, username: 'me' })
   })
 
+  it('passes includeClosed to getMyTasks when set', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchOverdueTasks } = await import('../../../src/commands/overdue.js')
+    await fetchOverdueTasks({ apiToken: 'pk_t', teamId: 'team1' }, { includeClosed: true })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { includeClosed: true })
+  })
+
+  it('does not pass includeClosed when not set', async () => {
+    mockGetMyTasks.mockResolvedValue([])
+    const { fetchOverdueTasks } = await import('../../../src/commands/overdue.js')
+    await fetchOverdueTasks({ apiToken: 'pk_t', teamId: 'team1' })
+    expect(mockGetMyTasks).toHaveBeenCalledWith('team1', { includeClosed: undefined })
+  })
+
   it('returns tasks with due_date in the past', async () => {
     const pastDue = String(now - 24 * 60 * 60 * 1000)
     mockGetMyTasks.mockResolvedValue([makeTask('t1', 'to do', { due_date: pastDue })])

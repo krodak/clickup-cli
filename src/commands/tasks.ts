@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Task, TaskFilters } from '../api.js'
 import type { Config } from '../config.js'
+import { formatDate } from '../date.js'
 import { isTTY, shouldOutputJson } from '../output.js'
 import { formatTasksMarkdown } from '../markdown.js'
 import { interactiveTaskPicker, showDetailsAndOpen } from '../interactive.js'
@@ -35,11 +36,7 @@ function isInitiative(task: Task): boolean {
 
 function formatDueDate(ms: string | null | undefined): string {
   if (!ms) return ''
-  const d = new Date(Number(ms))
-  const year = d.getUTCFullYear()
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return formatDate(ms)
 }
 
 export function summarize(task: Task): TaskSummary {

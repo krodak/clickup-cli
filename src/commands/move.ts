@@ -20,8 +20,19 @@ export async function moveTask(config: Config, taskId: string, opts: MoveOptions
   }
 
   if (opts.remove) {
-    await client.removeTaskFromList(taskId, opts.remove)
-    messages.push(`Removed ${taskId} from list ${opts.remove}`)
+    try {
+      await client.removeTaskFromList(taskId, opts.remove)
+      messages.push(`Removed ${taskId} from list ${opts.remove}`)
+    } catch (err) {
+      if (messages.length > 0) {
+        const reason = err instanceof Error ? err.message : String(err)
+        throw new Error(
+          `${messages.join('; ')}; but failed to remove from list ${opts.remove}: ${reason}`,
+          { cause: err },
+        )
+      }
+      throw err
+    }
   }
 
   return messages.join('; ')

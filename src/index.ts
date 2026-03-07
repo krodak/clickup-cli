@@ -466,7 +466,13 @@ program
       const config = loadConfig()
       const message = await manageDependency(config, taskId, opts)
       if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify({ taskId, ...opts, message }, null, 2))
+        console.log(
+          JSON.stringify(
+            { taskId, on: opts.on, blocks: opts.blocks, remove: opts.remove, message },
+            null,
+            2,
+          ),
+        )
       } else {
         console.log(message)
       }
@@ -484,7 +490,7 @@ program
       const config = loadConfig()
       const message = await moveTask(config, taskId, opts)
       if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify({ taskId, ...opts, message }, null, 2))
+        console.log(JSON.stringify({ taskId, to: opts.to, remove: opts.remove, message }, null, 2))
       } else {
         console.log(message)
       }

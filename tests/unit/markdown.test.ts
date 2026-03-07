@@ -276,6 +276,27 @@ describe('formatTaskDetailMarkdown', () => {
     expect(result.indexOf('## Description')).toBeGreaterThan(result.indexOf('**ID:**'))
   })
 
+  it('prefers markdown_content over description', () => {
+    const task: Task = {
+      ...fullTask,
+      description: 'plain text fallback',
+      markdown_content: '# Rich **markdown** content',
+    }
+    const result = formatTaskDetailMarkdown(task)
+    expect(result).toContain('# Rich **markdown** content')
+    expect(result).not.toContain('plain text fallback')
+  })
+
+  it('falls back to description when markdown_content is absent', () => {
+    const task: Task = {
+      ...fullTask,
+      description: 'plain description',
+      markdown_content: undefined,
+    }
+    const result = formatTaskDetailMarkdown(task)
+    expect(result).toContain('plain description')
+  })
+
   it('omits missing fields for a minimal task', () => {
     const minimal: Task = {
       id: 'min1',

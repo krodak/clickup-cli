@@ -2,6 +2,7 @@ import type { Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 import type { CommentSummary } from './commands/comments.js'
 import type { ListSummary } from './commands/lists.js'
+import { formatDate } from './date.js'
 
 export interface MarkdownColumn<T> {
   key: keyof T & string
@@ -71,14 +72,6 @@ export function formatGroupedTasksMarkdown(
     .map(g => `## ${g.label}\n\n${formatMarkdownTable(g.tasks, TASK_MD_COLUMNS)}`)
   if (sections.length === 0) return 'No tasks found.'
   return sections.join('\n\n')
-}
-
-function formatDate(ms: string): string {
-  const d = new Date(Number(ms))
-  const year = d.getUTCFullYear()
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }
 
 function formatDuration(ms: number): string {
