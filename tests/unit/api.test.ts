@@ -38,28 +38,6 @@ describe('ClickUpClient', () => {
     )
   })
 
-  it('filters by assignee using teamId to get current user', async () => {
-    mockFetch
-      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
-      .mockReturnValueOnce(mockResponse({ tasks: [], last_page: true }))
-    await client.getMyTasksFromList('list_1')
-    expect(mockFetch).toHaveBeenCalledTimes(2)
-    const secondCall = String(mockFetch.mock.calls[1]![0])
-    expect(secondCall).toContain('assignees%5B%5D=42')
-  })
-
-  it('updates task markdown content', async () => {
-    mockFetch.mockReturnValue(mockResponse({ id: 't1', description: 'updated' }))
-    await client.updateTaskMarkdown('t1', '# Updated markdown')
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/task/t1'),
-      expect.objectContaining({
-        method: 'PUT',
-        body: JSON.stringify({ markdown_content: '# Updated markdown' }),
-      }),
-    )
-  })
-
   it('creates a task in a list', async () => {
     mockFetch.mockReturnValue(mockResponse({ id: 't2', name: 'New task' }))
     const task = await client.createTask('list_1', { name: 'New task' })
@@ -85,44 +63,6 @@ describe('ClickUpClient', () => {
       }),
     )
     await expect(client.getTasksFromList('list_1')).rejects.toThrow('not valid JSON')
-  })
-
-  it('getAssignedListIds returns set of list IDs from assigned tasks', async () => {
-    mockFetch
-      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
-      .mockReturnValueOnce(
-        mockResponse({
-          tasks: [
-            {
-              id: 't1',
-              list: { id: 'l1', name: 'Sprint 1' },
-              status: { status: 'open', color: '' },
-              assignees: [],
-              url: '',
-              name: 't1',
-            },
-            {
-              id: 't2',
-              list: { id: 'l2', name: 'Backlog' },
-              status: { status: 'open', color: '' },
-              assignees: [],
-              url: '',
-              name: 't2',
-            },
-            {
-              id: 't3',
-              list: { id: 'l1', name: 'Sprint 1' },
-              status: { status: 'open', color: '' },
-              assignees: [],
-              url: '',
-              name: 't3',
-            },
-          ],
-          last_page: true,
-        }),
-      )
-    const ids = await client.getAssignedListIds('team1')
-    expect(ids).toEqual(new Set(['l1', 'l2']))
   })
 
   it('getTeams returns team array', async () => {

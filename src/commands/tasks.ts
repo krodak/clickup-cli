@@ -18,7 +18,7 @@ export interface TaskSummary {
   parent?: string
 }
 
-export interface FetchOptions extends TaskFilters {
+interface FetchOptions extends TaskFilters {
   typeFilter?: 'task' | 'initiative'
   name?: string
 }

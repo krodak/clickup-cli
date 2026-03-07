@@ -74,7 +74,7 @@ export interface CreateTaskOptions {
   custom_item_id?: number
 }
 
-export interface Team {
+interface Team {
   id: string
   name: string
 }
@@ -84,7 +84,7 @@ export interface Space {
   name: string
 }
 
-export interface SpaceStatus {
+interface SpaceStatus {
   status: string
   color: string
 }
@@ -98,18 +98,18 @@ export interface List {
   name: string
 }
 
-export interface Folder {
+interface Folder {
   id: string
   name: string
 }
 
-export interface View {
+interface View {
   id: string
   name: string
   type: string
 }
 
-export interface Comment {
+interface Comment {
   id: string
   comment_text: string
   user: { username: string }
@@ -236,17 +236,8 @@ export class ClickUpClient {
     })
   }
 
-  async getMyTasksFromList(listId: string): Promise<Task[]> {
-    const me = await this.getMe()
-    return this.getTasksFromList(listId, { 'assignees[]': String(me.id) })
-  }
-
   async getTask(taskId: string): Promise<Task> {
     return this.request<Task>(`/task/${taskId}?include_markdown_description=true`)
-  }
-
-  async updateTaskMarkdown(taskId: string, markdown: string): Promise<Task> {
-    return this.updateTask(taskId, { markdown_content: markdown })
   }
 
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {
@@ -254,11 +245,6 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify(options),
     })
-  }
-
-  async getAssignedListIds(teamId: string): Promise<Set<string>> {
-    const tasks = await this.getMyTasks(teamId)
-    return new Set(tasks.map(t => t.list.id))
   }
 
   async getTeams(): Promise<Team[]> {

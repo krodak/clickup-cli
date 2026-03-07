@@ -7,7 +7,7 @@ import { formatTaskDetail } from '../interactive.js'
 import { isTTY, shouldOutputJson } from '../output.js'
 import { formatTaskDetailMarkdown, formatCommentsMarkdown } from '../markdown.js'
 
-export interface ActivityResult {
+interface ActivityResult {
   task: Task
   comments: CommentSummary[]
 }

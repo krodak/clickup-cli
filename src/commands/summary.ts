@@ -6,7 +6,7 @@ import { isTTY, shouldOutputJson, formatTable, TASK_COLUMNS } from '../output.js
 import { summarize, isDoneStatus } from './tasks.js'
 import type { TaskSummary } from './tasks.js'
 
-export interface SummaryResult {
+interface SummaryResult {
   completed: TaskSummary[]
   inProgress: TaskSummary[]
   overdue: TaskSummary[]

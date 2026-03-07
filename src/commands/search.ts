@@ -4,7 +4,7 @@ import { matchStatus } from '../status.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize } from './tasks.js'
 
-export interface SearchOptions {
+interface SearchOptions {
   status?: string
   includeClosed?: boolean
 }

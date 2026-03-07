@@ -3,7 +3,7 @@ import type { Task } from '../api.js'
 import type { Config } from '../config.js'
 import { parseAssigneeId } from './update.js'
 
-export interface AssignOptions {
+interface AssignOptions {
   to?: string
   remove?: string
   json?: boolean

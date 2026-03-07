@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 
-export interface AuthResult {
+interface AuthResult {
   authenticated: boolean
   user?: { id: number; username: string }
   error?: string

@@ -7,7 +7,7 @@ import type { Column } from '../output.js'
 import { formatMarkdownTable } from '../markdown.js'
 import type { MarkdownColumn } from '../markdown.js'
 
-export interface SprintInfo {
+interface SprintInfo {
   id: string
   name: string
   folder: string

@@ -297,18 +297,3 @@ describe('fuzzy status matching', () => {
     ).rejects.toThrow('open, in progress, review, done')
   })
 })
-
-describe('updateDescription (backward compat)', () => {
-  it('delegates to updateTask with markdown_content', async () => {
-    const { updateDescription } = await import('../../../src/commands/update.js')
-    await updateDescription({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'new description')
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { markdown_content: 'new description' })
-  })
-
-  it('throws when description is only whitespace', async () => {
-    const { updateDescription } = await import('../../../src/commands/update.js')
-    await expect(
-      updateDescription({ apiToken: 'pk_t', teamId: 'team1' }, 't1', '   '),
-    ).rejects.toThrow('empty')
-  })
-})

@@ -133,12 +133,3 @@ export async function updateTask(
   const task = await client.updateTask(taskId, options)
   return { id: task.id, name: task.name }
 }
-
-export async function updateDescription(
-  config: Config,
-  taskId: string,
-  description: string,
-): Promise<{ id: string; name: string }> {
-  if (!description.trim()) throw new Error('Description cannot be empty')
-  return updateTask(config, taskId, { markdown_content: description })
-}

@@ -6,7 +6,7 @@ import { openUrl } from '../interactive.js'
 import { isTTY, shouldOutputJson } from '../output.js'
 import { formatTaskDetailMarkdown } from '../markdown.js'
 
-export interface OpenOptions {
+interface OpenOptions {
   json?: boolean
 }
 
