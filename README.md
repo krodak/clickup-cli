@@ -98,7 +98,7 @@ When output is piped (no TTY), all commands output **Markdown** by default - opt
 
 ## Commands
 
-27 commands total. All support `--help` for full flag details.
+30 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -261,6 +261,48 @@ cu create -n "Fix bug" -l <listId> --json
 | `--custom-item-id <id>`      | no               | Custom task type ID (for creating initiatives)       |
 | `--json`                     | no               | Force JSON output even in terminal                   |
 
+### `cu delete <id>`
+
+Delete a task. **DESTRUCTIVE - cannot be undone.**
+
+```bash
+cu delete abc123
+cu delete abc123 --confirm
+cu delete abc123 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the task name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `--confirm` | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | Force JSON output                                           |
+
+### `cu field <id>`
+
+Set or remove a custom field value. Field names are resolved case-insensitively; errors list available fields/options.
+
+```bash
+cu field abc123 --set "Priority Level" high
+cu field abc123 --set "Story Points" 5
+cu field abc123 --set "Approved" true
+cu field abc123 --set "Category" "Bug Fix"
+cu field abc123 --set "Due" 2025-06-01
+cu field abc123 --set "Website" "https://example.com"
+cu field abc123 --set "Contact" "user@example.com"
+cu field abc123 --remove "Priority Level"
+cu field abc123 --set "Points" 3 --remove "Old Field"
+cu field abc123 --set "Points" 3 --json
+```
+
+| Flag                       | Description                                                                                                                      |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `--set "Field Name" <val>` | Set a custom field by name. Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email |
+| `--remove "Field Name"`    | Remove a custom field value                                                                                                      |
+| `--json`                   | Force JSON output                                                                                                                |
+
+Both `--set` and `--remove` can be used together in one invocation.
+
 ### `cu comment <id>`
 
 Post a comment on a task.
@@ -422,6 +464,24 @@ cu move abc123 --to <listId> --json
 | `--to <listId>`     | Add task to this list      |
 | `--remove <listId>` | Remove task from this list |
 | `--json`            | Force JSON output          |
+
+### `cu tag <id>`
+
+Add or remove tags on a task. Both `--add` and `--remove` can be used together.
+
+```bash
+cu tag abc123 --add "bug"
+cu tag abc123 --add "bug,frontend,urgent"
+cu tag abc123 --remove "wontfix"
+cu tag abc123 --add "bug" --remove "triage"
+cu tag abc123 --add "bug" --json
+```
+
+| Flag              | Description                         |
+| ----------------- | ----------------------------------- |
+| `--add <tags>`    | Comma-separated tag names to add    |
+| `--remove <tags>` | Comma-separated tag names to remove |
+| `--json`          | Force JSON output                   |
 
 ### `cu auth`
 
