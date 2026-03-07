@@ -43,6 +43,7 @@ import { manageDependency } from './commands/depend.js'
 import type { DependOptions } from './commands/depend.js'
 import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
+import { setCustomField } from './commands/field.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -495,6 +496,42 @@ program
         console.log(message)
       }
     }),
+  )
+
+program
+  .command('field <taskId>')
+  .description('Set or remove a custom field value on a task')
+  .option('--set <nameAndValue...>', 'Set field: --set "Field Name" value')
+  .option('--remove <fieldName>', 'Remove field value by name')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (taskId: string, opts: { set?: string[]; remove?: string; json?: boolean }) => {
+        const config = loadConfig()
+        const fieldOpts: { set?: [string, string]; remove?: string } = {}
+        if (opts.set) {
+          if (opts.set.length !== 2) {
+            throw new Error('--set requires exactly two arguments: field name and value')
+          }
+          fieldOpts.set = [opts.set[0]!, opts.set[1]!]
+        }
+        if (opts.remove) {
+          fieldOpts.remove = opts.remove
+        }
+        const { results } = await setCustomField(config, taskId, fieldOpts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(results, null, 2))
+        } else {
+          for (const r of results) {
+            if (r.action === 'set') {
+              console.log(`Set "${r.field}" to ${JSON.stringify(r.value)} on ${r.taskId}`)
+            } else {
+              console.log(`Removed "${r.field}" from ${r.taskId}`)
+            }
+          }
+        }
+      },
+    ),
   )
 
 const configCmd = program.command('config').description('Manage CLI configuration')
