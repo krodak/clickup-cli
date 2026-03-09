@@ -2,7 +2,7 @@ import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { matchStatus } from '../status.js'
 import type { TaskSummary } from './tasks.js'
-import { summarize } from './tasks.js'
+import { summarize, buildTypeMap } from './tasks.js'
 
 interface SearchOptions {
   status?: string
@@ -20,9 +20,11 @@ export async function searchTasks(
   }
 
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId, {
-    includeClosed: opts.includeClosed,
-  })
+  const [allTasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed }),
+    client.getCustomTaskTypes(config.teamId),
+  ])
+  const typeMap = buildTypeMap(customTypes)
 
   const words = trimmed.toLowerCase().split(/\s+/)
 
@@ -44,5 +46,5 @@ export async function searchTasks(
     }
   }
 
-  return matched.map(summarize)
+  return matched.map(t => summarize(t, typeMap))
 }

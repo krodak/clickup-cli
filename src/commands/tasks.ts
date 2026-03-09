@@ -1,5 +1,5 @@
 import { ClickUpClient } from '../api.js'
-import type { Task, TaskFilters } from '../api.js'
+import type { Task, TaskFilters, CustomTaskType } from '../api.js'
 import type { Config } from '../config.js'
 import { formatDate } from '../date.js'
 import { isTTY, shouldOutputJson } from '../output.js'
@@ -10,7 +10,7 @@ export interface TaskSummary {
   id: string
   name: string
   status: string
-  task_type: 'task' | 'initiative'
+  task_type: string
   priority: string
   due_date: string
   list: string
@@ -19,7 +19,7 @@ export interface TaskSummary {
 }
 
 interface FetchOptions extends TaskFilters {
-  typeFilter?: 'task' | 'initiative'
+  typeFilter?: string
   name?: string
 }
 
@@ -30,27 +30,49 @@ export function isDoneStatus(status: string): boolean {
   return DONE_PATTERNS.some(p => lower.includes(p))
 }
 
-function isInitiative(task: Task): boolean {
-  return (task.custom_item_id ?? 0) !== 0
-}
-
 function formatDueDate(ms: string | null | undefined): string {
   if (!ms) return ''
   return formatDate(ms)
 }
 
-export function summarize(task: Task): TaskSummary {
+function resolveTaskType(task: Task, typeMap: Map<number, string>): string {
+  const id = task.custom_item_id ?? 0
+  if (id === 0) return 'task'
+  return typeMap.get(id) ?? `type_${id}`
+}
+
+export function summarize(task: Task, typeMap?: Map<number, string>): TaskSummary {
   return {
     id: task.id,
     name: task.name,
     status: task.status.status,
-    task_type: isInitiative(task) ? 'initiative' : 'task',
+    task_type: resolveTaskType(task, typeMap ?? new Map<number, string>()),
     priority: task.priority?.priority ?? 'none',
     due_date: formatDueDate(task.due_date),
     list: task.list.name,
     url: task.url,
     ...(task.parent ? { parent: task.parent } : {}),
   }
+}
+
+export function buildTypeMap(types: CustomTaskType[]): Map<number, string> {
+  const map = new Map<number, string>()
+  for (const t of types) {
+    map.set(t.id, t.name)
+  }
+  return map
+}
+
+function resolveTypeFilter(typeFilter: string, typeMap: Map<number, string>): number | undefined {
+  if (typeFilter === 'task') return 0
+  const asNum = Number(typeFilter)
+  if (Number.isFinite(asNum)) return asNum
+  const lower = typeFilter.toLowerCase()
+  for (const [id, name] of typeMap) {
+    if (name.toLowerCase() === lower) return id
+  }
+  const available = ['task', ...Array.from(typeMap.values())].join(', ')
+  throw new Error(`Unknown task type "${typeFilter}". Available types: ${available}`)
 }
 
 export async function fetchMyTasks(
@@ -60,21 +82,25 @@ export async function fetchMyTasks(
   const client = new ClickUpClient(config)
   const { typeFilter, name, ...apiFilters } = opts
 
-  const allTasks = await client.getMyTasks(config.teamId, apiFilters)
+  const [allTasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, apiFilters),
+    client.getCustomTaskTypes(config.teamId),
+  ])
 
-  let filtered =
-    typeFilter === 'initiative'
-      ? allTasks.filter(isInitiative)
-      : typeFilter === 'task'
-        ? allTasks.filter(t => !isInitiative(t))
-        : allTasks
+  const typeMap = buildTypeMap(customTypes)
+
+  let filtered = allTasks
+  if (typeFilter) {
+    const targetId = resolveTypeFilter(typeFilter, typeMap)
+    filtered = allTasks.filter(t => (t.custom_item_id ?? 0) === targetId)
+  }
 
   if (name) {
     const query = name.toLowerCase()
     filtered = filtered.filter(t => t.name.toLowerCase().includes(query))
   }
 
-  return filtered.map(summarize)
+  return filtered.map(t => summarize(t, typeMap))
 }
 
 export async function printTasks(

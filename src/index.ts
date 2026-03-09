@@ -64,6 +64,7 @@ interface TaskFilterOpts {
   list?: string
   space?: string
   name?: string
+  type?: string
   includeClosed?: boolean
   json?: boolean
 }
@@ -110,37 +111,17 @@ program
   .option('--list <listId>', 'Filter by list ID')
   .option('--space <spaceId>', 'Filter by space ID')
   .option('--name <partial>', 'Filter by name (case-insensitive contains)')
-  .option('--include-closed', 'Include done/closed tasks')
-  .option('--json', 'Force JSON output even in terminal')
-  .action(
-    wrapAction(async (opts: TaskFilterOpts) => {
-      const config = loadConfig()
-      const tasks = await fetchMyTasks(config, {
-        typeFilter: 'task',
-        statuses: opts.status ? [opts.status] : undefined,
-        listIds: opts.list ? [opts.list] : undefined,
-        spaceIds: opts.space ? [opts.space] : undefined,
-        name: opts.name,
-        includeClosed: opts.includeClosed,
-      })
-      await printTasks(tasks, opts.json ?? false, config)
-    }),
+  .option(
+    '--type <type>',
+    'Filter by task type (e.g. "task", "initiative", or custom type name/ID)',
   )
-
-program
-  .command('initiatives')
-  .description('List initiatives assigned to me')
-  .option('--status <status>', 'Filter by status')
-  .option('--list <listId>', 'Filter by list ID')
-  .option('--space <spaceId>', 'Filter by space ID')
-  .option('--name <partial>', 'Filter by name (case-insensitive contains)')
   .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (opts: TaskFilterOpts) => {
       const config = loadConfig()
       const tasks = await fetchMyTasks(config, {
-        typeFilter: 'initiative',
+        typeFilter: opts.type,
         statuses: opts.status ? [opts.status] : undefined,
         listIds: opts.list ? [opts.list] : undefined,
         spaceIds: opts.space ? [opts.space] : undefined,

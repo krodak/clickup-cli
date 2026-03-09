@@ -98,7 +98,7 @@ When output is piped (no TTY), all commands output **Markdown** by default - opt
 
 ## Commands
 
-30 commands total. All support `--help` for full flag details.
+29 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -110,30 +110,19 @@ cu init
 
 ### `cu tasks`
 
-List tasks assigned to me.
+List tasks assigned to me. By default shows all task types. Use `--type` to filter by task type.
 
 ```bash
 cu tasks
 cu tasks --status "in progress"
 cu tasks --name "login"
+cu tasks --type task                  # regular tasks only
+cu tasks --type initiative            # initiatives only
+cu tasks --type "Bug"                 # custom task type by name
 cu tasks --list <listId>
 cu tasks --space <spaceId>
 cu tasks --include-closed
 cu tasks --json
-```
-
-### `cu initiatives`
-
-List initiatives assigned to me.
-
-```bash
-cu initiatives
-cu initiatives --status "to do"
-cu initiatives --name "auth"
-cu initiatives --list <listId>
-cu initiatives --space <spaceId>
-cu initiatives --include-closed
-cu initiatives --json
 ```
 
 ### `cu sprint`
@@ -192,7 +181,7 @@ cu task abc123 --json
 
 ### `cu subtasks <id>`
 
-List subtasks of a task or initiative.
+List subtasks of a task.
 
 ```bash
 cu subtasks abc123
@@ -258,7 +247,7 @@ cu create -n "Fix bug" -l <listId> --json
 | `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)      |
 | `--assignee <userId>`        | no               | Assignee by numeric user ID                          |
 | `--tags <tags>`              | no               | Comma-separated tag names                            |
-| `--custom-item-id <id>`      | no               | Custom task type ID (for creating initiatives)       |
+| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)  |
 | `--json`                     | no               | Force JSON output even in terminal                   |
 
 ### `cu delete <id>`

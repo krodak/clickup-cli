@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockGetMyTasks = vi.fn()
+const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
+    getCustomTaskTypes: mockGetCustomTaskTypes,
   })),
 }))
 

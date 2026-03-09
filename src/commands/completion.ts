@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks initiatives task update create sprint sprints subtasks comment comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -32,8 +32,8 @@ function bashCompletion(): string {
   esac
 
   case "$cmd" in
-    tasks|initiatives)
-      COMPREPLY=($(compgen -W "--status --list --space --name --include-closed --json" -- "$cur"))
+    tasks)
+      COMPREPLY=($(compgen -W "--status --list --space --name --type --include-closed --json" -- "$cur"))
       ;;
     task)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
@@ -137,7 +137,6 @@ _cu() {
     'init:Set up cu for the first time'
     'auth:Validate API token and show current user'
     'tasks:List tasks assigned to me'
-    'initiatives:List initiatives assigned to me'
     'task:Get task details'
     'update:Update a task'
     'create:Create a new task'
@@ -177,12 +176,13 @@ _cu() {
       ;;
     args)
       case $words[1] in
-        tasks|initiatives)
+        tasks)
           _arguments \\
             '--status[Filter by status]:status:(open "in progress" "in review" done closed)' \\
             '--list[Filter by list ID]:list_id:' \\
             '--space[Filter by space ID]:space_id:' \\
             '--name[Filter by name]:query:' \\
+            '--type[Filter by task type]:type:' \\
             '--include-closed[Include done/closed tasks]' \\
             '--json[Force JSON output]'
           ;;
@@ -391,7 +391,6 @@ complete -c cu -n __fish_use_subcommand -s V -l version -d 'Show version'
 complete -c cu -n __fish_use_subcommand -a init -d 'Set up cu for the first time'
 complete -c cu -n __fish_use_subcommand -a auth -d 'Validate API token and show current user'
 complete -c cu -n __fish_use_subcommand -a tasks -d 'List tasks assigned to me'
-complete -c cu -n __fish_use_subcommand -a initiatives -d 'List initiatives assigned to me'
 complete -c cu -n __fish_use_subcommand -a task -d 'Get task details'
 complete -c cu -n __fish_use_subcommand -a update -d 'Update a task'
 complete -c cu -n __fish_use_subcommand -a create -d 'Create a new task'
@@ -420,12 +419,13 @@ complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completio
 
 complete -c cu -n '__fish_seen_subcommand_from auth' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l status -d 'Filter by status'
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l list -d 'Filter by list ID'
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l space -d 'Filter by space ID'
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l name -d 'Filter by name'
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l include-closed -d 'Include done/closed tasks'
-complete -c cu -n '__fish_seen_subcommand_from tasks initiatives' -l json -d 'Force JSON output'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l status -d 'Filter by status'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l list -d 'Filter by list ID'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l space -d 'Filter by space ID'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l name -d 'Filter by name'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l type -d 'Filter by task type'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l include-closed -d 'Include done/closed tasks'
+complete -c cu -n '__fish_seen_subcommand_from tasks' -l json -d 'Force JSON output'
 
 complete -c cu -n '__fish_seen_subcommand_from task' -l json -d 'Force JSON output'
 

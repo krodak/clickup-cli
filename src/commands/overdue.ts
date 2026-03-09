@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
-import { summarize, isDoneStatus } from './tasks.js'
+import { summarize, isDoneStatus, buildTypeMap } from './tasks.js'
 import type { TaskSummary } from './tasks.js'
 
 function isOverdue(task: Task, now: number): boolean {
@@ -14,11 +14,15 @@ export async function fetchOverdueTasks(
   opts: { includeClosed?: boolean } = {},
 ): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed })
+  const [allTasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed }),
+    client.getCustomTaskTypes(config.teamId),
+  ])
+  const typeMap = buildTypeMap(customTypes)
   const now = Date.now()
 
   return allTasks
     .filter(t => isOverdue(t, now) && (opts.includeClosed || !isDoneStatus(t.status.status)))
     .sort((a, b) => Number(a.due_date) - Number(b.due_date))
-    .map(summarize)
+    .map(t => summarize(t, typeMap))
 }

@@ -4,7 +4,6 @@ import { generateCompletion } from '../../../src/commands/completion.js'
 const ALL_COMMANDS = [
   'init',
   'tasks',
-  'initiatives',
   'task',
   'update',
   'create',

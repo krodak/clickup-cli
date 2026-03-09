@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { InboxTaskSummary, TimePeriod, GroupedInbox } from '../../../src/commands/inbox.js'
 
 const mockGetMyTasks = vi.fn()
+const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
+    getCustomTaskTypes: mockGetCustomTaskTypes,
   })),
 }))
 

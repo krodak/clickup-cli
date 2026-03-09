@@ -5,7 +5,7 @@ import { isTTY, shouldOutputJson } from '../output.js'
 import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { groupedTaskPicker, showDetailsAndOpen } from '../interactive.js'
 import type { TaskSummary } from './tasks.js'
-import { summarize } from './tasks.js'
+import { summarize, buildTypeMap } from './tasks.js'
 
 export type TimePeriod =
   | 'today'
@@ -35,9 +35,9 @@ export interface InboxTaskSummary extends TaskSummary {
   date_updated: string
 }
 
-function summarizeWithDate(task: Task): InboxTaskSummary {
+function summarizeWithDate(task: Task, typeMap?: Map<number, string>): InboxTaskSummary {
   return {
-    ...summarize(task),
+    ...summarize(task, typeMap),
     date_updated: task.date_updated ?? '0',
   }
 }
@@ -88,16 +88,17 @@ export async function fetchInbox(
   opts: { includeClosed?: boolean } = {},
 ): Promise<InboxTaskSummary[]> {
   const client = new ClickUpClient(config)
-  const tasks = await client.getMyTasks(config.teamId, {
-    subtasks: true,
-    includeClosed: opts.includeClosed,
-  })
+  const [tasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, { subtasks: true, includeClosed: opts.includeClosed }),
+    client.getCustomTaskTypes(config.teamId),
+  ])
+  const typeMap = buildTypeMap(customTypes)
 
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
   return tasks
     .filter(t => Number(t.date_updated ?? 0) > cutoff)
     .sort((a, b) => Number(b.date_updated ?? 0) - Number(a.date_updated ?? 0))
-    .map(summarizeWithDate)
+    .map(t => summarizeWithDate(t, typeMap))
 }
 
 export async function printInbox(

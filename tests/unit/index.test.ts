@@ -10,7 +10,6 @@ describe('CLI entry point', () => {
     const output = execSync('node dist/index.js --help', { cwd: ROOT }).toString()
     expect(output).toContain('init')
     expect(output).toContain('tasks')
-    expect(output).toContain('initiatives')
     expect(output).toContain('task')
     expect(output).toContain('update')
     expect(output).toContain('create')

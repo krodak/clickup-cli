@@ -116,6 +116,11 @@ interface Comment {
   date: string
 }
 
+export interface CustomTaskType {
+  id: number
+  name: string
+}
+
 interface ClientConfig {
   apiToken: string
 }
@@ -259,6 +264,13 @@ export class ClickUpClient {
   async getSpaces(teamId: string): Promise<Space[]> {
     const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space?archived=false`)
     return data.spaces ?? []
+  }
+
+  async getCustomTaskTypes(teamId: string): Promise<CustomTaskType[]> {
+    const data = await this.request<{ custom_items: CustomTaskType[] }>(
+      `/team/${teamId}/custom_item`,
+    )
+    return data.custom_items ?? []
   }
 
   async getLists(spaceId: string): Promise<List[]> {

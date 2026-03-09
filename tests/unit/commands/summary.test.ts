@@ -3,11 +3,13 @@ import type { Task } from '../../../src/api.js'
 
 const mockGetMyTasks = vi.fn()
 const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
+const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
     getMe: mockGetMe,
+    getCustomTaskTypes: mockGetCustomTaskTypes,
   })),
 }))
 

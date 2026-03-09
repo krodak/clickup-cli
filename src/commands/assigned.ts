@@ -5,7 +5,7 @@ import { isTTY, shouldOutputJson } from '../output.js'
 import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { groupedTaskPicker, showDetailsAndOpen } from '../interactive.js'
 import type { TaskSummary } from './tasks.js'
-import { summarize, isDoneStatus } from './tasks.js'
+import { summarize, isDoneStatus, buildTypeMap } from './tasks.js'
 
 const STATUS_ORDER = [
   'code review',
@@ -59,9 +59,11 @@ export async function runAssignedCommand(
   opts: { status?: string; includeClosed?: boolean; json?: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId, {
-    includeClosed: opts.includeClosed,
-  })
+  const [allTasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed }),
+    client.getCustomTaskTypes(config.teamId),
+  ])
+  const typeMap = buildTypeMap(customTypes)
   let groups = groupByStatus(allTasks, opts.includeClosed ?? false)
 
   if (opts.status) {
@@ -72,7 +74,7 @@ export async function runAssignedCommand(
   if (shouldOutputJson(opts.json ?? false)) {
     const result: Record<string, AssignedTaskJson[]> = {}
     for (const group of groups) {
-      result[group.status.toLowerCase()] = group.tasks.map(summarize)
+      result[group.status.toLowerCase()] = group.tasks.map(t => summarize(t, typeMap))
     }
     console.log(JSON.stringify(result, null, 2))
     return
@@ -81,7 +83,7 @@ export async function runAssignedCommand(
   if (!isTTY()) {
     const mdGroups = groups.map(g => ({
       label: g.status,
-      tasks: g.tasks.map(t => summarize(t)),
+      tasks: g.tasks.map(t => summarize(t, typeMap)),
     }))
     console.log(formatGroupedTasksMarkdown(mdGroups))
     return
@@ -94,7 +96,7 @@ export async function runAssignedCommand(
 
   const pickerGroups = groups.map(g => ({
     label: g.status.toUpperCase(),
-    tasks: g.tasks.map(summarize),
+    tasks: g.tasks.map(t => summarize(t, typeMap)),
   }))
   const selected = await groupedTaskPicker(pickerGroups)
   await showDetailsAndOpen(selected, (id: string) => client.getTask(id))

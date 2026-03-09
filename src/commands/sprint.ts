@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { Task, List, Space } from '../api.js'
 import type { Config } from '../config.js'
-import { printTasks, summarize, isDoneStatus } from './tasks.js'
+import { printTasks, summarize, isDoneStatus, buildTypeMap } from './tasks.js'
 
 export function parseSprintDates(name: string): { start: Date; end: Date } | null {
   // Match patterns like "(2/12 - 2/25)" or "(2/12-2/25)" with optional en-dash
@@ -59,10 +59,12 @@ export async function runSprintCommand(
 
   process.stderr.write('Detecting active sprint...\n')
 
-  const [myTasks, allSpaces] = await Promise.all([
+  const [myTasks, allSpaces, customTypes] = await Promise.all([
     client.getMyTasks(config.teamId),
     client.getSpaces(config.teamId),
+    client.getCustomTaskTypes(config.teamId),
   ])
+  const typeMap = buildTypeMap(customTypes)
 
   let spaces: Space[]
   if (opts.space) {
@@ -117,7 +119,7 @@ export async function runSprintCommand(
   const filtered = opts.status
     ? sprintTasks.filter(t => t.status.status.toLowerCase() === opts.status!.toLowerCase())
     : sprintTasks
-  const summaries = filtered.map(summarize)
+  const summaries = filtered.map(t => summarize(t, typeMap))
 
   await printTasks(summaries, opts.json ?? false, config)
 }

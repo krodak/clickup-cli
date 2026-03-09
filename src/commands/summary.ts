@@ -3,7 +3,7 @@ import type { Task } from '../api.js'
 import type { Config } from '../config.js'
 import { formatGroupedTasksMarkdown } from '../markdown.js'
 import { isTTY, shouldOutputJson, formatTable, TASK_COLUMNS } from '../output.js'
-import { summarize, isDoneStatus } from './tasks.js'
+import { summarize, isDoneStatus, buildTypeMap } from './tasks.js'
 import type { TaskSummary } from './tasks.js'
 
 interface SummaryResult {
@@ -31,7 +31,11 @@ function isOverdue(task: Task, now: number): boolean {
   return !isNaN(due) && due < now
 }
 
-export function categorizeTasks(tasks: Task[], hoursBack: number): SummaryResult {
+export function categorizeTasks(
+  tasks: Task[],
+  hoursBack: number,
+  typeMap?: Map<number, string>,
+): SummaryResult {
   const now = Date.now()
   const cutoff = now - hoursBack * 60 * 60 * 1000
 
@@ -43,15 +47,15 @@ export function categorizeTasks(tasks: Task[], hoursBack: number): SummaryResult
     const done = isDoneStatus(task.status.status)
 
     if (done && isCompletedRecently(task, cutoff)) {
-      completed.push(summarize(task))
+      completed.push(summarize(task, typeMap))
     }
 
     if (!done && isInProgress(task)) {
-      inProgress.push(summarize(task))
+      inProgress.push(summarize(task, typeMap))
     }
 
     if (!done && isOverdue(task, now)) {
-      overdue.push(summarize(task))
+      overdue.push(summarize(task, typeMap))
     }
   }
 
@@ -72,8 +76,12 @@ export async function runSummaryCommand(
   opts: { hours: number; json: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
-  const allTasks = await client.getMyTasks(config.teamId, { includeClosed: true })
-  const result = categorizeTasks(allTasks, opts.hours)
+  const [allTasks, customTypes] = await Promise.all([
+    client.getMyTasks(config.teamId, { includeClosed: true }),
+    client.getCustomTaskTypes(config.teamId),
+  ])
+  const typeMap = buildTypeMap(customTypes)
+  const result = categorizeTasks(allTasks, opts.hours, typeMap)
 
   if (shouldOutputJson(opts.json)) {
     console.log(JSON.stringify(result, null, 2))

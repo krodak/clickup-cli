@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mockGetMyTasks = vi.fn()
+const mockGetCustomTaskTypes = vi
+  .fn()
+  .mockResolvedValue([
+    { id: 1004, name: 'Initiative', name_plural: 'Initiatives', description: '', avatar: null },
+  ])
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getMyTasks: mockGetMyTasks,
+    getCustomTaskTypes: mockGetCustomTaskTypes,
   })),
 }))
 
@@ -67,7 +73,7 @@ describe('fetchMyTasks', () => {
     )
     expect(result).toHaveLength(1)
     expect(result[0]!.id).toBe('t2')
-    expect(result[0]!.task_type).toBe('initiative')
+    expect(result[0]!.task_type).toBe('Initiative')
   })
 
   it('filters to regular tasks when typeFilter is task', async () => {

@@ -116,6 +116,7 @@ describe('runSprintCommand space handling', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    vi.spyOn(ClickUpClient.prototype, 'getCustomTaskTypes').mockResolvedValue([])
   })
 
   it('searches related spaces only and returns tasks via view API', async () => {
