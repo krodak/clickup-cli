@@ -1,20 +1,12 @@
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
-import { parseAssigneeId } from './update.js'
+import { resolveAssigneeId } from './update.js'
 
 interface AssignOptions {
   to?: string
   remove?: string
   json?: boolean
-}
-
-async function resolveUserId(client: ClickUpClient, value: string): Promise<number> {
-  if (value === 'me') {
-    const user = await client.getMe()
-    return user.id
-  }
-  return parseAssigneeId(value)
 }
 
 export async function assignTask(
@@ -32,10 +24,10 @@ export async function assignTask(
   const rem: number[] = []
 
   if (opts.to) {
-    add.push(await resolveUserId(client, opts.to))
+    add.push(await resolveAssigneeId(client, opts.to))
   }
   if (opts.remove) {
-    rem.push(await resolveUserId(client, opts.remove))
+    rem.push(await resolveAssigneeId(client, opts.remove))
   }
 
   return client.updateTask(taskId, {

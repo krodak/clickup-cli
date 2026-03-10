@@ -55,19 +55,19 @@ All commands support `--help` for full flag details.
 
 ### Write
 
-| Command                                                                                                                                                                        | What it does                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
-| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
-| `cu comment <id> -m text [--json]`                                                                                                                                             | Post comment on task                        |
-| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                              | Assign/unassign users                       |
-| `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                           | Add/remove task dependencies                |
-| `cu move <id> [--to listId] [--remove listId] [--json]`                                                                                                                        | Add/remove task from lists                  |
-| `cu field <id> [--set "Name" value] [--remove "Name"] [--json]`                                                                                                                | Set/remove custom field values              |
-| `cu delete <id> [--confirm] [--json]`                                                                                                                                          | Delete a task (DESTRUCTIVE, irreversible)   |
-| `cu tag <id> [--add tags] [--remove tags] [--json]`                                                                                                                            | Add/remove tags on a task                   |
-| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                       | Manage CLI config                           |
-| `cu completion <shell>`                                                                                                                                                        | Shell completions (bash/zsh/fish)           |
+| Command                                                                                                                                                                            | What it does                                |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
+| `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
+| `cu comment <id> -m text [--json]`                                                                                                                                                 | Post comment on task                        |
+| `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                                  | Assign/unassign users                       |
+| `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                               | Add/remove task dependencies                |
+| `cu move <id> [--to listId] [--remove listId] [--json]`                                                                                                                            | Add/remove task from lists                  |
+| `cu field <id> [--set "Name" value] [--remove "Name"] [--json]`                                                                                                                    | Set/remove custom field values              |
+| `cu delete <id> [--confirm] [--json]`                                                                                                                                              | Delete a task (DESTRUCTIVE, irreversible)   |
+| `cu tag <id> [--add tags] [--remove tags] [--json]`                                                                                                                                | Add/remove tags on a task                   |
+| `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                           | Manage CLI config                           |
+| `cu completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)           |
 
 ## Quick Reference
 
@@ -79,7 +79,7 @@ All commands support `--help` for full flag details.
 | `--status`              | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                |
 | `--priority`            | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                             |
 | `--due-date`            | `YYYY-MM-DD` format                                                                                    |
-| `--assignee`            | Numeric user ID (find via `cu task <id> --json`)                                                       |
+| `--assignee`            | User ID or `me` (on `cu create`, `cu update`, `cu assign`)                                             |
 | `--tags`                | Comma-separated (e.g. `--tags "bug,frontend"`)                                                         |
 | `--time-estimate`       | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                       |
 | `--custom-item-id`      | Custom task type ID for `cu create` (e.g. `1` for initiative)                                          |

@@ -29,8 +29,16 @@ export function parseDueDate(value: string): number {
 
 export function parseAssigneeId(value: string): number {
   const id = Number(value)
-  if (!Number.isInteger(id)) throw new Error('Assignee must be a numeric user ID')
+  if (!Number.isInteger(id)) throw new Error('Assignee must be a numeric user ID or "me"')
   return id
+}
+
+export async function resolveAssigneeId(client: ClickUpClient, value: string): Promise<number> {
+  if (value === 'me') {
+    const user = await client.getMe()
+    return user.id
+  }
+  return parseAssigneeId(value)
 }
 
 export function parseTimeEstimate(value: string): number {

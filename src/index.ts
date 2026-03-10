@@ -1,8 +1,9 @@
 import { Command } from 'commander'
 import { createRequire } from 'module'
+import { ClickUpClient } from './api.js'
 import { loadConfig } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
-import { updateTask, buildUpdatePayload } from './commands/update.js'
+import { updateTask, buildUpdatePayload, resolveAssigneeId } from './commands/update.js'
 import type { UpdateCommandOptions } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
@@ -159,12 +160,16 @@ program
   .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
   .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
-  .option('--assignee <userId>', 'Add assignee by user ID')
+  .option('--assignee <userId>', 'Add assignee by user ID or "me"')
   .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (taskId: string, opts: UpdateCommandOptions & { json?: boolean }) => {
       const config = loadConfig()
+      if (opts.assignee === 'me') {
+        const client = new ClickUpClient(config)
+        opts.assignee = String(await resolveAssigneeId(client, 'me'))
+      }
       const payload = buildUpdatePayload(opts)
       const result = await updateTask(config, taskId, payload)
       if (shouldOutputJson(opts.json ?? false)) {
@@ -185,7 +190,7 @@ program
   .option('-s, --status <status>', 'Initial status')
   .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
   .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
-  .option('--assignee <userId>', 'Assignee user ID')
+  .option('--assignee <userId>', 'Assignee user ID or "me"')
   .option('--tags <tags>', 'Comma-separated tag names')
   .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
   .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
@@ -193,6 +198,10 @@ program
   .action(
     wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
       const config = loadConfig()
+      if (opts.assignee === 'me') {
+        const client = new ClickUpClient(config)
+        opts.assignee = String(await resolveAssigneeId(client, 'me'))
+      }
       const result = await createTask(config, opts)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))

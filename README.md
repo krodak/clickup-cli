@@ -201,6 +201,7 @@ cu update abc123 -n "New task name"
 cu update abc123 -d "Updated description with **markdown**"
 cu update abc123 --priority high
 cu update abc123 --due-date 2025-03-15
+cu update abc123 --assignee me
 cu update abc123 --assignee 12345
 cu update abc123 -n "New name" -s "done" --priority urgent
 cu update abc123 --time-estimate 2h
@@ -216,7 +217,7 @@ cu update abc123 -s "in progress" --json
 | `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
 | `--due-date <date>`          | Due date (`YYYY-MM-DD`)                                                     |
 | `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
-| `--assignee <userId>`        | Add assignee by numeric user ID                                             |
+| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                           |
 | `--parent <taskId>`          | Set parent task (makes this a subtask)                                      |
 | `--json`                     | Force JSON output even in terminal                                          |
 
@@ -229,7 +230,7 @@ cu create -n "Fix login bug" -l <listId>
 cu create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
 cu create -n "Task" -l <listId> -d "desc" -s "open"
 cu create -n "Task" -l <listId> --priority high --due-date 2025-06-01
-cu create -n "Task" -l <listId> --assignee 12345 --tags "bug,frontend"
+cu create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
 cu create -n "Initiative" -l <listId> --custom-item-id 1
 cu create -n "Task" -l <listId> --time-estimate 2h
 cu create -n "Fix bug" -l <listId> --json
@@ -245,7 +246,7 @@ cu create -n "Fix bug" -l <listId> --json
 | `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
 | `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`)                              |
 | `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)      |
-| `--assignee <userId>`        | no               | Assignee by numeric user ID                          |
+| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                        |
 | `--tags <tags>`              | no               | Comma-separated tag names                            |
 | `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)  |
 | `--json`                     | no               | Force JSON output even in terminal                   |
