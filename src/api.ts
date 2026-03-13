@@ -98,6 +98,10 @@ export interface List {
   name: string
 }
 
+export interface ListWithStatuses extends List {
+  statuses: SpaceStatus[]
+}
+
 interface Folder {
   id: string
   name: string
@@ -259,6 +263,10 @@ export class ClickUpClient {
 
   async getSpaceWithStatuses(spaceId: string): Promise<SpaceWithStatuses> {
     return this.request<SpaceWithStatuses>(`/space/${spaceId}`)
+  }
+
+  async getListWithStatuses(listId: string): Promise<ListWithStatuses> {
+    return this.request<ListWithStatuses>(`/list/${listId}`)
   }
 
   async getSpaces(teamId: string): Promise<Space[]> {
