@@ -105,10 +105,8 @@ async function resolveStatus(
   statusInput: string,
 ): Promise<string> {
   const task = await client.getTask(taskId)
-  if (!task.space) return statusInput
-
-  const space = await client.getSpaceWithStatuses(task.space.id)
-  const available = space.statuses.map(s => s.status)
+  const list = await client.getListWithStatuses(task.list.id)
+  const available = list.statuses.map(s => s.status)
   const matched = matchStatus(statusInput, available)
 
   if (!matched) {
