@@ -1,6 +1,6 @@
 {
   "name": "@krodak/clickup-cli",
-  "version": "0.13.2",
+  "version": "0.14.0",
   "description": "ClickUp CLI for AI agents and humans",
   "type": "module",
   "license": "MIT",
