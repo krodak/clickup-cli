@@ -133,6 +133,19 @@ export function formatTaskDetail(task: Task): string {
     }
   }
 
+  if (task.checklists?.length) {
+    lines.push('')
+    lines.push(chalk.bold('Checklists'))
+    for (const cl of task.checklists) {
+      const resolved = cl.items.filter(i => i.resolved).length
+      lines.push(`  ${chalk.bold(cl.name)} (${resolved}/${cl.items.length})`)
+      for (const item of cl.items) {
+        const check = item.resolved ? chalk.green('[x]') : chalk.dim('[ ]')
+        lines.push(`    ${check} ${item.name}`)
+      }
+    }
+  }
+
   if (task.text_content?.trim()) {
     lines.push('')
     lines.push(descriptionPreview(task.text_content))

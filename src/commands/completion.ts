@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag checklist config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -107,6 +107,14 @@ function bashCompletion(): string {
     tag)
       COMPREPLY=($(compgen -W "--add --remove --json" -- "$cur"))
       ;;
+    checklist)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "view create delete add-item edit-item delete-item" -- "$cur"))
+      fi
+      ;;
+    comment-edit)
+      COMPREPLY=($(compgen -W "-m --message --resolved --unresolved --json" -- "$cur"))
+      ;;
     config)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "get set path" -- "$cur"))
@@ -160,6 +168,8 @@ _cu() {
     'field:Set or remove a custom field value on a task'
     'delete:Delete a task'
     'tag:Add or remove tags from a task'
+    'checklist:Manage checklists on a task'
+    'comment-edit:Edit an existing comment'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -347,6 +357,62 @@ _cu() {
             '--remove[Comma-separated tag names to remove]:tags:' \\
             '--json[Force JSON output]'
           ;;
+        checklist)
+          local -a checklist_cmds
+          checklist_cmds=(
+            'view:View checklists on a task'
+            'create:Create a checklist on a task'
+            'delete:Delete a checklist'
+            'add-item:Add an item to a checklist'
+            'edit-item:Edit a checklist item'
+            'delete-item:Delete a checklist item'
+          )
+          _arguments -C \\
+            '1:checklist command:->checklist_cmd' \\
+            '*::checklist_arg:->checklist_args'
+          case $state in
+            checklist_cmd)
+              _describe 'checklist command' checklist_cmds
+              ;;
+            checklist_args)
+              case $words[1] in
+                view)
+                  _arguments '1:task_id:' '--json[Force JSON output]'
+                  ;;
+                create)
+                  _arguments '1:task_id:' '2:name:' '--json[Force JSON output]'
+                  ;;
+                delete)
+                  _arguments '1:checklist_id:' '--json[Force JSON output]'
+                  ;;
+                add-item)
+                  _arguments '1:checklist_id:' '2:name:' '--json[Force JSON output]'
+                  ;;
+                edit-item)
+                  _arguments \\
+                    '1:checklist_id:' \\
+                    '2:checklist_item_id:' \\
+                    '--name[New item name]:name:' \\
+                    '--resolved[Mark item as resolved]' \\
+                    '--unresolved[Mark item as unresolved]' \\
+                    '--assignee[Assign user by ID]:user_id:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                delete-item)
+                  _arguments '1:checklist_id:' '2:checklist_item_id:' '--json[Force JSON output]'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
+        comment-edit)
+          _arguments \\
+            '1:comment_id:' \\
+            '(-m --message)'{-m,--message}'[New comment text]:text:' \\
+            '--resolved[Mark comment as resolved]' \\
+            '--unresolved[Mark comment as unresolved]' \\
+            '--json[Force JSON output]'
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -414,6 +480,8 @@ complete -c cu -n __fish_use_subcommand -a move -d 'Add or remove a task from a 
 complete -c cu -n __fish_use_subcommand -a field -d 'Set or remove a custom field value on a task'
 complete -c cu -n __fish_use_subcommand -a delete -d 'Delete a task'
 complete -c cu -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
+complete -c cu -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
+complete -c cu -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
 complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -522,6 +590,23 @@ complete -c cu -n '__fish_seen_subcommand_from delete' -l json -d 'Force JSON ou
 complete -c cu -n '__fish_seen_subcommand_from tag' -l add -d 'Comma-separated tag names to add'
 complete -c cu -n '__fish_seen_subcommand_from tag' -l remove -d 'Comma-separated tag names to remove'
 complete -c cu -n '__fish_seen_subcommand_from tag' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a view -d 'View checklists on a task'
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a create -d 'Create a checklist on a task'
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete -d 'Delete a checklist'
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a add-item -d 'Add an item to a checklist'
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a edit-item -d 'Edit a checklist item'
+complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete-item -d 'Delete a checklist item'
+complete -c cu -n '__fish_seen_subcommand_from view create delete add-item edit-item delete-item' -l json -d 'Force JSON output'
+complete -c cu -n '__fish_seen_subcommand_from edit-item' -l name -d 'New item name'
+complete -c cu -n '__fish_seen_subcommand_from edit-item' -l resolved -d 'Mark item as resolved'
+complete -c cu -n '__fish_seen_subcommand_from edit-item' -l unresolved -d 'Mark item as unresolved'
+complete -c cu -n '__fish_seen_subcommand_from edit-item' -l assignee -d 'Assign user by ID'
+
+complete -c cu -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
+complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'
+complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l unresolved -d 'Mark comment as unresolved'
+complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Force JSON output'
 
 complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'

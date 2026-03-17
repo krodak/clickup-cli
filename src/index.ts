@@ -47,6 +47,16 @@ import type { MoveOptions } from './commands/move.js'
 import { setCustomField } from './commands/field.js'
 import { deleteTaskCommand } from './commands/delete.js'
 import { manageTags } from './commands/tag.js'
+import {
+  viewChecklists,
+  createChecklist,
+  deleteChecklist,
+  addChecklistItem,
+  editChecklistItem,
+  deleteChecklistItem,
+  formatChecklists,
+} from './commands/checklist.js'
+import { editComment } from './commands/comment-edit.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -299,6 +309,33 @@ program
       const comments = await fetchComments(config, taskId)
       printComments(comments, opts.json ?? false)
     }),
+  )
+
+program
+  .command('comment-edit <commentId>')
+  .description('Edit an existing comment')
+  .requiredOption('-m, --message <text>', 'New comment text')
+  .option('--resolved', 'Mark comment as resolved')
+  .option('--unresolved', 'Mark comment as unresolved')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        commentId: string,
+        opts: { message: string; resolved?: boolean; unresolved?: boolean; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        let resolved: boolean | undefined
+        if (opts.resolved) resolved = true
+        if (opts.unresolved) resolved = false
+        await editComment(config, commentId, opts.message, resolved)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, commentId }, null, 2))
+        } else {
+          console.log(`Comment ${commentId} updated`)
+        }
+      },
+    ),
   )
 
 program
@@ -560,6 +597,127 @@ program
         if (result.added.length > 0) parts.push(`Added tags: ${result.added.join(', ')}`)
         if (result.removed.length > 0) parts.push(`Removed tags: ${result.removed.join(', ')}`)
         console.log(parts.join('; '))
+      }
+    }),
+  )
+
+const checklistCmd = program.command('checklist').description('Manage checklists on a task')
+
+checklistCmd
+  .command('view <taskId>')
+  .description('View checklists on a task')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const checklists = await viewChecklists(config, taskId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(checklists, null, 2))
+      } else {
+        console.log(formatChecklists(checklists))
+      }
+    }),
+  )
+
+checklistCmd
+  .command('create <taskId> <name>')
+  .description('Create a checklist on a task')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, name: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await createChecklist(config, taskId, name)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Created checklist "${result.name}" (id: ${result.id})`)
+      }
+    }),
+  )
+
+checklistCmd
+  .command('delete <checklistId>')
+  .description('Delete a checklist')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (checklistId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await deleteChecklist(config, checklistId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Deleted checklist ${result.checklistId}`)
+      }
+    }),
+  )
+
+checklistCmd
+  .command('add-item <checklistId> <name>')
+  .description('Add an item to a checklist')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (checklistId: string, name: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await addChecklistItem(config, checklistId, name)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Added item "${name}" to checklist ${checklistId}`)
+      }
+    }),
+  )
+
+checklistCmd
+  .command('edit-item <checklistId> <checklistItemId>')
+  .description('Edit a checklist item')
+  .option('--name <name>', 'New item name')
+  .option('--resolved', 'Mark item as resolved')
+  .option('--unresolved', 'Mark item as unresolved')
+  .option('--assignee <userId>', 'Assign user by ID (use "null" to unassign)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        checklistId: string,
+        checklistItemId: string,
+        opts: {
+          name?: string
+          resolved?: boolean
+          unresolved?: boolean
+          assignee?: string
+          json?: boolean
+        },
+      ) => {
+        const config = loadConfig()
+        const updates: { name?: string; resolved?: boolean; assignee?: number | null } = {}
+        if (opts.name) updates.name = opts.name
+        if (opts.resolved) updates.resolved = true
+        if (opts.unresolved) updates.resolved = false
+        if (opts.assignee !== undefined) {
+          updates.assignee = opts.assignee === 'null' ? null : Number(opts.assignee)
+        }
+        const result = await editChecklistItem(config, checklistId, checklistItemId, updates)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Updated checklist item ${checklistItemId}`)
+        }
+      },
+    ),
+  )
+
+checklistCmd
+  .command('delete-item <checklistId> <checklistItemId>')
+  .description('Delete a checklist item')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (checklistId: string, checklistItemId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await deleteChecklistItem(config, checklistId, checklistItemId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Deleted checklist item ${result.checklistItemId}`)
       }
     }),
   )

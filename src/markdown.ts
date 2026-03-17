@@ -126,6 +126,18 @@ export function formatTaskDetailMarkdown(task: Task): string {
     lines.push('', '## Description', '', descriptionContent)
   }
 
+  if (task.checklists?.length) {
+    lines.push('', '## Checklists', '')
+    for (const cl of task.checklists) {
+      const resolved = cl.items.filter(i => i.resolved).length
+      lines.push(`### ${cl.name} (${resolved}/${cl.items.length})`, '')
+      for (const item of cl.items) {
+        lines.push(`- [${item.resolved ? 'x' : ' '}] ${item.name}`)
+      }
+      lines.push('')
+    }
+  }
+
   return lines.join('\n')
 }
 

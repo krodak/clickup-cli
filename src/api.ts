@@ -34,6 +34,7 @@ export interface Task {
   date_updated?: string
   locations?: Array<{ id: string; name: string }>
   custom_fields?: CustomField[]
+  checklists?: Checklist[]
 }
 
 export interface TaskFilters {
@@ -119,6 +120,38 @@ interface Comment {
 export interface CustomTaskType {
   id: number
   name: string
+}
+
+export interface ChecklistItem {
+  id: string
+  name: string
+  resolved: boolean
+  assignee?: { id: number; username: string } | null
+  orderindex: number
+  parent?: string | null
+}
+
+export interface Checklist {
+  id: string
+  name: string
+  orderindex: number
+  items: ChecklistItem[]
+}
+
+export interface CustomFieldDefinition {
+  id: string
+  name: string
+  type: string
+  type_config?: {
+    options?: Array<{
+      id: string
+      name: string
+      orderindex: number
+      label?: string
+      color?: string
+    }>
+  }
+  required?: boolean
 }
 
 interface ClientConfig {
@@ -356,5 +389,58 @@ export class ClickUpClient {
     await this.request(`/task/${taskId}/dependency?${params.toString()}`, {
       method: 'DELETE',
     })
+  }
+
+  async updateComment(commentId: string, text: string, resolved?: boolean): Promise<void> {
+    const body: Record<string, unknown> = { comment_text: text }
+    if (resolved !== undefined) body.resolved = resolved
+    await this.request<Record<string, never>>(`/comment/${commentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {
+    const data = await this.request<{ fields: CustomFieldDefinition[] }>(`/list/${listId}/field`)
+    return data.fields ?? []
+  }
+
+  async createChecklist(taskId: string, name: string): Promise<Checklist> {
+    const data = await this.request<{ checklist: Checklist }>(`/task/${taskId}/checklist`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
+    return data.checklist
+  }
+
+  async deleteChecklist(checklistId: string): Promise<void> {
+    await this.request<Record<string, never>>(`/checklist/${checklistId}`, { method: 'DELETE' })
+  }
+
+  async createChecklistItem(checklistId: string, name: string): Promise<Checklist> {
+    const data = await this.request<{ checklist: Checklist }>(
+      `/checklist/${checklistId}/checklist_item`,
+      { method: 'POST', body: JSON.stringify({ name }) },
+    )
+    return data.checklist
+  }
+
+  async editChecklistItem(
+    checklistId: string,
+    checklistItemId: string,
+    updates: { name?: string; resolved?: boolean; assignee?: number | null },
+  ): Promise<Checklist> {
+    const data = await this.request<{ checklist: Checklist }>(
+      `/checklist/${checklistId}/checklist_item/${checklistItemId}`,
+      { method: 'PUT', body: JSON.stringify(updates) },
+    )
+    return data.checklist
+  }
+
+  async deleteChecklistItem(checklistId: string, checklistItemId: string): Promise<void> {
+    await this.request<Record<string, never>>(
+      `/checklist/${checklistId}/checklist_item/${checklistItemId}`,
+      { method: 'DELETE' },
+    )
   }
 }

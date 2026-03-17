@@ -336,6 +336,153 @@ describe('task tags', () => {
   })
 })
 
+describe('updateComment', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends PUT with comment_text', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.updateComment('c1', 'new text')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/comment/c1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ comment_text: 'new text' }),
+      }),
+    )
+  })
+
+  it('includes resolved flag when provided', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.updateComment('c1', 'text', true)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/comment/c1'),
+      expect.objectContaining({
+        body: JSON.stringify({ comment_text: 'text', resolved: true }),
+      }),
+    )
+  })
+})
+
+describe('getListCustomFields', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns fields for a list', async () => {
+    const fields = [{ id: 'f1', name: 'Priority', type: 'drop_down' }]
+    mockFetch.mockReturnValue(mockResponse({ fields }))
+    const result = await client.getListCustomFields('l1')
+    expect(result).toEqual(fields)
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/list/l1/field')
+  })
+})
+
+describe('checklist API methods', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('createChecklist sends POST to task checklist endpoint', async () => {
+    const checklist = { id: 'cl1', name: 'QA', orderindex: 0, items: [] }
+    mockFetch.mockReturnValue(mockResponse({ checklist }))
+    const result = await client.createChecklist('t1', 'QA')
+    expect(result).toEqual(checklist)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/checklist'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'QA' }),
+      }),
+    )
+  })
+
+  it('deleteChecklist sends DELETE to checklist endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteChecklist('cl1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/checklist/cl1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('createChecklistItem sends POST to checklist item endpoint', async () => {
+    const checklist = {
+      id: 'cl1',
+      name: 'QA',
+      orderindex: 0,
+      items: [{ id: 'i1', name: 'Step 1', resolved: false, orderindex: 0 }],
+    }
+    mockFetch.mockReturnValue(mockResponse({ checklist }))
+    const result = await client.createChecklistItem('cl1', 'Step 1')
+    expect(result).toEqual(checklist)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/checklist/cl1/checklist_item'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Step 1' }),
+      }),
+    )
+  })
+
+  it('editChecklistItem sends PUT to checklist item endpoint', async () => {
+    const checklist = {
+      id: 'cl1',
+      name: 'QA',
+      orderindex: 0,
+      items: [{ id: 'i1', name: 'Updated', resolved: true, orderindex: 0 }],
+    }
+    mockFetch.mockReturnValue(mockResponse({ checklist }))
+    const updates = { name: 'Updated', resolved: true }
+    const result = await client.editChecklistItem('cl1', 'i1', updates)
+    expect(result).toEqual(checklist)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/checklist/cl1/checklist_item/i1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      }),
+    )
+  })
+
+  it('deleteChecklistItem sends DELETE to checklist item endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteChecklistItem('cl1', 'i1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/checklist/cl1/checklist_item/i1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

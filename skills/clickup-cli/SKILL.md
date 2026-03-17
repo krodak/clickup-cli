@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments.'
 ---
 
 # ClickUp CLI (`cu`)
@@ -60,12 +60,19 @@ All commands support `--help` for full flag details.
 | `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
 | `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
 | `cu comment <id> -m text [--json]`                                                                                                                                                 | Post comment on task                        |
+| `cu comment-edit <commentId> -m text [--resolved] [--unresolved] [--json]`                                                                                                         | Edit an existing comment                    |
 | `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                                  | Assign/unassign users                       |
 | `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                               | Add/remove task dependencies                |
 | `cu move <id> [--to listId] [--remove listId] [--json]`                                                                                                                            | Add/remove task from lists                  |
 | `cu field <id> [--set "Name" value] [--remove "Name"] [--json]`                                                                                                                    | Set/remove custom field values              |
 | `cu delete <id> [--confirm] [--json]`                                                                                                                                              | Delete a task (DESTRUCTIVE, irreversible)   |
 | `cu tag <id> [--add tags] [--remove tags] [--json]`                                                                                                                                | Add/remove tags on a task                   |
+| `cu checklist view <id> [--json]`                                                                                                                                                  | View checklists on a task                   |
+| `cu checklist create <id> <name> [--json]`                                                                                                                                         | Create a checklist                          |
+| `cu checklist delete <checklistId> [--json]`                                                                                                                                       | Delete a checklist                          |
+| `cu checklist add-item <checklistId> <name> [--json]`                                                                                                                              | Add item to a checklist                     |
+| `cu checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--json]`                                                                    | Edit a checklist item                       |
+| `cu checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                     |
 | `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                           | Manage CLI config                           |
 | `cu completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)           |
 
@@ -98,7 +105,9 @@ All commands support `--help` for full flag details.
 | `cu summary`            | Categories: completed (done/complete/closed within N hours), in progress, overdue                      |
 | `cu overdue`            | Excludes closed tasks, sorted most overdue first                                                       |
 | `cu open`               | Tries task ID first, falls back to name search                                                         |
-| `cu task`               | Shows custom fields in detail view                                                                     |
+| `cu checklist`          | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                  |
+| `cu comment-edit`       | Edit comment text and resolution status                                                                |
+| `cu task`               | Shows custom fields and checklists in detail view                                                      |
 | `cu lists`              | Discovers list IDs needed for `--list` and `cu create -l`                                              |
 | Errors                  | stderr with exit code 1                                                                                |
 | Parsing                 | Strict - excess/unknown arguments rejected                                                             |
@@ -150,6 +159,11 @@ cu field abc123def --set "Category" "Bug Fix"
 cu field abc123def --remove "Old Field"
 cu tag abc123def --add "bug,frontend"
 cu tag abc123def --remove "triage"
+cu checklist view abc123def                           # view checklists
+cu checklist create abc123def "QA Steps"              # add checklist
+cu checklist add-item <clId> "Run unit tests"         # add item
+cu checklist edit-item <clId> <itemId> --resolved     # check off item
+cu comment-edit <commentId> -m "Updated findings"     # edit a comment
 cu delete abc123def --confirm          # irreversible!
 ```
 

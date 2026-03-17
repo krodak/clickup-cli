@@ -98,7 +98,7 @@ When output is piped (no TTY), all commands output **Markdown** by default - opt
 
 ## Commands
 
-29 commands total. All support `--help` for full flag details.
+31 commands total. All support `--help` for full flag details.
 
 ### `cu init`
 
@@ -170,7 +170,7 @@ cu inbox --json
 
 ### `cu task <id>`
 
-Get task details including custom fields. Pretty summary in terminal, JSON when piped.
+Get task details including custom fields and checklists. Pretty summary in terminal, JSON when piped.
 
 ```bash
 cu task abc123
@@ -310,6 +310,24 @@ List comments on a task. Formatted view in terminal, JSON when piped.
 cu comments abc123
 cu comments abc123 --json
 ```
+
+### `cu comment-edit <commentId>`
+
+Edit an existing comment on a task.
+
+```bash
+cu comment-edit <commentId> -m "Updated text"
+cu comment-edit <commentId> -m "Fixed" --resolved
+cu comment-edit <commentId> -m "Reopening" --unresolved
+cu comment-edit <commentId> -m "Updated" --json
+```
+
+| Flag            | Required | Description                |
+| --------------- | -------- | -------------------------- |
+| `-m, --message` | yes      | New comment text           |
+| `--resolved`    | no       | Mark comment as resolved   |
+| `--unresolved`  | no       | Mark comment as unresolved |
+| `--json`        | no       | Force JSON output          |
 
 ### `cu activity <id>`
 
@@ -472,6 +490,32 @@ cu tag abc123 --add "bug" --json
 | `--add <tags>`    | Comma-separated tag names to add    |
 | `--remove <tags>` | Comma-separated tag names to remove |
 | `--json`          | Force JSON output                   |
+
+### `cu checklist`
+
+Manage checklists on tasks. Six subcommands for full CRUD operations.
+
+```bash
+cu checklist view abc123                           # view all checklists on a task
+cu checklist create abc123 "QA Checklist"           # add a checklist
+cu checklist delete <checklistId>                   # remove a checklist
+cu checklist add-item <checklistId> "Run tests"     # add an item
+cu checklist edit-item <clId> <itemId> --resolved   # mark item done
+cu checklist delete-item <clId> <itemId>            # remove an item
+```
+
+| Subcommand    | Arguments                        | Description           |
+| ------------- | -------------------------------- | --------------------- |
+| `view`        | `<taskId>`                       | Show all checklists   |
+| `create`      | `<taskId> <name>`                | Create a checklist    |
+| `delete`      | `<checklistId>`                  | Delete a checklist    |
+| `add-item`    | `<checklistId> <name>`           | Add checklist item    |
+| `edit-item`   | `<checklistId> <itemId> [flags]` | Edit checklist item   |
+| `delete-item` | `<checklistId> <itemId>`         | Delete checklist item |
+
+`edit-item` flags: `--name <text>`, `--resolved`, `--unresolved`, `--assignee <userId>`. All subcommands support `--json`.
+
+Checklists are also shown inline in `cu task <id>` detail view.
 
 ### `cu auth`
 
