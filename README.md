@@ -8,7 +8,7 @@
 [![CI](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml)
 
 ```bash
-npm install -g @krodak/clickup-cli && cu init   # or: brew tap krodak/tap && brew install clickup-cli
+npm install -g @krodak/clickup-cli && cu init
 ```
 
 ## Talk to your agent
@@ -126,7 +126,7 @@ The skill file follows the [Agent Skills](https://agentskills.io) open standard.
 
 [Full command reference with examples and flags](docs/commands.md).
 
-Status: :white_check_mark: implemented | :construction: planned | :heavy_minus_sign: not planned
+Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign: won't add
 
 ### Tasks
 
@@ -253,17 +253,17 @@ Status: :white_check_mark: implemented | :construction: planned | :heavy_minus_s
 | Upload file      | `cu attach <id> <file>` | :construction: |
 | List attachments |                         | :construction: |
 
-### Not planned
+### :no_entry_sign: Won't add
 
-| Feature               | Reason                                    |
-| --------------------- | ----------------------------------------- |
-| Webhooks              | Server-side concept, not relevant for CLI |
-| OAuth flow            | One-time setup, handled by `cu init`      |
-| Guest/ACL management  | Enterprise admin, not daily workflow      |
-| Chat/DM               | Better suited to ClickUp app              |
-| Audit logs            | Enterprise admin                          |
-| User/group management | Admin operations, dangerous via CLI       |
-| View CRUD             | View configuration is a UI concern        |
+| Feature               | Why                                                                         |
+| --------------------- | --------------------------------------------------------------------------- |
+| Webhooks              | Server-side. A CLI can't listen for events.                                 |
+| OAuth flow            | `cu init` already handles auth with API tokens.                             |
+| Guest/ACL             | Enterprise admin. Not what you reach for in a terminal.                     |
+| Chat/DM               | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
+| Audit logs            | Enterprise admin.                                                           |
+| User/group management | Too destructive for a CLI - removing someone from a workspace is permanent. |
+| View CRUD             | Views are visual layouts. Configure them in the UI.                         |
 
 ### Setup
 
