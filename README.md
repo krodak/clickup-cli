@@ -54,41 +54,53 @@ cu init
 
 ## Set up your agent
 
-The package includes a skill file that teaches agents all available commands. Install it for your agent:
+The package includes a [skill file](https://agentskills.io) that teaches agents all available commands and when to use them. All three major coding agents support skills natively:
 
 <details open>
 <summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
 
-Claude Code uses [skills](https://docs.anthropic.com/en/docs/claude-code/skills) - markdown files that Claude loads automatically when relevant.
+Claude Code [skills](https://docs.anthropic.com/en/docs/claude-code/skills) are markdown files with YAML frontmatter. Claude loads them automatically when relevant.
+
+**Install as a personal skill** (available across all your projects):
 
 ```bash
+SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
 mkdir -p ~/.claude/skills/clickup
-cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.claude/skills/clickup/SKILL.md
+cp "$SKILL/SKILL.md" ~/.claude/skills/clickup/SKILL.md
 ```
 
-The skill is available across all your projects. Claude will use it automatically when you mention ClickUp tasks.
-
-</details>
-
-<details>
-<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_CLI-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex CLI</strong></summary>
-
-Codex CLI reads `AGENTS.md` files from your repo. Append the skill:
+**Or install as a project skill** (available to everyone on the project):
 
 ```bash
-cat $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md >> AGENTS.md
+SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
+mkdir -p .claude/skills/clickup
+cp "$SKILL/SKILL.md" .claude/skills/clickup/SKILL.md
 ```
 
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_(ChatGPT)-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex in ChatGPT</strong></summary>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Codex-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex</strong></summary>
 
-Codex in ChatGPT runs tasks in cloud sandboxes preloaded with your repo.
+Codex supports [agent skills](https://developers.openai.com/codex/skills) across CLI, IDE extension, and web. Skills use the same `SKILL.md` format with YAML frontmatter.
 
-1. Add an `AGENTS.md` file to your repo with the contents of `skills/clickup-cli/SKILL.md`
-2. Add a setup script that installs the CLI: `npm install -g @krodak/clickup-cli && cu init`
-3. Set `CU_API_TOKEN` and `CU_TEAM_ID` as environment variables in your Codex environment
+**Install as a user skill** (available across all your projects):
+
+```bash
+SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
+mkdir -p ~/.agents/skills/clickup
+cp "$SKILL/SKILL.md" ~/.agents/skills/clickup/SKILL.md
+```
+
+**Or install as a project skill** (checked into your repo):
+
+```bash
+SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
+mkdir -p .agents/skills/clickup
+cp "$SKILL/SKILL.md" .agents/skills/clickup/SKILL.md
+```
+
+You can also use the built-in installer: `$skill-installer clickup`
 
 </details>
 
@@ -96,8 +108,9 @@ Codex in ChatGPT runs tasks in cloud sandboxes preloaded with your repo.
 <summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
 
 ```bash
+SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
 mkdir -p ~/.config/opencode/skills/clickup
-cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
+cp "$SKILL/SKILL.md" ~/.config/opencode/skills/clickup/SKILL.md
 ```
 
 </details>
@@ -105,7 +118,7 @@ cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.config/open
 <details>
 <summary>&nbsp;<strong>Other agents</strong></summary>
 
-Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt, project instructions, or `AGENTS.md`. It's a standalone document that teaches the agent all available commands.
+The skill file follows the [Agent Skills](https://agentskills.io) open standard. Copy `skills/clickup-cli/SKILL.md` into your agent's skill directory, system prompt, or `AGENTS.md`.
 
 </details>
 
