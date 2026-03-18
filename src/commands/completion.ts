@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag checklist time config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link move field delete tag checklist time config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -120,6 +120,18 @@ function bashCompletion(): string {
     comment-edit)
       COMPREPLY=($(compgen -W "-m --message --resolved --unresolved --json" -- "$cur"))
       ;;
+    comment-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    replies)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    reply)
+      COMPREPLY=($(compgen -W "-m --message --json" -- "$cur"))
+      ;;
+    link)
+      COMPREPLY=($(compgen -W "--remove --json" -- "$cur"))
+      ;;
     config)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "get set path" -- "$cur"))
@@ -176,6 +188,10 @@ _cu() {
     'checklist:Manage checklists on a task'
     'time:Track time on tasks'
     'comment-edit:Edit an existing comment'
+    'comment-delete:Delete a comment'
+    'replies:List threaded replies on a comment'
+    'reply:Reply to a comment'
+    'link:Add or remove a link between two tasks'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -466,6 +482,29 @@ _cu() {
             '--unresolved[Mark comment as unresolved]' \\
             '--json[Force JSON output]'
           ;;
+        comment-delete)
+          _arguments \\
+            '1:comment_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        replies)
+          _arguments \\
+            '1:comment_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        reply)
+          _arguments \\
+            '1:comment_id:' \\
+            '(-m --message)'{-m,--message}'[Reply text]:text:' \\
+            '--json[Force JSON output]'
+          ;;
+        link)
+          _arguments \\
+            '1:task_id:' \\
+            '2:links_to:' \\
+            '--remove[Remove the link instead of adding it]' \\
+            '--json[Force JSON output]'
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -536,6 +575,10 @@ complete -c cu -n __fish_use_subcommand -a tag -d 'Add or remove tags from a tas
 complete -c cu -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
 complete -c cu -n __fish_use_subcommand -a time -d 'Track time on tasks'
 complete -c cu -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
+complete -c cu -n __fish_use_subcommand -a comment-delete -d 'Delete a comment'
+complete -c cu -n __fish_use_subcommand -a replies -d 'List threaded replies on a comment'
+complete -c cu -n __fish_use_subcommand -a reply -d 'Reply to a comment'
+complete -c cu -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
 complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -667,6 +710,16 @@ complete -c cu -n '__fish_seen_subcommand_from start; and __fish_seen_subcommand
 complete -c cu -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
 complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
 complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
+
+complete -c cu -n '__fish_seen_subcommand_from comment-delete' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from replies' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from reply' -s m -l message -d 'Reply text'
+complete -c cu -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'
+complete -c cu -n '__fish_seen_subcommand_from link' -l json -d 'Force JSON output'
 
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'

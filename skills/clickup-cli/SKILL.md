@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, time tracking.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking.'
 ---
 
 # ClickUp CLI (`cu`)
@@ -73,6 +73,10 @@ All commands support `--help` for full flag details.
 | `cu checklist add-item <checklistId> <name> [--json]`                                                                                                                              | Add item to a checklist                     |
 | `cu checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--json]`                                                                    | Edit a checklist item                       |
 | `cu checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                     |
+| `cu comment-delete <commentId> [--json]`                                                                                                                                           | Delete a comment                            |
+| `cu replies <commentId> [--json]`                                                                                                                                                  | List threaded replies on a comment          |
+| `cu reply <commentId> -m text [--json]`                                                                                                                                            | Reply to a comment                          |
+| `cu link <taskId> <linksTo> [--remove] [--json]`                                                                                                                                   | Add or remove link between tasks            |
 | `cu time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task               |
 | `cu time stop [--json]`                                                                                                                                                            | Stop the running timer                      |
 | `cu time status [--json]`                                                                                                                                                          | Show currently running timer                |
@@ -83,40 +87,43 @@ All commands support `--help` for full flag details.
 
 ## Quick Reference
 
-| Topic                   | Detail                                                                                                 |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| Task IDs                | Stable alphanumeric strings (e.g. `abc123def`)                                                         |
-| `--type`                | Filter by task type: `task` (regular), or custom type name/ID (e.g. `initiative`, `Bug`)               |
-| `--list` on create      | Optional when `--parent` is given (auto-detected)                                                      |
-| `--status`              | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                |
-| `--priority`            | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                             |
-| `--due-date`            | `YYYY-MM-DD` format                                                                                    |
-| `--assignee`            | User ID or `me` (on `cu create`, `cu update`, `cu assign`)                                             |
-| `--tags`                | Comma-separated (e.g. `--tags "bug,frontend"`)                                                         |
-| `--time-estimate`       | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                       |
-| `--custom-item-id`      | Custom task type ID for `cu create` (e.g. `1` for initiative)                                          |
-| `--on` / `--blocks`     | Task dependency direction (used with `cu depend`)                                                      |
-| `--to` / `--remove`     | List ID to add/remove task (used with `cu move`)                                                       |
-| `cu field --set`        | Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email   |
-| `cu field`              | Field names resolved case-insensitively; errors list available fields/options                          |
-| `cu delete`             | DESTRUCTIVE. Requires `--confirm` in non-interactive mode. Cannot be undone                            |
-| `cu tag --add/--remove` | Comma-separated tag names (e.g. `--add "bug,frontend"`)                                                |
-| `--space`               | Partial name match or exact ID                                                                         |
-| `--name`                | Partial match, case-insensitive                                                                        |
-| `--include-closed`      | Include closed/done tasks (on `tasks`, `assigned`, `subtasks`, `sprint`, `search`, `inbox`, `overdue`) |
-| `cu assign --to me`     | Shorthand for your own user ID                                                                         |
-| `cu search`             | Matches all query words against task name, case-insensitive                                            |
-| `cu sprint`             | Auto-detects active sprint via view API and date range parsing                                         |
-| `cu summary`            | Categories: completed (done/complete/closed within N hours), in progress, overdue                      |
-| `cu overdue`            | Excludes closed tasks, sorted most overdue first                                                       |
-| `cu open`               | Tries task ID first, falls back to name search                                                         |
-| `cu checklist`          | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                  |
-| `cu time`               | Track time: start/stop timer, log entries, list history. Duration format: "2h", "30m", "1h30m"         |
-| `cu comment-edit`       | Edit comment text and resolution status                                                                |
-| `cu task`               | Shows custom fields and checklists in detail view                                                      |
-| `cu lists`              | Discovers list IDs needed for `--list` and `cu create -l`                                              |
-| Errors                  | stderr with exit code 1                                                                                |
-| Parsing                 | Strict - excess/unknown arguments rejected                                                             |
+| Topic                     | Detail                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Task IDs                  | Stable alphanumeric strings (e.g. `abc123def`)                                                         |
+| `--type`                  | Filter by task type: `task` (regular), or custom type name/ID (e.g. `initiative`, `Bug`)               |
+| `--list` on create        | Optional when `--parent` is given (auto-detected)                                                      |
+| `--status`                | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                |
+| `--priority`              | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                             |
+| `--due-date`              | `YYYY-MM-DD` format                                                                                    |
+| `--assignee`              | User ID or `me` (on `cu create`, `cu update`, `cu assign`)                                             |
+| `--tags`                  | Comma-separated (e.g. `--tags "bug,frontend"`)                                                         |
+| `--time-estimate`         | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                       |
+| `--custom-item-id`        | Custom task type ID for `cu create` (e.g. `1` for initiative)                                          |
+| `--on` / `--blocks`       | Task dependency direction (used with `cu depend`)                                                      |
+| `--to` / `--remove`       | List ID to add/remove task (used with `cu move`)                                                       |
+| `cu field --set`          | Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email   |
+| `cu field`                | Field names resolved case-insensitively; errors list available fields/options                          |
+| `cu delete`               | DESTRUCTIVE. Requires `--confirm` in non-interactive mode. Cannot be undone                            |
+| `cu tag --add/--remove`   | Comma-separated tag names (e.g. `--add "bug,frontend"`)                                                |
+| `--space`                 | Partial name match or exact ID                                                                         |
+| `--name`                  | Partial match, case-insensitive                                                                        |
+| `--include-closed`        | Include closed/done tasks (on `tasks`, `assigned`, `subtasks`, `sprint`, `search`, `inbox`, `overdue`) |
+| `cu assign --to me`       | Shorthand for your own user ID                                                                         |
+| `cu search`               | Matches all query words against task name, case-insensitive                                            |
+| `cu sprint`               | Auto-detects active sprint via view API and date range parsing                                         |
+| `cu summary`              | Categories: completed (done/complete/closed within N hours), in progress, overdue                      |
+| `cu overdue`              | Excludes closed tasks, sorted most overdue first                                                       |
+| `cu open`                 | Tries task ID first, falls back to name search                                                         |
+| `cu checklist`            | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                  |
+| `cu time`                 | Track time: start/stop timer, log entries, list history. Duration format: "2h", "30m", "1h30m"         |
+| `cu comment-edit`         | Edit comment text and resolution status                                                                |
+| `cu comment-delete`       | Delete a comment                                                                                       |
+| `cu replies` / `cu reply` | View and post threaded comment replies                                                                 |
+| `cu link`                 | Link/unlink tasks (different from dependencies)                                                        |
+| `cu task`                 | Shows custom fields and checklists in detail view                                                      |
+| `cu lists`                | Discovers list IDs needed for `--list` and `cu create -l`                                              |
+| Errors                    | stderr with exit code 1                                                                                |
+| Parsing                   | Strict - excess/unknown arguments rejected                                                             |
 
 ## Agent Workflow Examples
 
@@ -170,6 +177,11 @@ cu checklist create abc123def "QA Steps"              # add checklist
 cu checklist add-item <clId> "Run unit tests"         # add item
 cu checklist edit-item <clId> <itemId> --resolved     # check off item
 cu comment-edit <commentId> -m "Updated findings"     # edit a comment
+cu comment-delete <commentId>               # delete a comment
+cu replies <commentId>                      # view threaded replies
+cu reply <commentId> -m "Agreed, fixing"    # reply to a comment
+cu link abc123 def456                       # link two tasks
+cu link abc123 def456 --remove              # unlink two tasks
 cu time start abc123def -d "Working on feature"  # start timer
 cu time status                                    # check running timer
 cu time stop                                      # stop timer

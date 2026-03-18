@@ -4,46 +4,50 @@ All commands support `--help` for full flag details. When piped (no TTY), comman
 
 ## Quick Reference
 
-| Command                       | Description                           |
-| ----------------------------- | ------------------------------------- |
-| `cu init`                     | First-time setup wizard               |
-| **Read**                      |                                       |
-| `cu tasks`                    | List tasks assigned to me             |
-| `cu sprint`                   | My tasks in the active sprint         |
-| `cu sprints`                  | List all sprints across folders       |
-| `cu assigned`                 | My tasks grouped by pipeline stage    |
-| `cu inbox`                    | Recently updated tasks assigned to me |
-| `cu task <id>`                | Get task details                      |
-| `cu subtasks <id>`            | List subtasks of a task               |
-| `cu comments <id>`            | List comments on a task               |
-| `cu activity <id>`            | Task details + comment history        |
-| `cu lists <spaceId>`          | List all lists in a space             |
-| `cu spaces`                   | List spaces in workspace              |
-| `cu open <query>`             | Open a task in the browser            |
-| `cu search <query>`           | Search my tasks by name               |
-| `cu summary`                  | Daily standup helper                  |
-| `cu overdue`                  | Tasks past their due date             |
-| `cu auth`                     | Check authentication status           |
-| **Write**                     |                                       |
-| `cu update <id>`              | Update a task                         |
-| `cu create`                   | Create a new task                     |
-| `cu delete <id>`              | Delete a task                         |
-| `cu field <id>`               | Set or remove custom field values     |
-| `cu comment <id>`             | Post a comment on a task              |
-| `cu comment-edit <commentId>` | Edit an existing comment              |
-| `cu assign <id>`              | Assign or unassign users              |
-| `cu depend <id>`              | Add or remove task dependencies       |
-| `cu move <id>`                | Add or remove a task from a list      |
-| `cu tag <id>`                 | Add or remove tags on a task          |
-| `cu checklist`                | Manage checklists on tasks            |
-| `cu time start <taskId>`      | Start tracking time on a task         |
-| `cu time stop`                | Stop the running timer                |
-| `cu time status`              | Show the currently running timer      |
-| `cu time log <taskId> <dur>`  | Log a manual time entry               |
-| `cu time list`                | List recent time entries              |
-| **Configuration**             |                                       |
-| `cu config`                   | Manage CLI configuration              |
-| `cu completion <shell>`       | Output shell completion script        |
+| Command                         | Description                           |
+| ------------------------------- | ------------------------------------- |
+| `cu init`                       | First-time setup wizard               |
+| **Read**                        |                                       |
+| `cu tasks`                      | List tasks assigned to me             |
+| `cu sprint`                     | My tasks in the active sprint         |
+| `cu sprints`                    | List all sprints across folders       |
+| `cu assigned`                   | My tasks grouped by pipeline stage    |
+| `cu inbox`                      | Recently updated tasks assigned to me |
+| `cu task <id>`                  | Get task details                      |
+| `cu subtasks <id>`              | List subtasks of a task               |
+| `cu comments <id>`              | List comments on a task               |
+| `cu activity <id>`              | Task details + comment history        |
+| `cu lists <spaceId>`            | List all lists in a space             |
+| `cu spaces`                     | List spaces in workspace              |
+| `cu open <query>`               | Open a task in the browser            |
+| `cu search <query>`             | Search my tasks by name               |
+| `cu summary`                    | Daily standup helper                  |
+| `cu overdue`                    | Tasks past their due date             |
+| `cu auth`                       | Check authentication status           |
+| **Write**                       |                                       |
+| `cu update <id>`                | Update a task                         |
+| `cu create`                     | Create a new task                     |
+| `cu delete <id>`                | Delete a task                         |
+| `cu field <id>`                 | Set or remove custom field values     |
+| `cu comment <id>`               | Post a comment on a task              |
+| `cu comment-edit <commentId>`   | Edit an existing comment              |
+| `cu comment-delete <commentId>` | Delete a comment                      |
+| `cu replies <commentId>`        | List threaded replies on a comment    |
+| `cu reply <commentId>`          | Reply to a comment                    |
+| `cu link <taskId> <linksTo>`    | Add or remove a link between tasks    |
+| `cu assign <id>`                | Assign or unassign users              |
+| `cu depend <id>`                | Add or remove task dependencies       |
+| `cu move <id>`                  | Add or remove a task from a list      |
+| `cu tag <id>`                   | Add or remove tags on a task          |
+| `cu checklist`                  | Manage checklists on tasks            |
+| `cu time start <taskId>`        | Start tracking time on a task         |
+| `cu time stop`                  | Stop the running timer                |
+| `cu time status`                | Show the currently running timer      |
+| `cu time log <taskId> <dur>`    | Log a manual time entry               |
+| `cu time list`                  | List recent time entries              |
+| **Configuration**               |                                       |
+| `cu config`                     | Manage CLI configuration              |
+| `cu completion <shell>`         | Output shell completion script        |
 
 ---
 
@@ -381,6 +385,38 @@ cu comment-edit <commentId> -m "Updated" --json
 | `--unresolved`  | no       | Mark comment as unresolved |
 | `--json`        | no       | Force JSON output          |
 
+### `cu comment-delete <commentId>`
+
+Delete a comment.
+
+```bash
+cu comment-delete 12345
+cu comment-delete 12345 --json
+```
+
+### `cu replies <commentId>`
+
+List threaded replies on a comment.
+
+```bash
+cu replies 12345
+cu replies 12345 --json
+```
+
+### `cu reply <commentId>`
+
+Reply to a comment.
+
+```bash
+cu reply 12345 -m "Agreed, will fix"
+cu reply 12345 -m "Done" --json
+```
+
+| Flag            | Required | Description       |
+| --------------- | -------- | ----------------- |
+| `-m, --message` | yes      | Reply text        |
+| `--json`        | no       | Force JSON output |
+
 ### `cu assign <id>`
 
 Assign or unassign users from a task. Supports `me` as shorthand for your user ID.
@@ -417,6 +453,21 @@ cu depend abc123 --on def456 --json
 | `--blocks <taskId>` | Task that this task blocks                  |
 | `--remove`          | Remove the dependency instead of adding it  |
 | `--json`            | Force JSON output                           |
+
+### `cu link <taskId> <linksTo>`
+
+Add or remove a link between two tasks. Links are different from dependencies - they indicate a relationship without implying order.
+
+```bash
+cu link abc123 def456
+cu link abc123 def456 --remove
+cu link abc123 def456 --json
+```
+
+| Flag       | Required | Description                       |
+| ---------- | -------- | --------------------------------- |
+| `--remove` | no       | Remove the link instead of adding |
+| `--json`   | no       | Force JSON output                 |
 
 ### `cu move <id>`
 

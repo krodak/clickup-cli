@@ -114,7 +114,7 @@ interface View {
   type: string
 }
 
-interface Comment {
+export interface Comment {
   id: string
   comment_text: string
   user: { username: string }
@@ -420,6 +420,30 @@ export class ClickUpClient {
       method: 'PUT',
       body: JSON.stringify(body),
     })
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await this.request<Record<string, never>>(`/comment/${commentId}`, { method: 'DELETE' })
+  }
+
+  async getThreadedComments(commentId: string): Promise<Comment[]> {
+    const data = await this.request<{ comments: Comment[] }>(`/comment/${commentId}/reply`)
+    return data.comments ?? []
+  }
+
+  async createThreadedComment(commentId: string, text: string): Promise<void> {
+    await this.request<Record<string, never>>(`/comment/${commentId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ comment_text: text }),
+    })
+  }
+
+  async addTaskLink(taskId: string, linksTo: string): Promise<void> {
+    await this.request<{ task: unknown }>(`/task/${taskId}/link/${linksTo}`, { method: 'POST' })
+  }
+
+  async deleteTaskLink(taskId: string, linksTo: string): Promise<void> {
+    await this.request<{ task: unknown }>(`/task/${taskId}/link/${linksTo}`, { method: 'DELETE' })
   }
 
   async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {

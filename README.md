@@ -149,7 +149,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | -------------------- | ------------------------- | ------------------ |
 | Add dependency       | `cu depend <id>`          | :white_check_mark: |
 | Remove dependency    | `cu depend <id> --remove` | :white_check_mark: |
-| Add/remove task link |                           | :construction:     |
+| Add/remove task link | `cu link <id> <linksTo>`  | :white_check_mark: |
 
 ### Multi-list
 
@@ -171,14 +171,14 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Comments
 
-| Feature                  | Command                  | Status             |
-| ------------------------ | ------------------------ | ------------------ |
-| List comments            | `cu comments <id>`       | :white_check_mark: |
-| Post comment             | `cu comment <id>`        | :white_check_mark: |
-| Edit comment             | `cu comment-edit <id>`   | :white_check_mark: |
-| Task + comments combined | `cu activity <id>`       | :white_check_mark: |
-| Delete comment           | `cu comment-delete <id>` | :construction:     |
-| Threaded replies         |                          | :construction:     |
+| Feature                  | Command                             | Status             |
+| ------------------------ | ----------------------------------- | ------------------ |
+| List comments            | `cu comments <id>`                  | :white_check_mark: |
+| Post comment             | `cu comment <id>`                   | :white_check_mark: |
+| Edit comment             | `cu comment-edit <id>`              | :white_check_mark: |
+| Task + comments combined | `cu activity <id>`                  | :white_check_mark: |
+| Delete comment           | `cu comment-delete <id>`            | :white_check_mark: |
+| Threaded replies         | `cu replies <id>` / `cu reply <id>` | :white_check_mark: |
 
 ### Checklists
 

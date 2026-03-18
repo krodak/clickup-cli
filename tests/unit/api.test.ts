@@ -589,6 +589,104 @@ describe('time tracking API methods', () => {
   })
 })
 
+describe('deleteComment', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends DELETE to /comment/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteComment('c1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.clickup.com/api/v2/comment/c1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('threaded comments', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getThreadedComments fetches replies for a comment', async () => {
+    const comments = [{ id: 'r1', comment_text: 'reply', user: { username: 'u1' }, date: '123' }]
+    mockFetch.mockReturnValue(mockResponse({ comments }))
+    const result = await client.getThreadedComments('c1')
+    expect(result).toEqual(comments)
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/comment/c1/reply')
+  })
+
+  it('getThreadedComments returns empty array when no comments', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getThreadedComments('c1')
+    expect(result).toEqual([])
+  })
+
+  it('createThreadedComment sends POST to /comment/{id}/reply', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.createThreadedComment('c1', 'my reply')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/comment/c1/reply'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ comment_text: 'my reply' }),
+      }),
+    )
+  })
+})
+
+describe('task links', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('addTaskLink sends POST to /task/{id}/link/{linksTo}', async () => {
+    mockFetch.mockReturnValue(mockResponse({ task: {} }))
+    await client.addTaskLink('t1', 't2')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/link/t2'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('deleteTaskLink sends DELETE to /task/{id}/link/{linksTo}', async () => {
+    mockFetch.mockReturnValue(mockResponse({ task: {} }))
+    await client.deleteTaskLink('t1', 't2')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/task/t1/link/t2'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

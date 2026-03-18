@@ -57,6 +57,9 @@ import {
   formatChecklists,
 } from './commands/checklist.js'
 import { editComment } from './commands/comment-edit.js'
+import { deleteComment } from './commands/comment-delete.js'
+import { getReplies, createReply, formatReplies } from './commands/replies.js'
+import { manageTaskLink } from './commands/link.js'
 import {
   startTimer,
   stopTimer,
@@ -348,6 +351,55 @@ program
   )
 
 program
+  .command('comment-delete <commentId>')
+  .description('Delete a comment')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (commentId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteComment(config, commentId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, commentId }, null, 2))
+      } else {
+        console.log(`Deleted comment ${commentId}`)
+      }
+    }),
+  )
+
+program
+  .command('replies <commentId>')
+  .description('List threaded replies on a comment')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (commentId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const replies = await getReplies(config, commentId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(replies, null, 2))
+      } else {
+        console.log(formatReplies(replies))
+      }
+    }),
+  )
+
+program
+  .command('reply <commentId>')
+  .description('Reply to a comment')
+  .requiredOption('-m, --message <text>', 'Reply text')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (commentId: string, opts: { message: string; json?: boolean }) => {
+      const config = loadConfig()
+      await createReply(config, commentId, opts.message)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, commentId }, null, 2))
+      } else {
+        console.log(`Replied to comment ${commentId}`)
+      }
+    }),
+  )
+
+program
   .command('activity <taskId>')
   .description('Show task details and comments combined')
   .option('--json', 'Force JSON output even in terminal')
@@ -516,6 +568,31 @@ program
         console.log(message)
       }
     }),
+  )
+
+program
+  .command('link <taskId> <linksTo>')
+  .description('Add or remove a link between two tasks')
+  .option('--remove', 'Remove the link instead of adding it')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (taskId: string, linksTo: string, opts: { remove?: boolean; json?: boolean }) => {
+        const config = loadConfig()
+        const result = await manageTaskLink(config, taskId, linksTo, opts.remove ?? false)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(
+            JSON.stringify(
+              { success: true, taskId, linksTo, action: opts.remove ? 'removed' : 'added' },
+              null,
+              2,
+            ),
+          )
+        } else {
+          console.log(result)
+        }
+      },
+    ),
   )
 
 program
