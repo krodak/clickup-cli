@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag checklist config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comments activity lists spaces inbox assigned open search summary overdue assign depend move field delete tag checklist time config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -112,6 +112,11 @@ function bashCompletion(): string {
         COMPREPLY=($(compgen -W "view create delete add-item edit-item delete-item" -- "$cur"))
       fi
       ;;
+    time)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "start stop status log list" -- "$cur"))
+      fi
+      ;;
     comment-edit)
       COMPREPLY=($(compgen -W "-m --message --resolved --unresolved --json" -- "$cur"))
       ;;
@@ -169,6 +174,7 @@ _cu() {
     'delete:Delete a task'
     'tag:Add or remove tags from a task'
     'checklist:Manage checklists on a task'
+    'time:Track time on tasks'
     'comment-edit:Edit an existing comment'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
@@ -405,6 +411,53 @@ _cu() {
               ;;
           esac
           ;;
+        time)
+          local -a time_cmds
+          time_cmds=(
+            'start:Start tracking time on a task'
+            'stop:Stop the running timer'
+            'status:Show the currently running timer'
+            'log:Log a manual time entry'
+            'list:List recent time entries'
+          )
+          _arguments -C \\
+            '1:time command:->time_cmd' \\
+            '*::time_arg:->time_args'
+          case $state in
+            time_cmd)
+              _describe 'time command' time_cmds
+              ;;
+            time_args)
+              case $words[1] in
+                start)
+                  _arguments \\
+                    '1:task_id:' \\
+                    '(-d --description)'{-d,--description}'[Description]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                stop)
+                  _arguments '--json[Force JSON output]'
+                  ;;
+                status)
+                  _arguments '--json[Force JSON output]'
+                  ;;
+                log)
+                  _arguments \\
+                    '1:task_id:' \\
+                    '2:duration:' \\
+                    '(-d --description)'{-d,--description}'[Description]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                list)
+                  _arguments \\
+                    '--days[Number of days to look back]:days:' \\
+                    '--task[Filter by task ID]:task_id:' \\
+                    '--json[Force JSON output]'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
         comment-edit)
           _arguments \\
             '1:comment_id:' \\
@@ -481,6 +534,7 @@ complete -c cu -n __fish_use_subcommand -a field -d 'Set or remove a custom fiel
 complete -c cu -n __fish_use_subcommand -a delete -d 'Delete a task'
 complete -c cu -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
 complete -c cu -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
+complete -c cu -n __fish_use_subcommand -a time -d 'Track time on tasks'
 complete -c cu -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
 complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
@@ -602,6 +656,17 @@ complete -c cu -n '__fish_seen_subcommand_from edit-item' -l name -d 'New item n
 complete -c cu -n '__fish_seen_subcommand_from edit-item' -l resolved -d 'Mark item as resolved'
 complete -c cu -n '__fish_seen_subcommand_from edit-item' -l unresolved -d 'Mark item as unresolved'
 complete -c cu -n '__fish_seen_subcommand_from edit-item' -l assignee -d 'Assign user by ID'
+
+complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a start -d 'Start tracking time on a task'
+complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a stop -d 'Stop the running timer'
+complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a status -d 'Show the currently running timer'
+complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a log -d 'Log a manual time entry'
+complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a list -d 'List recent time entries'
+complete -c cu -n '__fish_seen_subcommand_from start stop status log list; and __fish_seen_subcommand_from time' -l json -d 'Force JSON output'
+complete -c cu -n '__fish_seen_subcommand_from start; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
+complete -c cu -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
+complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
+complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
 
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'

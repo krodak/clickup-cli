@@ -483,6 +483,112 @@ describe('checklist API methods', () => {
   })
 })
 
+describe('time tracking API methods', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('startTimeEntry sends POST to /team/{teamId}/time_entries/start', async () => {
+    const entry = { id: 'te1', duration: -1 }
+    mockFetch.mockReturnValue(mockResponse({ data: entry }))
+    const result = await client.startTimeEntry('team1', 'task1', 'working')
+    expect(result).toEqual(entry)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/time_entries/start'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('stopTimeEntry sends POST to /team/{teamId}/time_entries/stop', async () => {
+    const entry = { id: 'te1', duration: 3600000 }
+    mockFetch.mockReturnValue(mockResponse({ data: entry }))
+    const result = await client.stopTimeEntry('team1')
+    expect(result).toEqual(entry)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/time_entries/stop'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('getRunningTimeEntry sends GET to /team/{teamId}/time_entries/current', async () => {
+    const entry = { id: 'te1', duration: -1 }
+    mockFetch.mockReturnValue(mockResponse({ data: entry }))
+    const result = await client.getRunningTimeEntry('team1')
+    expect(result).toEqual(entry)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team1/time_entries/current')
+  })
+
+  it('getRunningTimeEntry returns null when no timer running', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: null }))
+    const result = await client.getRunningTimeEntry('team1')
+    expect(result).toBeNull()
+  })
+
+  it('createTimeEntry sends POST to /team/{teamId}/time_entries', async () => {
+    const entry = { id: 'te1', duration: 3600000 }
+    mockFetch.mockReturnValue(mockResponse({ data: entry }))
+    const result = await client.createTimeEntry('team1', 'task1', 3600000, {
+      description: 'review',
+    })
+    expect(result).toEqual(entry)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/time_entries'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.tid).toBe('task1')
+    expect(body.duration).toBe(3600000)
+    expect(body.description).toBe('review')
+  })
+
+  it('getTimeEntries sends GET to /team/{teamId}/time_entries with date params', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: [{ id: 'te1' }] }))
+    const result = await client.getTimeEntries('team1', {
+      startDate: 1000,
+      endDate: 2000,
+    })
+    expect(result).toEqual([{ id: 'te1' }])
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team1/time_entries')
+    expect(url).toContain('start_date=1000')
+    expect(url).toContain('end_date=2000')
+  })
+
+  it('getTimeEntries filters by taskId client-side', async () => {
+    mockFetch.mockReturnValue(
+      mockResponse({
+        data: [
+          { id: 'te1', task: { id: 't1' } },
+          { id: 'te2', task: { id: 't2' } },
+        ],
+      }),
+    )
+    const result = await client.getTimeEntries('team1', { taskId: 't1' })
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('te1')
+  })
+
+  it('deleteTimeEntry sends DELETE to /team/{teamId}/time_entries/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteTimeEntry('team1', 'te1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/time_entries/te1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, time tracking.'
 ---
 
 # ClickUp CLI (`cu`)
@@ -73,6 +73,11 @@ All commands support `--help` for full flag details.
 | `cu checklist add-item <checklistId> <name> [--json]`                                                                                                                              | Add item to a checklist                     |
 | `cu checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--json]`                                                                    | Edit a checklist item                       |
 | `cu checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                     |
+| `cu time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task               |
+| `cu time stop [--json]`                                                                                                                                                            | Stop the running timer                      |
+| `cu time status [--json]`                                                                                                                                                          | Show currently running timer                |
+| `cu time log <taskId> <duration> [-d desc] [--json]`                                                                                                                               | Log manual time entry (e.g. "2h", "30m")    |
+| `cu time list [--days n] [--task id] [--json]`                                                                                                                                     | List recent time entries                    |
 | `cu config get <key>` / `cu config set <key> <value>` / `cu config path`                                                                                                           | Manage CLI config                           |
 | `cu completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)           |
 
@@ -106,6 +111,7 @@ All commands support `--help` for full flag details.
 | `cu overdue`            | Excludes closed tasks, sorted most overdue first                                                       |
 | `cu open`               | Tries task ID first, falls back to name search                                                         |
 | `cu checklist`          | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                  |
+| `cu time`               | Track time: start/stop timer, log entries, list history. Duration format: "2h", "30m", "1h30m"         |
 | `cu comment-edit`       | Edit comment text and resolution status                                                                |
 | `cu task`               | Shows custom fields and checklists in detail view                                                      |
 | `cu lists`              | Discovers list IDs needed for `--list` and `cu create -l`                                              |
@@ -164,6 +170,11 @@ cu checklist create abc123def "QA Steps"              # add checklist
 cu checklist add-item <clId> "Run unit tests"         # add item
 cu checklist edit-item <clId> <itemId> --resolved     # check off item
 cu comment-edit <commentId> -m "Updated findings"     # edit a comment
+cu time start abc123def -d "Working on feature"  # start timer
+cu time status                                    # check running timer
+cu time stop                                      # stop timer
+cu time log abc123def 2h -d "Code review"         # log manual entry
+cu time list --days 7                             # recent entries
 cu delete abc123def --confirm          # irreversible!
 ```
 

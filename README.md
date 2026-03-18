@@ -116,7 +116,7 @@ Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt or project in
 
 ## Commands
 
-31 commands total. [Full reference with examples and flags](docs/commands.md).
+36 commands total. [Full reference with examples and flags](docs/commands.md).
 
 ### Tasks
 
@@ -194,12 +194,13 @@ Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt or project in
 
 ### Time Tracking
 
-| Command                 | Description                                   |
-| ----------------------- | --------------------------------------------- |
-| _`cu timer start <id>`_ | _Start tracking time on a task - coming soon_ |
-| _`cu timer stop`_       | _Stop the active timer - coming soon_         |
-| _`cu time log <id>`_    | _Log a manual time entry - coming soon_       |
-| _`cu time list <id>`_   | _View time entries for a task - coming soon_  |
+| Command                       | Description                                     |
+| ----------------------------- | ----------------------------------------------- |
+| `cu time start <id>`          | Start tracking time on a task                   |
+| `cu time stop`                | Stop the running timer                          |
+| `cu time status`              | Show the currently running timer                |
+| `cu time log <id> <duration>` | Log a manual time entry (e.g. "2h", "30m")      |
+| `cu time list`                | List recent time entries (default: last 7 days) |
 
 ### Setup
 

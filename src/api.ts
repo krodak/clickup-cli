@@ -158,6 +158,20 @@ export interface CustomFieldDefinition {
   required?: boolean
 }
 
+export interface TimeEntry {
+  id: string
+  task?: { id: string; name: string; status: { status: string; color: string } }
+  wid: string
+  user: { id: number; username: string }
+  start: string
+  end?: string
+  duration: number
+  description: string
+  tags: Array<{ name: string }>
+  billable: boolean
+  at: number
+}
+
 interface ClientConfig {
   apiToken: string
 }
@@ -450,5 +464,76 @@ export class ClickUpClient {
       `/checklist/${checklistId}/checklist_item/${checklistItemId}`,
       { method: 'DELETE' },
     )
+  }
+
+  async startTimeEntry(teamId: string, taskId: string, description?: string): Promise<TimeEntry> {
+    const body: Record<string, unknown> = {
+      tid: taskId,
+      start: Date.now(),
+      duration: -1,
+    }
+    if (description) body.description = description
+    const data = await this.request<{ data: TimeEntry }>(`/team/${teamId}/time_entries/start`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.data
+  }
+
+  async stopTimeEntry(teamId: string): Promise<TimeEntry> {
+    const data = await this.request<{ data: TimeEntry }>(`/team/${teamId}/time_entries/stop`, {
+      method: 'POST',
+    })
+    return data.data
+  }
+
+  async getRunningTimeEntry(teamId: string): Promise<TimeEntry | null> {
+    const data = await this.request<{ data: TimeEntry | null }>(
+      `/team/${teamId}/time_entries/current`,
+    )
+    return data.data ?? null
+  }
+
+  async createTimeEntry(
+    teamId: string,
+    taskId: string,
+    duration: number,
+    opts?: { description?: string; start?: number },
+  ): Promise<TimeEntry> {
+    const start = opts?.start ?? Date.now() - duration
+    const body: Record<string, unknown> = {
+      tid: taskId,
+      start,
+      duration,
+    }
+    if (opts?.description) body.description = opts.description
+    const data = await this.request<{ data: TimeEntry }>(`/team/${teamId}/time_entries`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.data
+  }
+
+  async getTimeEntries(
+    teamId: string,
+    opts?: { startDate?: number; endDate?: number; taskId?: string },
+  ): Promise<TimeEntry[]> {
+    const params = new URLSearchParams()
+    if (opts?.startDate != null) params.set('start_date', String(opts.startDate))
+    if (opts?.endDate != null) params.set('end_date', String(opts.endDate))
+    const query = params.toString()
+    const url = `/team/${teamId}/time_entries${query ? `?${query}` : ''}`
+    const data = await this.request<{ data: TimeEntry[] }>(url)
+    const entries = data.data ?? []
+    if (opts?.taskId) {
+      return entries.filter(e => e.task?.id === opts.taskId)
+    }
+    return entries
+  }
+
+  async deleteTimeEntry(teamId: string, timeEntryId: string): Promise<void> {
+    await this.request<Record<string, never>>(`/team/${teamId}/time_entries/${timeEntryId}`, {
+      method: 'DELETE',
+    })
   }
 }

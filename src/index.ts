@@ -57,6 +57,15 @@ import {
   formatChecklists,
 } from './commands/checklist.js'
 import { editComment } from './commands/comment-edit.js'
+import {
+  startTimer,
+  stopTimer,
+  timerStatus,
+  logTime,
+  listTimeEntries,
+  formatTimeEntries,
+  formatTimeEntry,
+} from './commands/time.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -718,6 +727,101 @@ checklistCmd
         console.log(JSON.stringify(result, null, 2))
       } else {
         console.log(`Deleted checklist item ${result.checklistItemId}`)
+      }
+    }),
+  )
+
+const timeCmd = program.command('time').description('Track time on tasks')
+
+timeCmd
+  .command('start <taskId>')
+  .description('Start tracking time on a task')
+  .option('-d, --description <text>', 'Description for the time entry')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { description?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const result = await startTimer(config, taskId, opts.description)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        const taskName = result.task?.name ?? taskId
+        console.log(`Started timer on "${taskName}"`)
+      }
+    }),
+  )
+
+timeCmd
+  .command('stop')
+  .description('Stop the running timer')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await stopTimer(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(formatTimeEntry(result))
+      }
+    }),
+  )
+
+timeCmd
+  .command('status')
+  .description('Show the currently running timer')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await timerStatus(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else if (result) {
+        console.log(formatTimeEntry(result))
+      } else {
+        console.log('No timer running')
+      }
+    }),
+  )
+
+timeCmd
+  .command('log <taskId> <duration>')
+  .description('Log a manual time entry (e.g. "2h", "30m", "1h30m")')
+  .option('-d, --description <text>', 'Description for the time entry')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (taskId: string, duration: string, opts: { description?: string; json?: boolean }) => {
+        const config = loadConfig()
+        const result = await logTime(config, taskId, duration, opts.description)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Logged ${duration} on task ${taskId}`)
+        }
+      },
+    ),
+  )
+
+timeCmd
+  .command('list')
+  .description('List recent time entries (default: last 7 days)')
+  .option('--days <n>', 'Number of days to look back', '7')
+  .option('--task <taskId>', 'Filter by task ID')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { days?: string; task?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const days = opts.days ? Number(opts.days) : 7
+      if (!Number.isFinite(days) || days <= 0) {
+        throw new Error('--days must be a positive number')
+      }
+      const entries = await listTimeEntries(config, { days, taskId: opts.task })
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(entries, null, 2))
+      } else {
+        console.log(formatTimeEntries(entries))
       }
     }),
   )
