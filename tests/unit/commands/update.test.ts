@@ -19,9 +19,9 @@ const mockGetTask = vi.fn().mockResolvedValue({
   url: '',
 })
 
-const mockGetSpaceWithStatuses = vi.fn().mockResolvedValue({
-  id: 's1',
-  name: 'Space',
+const mockGetListWithStatuses = vi.fn().mockResolvedValue({
+  id: 'l1',
+  name: 'L1',
   statuses: [
     { status: 'open', color: '#000' },
     { status: 'in progress', color: '#111' },
@@ -34,7 +34,7 @@ vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     updateTask: mockUpdateTask,
     getTask: mockGetTask,
-    getSpaceWithStatuses: mockGetSpaceWithStatuses,
+    getListWithStatuses: mockGetListWithStatuses,
   })),
 }))
 
@@ -42,7 +42,7 @@ describe('updateTask', () => {
   beforeEach(() => {
     mockUpdateTask.mockClear()
     mockGetTask.mockClear()
-    mockGetSpaceWithStatuses.mockClear()
+    mockGetListWithStatuses.mockClear()
   })
 
   it('calls API with task id and markdown_content', async () => {
@@ -258,14 +258,14 @@ describe('fuzzy status matching', () => {
   beforeEach(() => {
     mockUpdateTask.mockClear()
     mockGetTask.mockClear()
-    mockGetSpaceWithStatuses.mockClear()
+    mockGetListWithStatuses.mockClear()
   })
 
   it('resolves fuzzy status before sending update', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { status: 'prog' })
     expect(mockGetTask).toHaveBeenCalledWith('t1')
-    expect(mockGetSpaceWithStatuses).toHaveBeenCalledWith('s1')
+    expect(mockGetListWithStatuses).toHaveBeenCalledWith('l1')
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { status: 'in progress' })
   })
 
@@ -273,21 +273,6 @@ describe('fuzzy status matching', () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { status: 'done' })
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { status: 'done' })
-  })
-
-  it('falls back to raw status when task has no space', async () => {
-    mockGetTask.mockResolvedValueOnce({
-      id: 't1',
-      name: 'Task',
-      status: { status: 'open', color: '' },
-      list: { id: 'l1', name: 'L1' },
-      assignees: [],
-      url: '',
-    })
-    const { updateTask } = await import('../../../src/commands/update.js')
-    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { status: 'prog' })
-    expect(mockGetSpaceWithStatuses).not.toHaveBeenCalled()
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { status: 'prog' })
   })
 
   it('throws when no status matches', async () => {
