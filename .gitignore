@@ -5,4 +5,4 @@ dist/
 .env.test
 DECISIONS.md
 PROGRESS.md
-docs/
+docs/plans/
