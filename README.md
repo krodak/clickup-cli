@@ -8,12 +8,12 @@
 [![CI](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml)
 
 ```bash
-npm install -g @krodak/clickup-cli && cu init
+npm install -g @krodak/clickup-cli && cu init   # or: brew tap krodak/tap && brew install clickup-cli
 ```
 
 ## Talk to your agent
 
-Install `cu`, install the skill file, and your agent works with ClickUp. No API knowledge needed.
+Install the CLI, add the skill file to your agent, and it works with ClickUp. No API knowledge needed.
 
 > **"Read task abc123, do the work, then mark it in review and leave a comment with the commit hash."**
 
@@ -27,21 +27,37 @@ Install `cu`, install the skill file, and your agent works with ClickUp. No API 
 
 The agent reads the skill file, picks the right `cu` commands, and handles everything. You don't need to learn the CLI - the agent does.
 
-## Setup
+## Install
 
 You need Node 22+ and a ClickUp personal API token (`pk_...` from [ClickUp Settings > Apps](https://app.clickup.com/settings/apps)).
 
 <details open>
-<summary>&nbsp;<img src="https://cdn.simpleicons.org/openai/999999" height="16" align="center">&nbsp;<strong>OpenCode</strong></summary>
-
-**1. Install the CLI**
+<summary>&nbsp;<img src="https://img.shields.io/badge/npm-CB3837?logo=npm&logoColor=white" height="18" align="center">&nbsp;<strong>npm</strong></summary>
 
 ```bash
 npm install -g @krodak/clickup-cli
 cu init
 ```
 
-**2. Install the skill**
+</details>
+
+<details>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Homebrew-FBB040?logo=homebrew&logoColor=black" height="18" align="center">&nbsp;<strong>Homebrew</strong></summary>
+
+```bash
+brew tap krodak/tap
+brew install clickup-cli
+cu init
+```
+
+</details>
+
+## Set up your agent
+
+The repo includes a skill file at `skills/clickup-cli/SKILL.md` that teaches agents all available commands and when to use them. Install it for your agent:
+
+<details open>
+<summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPjxwb2x5bGluZSBwb2ludHM9IjE2IDEyIDIwIDEyIDIwIDE2Ii8+PHBhdGggZD0iTTQgMjBWMTBhOCA4IDAgMCAxIDE2IDB2MTAiLz48L3N2Zz4=&logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
 
 ```bash
 mkdir -p ~/.config/opencode/skills/clickup
@@ -51,16 +67,7 @@ cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.config/open
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://cdn.simpleicons.org/anthropic/D97757" height="16" align="center">&nbsp;<strong>Claude Code</strong></summary>
-
-**1. Install the CLI**
-
-```bash
-npm install -g @krodak/clickup-cli
-cu init
-```
-
-**2. Install the skill**
+<summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
 
 ```bash
 mkdir -p ~/.claude/skills/clickup
@@ -72,43 +79,39 @@ Then reference it in your `CLAUDE.md` or project instructions.
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://cdn.simpleicons.org/anthropic/D97757" height="16" align="center">&nbsp;<strong>Claude Desktop</strong></summary>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_CLI-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex CLI</strong></summary>
 
-Claude Desktop doesn't run CLI tools directly. Use it alongside a coding agent (Claude Code, OpenCode) that has `cu` installed, or run `cu` commands manually in your terminal.
-
-**Install the CLI:**
+Codex CLI reads `AGENTS.md` files from your repo. Add the skill content to your project's `AGENTS.md`:
 
 ```bash
-npm install -g @krodak/clickup-cli
-cu init
+cat $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md >> AGENTS.md
+```
+
+Or reference it from your existing `AGENTS.md`:
+
+```markdown
+## ClickUp
+
+See node_modules/@krodak/clickup-cli/skills/clickup-cli/SKILL.md for cu CLI reference.
 ```
 
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://cdn.simpleicons.org/homebrew/FBB040" height="16" align="center">&nbsp;<strong>Homebrew</strong></summary>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_(ChatGPT)-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex in ChatGPT</strong></summary>
 
-```bash
-brew tap krodak/tap
-brew install clickup-cli
-cu init
-```
+Codex in ChatGPT runs tasks in cloud sandboxes preloaded with your repo. To use `cu`:
 
-Then install the skill for your agent (see OpenCode or Claude Code sections above).
+1. Add an `AGENTS.md` file to your repo root with the contents of `skills/clickup-cli/SKILL.md`
+2. Add a setup script that installs the CLI: `npm install -g @krodak/clickup-cli`
+3. Set `CU_API_TOKEN` and `CU_TEAM_ID` as environment variables in your Codex environment
+
+Codex will read the AGENTS.md and use `cu` commands when working with ClickUp tasks.
 
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://cdn.simpleicons.org/openai/999999" height="16" align="center">&nbsp;<strong>Codex / Other agents</strong></summary>
-
-**1. Install the CLI**
-
-```bash
-npm install -g @krodak/clickup-cli
-cu init
-```
-
-**2. Add the skill to your agent**
+<summary>&nbsp;<strong>Other agents</strong></summary>
 
 Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt or project instructions. It's a standalone markdown document that teaches the agent all available commands.
 
