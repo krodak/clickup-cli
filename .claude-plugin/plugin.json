@@ -1,7 +1,7 @@
 {
   "name": "clickup-cli",
-  "description": "Claude Code skills for the cu (ClickUp CLI) tool - manage tasks, sprints, initiatives, and comments",
-  "version": "0.6.1",
+  "description": "ClickUp CLI skills for managing tasks, sprints, comments, checklists, custom fields, tags, and time tracking via the cu command",
+  "version": "0.15.0",
   "author": {
     "name": "Krzysztof Rodak"
   },

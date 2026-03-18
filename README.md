@@ -59,22 +59,20 @@ The package includes a [skill file](https://agentskills.io) that teaches agents 
 <details open>
 <summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
 
-Claude Code [skills](https://docs.anthropic.com/en/docs/claude-code/skills) are markdown files with YAML frontmatter. Claude loads them automatically when relevant.
+**Install as a [plugin](https://docs.anthropic.com/en/docs/claude-code/plugins)** (recommended):
 
-**Install as a personal skill** (available across all your projects):
+```bash
+claude plugin add $(npm root -g)/@krodak/clickup-cli
+```
+
+This registers the skill under the `clickup-cli:` namespace. Claude loads it automatically when you work with ClickUp tasks.
+
+**Or install as a personal skill** (no namespace prefix):
 
 ```bash
 SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
 mkdir -p ~/.claude/skills/clickup
 cp "$SKILL/SKILL.md" ~/.claude/skills/clickup/SKILL.md
-```
-
-**Or install as a project skill** (available to everyone on the project):
-
-```bash
-SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
-mkdir -p .claude/skills/clickup
-cp "$SKILL/SKILL.md" .claude/skills/clickup/SKILL.md
 ```
 
 </details>
