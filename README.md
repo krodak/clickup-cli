@@ -54,10 +54,46 @@ cu init
 
 ## Set up your agent
 
-The repo includes a skill file at `skills/clickup-cli/SKILL.md` that teaches agents all available commands and when to use them. Install it for your agent:
+The package includes a skill file that teaches agents all available commands. Install it for your agent:
 
 <details open>
-<summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPjxwb2x5bGluZSBwb2ludHM9IjE2IDEyIDIwIDEyIDIwIDE2Ii8+PHBhdGggZD0iTTQgMjBWMTBhOCA4IDAgMCAxIDE2IDB2MTAiLz48L3N2Zz4=&logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
+
+Claude Code uses [skills](https://docs.anthropic.com/en/docs/claude-code/skills) - markdown files that Claude loads automatically when relevant.
+
+```bash
+mkdir -p ~/.claude/skills/clickup
+cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.claude/skills/clickup/SKILL.md
+```
+
+The skill is available across all your projects. Claude will use it automatically when you mention ClickUp tasks.
+
+</details>
+
+<details>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_CLI-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex CLI</strong></summary>
+
+Codex CLI reads `AGENTS.md` files from your repo. Append the skill:
+
+```bash
+cat $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md >> AGENTS.md
+```
+
+</details>
+
+<details>
+<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_(ChatGPT)-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex in ChatGPT</strong></summary>
+
+Codex in ChatGPT runs tasks in cloud sandboxes preloaded with your repo.
+
+1. Add an `AGENTS.md` file to your repo with the contents of `skills/clickup-cli/SKILL.md`
+2. Add a setup script that installs the CLI: `npm install -g @krodak/clickup-cli && cu init`
+3. Set `CU_API_TOKEN` and `CU_TEAM_ID` as environment variables in your Codex environment
+
+</details>
+
+<details>
+<summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
 
 ```bash
 mkdir -p ~/.config/opencode/skills/clickup
@@ -67,53 +103,9 @@ cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.config/open
 </details>
 
 <details>
-<summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
-
-```bash
-mkdir -p ~/.claude/skills/clickup
-cp $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md ~/.claude/skills/clickup/SKILL.md
-```
-
-Then reference it in your `CLAUDE.md` or project instructions.
-
-</details>
-
-<details>
-<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_CLI-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex CLI</strong></summary>
-
-Codex CLI reads `AGENTS.md` files from your repo. Add the skill content to your project's `AGENTS.md`:
-
-```bash
-cat $(npm root -g)/@krodak/clickup-cli/skills/clickup-cli/SKILL.md >> AGENTS.md
-```
-
-Or reference it from your existing `AGENTS.md`:
-
-```markdown
-## ClickUp
-
-See node_modules/@krodak/clickup-cli/skills/clickup-cli/SKILL.md for cu CLI reference.
-```
-
-</details>
-
-<details>
-<summary>&nbsp;<img src="https://img.shields.io/badge/Codex_(ChatGPT)-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex in ChatGPT</strong></summary>
-
-Codex in ChatGPT runs tasks in cloud sandboxes preloaded with your repo. To use `cu`:
-
-1. Add an `AGENTS.md` file to your repo root with the contents of `skills/clickup-cli/SKILL.md`
-2. Add a setup script that installs the CLI: `npm install -g @krodak/clickup-cli`
-3. Set `CU_API_TOKEN` and `CU_TEAM_ID` as environment variables in your Codex environment
-
-Codex will read the AGENTS.md and use `cu` commands when working with ClickUp tasks.
-
-</details>
-
-<details>
 <summary>&nbsp;<strong>Other agents</strong></summary>
 
-Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt or project instructions. It's a standalone markdown document that teaches the agent all available commands.
+Copy `skills/clickup-cli/SKILL.md` into your agent's system prompt, project instructions, or `AGENTS.md`. It's a standalone document that teaches the agent all available commands.
 
 </details>
 
