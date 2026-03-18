@@ -122,101 +122,156 @@ The skill file follows the [Agent Skills](https://agentskills.io) open standard.
 
 </details>
 
-## Commands
+## API Coverage
 
-36 commands total. [Full reference with examples and flags](docs/commands.md).
+[Full command reference with examples and flags](docs/commands.md).
+
+Status: :white_check_mark: implemented | :construction: planned | :heavy_minus_sign: not planned
 
 ### Tasks
 
-| Command               | Description                                                 |
-| --------------------- | ----------------------------------------------------------- |
-| `cu tasks`            | List my tasks (filter by status, name, type, list, space)   |
-| `cu task <id>`        | Task details with custom fields and checklists              |
-| `cu subtasks <id>`    | List subtasks of a task                                     |
-| `cu create`           | Create a task or subtask                                    |
-| `cu update <id>`      | Update task fields (status, name, priority, assignee, etc.) |
-| `cu delete <id>`      | Delete a task (requires confirmation)                       |
-| `cu assign <id>`      | Assign/unassign users                                       |
-| `cu depend <id>`      | Add/remove task dependencies                                |
-| `cu move <id>`        | Add/remove task from lists                                  |
-| `cu open <query>`     | Open task in browser by ID or name                          |
-| `cu search <query>`   | Search my tasks by name                                     |
-| _`cu duplicate <id>`_ | _Copy a task - coming soon_                                 |
-| _`cu bulk`_           | _Bulk task operations - coming soon_                        |
+| Feature              | Command                | Status             |
+| -------------------- | ---------------------- | ------------------ |
+| List my tasks        | `cu tasks`             | :white_check_mark: |
+| Get task details     | `cu task <id>`         | :white_check_mark: |
+| Create task          | `cu create`            | :white_check_mark: |
+| Update task          | `cu update <id>`       | :white_check_mark: |
+| Delete task          | `cu delete <id>`       | :white_check_mark: |
+| Search tasks         | `cu search <query>`    | :white_check_mark: |
+| Open in browser      | `cu open <query>`      | :white_check_mark: |
+| List subtasks        | `cu subtasks <id>`     | :white_check_mark: |
+| Assign / unassign    | `cu assign <id>`       | :white_check_mark: |
+| Duplicate task       | `cu duplicate <id>`    | :construction:     |
+| Create from template | `cu create --template` | :construction:     |
+| Bulk operations      | `cu bulk`              | :construction:     |
+
+### Dependencies & Relations
+
+| Feature              | Command                   | Status             |
+| -------------------- | ------------------------- | ------------------ |
+| Add dependency       | `cu depend <id>`          | :white_check_mark: |
+| Remove dependency    | `cu depend <id> --remove` | :white_check_mark: |
+| Add/remove task link |                           | :construction:     |
+
+### Multi-list
+
+| Feature          | Command                 | Status             |
+| ---------------- | ----------------------- | ------------------ |
+| Add task to list | `cu move <id> --add`    | :white_check_mark: |
+| Remove from list | `cu move <id> --remove` | :white_check_mark: |
 
 ### Sprints & Planning
 
-| Command       | Description                                     |
-| ------------- | ----------------------------------------------- |
-| `cu sprint`   | My tasks in the active sprint (auto-detected)   |
-| `cu sprints`  | List all sprints                                |
-| `cu assigned` | All my tasks grouped by status                  |
-| `cu summary`  | Standup helper: completed, in progress, overdue |
-| `cu overdue`  | Tasks past their due date                       |
-| `cu inbox`    | Recently updated tasks                          |
+| Feature                  | Command       | Status             |
+| ------------------------ | ------------- | ------------------ |
+| Active sprint tasks      | `cu sprint`   | :white_check_mark: |
+| List all sprints         | `cu sprints`  | :white_check_mark: |
+| Assigned tasks by status | `cu assigned` | :white_check_mark: |
+| Standup summary          | `cu summary`  | :white_check_mark: |
+| Overdue tasks            | `cu overdue`  | :white_check_mark: |
+| Recently updated         | `cu inbox`    | :white_check_mark: |
 
 ### Comments
 
-| Command                    | Description                      |
-| -------------------------- | -------------------------------- |
-| `cu comment <id>`          | Post a comment on a task         |
-| `cu comments <id>`         | List comments on a task          |
-| `cu comment-edit <id>`     | Edit an existing comment         |
-| `cu activity <id>`         | Task details + comments combined |
-| _`cu comment-delete <id>`_ | _Delete a comment - coming soon_ |
-
-### Custom Fields
-
-| Command                | Description                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `cu field <id>`        | Set/remove custom field values (text, number, dropdown, date, checkbox, url, email) |
-| _`cu fields <listId>`_ | _List available custom fields for a list - coming soon_                             |
+| Feature                  | Command                  | Status             |
+| ------------------------ | ------------------------ | ------------------ |
+| List comments            | `cu comments <id>`       | :white_check_mark: |
+| Post comment             | `cu comment <id>`        | :white_check_mark: |
+| Edit comment             | `cu comment-edit <id>`   | :white_check_mark: |
+| Task + comments combined | `cu activity <id>`       | :white_check_mark: |
+| Delete comment           | `cu comment-delete <id>` | :construction:     |
+| Threaded replies         |                          | :construction:     |
 
 ### Checklists
 
-| Command                                  | Description                                      |
-| ---------------------------------------- | ------------------------------------------------ |
-| `cu checklist view <id>`                 | View all checklists on a task                    |
-| `cu checklist create <id> <name>`        | Create a checklist                               |
-| `cu checklist delete <id>`               | Delete a checklist                               |
-| `cu checklist add-item <id> <name>`      | Add item to a checklist                          |
-| `cu checklist edit-item <id> <itemId>`   | Edit a checklist item (name, resolved, assignee) |
-| `cu checklist delete-item <id> <itemId>` | Delete a checklist item                          |
+| Feature          | Command                                  | Status             |
+| ---------------- | ---------------------------------------- | ------------------ |
+| View checklists  | `cu checklist view <id>`                 | :white_check_mark: |
+| Create checklist | `cu checklist create <id> <name>`        | :white_check_mark: |
+| Delete checklist | `cu checklist delete <id>`               | :white_check_mark: |
+| Add item         | `cu checklist add-item <id> <name>`      | :white_check_mark: |
+| Edit item        | `cu checklist edit-item <id> <itemId>`   | :white_check_mark: |
+| Delete item      | `cu checklist delete-item <id> <itemId>` | :white_check_mark: |
+
+### Custom Fields
+
+| Feature               | Command                  | Status             |
+| --------------------- | ------------------------ | ------------------ |
+| Set field value       | `cu field <id> --set`    | :white_check_mark: |
+| Remove field value    | `cu field <id> --remove` | :white_check_mark: |
+| List available fields | `cu fields <listId>`     | :construction:     |
 
 ### Tags
 
-| Command               | Description                                         |
-| --------------------- | --------------------------------------------------- |
-| `cu tag <id>`         | Add/remove tags on a task                           |
-| _`cu tags <spaceId>`_ | _List/create/delete space-level tags - coming soon_ |
-
-### Workspace
-
-| Command                  | Description                               |
-| ------------------------ | ----------------------------------------- |
-| `cu spaces`              | List workspace spaces                     |
-| `cu lists <spaceId>`     | Lists in a space (including folder lists) |
-| `cu auth`                | Check authentication status               |
-| _`cu folders <spaceId>`_ | _List folders in a space - coming soon_   |
-| _`cu members`_           | _List workspace members - coming soon_    |
+| Feature                 | Command             | Status             |
+| ----------------------- | ------------------- | ------------------ |
+| Add/remove tag on task  | `cu tag <id>`       | :white_check_mark: |
+| List space tags         | `cu tags <spaceId>` | :construction:     |
+| Create/delete space tag |                     | :construction:     |
 
 ### Time Tracking
 
-| Command                       | Description                                     |
-| ----------------------------- | ----------------------------------------------- |
-| `cu time start <id>`          | Start tracking time on a task                   |
-| `cu time stop`                | Stop the running timer                          |
-| `cu time status`              | Show the currently running timer                |
-| `cu time log <id> <duration>` | Log a manual time entry (e.g. "2h", "30m")      |
-| `cu time list`                | List recent time entries (default: last 7 days) |
+| Feature        | Command                       | Status             |
+| -------------- | ----------------------------- | ------------------ |
+| Start timer    | `cu time start <id>`          | :white_check_mark: |
+| Stop timer     | `cu time stop`                | :white_check_mark: |
+| Timer status   | `cu time status`              | :white_check_mark: |
+| Log time entry | `cu time log <id> <duration>` | :white_check_mark: |
+| List entries   | `cu time list`                | :white_check_mark: |
+| Update entry   | `cu time update <id>`         | :construction:     |
+| Delete entry   | `cu time delete <id>`         | :construction:     |
+
+### Workspace
+
+| Feature      | Command                | Status             |
+| ------------ | ---------------------- | ------------------ |
+| List spaces  | `cu spaces`            | :white_check_mark: |
+| List lists   | `cu lists <spaceId>`   | :white_check_mark: |
+| Check auth   | `cu auth`              | :white_check_mark: |
+| List folders | `cu folders <spaceId>` | :construction:     |
+| List members | `cu members`           | :construction:     |
+
+### Goals & Key Results
+
+| Feature            | Command    | Status         |
+| ------------------ | ---------- | -------------- |
+| List goals         | `cu goals` | :construction: |
+| Create/update goal |            | :construction: |
+| Key results CRUD   |            | :construction: |
+
+### Docs
+
+| Feature           | Command           | Status         |
+| ----------------- | ----------------- | -------------- |
+| Search docs       | `cu docs <query>` | :construction: |
+| View page content | `cu doc <id>`     | :construction: |
+
+### Attachments
+
+| Feature          | Command                 | Status         |
+| ---------------- | ----------------------- | -------------- |
+| Upload file      | `cu attach <id> <file>` | :construction: |
+| List attachments |                         | :construction: |
+
+### Not planned
+
+| Feature               | Reason                                    |
+| --------------------- | ----------------------------------------- |
+| Webhooks              | Server-side concept, not relevant for CLI |
+| OAuth flow            | One-time setup, handled by `cu init`      |
+| Guest/ACL management  | Enterprise admin, not daily workflow      |
+| Chat/DM               | Better suited to ClickUp app              |
+| Audit logs            | Enterprise admin                          |
+| User/group management | Admin operations, dangerous via CLI       |
+| View CRUD             | View configuration is a UI concern        |
 
 ### Setup
 
-| Command                 | Description                       |
-| ----------------------- | --------------------------------- |
-| `cu init`               | First-time setup wizard           |
-| `cu config`             | Get/set config values             |
-| `cu completion <shell>` | Shell completions (bash/zsh/fish) |
+| Feature           | Command                 | Status             |
+| ----------------- | ----------------------- | ------------------ |
+| First-time setup  | `cu init`               | :white_check_mark: |
+| Get/set config    | `cu config`             | :white_check_mark: |
+| Shell completions | `cu completion <shell>` | :white_check_mark: |
 
 ## Output Modes
 
