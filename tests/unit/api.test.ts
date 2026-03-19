@@ -47,6 +47,118 @@ describe('isCustomTaskId', () => {
   })
 })
 
+describe('custom task ID URL construction', () => {
+  let clientWithTeam: import('../../src/api.js').ClickUpClient
+  let clientWithoutTeam: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    clientWithTeam = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+    clientWithoutTeam = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('appends custom_task_ids params for custom IDs when teamId is set', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'PROJ-123', name: 'Task' }))
+    await clientWithTeam.getTask('PROJ-123')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/PROJ-123')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('does not append custom_task_ids params for native IDs', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'abc123', name: 'Task' }))
+    await clientWithTeam.getTask('abc123')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/abc123')
+    expect(url).not.toContain('custom_task_ids')
+  })
+
+  it('does not append custom_task_ids params when teamId is not set', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'PROJ-123', name: 'Task' }))
+    await clientWithoutTeam.getTask('PROJ-123')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/PROJ-123')
+    expect(url).not.toContain('custom_task_ids')
+  })
+
+  it('appends custom_task_ids params for updateTask with custom ID', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'DEV-42', name: 'Task' }))
+    await clientWithTeam.updateTask('DEV-42', { status: 'done' })
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/DEV-42')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('appends custom_task_ids params for deleteTask with custom ID', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await clientWithTeam.deleteTask('DEV-42')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/DEV-42')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('appends custom_task_ids params for postComment with custom ID', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c1' }))
+    await clientWithTeam.postComment('DEV-42', 'hello')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/DEV-42/comment')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('correctly handles suffix that already has query params', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'PROJ-1', name: 'Task' }))
+    await clientWithTeam.getTask('PROJ-1')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('include_markdown_description=true')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('appends custom_task_ids params for startTimeEntry with custom ID in body', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'te1' } }))
+    await clientWithTeam.startTimeEntry('team123', 'PROJ-42', 'working')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/time_entries/start')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('does not append custom_task_ids for startTimeEntry with native ID', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'te1' } }))
+    await clientWithTeam.startTimeEntry('team123', 'abc123')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/time_entries/start')
+    expect(url).not.toContain('custom_task_ids')
+  })
+
+  it('appends custom_task_ids params for createTimeEntry with custom ID in body', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'te1' } }))
+    await clientWithTeam.createTimeEntry('team123', 'PROJ-42', 3600000)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/time_entries')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('does not append custom_task_ids for createTimeEntry with native ID', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'te1' } }))
+    await clientWithTeam.createTimeEntry('team123', 'abc123', 3600000)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/time_entries')
+    expect(url).not.toContain('custom_task_ids')
+  })
+})
+
 describe('ClickUpClient', () => {
   let client: import('../../src/api.js').ClickUpClient
 

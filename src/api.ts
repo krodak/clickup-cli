@@ -289,21 +289,21 @@ export class ClickUpClient {
   }
 
   async updateTask(taskId: string, options: UpdateTaskOptions): Promise<Task> {
-    return this.request<Task>(`/task/${taskId}`, {
+    return this.request<Task>(this.taskPath(taskId), {
       method: 'PUT',
       body: JSON.stringify(options),
     })
   }
 
   async postComment(taskId: string, commentText: string): Promise<{ id: string }> {
-    return this.request<{ id: string }>(`/task/${taskId}/comment`, {
+    return this.request<{ id: string }>(this.taskPath(taskId, '/comment'), {
       method: 'POST',
       body: JSON.stringify({ comment_text: commentText }),
     })
   }
 
   async getTaskComments(taskId: string): Promise<Comment[]> {
-    const data = await this.request<{ comments: Comment[] }>(`/task/${taskId}/comment`)
+    const data = await this.request<{ comments: Comment[] }>(this.taskPath(taskId, '/comment'))
     return data.comments ?? []
   }
 
@@ -321,7 +321,7 @@ export class ClickUpClient {
   }
 
   async getTask(taskId: string): Promise<Task> {
-    return this.request<Task>(`/task/${taskId}?include_markdown_description=true`)
+    return this.request<Task>(this.taskPath(taskId, '?include_markdown_description=true'))
   }
 
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {
@@ -394,26 +394,30 @@ export class ClickUpClient {
   }
 
   async setCustomFieldValue(taskId: string, fieldId: string, value: unknown): Promise<void> {
-    await this.request(`/task/${taskId}/field/${fieldId}`, {
+    await this.request(this.taskPath(taskId, `/field/${fieldId}`), {
       method: 'POST',
       body: JSON.stringify({ value }),
     })
   }
 
   async removeCustomFieldValue(taskId: string, fieldId: string): Promise<void> {
-    await this.request(`/task/${taskId}/field/${fieldId}`, { method: 'DELETE' })
+    await this.request(this.taskPath(taskId, `/field/${fieldId}`), { method: 'DELETE' })
   }
 
   async deleteTask(taskId: string): Promise<void> {
-    await this.request(`/task/${taskId}`, { method: 'DELETE' })
+    await this.request(this.taskPath(taskId), { method: 'DELETE' })
   }
 
   async addTagToTask(taskId: string, tagName: string): Promise<void> {
-    await this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: 'POST' })
+    await this.request(this.taskPath(taskId, `/tag/${encodeURIComponent(tagName)}`), {
+      method: 'POST',
+    })
   }
 
   async removeTagFromTask(taskId: string, tagName: string): Promise<void> {
-    await this.request(`/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { method: 'DELETE' })
+    await this.request(this.taskPath(taskId, `/tag/${encodeURIComponent(tagName)}`), {
+      method: 'DELETE',
+    })
   }
 
   async addDependency(
@@ -423,7 +427,7 @@ export class ClickUpClient {
     const body: Record<string, string> = {}
     if (opts.dependsOn) body.depends_on = opts.dependsOn
     if (opts.dependencyOf) body.dependency_of = opts.dependencyOf
-    await this.request(`/task/${taskId}/dependency`, {
+    await this.request(this.taskPath(taskId, '/dependency'), {
       method: 'POST',
       body: JSON.stringify(body),
     })
@@ -436,7 +440,7 @@ export class ClickUpClient {
     const params = new URLSearchParams()
     if (opts.dependsOn) params.set('depends_on', opts.dependsOn)
     if (opts.dependencyOf) params.set('dependency_of', opts.dependencyOf)
-    await this.request(`/task/${taskId}/dependency?${params.toString()}`, {
+    await this.request(this.taskPath(taskId, `/dependency?${params.toString()}`), {
       method: 'DELETE',
     })
   }
@@ -467,11 +471,15 @@ export class ClickUpClient {
   }
 
   async addTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(`/task/${taskId}/link/${linksTo}`, { method: 'POST' })
+    await this.request<{ task: unknown }>(this.taskPath(taskId, `/link/${linksTo}`), {
+      method: 'POST',
+    })
   }
 
   async deleteTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(`/task/${taskId}/link/${linksTo}`, { method: 'DELETE' })
+    await this.request<{ task: unknown }>(this.taskPath(taskId, `/link/${linksTo}`), {
+      method: 'DELETE',
+    })
   }
 
   async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {
@@ -480,7 +488,7 @@ export class ClickUpClient {
   }
 
   async createChecklist(taskId: string, name: string): Promise<Checklist> {
-    const data = await this.request<{ checklist: Checklist }>(`/task/${taskId}/checklist`, {
+    const data = await this.request<{ checklist: Checklist }>(this.taskPath(taskId, '/checklist'), {
       method: 'POST',
       body: JSON.stringify({ name }),
     })
@@ -525,10 +533,15 @@ export class ClickUpClient {
       duration: -1,
     }
     if (description) body.description = description
-    const data = await this.request<{ data: TimeEntry }>(`/team/${teamId}/time_entries/start`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    })
+    const customIdParams =
+      isCustomTaskId(taskId) && this.teamId ? `?custom_task_ids=true&team_id=${this.teamId}` : ''
+    const data = await this.request<{ data: TimeEntry }>(
+      `/team/${teamId}/time_entries/start${customIdParams}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    )
     return data.data
   }
 
@@ -559,10 +572,15 @@ export class ClickUpClient {
       duration,
     }
     if (opts?.description) body.description = opts.description
-    const data = await this.request<{ data: TimeEntry }>(`/team/${teamId}/time_entries`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    })
+    const customIdParams =
+      isCustomTaskId(taskId) && this.teamId ? `?custom_task_ids=true&team_id=${this.teamId}` : ''
+    const data = await this.request<{ data: TimeEntry }>(
+      `/team/${teamId}/time_entries${customIdParams}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+    )
     return data.data
   }
 
@@ -596,7 +614,7 @@ export class ClickUpClient {
     const fileName = basename(filePath)
     const formData = new FormData()
     formData.append('attachment', new Blob([fileBuffer]), fileName)
-    const res = await fetch(`${BASE_URL}/task/${taskId}/attachment`, {
+    const res = await fetch(`${BASE_URL}${this.taskPath(taskId, '/attachment')}`, {
       method: 'POST',
       headers: { Authorization: this.apiToken },
       body: formData,
