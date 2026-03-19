@@ -138,6 +138,13 @@ export function formatTaskDetailMarkdown(task: Task): string {
     }
   }
 
+  if (task.attachments?.length) {
+    lines.push('', '## Attachments', '')
+    for (const att of task.attachments) {
+      lines.push(`- [${att.title}](${att.url})`)
+    }
+  }
+
   return lines.join('\n')
 }
 

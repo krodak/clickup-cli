@@ -246,10 +246,10 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Attachments
 
-| Feature          | Command                 | Status         |
-| ---------------- | ----------------------- | -------------- |
-| Upload file      | `cu attach <id> <file>` | :construction: |
-| List attachments |                         | :construction: |
+| Feature          | Command                   | Status             |
+| ---------------- | ------------------------- | ------------------ |
+| Upload file      | `cu attach <id> <file>`   | :white_check_mark: |
+| List attachments | shown inline in `cu task` | :white_check_mark: |
 
 ### :no_entry_sign: Won't add
 

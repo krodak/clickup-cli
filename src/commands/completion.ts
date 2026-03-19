@@ -11,7 +11,7 @@ function bashCompletion(): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link move field delete tag checklist time config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -132,6 +132,9 @@ function bashCompletion(): string {
     link)
       COMPREPLY=($(compgen -W "--remove --json" -- "$cur"))
       ;;
+    attach)
+      COMPREPLY=($(compgen -f -- "$cur"))
+      ;;
     config)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "get set path" -- "$cur"))
@@ -192,6 +195,7 @@ _cu() {
     'replies:List threaded replies on a comment'
     'reply:Reply to a comment'
     'link:Add or remove a link between two tasks'
+    'attach:Upload a file attachment to a task'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -505,6 +509,12 @@ _cu() {
             '--remove[Remove the link instead of adding it]' \\
             '--json[Force JSON output]'
           ;;
+        attach)
+          _arguments \\
+            '1:task_id:' \\
+            '2:file_path:_files' \\
+            '--json[Force JSON output]'
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -579,6 +589,7 @@ complete -c cu -n __fish_use_subcommand -a comment-delete -d 'Delete a comment'
 complete -c cu -n __fish_use_subcommand -a replies -d 'List threaded replies on a comment'
 complete -c cu -n __fish_use_subcommand -a reply -d 'Reply to a comment'
 complete -c cu -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
+complete -c cu -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
 complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -720,6 +731,9 @@ complete -c cu -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON out
 
 complete -c cu -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'
 complete -c cu -n '__fish_seen_subcommand_from link' -l json -d 'Force JSON output'
+
+complete -c cu -n '__fish_seen_subcommand_from attach' -l json -d 'Force JSON output'
+complete -c cu -n '__fish_seen_subcommand_from attach' -F
 
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
 complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'

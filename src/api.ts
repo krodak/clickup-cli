@@ -35,6 +35,7 @@ export interface Task {
   locations?: Array<{ id: string; name: string }>
   custom_fields?: CustomField[]
   checklists?: Checklist[]
+  attachments?: Attachment[]
 }
 
 export interface TaskFilters {
@@ -170,6 +171,17 @@ export interface TimeEntry {
   tags: Array<{ name: string }>
   billable: boolean
   at: number
+}
+
+export interface Attachment {
+  id: string
+  version: string
+  date: number
+  title: string
+  extension: string
+  thumbnail_small?: string
+  thumbnail_large?: string
+  url: string
 }
 
 interface ClientConfig {
@@ -559,5 +571,37 @@ export class ClickUpClient {
     await this.request<Record<string, never>>(`/team/${teamId}/time_entries/${timeEntryId}`, {
       method: 'DELETE',
     })
+  }
+
+  async createTaskAttachment(taskId: string, filePath: string): Promise<Attachment> {
+    const { readFile } = await import('node:fs/promises')
+    const { basename } = await import('node:path')
+    const fileBuffer = await readFile(filePath)
+    const fileName = basename(filePath)
+    const formData = new FormData()
+    formData.append('attachment', new Blob([fileBuffer]), fileName)
+    const res = await fetch(`${BASE_URL}/task/${taskId}/attachment`, {
+      method: 'POST',
+      headers: { Authorization: this.apiToken },
+      body: formData,
+      signal: AbortSignal.timeout(60_000),
+    })
+    if (!res.ok) {
+      let msg: string
+      try {
+        const data = (await res.json()) as { err?: string }
+        msg = data.err ?? `HTTP ${res.status}`
+      } catch {
+        msg = `HTTP ${res.status}`
+      }
+      throw new Error(`ClickUp API error ${res.status}: ${msg}`)
+    }
+    let data: Attachment
+    try {
+      data = (await res.json()) as Attachment
+    } catch {
+      throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
+    }
+    return data
   }
 }

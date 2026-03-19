@@ -146,6 +146,14 @@ export function formatTaskDetail(task: Task): string {
     }
   }
 
+  if (task.attachments?.length) {
+    lines.push('')
+    lines.push(chalk.bold('Attachments'))
+    for (const att of task.attachments) {
+      lines.push(`  ${att.title} ${chalk.dim(att.url)}`)
+    }
+  }
+
   if (task.text_content?.trim()) {
     lines.push('')
     lines.push(descriptionPreview(task.text_content))

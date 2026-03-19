@@ -60,6 +60,7 @@ import { editComment } from './commands/comment-edit.js'
 import { deleteComment } from './commands/comment-delete.js'
 import { getReplies, createReply, formatReplies } from './commands/replies.js'
 import { manageTaskLink } from './commands/link.js'
+import { attachFile } from './commands/attach.js'
 import {
   startTimer,
   stopTimer,
@@ -593,6 +594,23 @@ program
         }
       },
     ),
+  )
+
+program
+  .command('attach <taskId> <filePath>')
+  .description('Upload a file attachment to a task')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, filePath: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await attachFile(config, taskId, filePath)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Uploaded "${result.title}" to task ${taskId}`)
+        console.log(`  ${result.url}`)
+      }
+    }),
   )
 
 program

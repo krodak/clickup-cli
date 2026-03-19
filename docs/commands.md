@@ -35,6 +35,7 @@ All commands support `--help` for full flag details. When piped (no TTY), comman
 | `cu replies <commentId>`        | List threaded replies on a comment    |
 | `cu reply <commentId>`          | Reply to a comment                    |
 | `cu link <taskId> <linksTo>`    | Add or remove a link between tasks    |
+| `cu attach <taskId> <filePath>` | Upload a file attachment to a task    |
 | `cu assign <id>`                | Assign or unassign users              |
 | `cu depend <id>`                | Add or remove task dependencies       |
 | `cu move <id>`                  | Add or remove a task from a list      |
@@ -468,6 +469,23 @@ cu link abc123 def456 --json
 | ---------- | -------- | --------------------------------- |
 | `--remove` | no       | Remove the link instead of adding |
 | `--json`   | no       | Force JSON output                 |
+
+### `cu attach <taskId> <filePath>`
+
+Upload a file attachment to a task.
+
+```bash
+cu attach abc123 ./screenshot.png
+cu attach abc123 /path/to/report.pdf --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+JSON output includes the attachment ID, title, and URL.
+
+Attachments are also shown inline when viewing task details with `cu task <id>`.
 
 ### `cu move <id>`
 

@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads.'
 ---
 
 # ClickUp CLI (`cu`)
@@ -77,6 +77,7 @@ All commands support `--help` for full flag details.
 | `cu replies <commentId> [--json]`                                                                                                                                                  | List threaded replies on a comment          |
 | `cu reply <commentId> -m text [--json]`                                                                                                                                            | Reply to a comment                          |
 | `cu link <taskId> <linksTo> [--remove] [--json]`                                                                                                                                   | Add or remove link between tasks            |
+| `cu attach <taskId> <filePath> [--json]`                                                                                                                                           | Upload file attachment to a task            |
 | `cu time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task               |
 | `cu time stop [--json]`                                                                                                                                                            | Stop the running timer                      |
 | `cu time status [--json]`                                                                                                                                                          | Show currently running timer                |
@@ -120,7 +121,8 @@ All commands support `--help` for full flag details.
 | `cu comment-delete`       | Delete a comment                                                                                       |
 | `cu replies` / `cu reply` | View and post threaded comment replies                                                                 |
 | `cu link`                 | Link/unlink tasks (different from dependencies)                                                        |
-| `cu task`                 | Shows custom fields and checklists in detail view                                                      |
+| `cu attach`               | Upload files to tasks. Attachments shown in `cu task` detail view                                      |
+| `cu task`                 | Shows custom fields, checklists, and attachments in detail view                                        |
 | `cu lists`                | Discovers list IDs needed for `--list` and `cu create -l`                                              |
 | Errors                    | stderr with exit code 1                                                                                |
 | Parsing                   | Strict - excess/unknown arguments rejected                                                             |
@@ -182,6 +184,7 @@ cu replies <commentId>                      # view threaded replies
 cu reply <commentId> -m "Agreed, fixing"    # reply to a comment
 cu link abc123 def456                       # link two tasks
 cu link abc123 def456 --remove              # unlink two tasks
+cu attach abc123def ./screenshot.png        # upload file to task
 cu time start abc123def -d "Working on feature"  # start timer
 cu time status                                    # check running timer
 cu time stop                                      # stop timer
