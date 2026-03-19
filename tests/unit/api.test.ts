@@ -11,6 +11,42 @@ function mockResponse(data: unknown, ok = true) {
   })
 }
 
+describe('isCustomTaskId', () => {
+  let isCustomTaskId: typeof import('../../src/api.js').isCustomTaskId
+
+  beforeEach(async () => {
+    const api = await import('../../src/api.js')
+    isCustomTaskId = api.isCustomTaskId
+  })
+
+  it('detects PREFIX-NUMBER format as custom', () => {
+    expect(isCustomTaskId('PROJ-123')).toBe(true)
+    expect(isCustomTaskId('DEV-42')).toBe(true)
+    expect(isCustomTaskId('ENG-1085')).toBe(true)
+    expect(isCustomTaskId('A-1')).toBe(true)
+  })
+
+  it('is case-insensitive', () => {
+    expect(isCustomTaskId('proj-123')).toBe(true)
+    expect(isCustomTaskId('Proj-123')).toBe(true)
+  })
+
+  it('rejects native ClickUp IDs', () => {
+    expect(isCustomTaskId('abc123xyz')).toBe(false)
+    expect(isCustomTaskId('86a5bqwxr')).toBe(false)
+    expect(isCustomTaskId('9hz')).toBe(false)
+  })
+
+  it('rejects empty and malformed strings', () => {
+    expect(isCustomTaskId('')).toBe(false)
+    expect(isCustomTaskId('-123')).toBe(false)
+    expect(isCustomTaskId('PROJ-')).toBe(false)
+    expect(isCustomTaskId('PROJ')).toBe(false)
+    expect(isCustomTaskId('123')).toBe(false)
+    expect(isCustomTaskId('PROJ-123-456')).toBe(false)
+  })
+})
+
 describe('ClickUpClient', () => {
   let client: import('../../src/api.js').ClickUpClient
 

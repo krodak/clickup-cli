@@ -186,14 +186,30 @@ export interface Attachment {
 
 interface ClientConfig {
   apiToken: string
+  teamId?: string
+}
+
+export function isCustomTaskId(id: string): boolean {
+  return /^[A-Z]+-\d+$/i.test(id)
 }
 
 export class ClickUpClient {
   private apiToken: string
+  private teamId: string | undefined
   private meCache: { id: number; username: string } | null = null
 
   constructor(config: ClientConfig) {
     this.apiToken = config.apiToken
+    this.teamId = config.teamId
+  }
+
+  private taskPath(taskId: string, suffix = ''): string {
+    const base = `/task/${taskId}${suffix}`
+    if (isCustomTaskId(taskId) && this.teamId) {
+      const sep = base.includes('?') ? '&' : '?'
+      return `${base}${sep}custom_task_ids=true&team_id=${this.teamId}`
+    }
+    return base
   }
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
