@@ -2,6 +2,8 @@
 
 All commands support `--help` for full flag details. When piped (no TTY), commands output Markdown by default. Pass `--json` for JSON output.
 
+All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc123xyz`) and custom task IDs (e.g., `PROJ-123`). Custom task IDs are detected automatically by their `PREFIX-DIGITS` format.
+
 ## Quick Reference
 
 | Command                         | Description                           |
