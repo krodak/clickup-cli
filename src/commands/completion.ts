@@ -1,5 +1,5 @@
-function bashCompletion(): string {
-  return `_cu_completions() {
+function bashCompletion(name: string): string {
+  return `_${name}_completions() {
   local cur prev words cword
 
   if type _init_completion &>/dev/null; then
@@ -152,17 +152,17 @@ function bashCompletion(): string {
       ;;
   esac
 }
-complete -F _cu_completions cu
+complete -F _${name}_completions ${name}
 `
 }
 
-function zshCompletion(): string {
-  return `#compdef cu
+function zshCompletion(name: string): string {
+  return `#compdef ${name}
 
-_cu() {
+_${name}() {
   local -a commands
   commands=(
-    'init:Set up cu for the first time'
+    'init:Set up ${name} for the first time'
     'auth:Validate API token and show current user'
     'tasks:List tasks assigned to me'
     'task:Get task details'
@@ -546,217 +546,217 @@ _cu() {
   esac
 }
 
-_cu
+_${name}
 `
 }
 
-function fishCompletion(): string {
-  return `complete -c cu -f
+function fishCompletion(name: string): string {
+  return `complete -c ${name} -f
 
-complete -c cu -n __fish_use_subcommand -s h -l help -d 'Show help'
-complete -c cu -n __fish_use_subcommand -s V -l version -d 'Show version'
+complete -c ${name} -n __fish_use_subcommand -s h -l help -d 'Show help'
+complete -c ${name} -n __fish_use_subcommand -s V -l version -d 'Show version'
 
-complete -c cu -n __fish_use_subcommand -a init -d 'Set up cu for the first time'
-complete -c cu -n __fish_use_subcommand -a auth -d 'Validate API token and show current user'
-complete -c cu -n __fish_use_subcommand -a tasks -d 'List tasks assigned to me'
-complete -c cu -n __fish_use_subcommand -a task -d 'Get task details'
-complete -c cu -n __fish_use_subcommand -a update -d 'Update a task'
-complete -c cu -n __fish_use_subcommand -a create -d 'Create a new task'
-complete -c cu -n __fish_use_subcommand -a sprint -d 'List my tasks in the current active sprint'
-complete -c cu -n __fish_use_subcommand -a sprints -d 'List all sprints in sprint folders'
-complete -c cu -n __fish_use_subcommand -a subtasks -d 'List subtasks of a task or initiative'
-complete -c cu -n __fish_use_subcommand -a comment -d 'Post a comment on a task'
-complete -c cu -n __fish_use_subcommand -a comments -d 'List comments on a task'
-complete -c cu -n __fish_use_subcommand -a activity -d 'Show task details and comments combined'
-complete -c cu -n __fish_use_subcommand -a lists -d 'List all lists in a space'
-complete -c cu -n __fish_use_subcommand -a spaces -d 'List spaces in your workspace'
-complete -c cu -n __fish_use_subcommand -a inbox -d 'Recently updated tasks grouped by time period'
-complete -c cu -n __fish_use_subcommand -a assigned -d 'Show all tasks assigned to me'
-complete -c cu -n __fish_use_subcommand -a open -d 'Open a task in the browser by ID or name'
-complete -c cu -n __fish_use_subcommand -a search -d 'Search my tasks by name'
-complete -c cu -n __fish_use_subcommand -a summary -d 'Daily standup summary'
-complete -c cu -n __fish_use_subcommand -a overdue -d 'List tasks that are past their due date'
-complete -c cu -n __fish_use_subcommand -a assign -d 'Assign or unassign users from a task'
-complete -c cu -n __fish_use_subcommand -a depend -d 'Add or remove task dependencies'
-complete -c cu -n __fish_use_subcommand -a move -d 'Add or remove a task from a list'
-complete -c cu -n __fish_use_subcommand -a field -d 'Set or remove a custom field value on a task'
-complete -c cu -n __fish_use_subcommand -a delete -d 'Delete a task'
-complete -c cu -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
-complete -c cu -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
-complete -c cu -n __fish_use_subcommand -a time -d 'Track time on tasks'
-complete -c cu -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
-complete -c cu -n __fish_use_subcommand -a comment-delete -d 'Delete a comment'
-complete -c cu -n __fish_use_subcommand -a replies -d 'List threaded replies on a comment'
-complete -c cu -n __fish_use_subcommand -a reply -d 'Reply to a comment'
-complete -c cu -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
-complete -c cu -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
-complete -c cu -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
-complete -c cu -n __fish_use_subcommand -a completion -d 'Output shell completion script'
+complete -c ${name} -n __fish_use_subcommand -a init -d 'Set up ${name} for the first time'
+complete -c ${name} -n __fish_use_subcommand -a auth -d 'Validate API token and show current user'
+complete -c ${name} -n __fish_use_subcommand -a tasks -d 'List tasks assigned to me'
+complete -c ${name} -n __fish_use_subcommand -a task -d 'Get task details'
+complete -c ${name} -n __fish_use_subcommand -a update -d 'Update a task'
+complete -c ${name} -n __fish_use_subcommand -a create -d 'Create a new task'
+complete -c ${name} -n __fish_use_subcommand -a sprint -d 'List my tasks in the current active sprint'
+complete -c ${name} -n __fish_use_subcommand -a sprints -d 'List all sprints in sprint folders'
+complete -c ${name} -n __fish_use_subcommand -a subtasks -d 'List subtasks of a task or initiative'
+complete -c ${name} -n __fish_use_subcommand -a comment -d 'Post a comment on a task'
+complete -c ${name} -n __fish_use_subcommand -a comments -d 'List comments on a task'
+complete -c ${name} -n __fish_use_subcommand -a activity -d 'Show task details and comments combined'
+complete -c ${name} -n __fish_use_subcommand -a lists -d 'List all lists in a space'
+complete -c ${name} -n __fish_use_subcommand -a spaces -d 'List spaces in your workspace'
+complete -c ${name} -n __fish_use_subcommand -a inbox -d 'Recently updated tasks grouped by time period'
+complete -c ${name} -n __fish_use_subcommand -a assigned -d 'Show all tasks assigned to me'
+complete -c ${name} -n __fish_use_subcommand -a open -d 'Open a task in the browser by ID or name'
+complete -c ${name} -n __fish_use_subcommand -a search -d 'Search my tasks by name'
+complete -c ${name} -n __fish_use_subcommand -a summary -d 'Daily standup summary'
+complete -c ${name} -n __fish_use_subcommand -a overdue -d 'List tasks that are past their due date'
+complete -c ${name} -n __fish_use_subcommand -a assign -d 'Assign or unassign users from a task'
+complete -c ${name} -n __fish_use_subcommand -a depend -d 'Add or remove task dependencies'
+complete -c ${name} -n __fish_use_subcommand -a move -d 'Add or remove a task from a list'
+complete -c ${name} -n __fish_use_subcommand -a field -d 'Set or remove a custom field value on a task'
+complete -c ${name} -n __fish_use_subcommand -a delete -d 'Delete a task'
+complete -c ${name} -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
+complete -c ${name} -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
+complete -c ${name} -n __fish_use_subcommand -a time -d 'Track time on tasks'
+complete -c ${name} -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
+complete -c ${name} -n __fish_use_subcommand -a comment-delete -d 'Delete a comment'
+complete -c ${name} -n __fish_use_subcommand -a replies -d 'List threaded replies on a comment'
+complete -c ${name} -n __fish_use_subcommand -a reply -d 'Reply to a comment'
+complete -c ${name} -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
+complete -c ${name} -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
+complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
+complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
-complete -c cu -n '__fish_seen_subcommand_from auth' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from auth' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l status -d 'Filter by status'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l list -d 'Filter by list ID'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l space -d 'Filter by space ID'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l name -d 'Filter by name'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l type -d 'Filter by task type'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l include-closed -d 'Include done/closed tasks'
-complete -c cu -n '__fish_seen_subcommand_from tasks' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l status -d 'Filter by status'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l list -d 'Filter by list ID'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l space -d 'Filter by space ID'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l name -d 'Filter by name'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l type -d 'Filter by task type'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l include-closed -d 'Include done/closed tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from task' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from task' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from update' -s n -l name -d 'New task name'
-complete -c cu -n '__fish_seen_subcommand_from update' -s d -l description -d 'New description'
-complete -c cu -n '__fish_seen_subcommand_from update' -s s -l status -d 'New status'
-complete -c cu -n '__fish_seen_subcommand_from update' -l priority -d 'Priority level' -a 'urgent high normal low'
-complete -c cu -n '__fish_seen_subcommand_from update' -l due-date -d 'Due date'
-complete -c cu -n '__fish_seen_subcommand_from update' -l time-estimate -d 'Time estimate'
-complete -c cu -n '__fish_seen_subcommand_from update' -l assignee -d 'Add assignee'
-complete -c cu -n '__fish_seen_subcommand_from update' -l parent -d 'Set parent task'
-complete -c cu -n '__fish_seen_subcommand_from update' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -s n -l name -d 'New task name'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -s d -l description -d 'New description'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -s s -l status -d 'New status'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l priority -d 'Priority level' -a 'urgent high normal low'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l due-date -d 'Due date'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l time-estimate -d 'Time estimate'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l assignee -d 'Add assignee'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l parent -d 'Set parent task'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from create' -s l -l list -d 'Target list ID'
-complete -c cu -n '__fish_seen_subcommand_from create' -s n -l name -d 'Task name'
-complete -c cu -n '__fish_seen_subcommand_from create' -s d -l description -d 'Task description'
-complete -c cu -n '__fish_seen_subcommand_from create' -s p -l parent -d 'Parent task ID'
-complete -c cu -n '__fish_seen_subcommand_from create' -s s -l status -d 'Initial status'
-complete -c cu -n '__fish_seen_subcommand_from create' -l priority -d 'Priority level' -a 'urgent high normal low'
-complete -c cu -n '__fish_seen_subcommand_from create' -l due-date -d 'Due date'
-complete -c cu -n '__fish_seen_subcommand_from create' -l assignee -d 'Assignee user ID'
-complete -c cu -n '__fish_seen_subcommand_from create' -l tags -d 'Comma-separated tag names'
-complete -c cu -n '__fish_seen_subcommand_from create' -l custom-item-id -d 'Custom task type ID'
-complete -c cu -n '__fish_seen_subcommand_from create' -l time-estimate -d 'Time estimate'
-complete -c cu -n '__fish_seen_subcommand_from create' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -s l -l list -d 'Target list ID'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -s n -l name -d 'Task name'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -s d -l description -d 'Task description'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -s p -l parent -d 'Parent task ID'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -s s -l status -d 'Initial status'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l priority -d 'Priority level' -a 'urgent high normal low'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l due-date -d 'Due date'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l assignee -d 'Assignee user ID'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l tags -d 'Comma-separated tag names'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l custom-item-id -d 'Custom task type ID'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l time-estimate -d 'Time estimate'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from sprint' -l status -d 'Filter by status'
-complete -c cu -n '__fish_seen_subcommand_from sprint' -l space -d 'Narrow sprint search to a space'
-complete -c cu -n '__fish_seen_subcommand_from sprint' -l include-closed -d 'Include done/closed tasks'
-complete -c cu -n '__fish_seen_subcommand_from sprint' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l status -d 'Filter by status'
+complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l space -d 'Narrow sprint search to a space'
+complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l include-closed -d 'Include done/closed tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from sprints' -l space -d 'Filter by space'
-complete -c cu -n '__fish_seen_subcommand_from sprints' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from sprints' -l space -d 'Filter by space'
+complete -c ${name} -n '__fish_seen_subcommand_from sprints' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from subtasks' -l status -d 'Filter by status'
-complete -c cu -n '__fish_seen_subcommand_from subtasks' -l name -d 'Filter by name'
-complete -c cu -n '__fish_seen_subcommand_from subtasks' -l include-closed -d 'Include closed/done subtasks'
-complete -c cu -n '__fish_seen_subcommand_from subtasks' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l status -d 'Filter by status'
+complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l name -d 'Filter by name'
+complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l include-closed -d 'Include closed/done subtasks'
+complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from comment' -s m -l message -d 'Comment text'
-complete -c cu -n '__fish_seen_subcommand_from comment' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from comment' -s m -l message -d 'Comment text'
+complete -c ${name} -n '__fish_seen_subcommand_from comment' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from comments' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from comments' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from activity' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from activity' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from lists' -l name -d 'Filter by name'
-complete -c cu -n '__fish_seen_subcommand_from lists' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from lists' -l name -d 'Filter by name'
+complete -c ${name} -n '__fish_seen_subcommand_from lists' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from spaces' -l name -d 'Filter spaces by name'
-complete -c cu -n '__fish_seen_subcommand_from spaces' -l my -d 'Show only spaces where I have assigned tasks'
-complete -c cu -n '__fish_seen_subcommand_from spaces' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l name -d 'Filter spaces by name'
+complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l my -d 'Show only spaces where I have assigned tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from inbox' -l include-closed -d 'Include done/closed tasks'
-complete -c cu -n '__fish_seen_subcommand_from inbox' -l json -d 'Force JSON output'
-complete -c cu -n '__fish_seen_subcommand_from inbox' -l days -d 'Lookback period in days'
+complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l include-closed -d 'Include done/closed tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l days -d 'Lookback period in days'
 
-complete -c cu -n '__fish_seen_subcommand_from assigned' -l status -d 'Show only tasks with this status'
-complete -c cu -n '__fish_seen_subcommand_from assigned' -l include-closed -d 'Include done/closed tasks'
-complete -c cu -n '__fish_seen_subcommand_from assigned' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l status -d 'Show only tasks with this status'
+complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l include-closed -d 'Include done/closed tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from open' -l json -d 'Output task JSON instead of opening'
+complete -c ${name} -n '__fish_seen_subcommand_from open' -l json -d 'Output task JSON instead of opening'
 
-complete -c cu -n '__fish_seen_subcommand_from search' -l status -d 'Filter by status'
-complete -c cu -n '__fish_seen_subcommand_from search' -l include-closed -d 'Include done/closed tasks in search'
-complete -c cu -n '__fish_seen_subcommand_from search' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from search' -l status -d 'Filter by status'
+complete -c ${name} -n '__fish_seen_subcommand_from search' -l include-closed -d 'Include done/closed tasks in search'
+complete -c ${name} -n '__fish_seen_subcommand_from search' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from summary' -l hours -d 'Completed-tasks lookback in hours'
-complete -c cu -n '__fish_seen_subcommand_from summary' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from summary' -l hours -d 'Completed-tasks lookback in hours'
+complete -c ${name} -n '__fish_seen_subcommand_from summary' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from overdue' -l include-closed -d 'Include done/closed overdue tasks'
-complete -c cu -n '__fish_seen_subcommand_from overdue' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from overdue' -l include-closed -d 'Include done/closed overdue tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from overdue' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from assign' -l to -d 'Add assignee'
-complete -c cu -n '__fish_seen_subcommand_from assign' -l remove -d 'Remove assignee'
-complete -c cu -n '__fish_seen_subcommand_from assign' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from assign' -l to -d 'Add assignee'
+complete -c ${name} -n '__fish_seen_subcommand_from assign' -l remove -d 'Remove assignee'
+complete -c ${name} -n '__fish_seen_subcommand_from assign' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from depend' -l on -d 'Task that this task depends on'
-complete -c cu -n '__fish_seen_subcommand_from depend' -l blocks -d 'Task that this task blocks'
-complete -c cu -n '__fish_seen_subcommand_from depend' -l remove -d 'Remove the dependency'
-complete -c cu -n '__fish_seen_subcommand_from depend' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from depend' -l on -d 'Task that this task depends on'
+complete -c ${name} -n '__fish_seen_subcommand_from depend' -l blocks -d 'Task that this task blocks'
+complete -c ${name} -n '__fish_seen_subcommand_from depend' -l remove -d 'Remove the dependency'
+complete -c ${name} -n '__fish_seen_subcommand_from depend' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from move' -l to -d 'Add task to this list'
-complete -c cu -n '__fish_seen_subcommand_from move' -l remove -d 'Remove task from this list'
-complete -c cu -n '__fish_seen_subcommand_from move' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from move' -l to -d 'Add task to this list'
+complete -c ${name} -n '__fish_seen_subcommand_from move' -l remove -d 'Remove task from this list'
+complete -c ${name} -n '__fish_seen_subcommand_from move' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from field' -l set -d 'Set field name and value'
-complete -c cu -n '__fish_seen_subcommand_from field' -l remove -d 'Remove field value by name'
-complete -c cu -n '__fish_seen_subcommand_from field' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from field' -l set -d 'Set field name and value'
+complete -c ${name} -n '__fish_seen_subcommand_from field' -l remove -d 'Remove field value by name'
+complete -c ${name} -n '__fish_seen_subcommand_from field' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from delete' -l confirm -d 'Skip confirmation prompt'
-complete -c cu -n '__fish_seen_subcommand_from delete' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from delete' -l confirm -d 'Skip confirmation prompt'
+complete -c ${name} -n '__fish_seen_subcommand_from delete' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from tag' -l add -d 'Comma-separated tag names to add'
-complete -c cu -n '__fish_seen_subcommand_from tag' -l remove -d 'Comma-separated tag names to remove'
-complete -c cu -n '__fish_seen_subcommand_from tag' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from tag' -l add -d 'Comma-separated tag names to add'
+complete -c ${name} -n '__fish_seen_subcommand_from tag' -l remove -d 'Comma-separated tag names to remove'
+complete -c ${name} -n '__fish_seen_subcommand_from tag' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a view -d 'View checklists on a task'
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a create -d 'Create a checklist on a task'
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete -d 'Delete a checklist'
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a add-item -d 'Add an item to a checklist'
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a edit-item -d 'Edit a checklist item'
-complete -c cu -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete-item -d 'Delete a checklist item'
-complete -c cu -n '__fish_seen_subcommand_from view create delete add-item edit-item delete-item' -l json -d 'Force JSON output'
-complete -c cu -n '__fish_seen_subcommand_from edit-item' -l name -d 'New item name'
-complete -c cu -n '__fish_seen_subcommand_from edit-item' -l resolved -d 'Mark item as resolved'
-complete -c cu -n '__fish_seen_subcommand_from edit-item' -l unresolved -d 'Mark item as unresolved'
-complete -c cu -n '__fish_seen_subcommand_from edit-item' -l assignee -d 'Assign user by ID'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a view -d 'View checklists on a task'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a create -d 'Create a checklist on a task'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete -d 'Delete a checklist'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a add-item -d 'Add an item to a checklist'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a edit-item -d 'Edit a checklist item'
+complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a delete-item -d 'Delete a checklist item'
+complete -c ${name} -n '__fish_seen_subcommand_from view create delete add-item edit-item delete-item' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l name -d 'New item name'
+complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l resolved -d 'Mark item as resolved'
+complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l unresolved -d 'Mark item as unresolved'
+complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l assignee -d 'Assign user by ID'
 
-complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a start -d 'Start tracking time on a task'
-complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a stop -d 'Stop the running timer'
-complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a status -d 'Show the currently running timer'
-complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a log -d 'Log a manual time entry'
-complete -c cu -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a list -d 'List recent time entries'
-complete -c cu -n '__fish_seen_subcommand_from start stop status log list; and __fish_seen_subcommand_from time' -l json -d 'Force JSON output'
-complete -c cu -n '__fish_seen_subcommand_from start; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
-complete -c cu -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
-complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
-complete -c cu -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a start -d 'Start tracking time on a task'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a stop -d 'Stop the running timer'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a status -d 'Show the currently running timer'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a log -d 'Log a manual time entry'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a list -d 'List recent time entries'
+complete -c ${name} -n '__fish_seen_subcommand_from start stop status log list; and __fish_seen_subcommand_from time' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from start; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
+complete -c ${name} -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
 
-complete -c cu -n '__fish_seen_subcommand_from comment-delete' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from comment-delete' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from replies' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from replies' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from reply' -s m -l message -d 'Reply text'
-complete -c cu -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from reply' -s m -l message -d 'Reply text'
+complete -c ${name} -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'
-complete -c cu -n '__fish_seen_subcommand_from link' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'
+complete -c ${name} -n '__fish_seen_subcommand_from link' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from attach' -l json -d 'Force JSON output'
-complete -c cu -n '__fish_seen_subcommand_from attach' -F
+complete -c ${name} -n '__fish_seen_subcommand_from attach' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from attach' -F
 
-complete -c cu -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
-complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'
-complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l unresolved -d 'Mark comment as unresolved'
-complete -c cu -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
+complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'
+complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l unresolved -d 'Mark comment as unresolved'
+complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Force JSON output'
 
-complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
-complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'
-complete -c cu -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a path -d 'Print config file path'
-complete -c cu -n '__fish_seen_subcommand_from get set' -a 'apiToken teamId' -d 'Config key'
+complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
+complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'
+complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a path -d 'Print config file path'
+complete -c ${name} -n '__fish_seen_subcommand_from get set' -a 'apiToken teamId' -d 'Config key'
 
-complete -c cu -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish' -d 'Shell type'
+complete -c ${name} -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish' -d 'Shell type'
 `
 }
 
-export function generateCompletion(shell: string): string {
+export function generateCompletion(shell: string, name = 'cu'): string {
   switch (shell) {
     case 'bash':
-      return bashCompletion()
+      return bashCompletion(name)
     case 'zsh':
-      return zshCompletion()
+      return zshCompletion(name)
     case 'fish':
-      return fishCompletion()
+      return fishCompletion(name)
     default:
       throw new Error(`Unsupported shell: ${shell}. Supported shells: bash, zsh, fish`)
   }

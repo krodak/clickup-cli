@@ -142,6 +142,35 @@ describe('generateCompletion', () => {
     })
   })
 
+  describe('custom binary name', () => {
+    it('bash uses the provided name for function and registration', () => {
+      const result = generateCompletion('bash', 'cup')
+      expect(result).toContain('_cup_completions()')
+      expect(result).toContain('complete -F _cup_completions cup')
+      expect(result).not.toContain('_cu_completions')
+    })
+
+    it('zsh uses the provided name for compdef and function', () => {
+      const result = generateCompletion('zsh', 'cup')
+      expect(result).toContain('#compdef cup')
+      expect(result).toContain('_cup()')
+      expect(result).not.toContain('#compdef cu\n')
+    })
+
+    it('fish uses the provided name for complete commands', () => {
+      const result = generateCompletion('fish', 'cup')
+      expect(result).toContain('complete -c cup -f')
+      expect(result).toContain('complete -c cup -n __fish_use_subcommand')
+      expect(result).not.toContain('complete -c cu ')
+    })
+
+    it('defaults to cu when name is not provided', () => {
+      const result = generateCompletion('bash')
+      expect(result).toContain('_cu_completions()')
+      expect(result).toContain('complete -F _cu_completions cu')
+    })
+  })
+
   describe('unknown shell', () => {
     it('throws an error for unsupported shell', () => {
       expect(() => generateCompletion('powershell')).toThrow()

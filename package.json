@@ -1,6 +1,6 @@
 {
   "name": "@krodak/clickup-cli",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "ClickUp CLI for AI agents and humans",
   "type": "module",
   "license": "MIT",
@@ -20,7 +20,8 @@
     "initiative"
   ],
   "bin": {
-    "cu": "./dist/index.js"
+    "cu": "./dist/index.js",
+    "cup": "./dist/index.js"
   },
   "files": [
     "dist",

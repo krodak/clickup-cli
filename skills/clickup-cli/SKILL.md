@@ -1,13 +1,17 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cu` / `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads.'
 ---
 
-# ClickUp CLI (`cu`)
+# ClickUp CLI (`cu` / `cup`)
 
 Reference for AI agents using the `cu` CLI tool. Covers task management, sprint tracking, comments, and project workflows.
 
 Keywords: ClickUp, task management, sprint, project management, agile, backlog, subtasks, standup, overdue, search
+
+## Binary Names
+
+Both `cu` and `cup` are available as binary names. They are identical. Use `cup` if `cu` conflicts with the Unix `cu(1)` utility on your system. All examples below use `cu`, but `cup` works the same way.
 
 ## Setup
 

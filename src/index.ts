@@ -1,3 +1,4 @@
+import { basename } from 'path'
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import { ClickUpClient } from './api.js'
@@ -74,6 +75,8 @@ import {
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
 
+const programName = basename(process.argv[1] ?? 'cu')
+
 function wrapAction<T extends unknown[]>(fn: (...args: T) => Promise<void>): (...args: T) => void {
   return (...args: T) => {
     fn(...args).catch((err: unknown) => {
@@ -96,14 +99,14 @@ interface TaskFilterOpts {
 const program = new Command()
 
 program
-  .name('cu')
+  .name(programName)
   .description('ClickUp CLI for AI agents')
   .version(version)
   .allowExcessArguments(false)
 
 program
   .command('init')
-  .description('Set up cu for the first time')
+  .description(`Set up ${programName} for the first time`)
   .action(
     wrapAction(async () => {
       await runInitCommand()
@@ -958,7 +961,7 @@ program
   .description('Output shell completion script (bash, zsh, fish)')
   .action(
     wrapAction(async (shell: string) => {
-      const script = generateCompletion(shell)
+      const script = generateCompletion(shell, programName)
       process.stdout.write(script)
     }),
   )

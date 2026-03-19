@@ -11,6 +11,8 @@
 npm install -g @krodak/clickup-cli && cu init
 ```
 
+Both `cu` and `cup` are installed as binaries. Use `cup` if `cu` conflicts with the Unix [cu(1)](<https://en.wikipedia.org/wiki/Cu_(Unix_utility)>) utility on your system. All examples below use `cu` but `cup` works identically.
+
 ## Talk to your agent
 
 Install the CLI, add the skill file to your agent, and it works with ClickUp. No API knowledge needed.
