@@ -94,7 +94,7 @@ All commands support `--help` for full flag details.
 
 | Topic                     | Detail                                                                                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Task IDs                  | Stable alphanumeric strings (e.g. `abc123def`)                                                         |
+| Task IDs                  | Native (`abc123def`) or custom (`PROJ-123`). Custom IDs auto-detected by `PREFIX-DIGITS` format        |
 | `--type`                  | Filter by task type: `task` (regular), or custom type name/ID (e.g. `initiative`, `Bug`)               |
 | `--list` on create        | Optional when `--parent` is given (auto-detected)                                                      |
 | `--status`                | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                |
@@ -124,6 +124,8 @@ All commands support `--help` for full flag details.
 | `cu comment-edit`         | Edit comment text and resolution status                                                                |
 | `cu comment-delete`       | Delete a comment                                                                                       |
 | `cu replies` / `cu reply` | View and post threaded comment replies                                                                 |
+| Custom task IDs           | Auto-detected by format (`PROJ-123`). Uses `teamId` from config. All commands support them             |
+| `cu link` + custom IDs    | Both IDs must be the same type (both custom or both native). Mixing may not work                       |
 | `cu link`                 | Link/unlink tasks (different from dependencies)                                                        |
 | `cu attach`               | Upload files to tasks. Attachments shown in `cu task` detail view                                      |
 | `cu task`                 | Shows custom fields, checklists, and attachments in detail view                                        |

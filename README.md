@@ -307,6 +307,23 @@ Environment variables override config file values:
 
 When both are set, the config file is not required. Useful for CI/CD and containerized agents.
 
+## Custom Task IDs
+
+ClickUp workspaces can configure custom task IDs with a prefix per space (e.g., `PROJ-123`, `DEV-42`). The CLI detects these automatically - any ID matching the `PREFIX-DIGITS` format (uppercase letters, hyphen, digits) is treated as a custom task ID.
+
+All commands that accept task IDs work with both native IDs and custom IDs:
+
+```bash
+cu task PROJ-123
+cu update DEV-42 --status done
+cu comment PROJ-456 -m "Fixed in latest commit"
+cu subtasks DEV-100
+```
+
+Custom ID resolution uses the `teamId` from your config, which is required (`cu init` sets it up).
+
+**Task links with custom IDs:** The `cu link` command passes both task IDs in a single API request. When both IDs are custom, this works correctly. However, mixing custom and native IDs in a single link command may not work as expected because the ClickUp API applies the `custom_task_ids` flag to all IDs in the request.
+
 ## Why a CLI and not MCP?
 
 A CLI + skill file has fewer moving parts. No server process, no protocol layer. The agent already knows how to run shell commands - the skill file teaches it which ones exist. For tool-use with coding agents, CLI + instructions tends to work better than MCP in practice.
