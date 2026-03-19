@@ -126,7 +126,7 @@ cu inbox --json
 
 ### `cu task <id>`
 
-Get task details including custom fields and checklists. Pretty summary in terminal, JSON when piped.
+Get task details including custom fields, checklists, dependencies, and linked tasks. Pretty summary in terminal, JSON when piped.
 
 ```bash
 cu task abc123
@@ -367,8 +367,15 @@ Post a comment on a task.
 
 ```bash
 cu comment abc123 -m "Addressed in PR #42"
+cu comment abc123 -m "Done" --notify-all
 cu comment abc123 -m "Done" --json
 ```
+
+| Flag            | Required | Description               |
+| --------------- | -------- | ------------------------- |
+| `-m, --message` | yes      | Comment text              |
+| `--notify-all`  | no       | Notify all task assignees |
+| `--json`        | no       | Force JSON output         |
 
 ### `cu comment-edit <commentId>`
 
@@ -415,10 +422,11 @@ cu reply 12345 -m "Agreed, will fix"
 cu reply 12345 -m "Done" --json
 ```
 
-| Flag            | Required | Description       |
-| --------------- | -------- | ----------------- |
-| `-m, --message` | yes      | Reply text        |
-| `--json`        | no       | Force JSON output |
+| Flag            | Required | Description               |
+| --------------- | -------- | ------------------------- |
+| `-m, --message` | yes      | Reply text                |
+| `--notify-all`  | no       | Notify all task assignees |
+| `--json`        | no       | Force JSON output         |
 
 ### `cu assign <id>`
 

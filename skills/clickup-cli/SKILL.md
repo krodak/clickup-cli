@@ -63,7 +63,7 @@ All commands support `--help` for full flag details.
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | `cu update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
 | `cu create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
-| `cu comment <id> -m text [--json]`                                                                                                                                                 | Post comment on task                        |
+| `cu comment <id> -m text [--notify-all] [--json]`                                                                                                                                  | Post comment on task                        |
 | `cu comment-edit <commentId> -m text [--resolved] [--unresolved] [--json]`                                                                                                         | Edit an existing comment                    |
 | `cu assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                                  | Assign/unassign users                       |
 | `cu depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                               | Add/remove task dependencies                |
@@ -79,7 +79,7 @@ All commands support `--help` for full flag details.
 | `cu checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                     |
 | `cu comment-delete <commentId> [--json]`                                                                                                                                           | Delete a comment                            |
 | `cu replies <commentId> [--json]`                                                                                                                                                  | List threaded replies on a comment          |
-| `cu reply <commentId> -m text [--json]`                                                                                                                                            | Reply to a comment                          |
+| `cu reply <commentId> -m text [--notify-all] [--json]`                                                                                                                             | Reply to a comment                          |
 | `cu link <taskId> <linksTo> [--remove] [--json]`                                                                                                                                   | Add or remove link between tasks            |
 | `cu attach <taskId> <filePath> [--json]`                                                                                                                                           | Upload file attachment to a task            |
 | `cu time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task               |
@@ -128,7 +128,7 @@ All commands support `--help` for full flag details.
 | `cu link` + custom IDs    | Both IDs must be the same type (both custom or both native). Mixing may not work                       |
 | `cu link`                 | Link/unlink tasks (different from dependencies)                                                        |
 | `cu attach`               | Upload files to tasks. Attachments shown in `cu task` detail view                                      |
-| `cu task`                 | Shows custom fields, checklists, and attachments in detail view                                        |
+| `cu task`                 | Shows custom fields, checklists, attachments, dependencies, and linked tasks in detail view            |
 | `cu lists`                | Discovers list IDs needed for `--list` and `cu create -l`                                              |
 | Errors                    | stderr with exit code 1                                                                                |
 | Parsing                   | Strict - excess/unknown arguments rejected                                                             |
