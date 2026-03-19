@@ -212,6 +212,13 @@ export class ClickUpClient {
     return base
   }
 
+  private customIdQueryParams(taskId: string): string {
+    if (isCustomTaskId(taskId) && this.teamId) {
+      return `?custom_task_ids=true&team_id=${this.teamId}`
+    }
+    return ''
+  }
+
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const res = await fetch(`${BASE_URL}${path}`, {
       ...options,
@@ -533,10 +540,8 @@ export class ClickUpClient {
       duration: -1,
     }
     if (description) body.description = description
-    const customIdParams =
-      isCustomTaskId(taskId) && this.teamId ? `?custom_task_ids=true&team_id=${this.teamId}` : ''
     const data = await this.request<{ data: TimeEntry }>(
-      `/team/${teamId}/time_entries/start${customIdParams}`,
+      `/team/${teamId}/time_entries/start${this.customIdQueryParams(taskId)}`,
       {
         method: 'POST',
         body: JSON.stringify(body),
@@ -572,10 +577,8 @@ export class ClickUpClient {
       duration,
     }
     if (opts?.description) body.description = opts.description
-    const customIdParams =
-      isCustomTaskId(taskId) && this.teamId ? `?custom_task_ids=true&team_id=${this.teamId}` : ''
     const data = await this.request<{ data: TimeEntry }>(
-      `/team/${teamId}/time_entries${customIdParams}`,
+      `/team/${teamId}/time_entries${this.customIdQueryParams(taskId)}`,
       {
         method: 'POST',
         body: JSON.stringify(body),
