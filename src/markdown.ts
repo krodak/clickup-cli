@@ -145,6 +145,22 @@ export function formatTaskDetailMarkdown(task: Task): string {
     }
   }
 
+  if (task.dependencies?.length) {
+    lines.push('', '## Dependencies', '')
+    for (const dep of task.dependencies) {
+      const direction = dep.depends_on === task.id ? 'blocks' : 'depends on'
+      const otherId = dep.depends_on === task.id ? dep.task_id : dep.depends_on
+      lines.push(`- ${direction} ${otherId}`)
+    }
+  }
+
+  if (task.linked_tasks?.length) {
+    lines.push('', '## Linked Tasks', '')
+    for (const lt of task.linked_tasks) {
+      lines.push(`- ${lt.task_id}`)
+    }
+  }
+
   return lines.join('\n')
 }
 

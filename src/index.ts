@@ -302,17 +302,20 @@ program
   .command('comment <taskId>')
   .description('Post a comment on a task')
   .requiredOption('-m, --message <text>', 'Comment text')
+  .option('--notify-all', 'Notify all assignees')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (taskId: string, opts: { message: string; json?: boolean }) => {
-      const config = loadConfig()
-      const result = await postComment(config, taskId, opts.message)
-      if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify(result, null, 2))
-      } else {
-        console.log(formatCommentConfirmation(result.id))
-      }
-    }),
+    wrapAction(
+      async (taskId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+        const config = loadConfig()
+        const result = await postComment(config, taskId, opts.message, opts.notifyAll)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(formatCommentConfirmation(result.id))
+        }
+      },
+    ),
   )
 
 program
@@ -390,17 +393,20 @@ program
   .command('reply <commentId>')
   .description('Reply to a comment')
   .requiredOption('-m, --message <text>', 'Reply text')
+  .option('--notify-all', 'Notify all assignees')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (commentId: string, opts: { message: string; json?: boolean }) => {
-      const config = loadConfig()
-      await createReply(config, commentId, opts.message)
-      if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify({ success: true, commentId }, null, 2))
-      } else {
-        console.log(`Replied to comment ${commentId}`)
-      }
-    }),
+    wrapAction(
+      async (commentId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+        const config = loadConfig()
+        await createReply(config, commentId, opts.message, opts.notifyAll)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, commentId }, null, 2))
+        } else {
+          console.log(`Replied to comment ${commentId}`)
+        }
+      },
+    ),
   )
 
 program

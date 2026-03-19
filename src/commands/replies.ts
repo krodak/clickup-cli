@@ -8,10 +8,15 @@ export async function getReplies(config: Config, commentId: string): Promise<Com
   return client.getThreadedComments(commentId)
 }
 
-export async function createReply(config: Config, commentId: string, text: string): Promise<void> {
+export async function createReply(
+  config: Config,
+  commentId: string,
+  text: string,
+  notifyAll?: boolean,
+): Promise<void> {
   if (!text.trim()) throw new Error('Reply text cannot be empty')
   const client = new ClickUpClient(config)
-  await client.createThreadedComment(commentId, text)
+  await client.createThreadedComment(commentId, text, notifyAll)
 }
 
 export function formatReplies(replies: Comment[]): string {

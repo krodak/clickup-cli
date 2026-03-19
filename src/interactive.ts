@@ -154,6 +154,24 @@ export function formatTaskDetail(task: Task): string {
     }
   }
 
+  if (task.dependencies?.length) {
+    lines.push('')
+    lines.push(chalk.bold('Dependencies'))
+    for (const dep of task.dependencies) {
+      const direction = dep.depends_on === task.id ? 'blocks' : 'depends on'
+      const otherId = dep.depends_on === task.id ? dep.task_id : dep.depends_on
+      lines.push(`  ${direction} ${chalk.dim(otherId)}`)
+    }
+  }
+
+  if (task.linked_tasks?.length) {
+    lines.push('')
+    lines.push(chalk.bold('Linked Tasks'))
+    for (const lt of task.linked_tasks) {
+      lines.push(`  ${chalk.dim(lt.task_id)}`)
+    }
+  }
+
   if (task.text_content?.trim()) {
     lines.push('')
     lines.push(descriptionPreview(task.text_content))

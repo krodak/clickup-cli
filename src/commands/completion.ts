@@ -54,7 +54,7 @@ function bashCompletion(name: string): string {
       COMPREPLY=($(compgen -W "--status --name --include-closed --json" -- "$cur"))
       ;;
     comment)
-      COMPREPLY=($(compgen -W "-m --message --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "-m --message --notify-all --json" -- "$cur"))
       ;;
     comments)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
@@ -127,7 +127,7 @@ function bashCompletion(name: string): string {
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
     reply)
-      COMPREPLY=($(compgen -W "-m --message --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "-m --message --notify-all --json" -- "$cur"))
       ;;
     link)
       COMPREPLY=($(compgen -W "--remove --json" -- "$cur"))
@@ -279,6 +279,7 @@ _${name}() {
           _arguments \\
             '1:task_id:' \\
             '(-m --message)'{-m,--message}'[Comment text]:text:' \\
+            '--notify-all[Notify all assignees]' \\
             '--json[Force JSON output]'
           ;;
         comments)
@@ -500,6 +501,7 @@ _${name}() {
           _arguments \\
             '1:comment_id:' \\
             '(-m --message)'{-m,--message}'[Reply text]:text:' \\
+            '--notify-all[Notify all assignees]' \\
             '--json[Force JSON output]'
           ;;
         link)
@@ -642,6 +644,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l include-closed 
 complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from comment' -s m -l message -d 'Comment text'
+complete -c ${name} -n '__fish_seen_subcommand_from comment' -l notify-all -d 'Notify all assignees'
 complete -c ${name} -n '__fish_seen_subcommand_from comment' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from comments' -l json -d 'Force JSON output'
@@ -727,6 +730,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from comment-delete' -l json -d '
 complete -c ${name} -n '__fish_seen_subcommand_from replies' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from reply' -s m -l message -d 'Reply text'
+complete -c ${name} -n '__fish_seen_subcommand_from reply' -l notify-all -d 'Notify all assignees'
 complete -c ${name} -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'

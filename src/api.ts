@@ -36,6 +36,8 @@ export interface Task {
   custom_fields?: CustomField[]
   checklists?: Checklist[]
   attachments?: Attachment[]
+  dependencies?: Array<{ task_id: string; depends_on: string; type: number }>
+  linked_tasks?: Array<{ task_id: string; link_id: string; date_created: string }>
 }
 
 export interface TaskFilters {
@@ -302,10 +304,16 @@ export class ClickUpClient {
     })
   }
 
-  async postComment(taskId: string, commentText: string): Promise<{ id: string }> {
+  async postComment(
+    taskId: string,
+    commentText: string,
+    notifyAll?: boolean,
+  ): Promise<{ id: string }> {
+    const body: Record<string, unknown> = { comment_text: commentText }
+    if (notifyAll) body.notify_all = true
     return this.request<{ id: string }>(this.taskPath(taskId, '/comment'), {
       method: 'POST',
-      body: JSON.stringify({ comment_text: commentText }),
+      body: JSON.stringify(body),
     })
   }
 
@@ -470,10 +478,12 @@ export class ClickUpClient {
     return data.comments ?? []
   }
 
-  async createThreadedComment(commentId: string, text: string): Promise<void> {
+  async createThreadedComment(commentId: string, text: string, notifyAll?: boolean): Promise<void> {
+    const body: Record<string, unknown> = { comment_text: text }
+    if (notifyAll) body.notify_all = true
     await this.request<Record<string, never>>(`/comment/${commentId}/reply`, {
       method: 'POST',
-      body: JSON.stringify({ comment_text: text }),
+      body: JSON.stringify(body),
     })
   }
 
