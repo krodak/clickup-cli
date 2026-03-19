@@ -6,14 +6,18 @@ const mockGetMe = vi.fn()
 
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
-vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
-    getTask: mockGetTask,
-    getMyTasks: mockGetMyTasks,
-    getMe: mockGetMe,
-    getCustomTaskTypes: mockGetCustomTaskTypes,
-  })),
-}))
+vi.mock('../../../src/api.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../../src/api.js')>()
+  return {
+    ...actual,
+    ClickUpClient: vi.fn().mockImplementation(() => ({
+      getTask: mockGetTask,
+      getMyTasks: mockGetMyTasks,
+      getMe: mockGetMe,
+      getCustomTaskTypes: mockGetCustomTaskTypes,
+    })),
+  }
+})
 
 const mockOpenUrl = vi.fn()
 vi.mock('../../../src/interactive.js', () => ({
@@ -174,5 +178,15 @@ describe('openTask', () => {
     expect(mockFormatTaskDetailMarkdown).toHaveBeenCalledWith(fakeTask)
     expect(console.log).toHaveBeenCalledWith('# Markdown')
     expect(mockOpenUrl).not.toHaveBeenCalled()
+  })
+
+  it('treats custom task ID format as task ID lookup', async () => {
+    mockIsTTY.mockReturnValue(true)
+    mockGetTask.mockResolvedValue({ ...fakeTask, id: 'PROJ-123' })
+    const { openTask } = await import('../../../src/commands/open.js')
+    const result = await openTask(config, 'PROJ-123')
+    expect(mockGetTask).toHaveBeenCalledWith('PROJ-123')
+    expect(mockGetMyTasks).not.toHaveBeenCalled()
+    expect(result.id).toBe('PROJ-123')
   })
 })

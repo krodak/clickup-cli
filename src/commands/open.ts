@@ -1,4 +1,4 @@
-import { ClickUpClient } from '../api.js'
+import { ClickUpClient, isCustomTaskId } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
 import { fetchMyTasks } from './tasks.js'
@@ -11,7 +11,7 @@ interface OpenOptions {
 }
 
 function looksLikeTaskId(query: string): boolean {
-  return /^[a-z0-9]+$/i.test(query) && query.length <= 12
+  return (/^[a-z0-9]+$/i.test(query) && query.length <= 12) || isCustomTaskId(query)
 }
 
 export async function openTask(
