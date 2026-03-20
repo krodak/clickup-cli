@@ -3,24 +3,7 @@ import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import type { TimeEntry } from '../api.js'
 import { parseTimeEstimate } from './update.js'
-
-export function formatDuration(ms: number): string {
-  const totalMinutes = Math.round(Math.abs(ms) / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`
-  if (hours > 0) return `${hours}h`
-  return `${minutes}m`
-}
-
-function formatTimestamp(ms: string | number): string {
-  return new Date(Number(ms)).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
+import { formatDuration, formatTimestamp } from '../date.js'
 
 export async function startTimer(
   config: Config,
@@ -86,4 +69,19 @@ export function formatTimeEntry(entry: TimeEntry): string {
 export function formatTimeEntries(entries: TimeEntry[]): string {
   if (entries.length === 0) return 'No time entries'
   return entries.map(formatTimeEntry).join('\n')
+}
+
+export function formatTimeEntryMarkdown(entry: TimeEntry): string {
+  const taskName = entry.task?.name ?? 'No task'
+  const taskId = entry.task?.id ?? ''
+  const isRunning = entry.duration < 0
+  const elapsed = isRunning ? Date.now() - Number(entry.start) : entry.duration
+  const durationStr = formatDuration(elapsed)
+  const status = isRunning ? ' (RUNNING)' : ''
+  return `**${taskName}** ${taskId}${status} - ${durationStr}${entry.description ? ` - ${entry.description}` : ''}`
+}
+
+export function formatTimeEntriesMarkdown(entries: TimeEntry[]): string {
+  if (entries.length === 0) return 'No time entries'
+  return entries.map(formatTimeEntryMarkdown).join('\n')
 }

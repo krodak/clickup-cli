@@ -170,24 +170,49 @@ describe('formatTimeEntry', () => {
   })
 })
 
-describe('formatDuration', () => {
-  it('formats hours and minutes', async () => {
-    const { formatDuration } = await import('../../../src/commands/time.js')
-    expect(formatDuration(5400000)).toBe('1h 30m')
+describe('formatTimeEntryMarkdown', () => {
+  it('formats a completed entry as markdown', async () => {
+    const { formatTimeEntryMarkdown } = await import('../../../src/commands/time.js')
+    const output = formatTimeEntryMarkdown(baseEntry)
+    expect(output).toContain('**Test Task**')
+    expect(output).toContain('t1')
+    expect(output).toContain('1h')
+    expect(output).not.toContain('RUNNING')
   })
 
-  it('formats hours only', async () => {
-    const { formatDuration } = await import('../../../src/commands/time.js')
-    expect(formatDuration(7200000)).toBe('2h')
+  it('shows RUNNING for negative duration', async () => {
+    const { formatTimeEntryMarkdown } = await import('../../../src/commands/time.js')
+    const running = { ...baseEntry, duration: -1, start: String(Date.now() - 60000) }
+    const output = formatTimeEntryMarkdown(running)
+    expect(output).toContain('(RUNNING)')
+    expect(output).toContain('**Test Task**')
   })
 
-  it('formats minutes only', async () => {
-    const { formatDuration } = await import('../../../src/commands/time.js')
-    expect(formatDuration(900000)).toBe('15m')
+  it('includes description when present', async () => {
+    const { formatTimeEntryMarkdown } = await import('../../../src/commands/time.js')
+    const entry = { ...baseEntry, description: 'code review' }
+    const output = formatTimeEntryMarkdown(entry)
+    expect(output).toContain('code review')
   })
 
-  it('handles zero', async () => {
-    const { formatDuration } = await import('../../../src/commands/time.js')
-    expect(formatDuration(0)).toBe('0m')
+  it('shows "No task" when task is missing', async () => {
+    const { formatTimeEntryMarkdown } = await import('../../../src/commands/time.js')
+    const entry = { ...baseEntry, task: undefined }
+    const output = formatTimeEntryMarkdown(entry)
+    expect(output).toContain('**No task**')
+  })
+})
+
+describe('formatTimeEntriesMarkdown', () => {
+  it('returns "No time entries" for empty array', async () => {
+    const { formatTimeEntriesMarkdown } = await import('../../../src/commands/time.js')
+    expect(formatTimeEntriesMarkdown([])).toBe('No time entries')
+  })
+
+  it('formats multiple entries', async () => {
+    const { formatTimeEntriesMarkdown } = await import('../../../src/commands/time.js')
+    const entries = [baseEntry, { ...baseEntry, id: 'te2' }]
+    const output = formatTimeEntriesMarkdown(entries)
+    expect(output.split('\n')).toHaveLength(2)
   })
 })

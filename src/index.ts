@@ -56,10 +56,16 @@ import {
   editChecklistItem,
   deleteChecklistItem,
   formatChecklists,
+  formatChecklistsMarkdown,
 } from './commands/checklist.js'
 import { editComment } from './commands/comment-edit.js'
 import { deleteComment } from './commands/comment-delete.js'
-import { getReplies, createReply, formatReplies } from './commands/replies.js'
+import {
+  getReplies,
+  createReply,
+  formatReplies,
+  formatRepliesMarkdown,
+} from './commands/replies.js'
 import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
 import {
@@ -70,6 +76,8 @@ import {
   listTimeEntries,
   formatTimeEntries,
   formatTimeEntry,
+  formatTimeEntryMarkdown,
+  formatTimeEntriesMarkdown,
 } from './commands/time.js'
 
 const require = createRequire(import.meta.url)
@@ -383,8 +391,10 @@ program
       const replies = await getReplies(config, commentId)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(replies, null, 2))
-      } else {
+      } else if (isTTY()) {
         console.log(formatReplies(replies))
+      } else {
+        console.log(formatRepliesMarkdown(replies))
       }
     }),
   )
@@ -726,8 +736,10 @@ checklistCmd
       const checklists = await viewChecklists(config, taskId)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(checklists, null, 2))
-      } else {
+      } else if (isTTY()) {
         console.log(formatChecklists(checklists))
+      } else {
+        console.log(formatChecklistsMarkdown(checklists))
       }
     }),
   )
@@ -865,8 +877,10 @@ timeCmd
       const result = await stopTimer(config)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
-      } else {
+      } else if (isTTY()) {
         console.log(formatTimeEntry(result))
+      } else {
+        console.log(formatTimeEntryMarkdown(result))
       }
     }),
   )
@@ -881,10 +895,12 @@ timeCmd
       const result = await timerStatus(config)
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(result, null, 2))
-      } else if (result) {
+      } else if (!result) {
+        console.log('No timer running')
+      } else if (isTTY()) {
         console.log(formatTimeEntry(result))
       } else {
-        console.log('No timer running')
+        console.log(formatTimeEntryMarkdown(result))
       }
     }),
   )
@@ -924,8 +940,10 @@ timeCmd
       const entries = await listTimeEntries(config, { days, taskId: opts.task })
       if (shouldOutputJson(opts.json ?? false)) {
         console.log(JSON.stringify(entries, null, 2))
-      } else {
+      } else if (isTTY()) {
         console.log(formatTimeEntries(entries))
+      } else {
+        console.log(formatTimeEntriesMarkdown(entries))
       }
     }),
   )

@@ -261,7 +261,7 @@ describe('formatTaskDetailMarkdown', () => {
 
   it('formats time estimate as Xh Ym', () => {
     const result = formatTaskDetailMarkdown(fullTask)
-    expect(result).toContain('**Time Estimate:** 2h 0m')
+    expect(result).toContain('**Time Estimate:** 2h')
   })
 
   it('formats time spent as Xh Ym', () => {

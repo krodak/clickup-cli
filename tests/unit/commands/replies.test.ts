@@ -89,3 +89,33 @@ describe('formatReplies', () => {
     expect(output).toContain('Unknown')
   })
 })
+
+describe('formatRepliesMarkdown', () => {
+  it('returns "No replies" for empty array', async () => {
+    const { formatRepliesMarkdown } = await import('../../../src/commands/replies.js')
+    expect(formatRepliesMarkdown([])).toBe('No replies')
+  })
+
+  it('formats replies as markdown with bold user and separator', async () => {
+    const { formatRepliesMarkdown } = await import('../../../src/commands/replies.js')
+    const replies = [
+      { id: 'r1', comment_text: 'first reply', user: { username: 'alice' }, date: '1700000000000' },
+      { id: 'r2', comment_text: 'second reply', user: { username: 'bob' }, date: '1700001000000' },
+    ]
+    const output = formatRepliesMarkdown(replies)
+    expect(output).toContain('**alice**')
+    expect(output).toContain('first reply')
+    expect(output).toContain('---')
+    expect(output).toContain('**bob**')
+    expect(output).toContain('second reply')
+  })
+
+  it('shows "Unknown" when user is missing', async () => {
+    const { formatRepliesMarkdown } = await import('../../../src/commands/replies.js')
+    const replies = [
+      { id: 'r1', comment_text: 'orphan', user: undefined as never, date: '1700000000000' },
+    ]
+    const output = formatRepliesMarkdown(replies)
+    expect(output).toContain('**Unknown**')
+  })
+})

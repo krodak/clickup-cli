@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
-import type { Checklist } from '../api.js'
+import type { Checklist, ChecklistItem } from '../api.js'
 import type { Config } from '../config.js'
 
 export async function viewChecklists(config: Config, taskId: string): Promise<Checklist[]> {
@@ -71,4 +71,18 @@ export function formatChecklists(checklists: Checklist[]): string {
     }
   }
   return lines.join('\n')
+}
+
+export function formatChecklistsMarkdown(checklists: Checklist[]): string {
+  if (checklists.length === 0) return 'No checklists'
+  return checklists
+    .map(cl => {
+      const resolved = cl.items.filter((i: ChecklistItem) => i.resolved).length
+      const header = `### ${cl.name} (${resolved}/${cl.items.length})`
+      const items = cl.items.map(
+        (item: ChecklistItem) => `- [${item.resolved ? 'x' : ' '}] ${item.name}`,
+      )
+      return [header, '', ...items].join('\n')
+    })
+    .join('\n\n')
 }

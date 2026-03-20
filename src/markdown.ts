@@ -2,7 +2,7 @@ import type { Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 import type { CommentSummary } from './commands/comments.js'
 import type { ListSummary } from './commands/lists.js'
-import { formatDate } from './date.js'
+import { formatDateISO, formatDuration } from './date.js'
 
 export interface MarkdownColumn<T> {
   key: keyof T & string
@@ -74,13 +74,6 @@ export function formatGroupedTasksMarkdown(
   return sections.join('\n\n')
 }
 
-function formatDuration(ms: number): string {
-  const totalMinutes = Math.floor(ms / 60000)
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  return `${hours}h ${minutes}m`
-}
-
 export function formatTaskDetailMarkdown(task: Task): string {
   const lines: string[] = [`# ${task.name}`, '']
 
@@ -98,8 +91,8 @@ export function formatTaskDetailMarkdown(task: Task): string {
     ],
     ['Priority', task.priority?.priority],
     ['Parent', task.parent ?? undefined],
-    ['Start Date', task.start_date ? formatDate(task.start_date) : undefined],
-    ['Due Date', task.due_date ? formatDate(task.due_date) : undefined],
+    ['Start Date', task.start_date ? formatDateISO(task.start_date) : undefined],
+    ['Due Date', task.due_date ? formatDateISO(task.due_date) : undefined],
     [
       'Time Estimate',
       task.time_estimate != null && task.time_estimate > 0
@@ -111,8 +104,8 @@ export function formatTaskDetailMarkdown(task: Task): string {
       task.time_spent != null && task.time_spent > 0 ? formatDuration(task.time_spent) : undefined,
     ],
     ['Tags', task.tags && task.tags.length > 0 ? task.tags.map(t => t.name).join(', ') : undefined],
-    ['Created', task.date_created ? formatDate(task.date_created) : undefined],
-    ['Updated', task.date_updated ? formatDate(task.date_updated) : undefined],
+    ['Created', task.date_created ? formatDateISO(task.date_created) : undefined],
+    ['Updated', task.date_updated ? formatDateISO(task.date_updated) : undefined],
   ]
 
   for (const [label, value] of fields) {

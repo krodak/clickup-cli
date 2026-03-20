@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { Comment } from '../api.js'
 import type { Config } from '../config.js'
+import { formatTimestamp } from '../date.js'
 
 export async function getReplies(config: Config, commentId: string): Promise<Comment[]> {
   const client = new ClickUpClient(config)
@@ -24,8 +25,19 @@ export function formatReplies(replies: Comment[]): string {
   return replies
     .map(r => {
       const user = r.user?.username ?? 'Unknown'
-      const date = new Date(Number(r.date)).toLocaleString()
+      const date = formatTimestamp(Number(r.date))
       return `${chalk.bold(user)} ${chalk.dim(date)}\n  ${r.comment_text}`
     })
     .join('\n\n')
+}
+
+export function formatRepliesMarkdown(replies: Comment[]): string {
+  if (replies.length === 0) return 'No replies'
+  return replies
+    .map(r => {
+      const user = r.user?.username ?? 'Unknown'
+      const date = formatTimestamp(Number(r.date))
+      return `**${user}** (${date})\n\n${r.comment_text}`
+    })
+    .join('\n\n---\n\n')
 }

@@ -3,22 +3,13 @@ import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { isTTY, shouldOutputJson } from '../output.js'
 import { formatCommentsMarkdown } from '../markdown.js'
+import { formatTimestamp } from '../date.js'
 
 export interface CommentSummary {
   id: string
   user: string
   date: string
   text: string
-}
-
-function formatDate(timestamp: string): string {
-  return new Date(Number(timestamp)).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }
 
 export async function fetchComments(config: Config, taskId: string): Promise<CommentSummary[]> {
@@ -51,7 +42,7 @@ export function printComments(comments: CommentSummary[], forceJson: boolean): v
   for (let i = 0; i < comments.length; i++) {
     const c = comments[i]!
     if (i > 0) console.log(separator)
-    console.log(`${chalk.bold(c.user)}  ${chalk.dim(formatDate(c.date))}`)
+    console.log(`${chalk.bold(c.user)}  ${chalk.dim(formatTimestamp(c.date))}`)
     console.log(c.text)
     if (i < comments.length - 1) console.log('')
   }

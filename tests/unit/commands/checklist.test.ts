@@ -176,3 +176,51 @@ describe('formatChecklists', () => {
     expect(output).toContain('i2')
   })
 })
+
+describe('formatChecklistsMarkdown', () => {
+  it('returns "No checklists" for empty array', async () => {
+    const { formatChecklistsMarkdown } = await import('../../../src/commands/checklist.js')
+    expect(formatChecklistsMarkdown([])).toBe('No checklists')
+  })
+
+  it('formats checklists as markdown with checkboxes', async () => {
+    const { formatChecklistsMarkdown } = await import('../../../src/commands/checklist.js')
+    const checklists = [
+      {
+        id: 'cl1',
+        name: 'QA Checks',
+        orderindex: 0,
+        items: [
+          { id: 'i1', name: 'Unit tests', resolved: true, orderindex: 0 },
+          { id: 'i2', name: 'Code review', resolved: false, orderindex: 1 },
+        ],
+      },
+    ]
+    const output = formatChecklistsMarkdown(checklists)
+    expect(output).toContain('### QA Checks (1/2)')
+    expect(output).toContain('- [x] Unit tests')
+    expect(output).toContain('- [ ] Code review')
+  })
+
+  it('formats multiple checklists separated by blank lines', async () => {
+    const { formatChecklistsMarkdown } = await import('../../../src/commands/checklist.js')
+    const checklists = [
+      {
+        id: 'cl1',
+        name: 'First',
+        orderindex: 0,
+        items: [{ id: 'i1', name: 'Step 1', resolved: false, orderindex: 0 }],
+      },
+      {
+        id: 'cl2',
+        name: 'Second',
+        orderindex: 1,
+        items: [{ id: 'i2', name: 'Step 2', resolved: true, orderindex: 0 }],
+      },
+    ]
+    const output = formatChecklistsMarkdown(checklists)
+    expect(output).toContain('### First (0/1)')
+    expect(output).toContain('### Second (1/1)')
+    expect(output).toContain('\n\n')
+  })
+})

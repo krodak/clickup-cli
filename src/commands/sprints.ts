@@ -28,7 +28,7 @@ const SPRINT_COLUMNS: Column<SprintRow>[] = [
   { key: 'dates', label: 'DATES' },
 ]
 
-function formatDate(d: Date): string {
+function formatSprintDate(d: Date): string {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
@@ -102,7 +102,7 @@ export async function listSprints(
 
   const rows: SprintRow[] = allSprints.map(s => {
     const dates = parseSprintDates(s.name)
-    const dateStr = dates ? `${formatDate(dates.start)} - ${formatDate(dates.end)}` : ''
+    const dateStr = dates ? `${formatSprintDate(dates.start)} - ${formatSprintDate(dates.end)}` : ''
     return {
       id: s.id,
       sprint: s.active ? `* ${s.name}` : s.name,

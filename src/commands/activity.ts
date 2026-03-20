@@ -6,20 +6,11 @@ import type { CommentSummary } from './comments.js'
 import { formatTaskDetail } from '../interactive.js'
 import { isTTY, shouldOutputJson } from '../output.js'
 import { formatTaskDetailMarkdown, formatCommentsMarkdown } from '../markdown.js'
+import { formatTimestamp } from '../date.js'
 
 interface ActivityResult {
   task: Task
   comments: CommentSummary[]
-}
-
-function formatDate(timestamp: string): string {
-  return new Date(Number(timestamp)).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }
 
 export async function fetchActivity(config: Config, taskId: string): Promise<ActivityResult> {
@@ -67,7 +58,7 @@ export function printActivity(result: ActivityResult, forceJson: boolean): void 
       console.log('')
       console.log(chalk.dim('-'.repeat(60)))
     }
-    console.log(`${chalk.bold(c.user)}  ${chalk.dim(formatDate(c.date))}`)
+    console.log(`${chalk.bold(c.user)}  ${chalk.dim(formatTimestamp(c.date))}`)
     console.log(c.text)
   }
 }

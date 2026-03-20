@@ -3,6 +3,7 @@ import { checkbox, confirm, Separator } from '@inquirer/prompts'
 import chalk from 'chalk'
 import type { CustomField, Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
+import { formatDate, formatDuration } from './date.js'
 
 export function openUrl(url: string): void {
   switch (process.platform) {
@@ -18,22 +19,6 @@ export function openUrl(url: string): void {
     default:
       process.stderr.write(`Cannot open browser on ${process.platform}. Visit: ${url}\n`)
   }
-}
-
-function formatMs(ms: number): string {
-  const hours = Math.floor(ms / 3600000)
-  const mins = Math.floor((ms % 3600000) / 60000)
-  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`
-  if (hours > 0) return `${hours}h`
-  return `${mins}m`
-}
-
-function formatTimestamp(ts: string): string {
-  return new Date(Number(ts)).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 function descriptionPreview(text: string, maxLines = 3): string {
@@ -105,10 +90,10 @@ export function formatTaskDetail(task: Task): string {
       task.assignees?.length ? task.assignees.map(a => a.username).join(', ') : undefined,
     ],
     ['Priority', task.priority?.priority],
-    ['Start', task.start_date ? formatTimestamp(task.start_date) : undefined],
-    ['Due', task.due_date ? formatTimestamp(task.due_date) : undefined],
-    ['Estimate', task.time_estimate ? formatMs(task.time_estimate) : undefined],
-    ['Tracked', task.time_spent ? formatMs(task.time_spent) : undefined],
+    ['Start', task.start_date ? formatDate(task.start_date) : undefined],
+    ['Due', task.due_date ? formatDate(task.due_date) : undefined],
+    ['Estimate', task.time_estimate ? formatDuration(task.time_estimate) : undefined],
+    ['Tracked', task.time_spent ? formatDuration(task.time_spent) : undefined],
     ['Tags', task.tags?.length ? task.tags.map(t => t.name).join(', ') : undefined],
     ['Parent', task.parent || undefined],
     ['URL', task.url],
