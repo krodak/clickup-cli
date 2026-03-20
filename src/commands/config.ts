@@ -1,7 +1,7 @@
 import { loadRawConfig, writeConfig, getConfigPath } from '../config.js'
 import type { Config } from '../config.js'
 
-const VALID_KEYS: ReadonlySet<string> = new Set(['apiToken', 'teamId'])
+const VALID_KEYS: ReadonlySet<string> = new Set(['apiToken', 'teamId', 'sprintFolderId'])
 
 function assertValidKey(key: string): asserts key is keyof Config {
   if (!VALID_KEYS.has(key)) {

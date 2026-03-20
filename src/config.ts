@@ -5,6 +5,7 @@ import { join } from 'path'
 export interface Config {
   apiToken: string
   teamId: string
+  sprintFolderId?: string
 }
 
 function configDir(): string {
@@ -43,6 +44,7 @@ export function loadConfig(): Config {
 
   let fileToken: string | undefined
   let fileTeamId: string | undefined
+  let fileSprintFolderId: string | undefined
 
   const path = configPath()
   if (fs.existsSync(path)) {
@@ -55,6 +57,7 @@ export function loadConfig(): Config {
     }
     fileToken = parsed.apiToken?.trim()
     fileTeamId = parsed.teamId?.trim()
+    fileSprintFolderId = parsed.sprintFolderId?.trim() || undefined
   }
 
   const apiToken = envToken || fileToken
@@ -70,7 +73,7 @@ export function loadConfig(): Config {
     throw new Error('Config missing required field: teamId.\nSet CU_TEAM_ID or run: cup init')
   }
 
-  return { apiToken, teamId }
+  return { apiToken, teamId, ...(fileSprintFolderId ? { sprintFolderId: fileSprintFolderId } : {}) }
 }
 
 export function loadRawConfig(): Partial<Config> {

@@ -45,7 +45,7 @@ function bashCompletion(name: string): string {
       COMPREPLY=($(compgen -W "-l --list -n --name -d --description -p --parent -s --status --priority --due-date --assignee --tags --custom-item-id --time-estimate --json" -- "$cur"))
       ;;
     sprint)
-      COMPREPLY=($(compgen -W "--status --space --include-closed --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "--status --space --folder --include-closed --json" -- "$cur"))
       ;;
     sprints)
       COMPREPLY=($(compgen -W "--space --json" -- "$cur"))
@@ -142,7 +142,7 @@ function bashCompletion(name: string): string {
         local subcmd="\${words[2]}"
         case "$subcmd" in
           get|set)
-            COMPREPLY=($(compgen -W "apiToken teamId" -- "$cur"))
+            COMPREPLY=($(compgen -W "apiToken teamId sprintFolderId" -- "$cur"))
             ;;
         esac
       fi
@@ -259,6 +259,7 @@ _${name}() {
           _arguments \\
             '--status[Filter by status]:status:(open "in progress" "in review" done closed)' \\
             '--space[Narrow sprint search to a space]:space:' \\
+            '--folder[Sprint folder ID]:folder_id:' \\
             '--include-closed[Include done/closed tasks]' \\
             '--json[Force JSON output]'
           ;;
@@ -534,7 +535,7 @@ _${name}() {
             config_args)
               case $words[1] in
                 get|set)
-                  _arguments '1:key:(apiToken teamId)'
+                  _arguments '1:key:(apiToken teamId sprintFolderId)'
                   ;;
               esac
               ;;
@@ -632,6 +633,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from create' -l json -d 'Force JS
 
 complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l status -d 'Filter by status'
 complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l space -d 'Narrow sprint search to a space'
+complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l folder -d 'Sprint folder ID'
 complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l include-closed -d 'Include done/closed tasks'
 complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l json -d 'Force JSON output'
 
@@ -747,7 +749,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Fo
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a path -d 'Print config file path'
-complete -c ${name} -n '__fish_seen_subcommand_from get set' -a 'apiToken teamId' -d 'Config key'
+complete -c ${name} -n '__fish_seen_subcommand_from get set' -a 'apiToken teamId sprintFolderId' -d 'Config key'
 
 complete -c ${name} -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish' -d 'Shell type'
 `

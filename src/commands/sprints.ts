@@ -1,7 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { List, Space } from '../api.js'
 import type { Config } from '../config.js'
-import { parseSprintDates, findRelatedSpaces } from './sprint.js'
+import { parseSprintDates, findRelatedSpaces, SPRINT_KEYWORDS } from './sprint.js'
 import { formatTable, isTTY, shouldOutputJson } from '../output.js'
 import type { Column } from '../output.js'
 import { formatMarkdownTable } from '../markdown.js'
@@ -76,7 +76,10 @@ export async function listSprints(
   }
 
   const foldersBySpace = await Promise.all(spaces.map(space => client.getFolders(space.id)))
-  const sprintFolders = foldersBySpace.flat().filter(f => f.name.toLowerCase().includes('sprint'))
+  const sprintFolders = foldersBySpace.flat().filter(f => {
+    const lower = f.name.toLowerCase()
+    return SPRINT_KEYWORDS.some(kw => lower.includes(kw))
+  })
 
   const today = new Date()
   const allSprints: SprintInfo[] = []

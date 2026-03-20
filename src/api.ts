@@ -100,6 +100,8 @@ export interface SpaceWithStatuses extends Space {
 export interface List {
   id: string
   name: string
+  start_date?: string | null
+  due_date?: string | null
 }
 
 export interface ListWithStatuses extends List {

@@ -250,6 +250,7 @@ program
   .description('List my tasks in the current active sprint (auto-detected)')
   .option('--status <status>', 'Filter by status')
   .option('--space <nameOrId>', 'Narrow sprint search to a specific space (partial name or ID)')
+  .option('--folder <folderId>', 'Sprint folder ID (overrides config and auto-detection)')
   .option('--include-closed', 'Include done/closed tasks')
   .option('--json', 'Force JSON output even in terminal')
   .action(
@@ -257,6 +258,7 @@ program
       async (opts: {
         status?: string
         space?: string
+        folder?: string
         includeClosed?: boolean
         json?: boolean
       }) => {

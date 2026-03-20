@@ -111,6 +111,36 @@ describe('loadConfig', () => {
     expect(config).not.toHaveProperty('lists')
   })
 
+  it('loads sprintFolderId when present in config file', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1', sprintFolderId: 'folder_123' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.sprintFolderId).toBe('folder_123')
+  })
+
+  it('omits sprintFolderId when not present in config file', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.sprintFolderId).toBeUndefined()
+  })
+
+  it('trims sprintFolderId whitespace', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1', sprintFolderId: '  folder_123  ' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.sprintFolderId).toBe('folder_123')
+  })
+
   it('uses CU_API_TOKEN env var over config file', async () => {
     process.env.CU_API_TOKEN = 'pk_env_token'
     vi.mocked(fs.existsSync).mockReturnValue(true)
@@ -189,6 +219,16 @@ describe('writeConfig', () => {
     expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(call[2]).toEqual({ encoding: 'utf-8', mode: 0o600 })
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
+  })
+
+  it('persists sprintFolderId when present', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
   })
 })
 
