@@ -39,7 +39,7 @@ export function loadConfig(): Config {
 
   const apiToken = envToken || fileToken
   if (!apiToken) {
-    throw new Error('Config missing required field: apiToken.\nSet CU_API_TOKEN or run: cu init')
+    throw new Error('Config missing required field: apiToken.\nSet CU_API_TOKEN or run: cup init')
   }
   if (!apiToken.startsWith('pk_')) {
     throw new Error('Config apiToken must start with pk_. The configured token does not.')
@@ -47,7 +47,7 @@ export function loadConfig(): Config {
 
   const teamId = envTeamId || fileTeamId
   if (!teamId) {
-    throw new Error('Config missing required field: teamId.\nSet CU_TEAM_ID or run: cu init')
+    throw new Error('Config missing required field: teamId.\nSet CU_TEAM_ID or run: cup init')
   }
 
   return { apiToken, teamId }

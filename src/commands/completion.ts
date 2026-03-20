@@ -753,7 +753,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from completion' -a 'bash zsh fis
 `
 }
 
-export function generateCompletion(shell: string, name = 'cu'): string {
+export function generateCompletion(shell: string, name = 'cup'): string {
   switch (shell) {
     case 'bash':
       return bashCompletion(name)

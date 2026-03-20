@@ -75,7 +75,7 @@ import {
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
 
-const programName = basename(process.argv[1] ?? 'cu')
+const programName = basename(process.argv[1] ?? 'cup')
 
 function wrapAction<T extends unknown[]>(fn: (...args: T) => Promise<void>): (...args: T) => void {
   return (...args: T) => {

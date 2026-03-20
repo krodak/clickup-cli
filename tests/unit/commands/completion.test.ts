@@ -58,7 +58,7 @@ describe('generateCompletion', () => {
     it('contains the complete function registration', () => {
       const result = generateCompletion('bash')
       expect(result).toContain('complete -F')
-      expect(result).toContain('cu')
+      expect(result).toContain('cup')
     })
 
     it('handles missing _init_completion with fallback', () => {
@@ -93,7 +93,7 @@ describe('generateCompletion', () => {
 
     it('contains compdef directive', () => {
       const result = generateCompletion('zsh')
-      expect(result).toContain('#compdef cu')
+      expect(result).toContain('#compdef cup')
     })
 
     it('contains status suggestions', () => {
@@ -128,7 +128,7 @@ describe('generateCompletion', () => {
 
     it('disables file completions', () => {
       const result = generateCompletion('fish')
-      expect(result).toContain('complete -c cu -f')
+      expect(result).toContain('complete -c cup -f')
     })
 
     it('uses __fish_use_subcommand for top-level commands', () => {
@@ -144,30 +144,30 @@ describe('generateCompletion', () => {
 
   describe('custom binary name', () => {
     it('bash uses the provided name for function and registration', () => {
-      const result = generateCompletion('bash', 'cup')
-      expect(result).toContain('_cup_completions()')
-      expect(result).toContain('complete -F _cup_completions cup')
-      expect(result).not.toContain('_cu_completions')
+      const result = generateCompletion('bash', 'clickup')
+      expect(result).toContain('_clickup_completions()')
+      expect(result).toContain('complete -F _clickup_completions clickup')
+      expect(result).not.toContain('_cup_completions')
     })
 
     it('zsh uses the provided name for compdef and function', () => {
-      const result = generateCompletion('zsh', 'cup')
-      expect(result).toContain('#compdef cup')
-      expect(result).toContain('_cup()')
-      expect(result).not.toContain('#compdef cu\n')
+      const result = generateCompletion('zsh', 'clickup')
+      expect(result).toContain('#compdef clickup')
+      expect(result).toContain('_clickup()')
+      expect(result).not.toContain('#compdef cup\n')
     })
 
     it('fish uses the provided name for complete commands', () => {
-      const result = generateCompletion('fish', 'cup')
-      expect(result).toContain('complete -c cup -f')
-      expect(result).toContain('complete -c cup -n __fish_use_subcommand')
-      expect(result).not.toContain('complete -c cu ')
+      const result = generateCompletion('fish', 'clickup')
+      expect(result).toContain('complete -c clickup -f')
+      expect(result).toContain('complete -c clickup -n __fish_use_subcommand')
+      expect(result).not.toContain('complete -c cup ')
     })
 
-    it('defaults to cu when name is not provided', () => {
+    it('defaults to cup when name is not provided', () => {
       const result = generateCompletion('bash')
-      expect(result).toContain('_cu_completions()')
-      expect(result).toContain('complete -F _cu_completions cu')
+      expect(result).toContain('_cup_completions()')
+      expect(result).toContain('complete -F _cup_completions cup')
     })
   })
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`@krodak/clickup-cli` (`cu` / `cup`) - a ClickUp CLI for AI agents and humans. TypeScript, ESM-only, Node 22+. Three output modes: interactive tables with task picker in TTY, Markdown when piped (optimized for AI context windows), JSON with `--json`. Both `cu` and `cup` are registered as binary names - `cup` avoids conflicts with the Unix `cu(1)` utility.
+`@krodak/clickup-cli` (`cup`) - a ClickUp CLI for AI agents and humans. TypeScript, ESM-only, Node 22+. Three output modes: interactive tables with task picker in TTY, Markdown when piped (optimized for AI context windows), JSON with `--json`. The binary is `cup` - the previous `cu` name was retired to avoid conflict with the Unix `cu(1)` utility.
 
 ## Skills
 
