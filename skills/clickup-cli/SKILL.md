@@ -11,7 +11,7 @@ Keywords: ClickUp, task management, sprint, project management, agile, backlog, 
 
 ## Setup
 
-Config at `~/.config/cup/config.json` with `apiToken` and `teamId`. Run `cup init` to set up interactively.
+Config at `~/.config/cup/config.json` with `apiToken` and `teamId`. Optional: `sprintFolderId` to pin sprint detection to a specific folder. Run `cup init` to set up interactively.
 
 Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set.
 
@@ -38,7 +38,7 @@ All commands support `--help` for full flag details.
 | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | `cup tasks [--status s] [--name q] [--type t] [--list id] [--space id] [--include-closed] [--json]` | My tasks (all types, or filter with --type)        |
 | `cup assigned [--status s] [--include-closed] [--json]`                                             | All my tasks grouped by status                     |
-| `cup sprint [--status s] [--space nameOrId] [--include-closed] [--json]`                            | Tasks in active sprint (auto-detected)             |
+| `cup sprint [--status s] [--space nameOrId] [--folder id] [--include-closed] [--json]`              | Tasks in active sprint (auto-detected)             |
 | `cup sprints [--space nameOrId] [--json]`                                                           | List all sprints (marks active with \*)            |
 | `cup search <query> [--status s] [--include-closed] [--json]`                                       | Search my tasks by name (multi-word, fuzzy status) |
 | `cup task <id> [--json]`                                                                            | Single task details                                |
@@ -55,79 +55,79 @@ All commands support `--help` for full flag details.
 
 ### Write
 
-| Command                                                                                                                                                                             | What it does                                |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `cup update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--parent id] [--json]`                                      | Update task fields (desc supports markdown) |
-| `cup create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)        |
-| `cup comment <id> -m text [--notify-all] [--json]`                                                                                                                                  | Post comment on task                        |
-| `cup comment-edit <commentId> -m text [--resolved] [--unresolved] [--json]`                                                                                                         | Edit an existing comment                    |
-| `cup assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                                  | Assign/unassign users                       |
-| `cup depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                               | Add/remove task dependencies                |
-| `cup move <id> [--to listId] [--remove listId] [--json]`                                                                                                                            | Add/remove task from lists                  |
-| `cup field <id> [--set "Name" value] [--remove "Name"] [--json]`                                                                                                                    | Set/remove custom field values              |
-| `cup delete <id> [--confirm] [--json]`                                                                                                                                              | Delete a task (DESTRUCTIVE, irreversible)   |
-| `cup tag <id> [--add tags] [--remove tags] [--json]`                                                                                                                                | Add/remove tags on a task                   |
-| `cup checklist view <id> [--json]`                                                                                                                                                  | View checklists on a task                   |
-| `cup checklist create <id> <name> [--json]`                                                                                                                                         | Create a checklist                          |
-| `cup checklist delete <checklistId> [--json]`                                                                                                                                       | Delete a checklist                          |
-| `cup checklist add-item <checklistId> <name> [--json]`                                                                                                                              | Add item to a checklist                     |
-| `cup checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--json]`                                                                    | Edit a checklist item                       |
-| `cup checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                     |
-| `cup comment-delete <commentId> [--json]`                                                                                                                                           | Delete a comment                            |
-| `cup replies <commentId> [--json]`                                                                                                                                                  | List threaded replies on a comment          |
-| `cup reply <commentId> -m text [--notify-all] [--json]`                                                                                                                             | Reply to a comment                          |
-| `cup link <taskId> <linksTo> [--remove] [--json]`                                                                                                                                   | Add or remove link between tasks            |
-| `cup attach <taskId> <filePath> [--json]`                                                                                                                                           | Upload file attachment to a task            |
-| `cup time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task               |
-| `cup time stop [--json]`                                                                                                                                                            | Stop the running timer                      |
-| `cup time status [--json]`                                                                                                                                                          | Show currently running timer                |
-| `cup time log <taskId> <duration> [-d desc] [--json]`                                                                                                                               | Log manual time entry (e.g. "2h", "30m")    |
-| `cup time list [--days n] [--task id] [--json]`                                                                                                                                     | List recent time entries                    |
-| `cup config get <key>` / `cup config set <key> <value>` / `cup config path`                                                                                                         | Manage CLI config                           |
-| `cup completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)           |
+| Command                                                                                                                                                                             | What it does                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `cup update <id> [-n name] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--parent id] [--json]`                                      | Update task fields (desc supports markdown)                |
+| `cup create -n name [-l listId] [-p parentId] [-d desc] [-s status] [--priority p] [--due-date d] [--time-estimate t] [--assignee id\|me] [--tags t] [--custom-item-id n] [--json]` | Create task (desc supports markdown)                       |
+| `cup comment <id> -m text [--notify-all] [--json]`                                                                                                                                  | Post comment on task                                       |
+| `cup comment-edit <commentId> -m text [--resolved] [--unresolved] [--json]`                                                                                                         | Edit an existing comment                                   |
+| `cup assign <id> [--to userId\|me] [--remove userId\|me] [--json]`                                                                                                                  | Assign/unassign users                                      |
+| `cup depend <id> [--on taskId] [--blocks taskId] [--remove] [--json]`                                                                                                               | Add/remove task dependencies                               |
+| `cup move <id> [--to listId] [--remove listId] [--json]`                                                                                                                            | Add/remove task from lists                                 |
+| `cup field <id> [--set "Name" value] [--remove "Name"] [--json]`                                                                                                                    | Set/remove custom field values                             |
+| `cup delete <id> [--confirm] [--json]`                                                                                                                                              | Delete a task (DESTRUCTIVE, irreversible)                  |
+| `cup tag <id> [--add tags] [--remove tags] [--json]`                                                                                                                                | Add/remove tags on a task                                  |
+| `cup checklist view <id> [--json]`                                                                                                                                                  | View checklists on a task                                  |
+| `cup checklist create <id> <name> [--json]`                                                                                                                                         | Create a checklist                                         |
+| `cup checklist delete <checklistId> [--json]`                                                                                                                                       | Delete a checklist                                         |
+| `cup checklist add-item <checklistId> <name> [--json]`                                                                                                                              | Add item to a checklist                                    |
+| `cup checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--json]`                                                                    | Edit a checklist item                                      |
+| `cup checklist delete-item <checklistId> <itemId> [--json]`                                                                                                                         | Delete a checklist item                                    |
+| `cup comment-delete <commentId> [--json]`                                                                                                                                           | Delete a comment                                           |
+| `cup replies <commentId> [--json]`                                                                                                                                                  | List threaded replies on a comment                         |
+| `cup reply <commentId> -m text [--notify-all] [--json]`                                                                                                                             | Reply to a comment                                         |
+| `cup link <taskId> <linksTo> [--remove] [--json]`                                                                                                                                   | Add or remove link between tasks                           |
+| `cup attach <taskId> <filePath> [--json]`                                                                                                                                           | Upload file attachment to a task                           |
+| `cup time start <taskId> [-d desc] [--json]`                                                                                                                                        | Start tracking time on a task                              |
+| `cup time stop [--json]`                                                                                                                                                            | Stop the running timer                                     |
+| `cup time status [--json]`                                                                                                                                                          | Show currently running timer                               |
+| `cup time log <taskId> <duration> [-d desc] [--json]`                                                                                                                               | Log manual time entry (e.g. "2h", "30m")                   |
+| `cup time list [--days n] [--task id] [--json]`                                                                                                                                     | List recent time entries                                   |
+| `cup config get <key>` / `cup config set <key> <value>` / `cup config path`                                                                                                         | Manage CLI config (keys: apiToken, teamId, sprintFolderId) |
+| `cup completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)                          |
 
 ## Quick Reference
 
-| Topic                       | Detail                                                                                                 |
-| --------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Task IDs                    | Native (`abc123def`) or custom (`PROJ-123`). Custom IDs auto-detected by `PREFIX-DIGITS` format        |
-| `--type`                    | Filter by task type: `task` (regular), or custom type name/ID (e.g. `initiative`, `Bug`)               |
-| `--list` on create          | Optional when `--parent` is given (auto-detected)                                                      |
-| `--status`                  | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                |
-| `--priority`                | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                             |
-| `--due-date`                | `YYYY-MM-DD` format                                                                                    |
-| `--assignee`                | User ID or `me` (on `cup create`, `cup update`, `cup assign`)                                          |
-| `--tags`                    | Comma-separated (e.g. `--tags "bug,frontend"`)                                                         |
-| `--time-estimate`           | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                       |
-| `--custom-item-id`          | Custom task type ID for `cup create` (e.g. `1` for initiative)                                         |
-| `--on` / `--blocks`         | Task dependency direction (used with `cup depend`)                                                     |
-| `--to` / `--remove`         | List ID to add/remove task (used with `cup move`)                                                      |
-| `cup field --set`           | Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email   |
-| `cup field`                 | Field names resolved case-insensitively; errors list available fields/options                          |
-| `cup delete`                | DESTRUCTIVE. Requires `--confirm` in non-interactive mode. Cannot be undone                            |
-| `cup tag --add/--remove`    | Comma-separated tag names (e.g. `--add "bug,frontend"`)                                                |
-| `--space`                   | Partial name match or exact ID                                                                         |
-| `--name`                    | Partial match, case-insensitive                                                                        |
-| `--include-closed`          | Include closed/done tasks (on `tasks`, `assigned`, `subtasks`, `sprint`, `search`, `inbox`, `overdue`) |
-| `cup assign --to me`        | Shorthand for your own user ID                                                                         |
-| `cup search`                | Matches all query words against task name, case-insensitive                                            |
-| `cup sprint`                | Auto-detects active sprint via view API and date range parsing                                         |
-| `cup summary`               | Categories: completed (done/complete/closed within N hours), in progress, overdue                      |
-| `cup overdue`               | Excludes closed tasks, sorted most overdue first                                                       |
-| `cup open`                  | Tries task ID first, falls back to name search                                                         |
-| `cup checklist`             | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                  |
-| `cup time`                  | Track time: start/stop timer, log entries, list history. Duration format: "2h", "30m", "1h30m"         |
-| `cup comment-edit`          | Edit comment text and resolution status                                                                |
-| `cup comment-delete`        | Delete a comment                                                                                       |
-| `cup replies` / `cup reply` | View and post threaded comment replies                                                                 |
-| Custom task IDs             | Auto-detected by format (`PROJ-123`). Uses `teamId` from config. All commands support them             |
-| `cup link` + custom IDs     | Both IDs must be the same type (both custom or both native). Mixing may not work                       |
-| `cup link`                  | Link/unlink tasks (different from dependencies)                                                        |
-| `cup attach`                | Upload files to tasks. Attachments shown in `cup task` detail view                                     |
-| `cup task`                  | Shows custom fields, checklists, attachments, dependencies, and linked tasks in detail view            |
-| `cup lists`                 | Discovers list IDs needed for `--list` and `cup create -l`                                             |
-| Errors                      | stderr with exit code 1                                                                                |
-| Parsing                     | Strict - excess/unknown arguments rejected                                                             |
+| Topic                       | Detail                                                                                                                                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task IDs                    | Native (`abc123def`) or custom (`PROJ-123`). Custom IDs auto-detected by `PREFIX-DIGITS` format                                                                                                                                                           |
+| `--type`                    | Filter by task type: `task` (regular), or custom type name/ID (e.g. `initiative`, `Bug`)                                                                                                                                                                  |
+| `--list` on create          | Optional when `--parent` is given (auto-detected)                                                                                                                                                                                                         |
+| `--status`                  | Fuzzy matching: exact > starts-with > contains. Prints match to stderr.                                                                                                                                                                                   |
+| `--priority`                | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                                                                                                                                                                                |
+| `--due-date`                | `YYYY-MM-DD` format                                                                                                                                                                                                                                       |
+| `--assignee`                | User ID or `me` (on `cup create`, `cup update`, `cup assign`)                                                                                                                                                                                             |
+| `--tags`                    | Comma-separated (e.g. `--tags "bug,frontend"`)                                                                                                                                                                                                            |
+| `--time-estimate`           | Duration format: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                                                                                                                                                                          |
+| `--custom-item-id`          | Custom task type ID for `cup create` (e.g. `1` for initiative)                                                                                                                                                                                            |
+| `--on` / `--blocks`         | Task dependency direction (used with `cup depend`)                                                                                                                                                                                                        |
+| `--to` / `--remove`         | List ID to add/remove task (used with `cup move`)                                                                                                                                                                                                         |
+| `cup field --set`           | Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email                                                                                                                                                      |
+| `cup field`                 | Field names resolved case-insensitively; errors list available fields/options                                                                                                                                                                             |
+| `cup delete`                | DESTRUCTIVE. Requires `--confirm` in non-interactive mode. Cannot be undone                                                                                                                                                                               |
+| `cup tag --add/--remove`    | Comma-separated tag names (e.g. `--add "bug,frontend"`)                                                                                                                                                                                                   |
+| `--space`                   | Partial name match or exact ID                                                                                                                                                                                                                            |
+| `--name`                    | Partial match, case-insensitive                                                                                                                                                                                                                           |
+| `--include-closed`          | Include closed/done tasks (on `tasks`, `assigned`, `subtasks`, `sprint`, `search`, `inbox`, `overdue`)                                                                                                                                                    |
+| `cup assign --to me`        | Shorthand for your own user ID                                                                                                                                                                                                                            |
+| `cup search`                | Matches all query words against task name, case-insensitive                                                                                                                                                                                               |
+| `cup sprint`                | Auto-detects active sprint by searching for folders named sprint/iteration/cycle/scrum, parses multiple date formats (US, ISO, month-day, European), prompts in TTY when ambiguous. Override with `--folder <id>` or `cup config set sprintFolderId <id>` |
+| `cup summary`               | Categories: completed (done/complete/closed within N hours), in progress, overdue                                                                                                                                                                         |
+| `cup overdue`               | Excludes closed tasks, sorted most overdue first                                                                                                                                                                                                          |
+| `cup open`                  | Tries task ID first, falls back to name search                                                                                                                                                                                                            |
+| `cup checklist`             | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                                                                                                                                                                     |
+| `cup time`                  | Track time: start/stop timer, log entries, list history. Duration format: "2h", "30m", "1h30m"                                                                                                                                                            |
+| `cup comment-edit`          | Edit comment text and resolution status                                                                                                                                                                                                                   |
+| `cup comment-delete`        | Delete a comment                                                                                                                                                                                                                                          |
+| `cup replies` / `cup reply` | View and post threaded comment replies                                                                                                                                                                                                                    |
+| Custom task IDs             | Auto-detected by format (`PROJ-123`). Uses `teamId` from config. All commands support them                                                                                                                                                                |
+| `cup link` + custom IDs     | Both IDs must be the same type (both custom or both native). Mixing may not work                                                                                                                                                                          |
+| `cup link`                  | Link/unlink tasks (different from dependencies)                                                                                                                                                                                                           |
+| `cup attach`                | Upload files to tasks. Attachments shown in `cup task` detail view                                                                                                                                                                                        |
+| `cup task`                  | Shows custom fields, checklists, attachments, dependencies, and linked tasks in detail view                                                                                                                                                               |
+| `cup lists`                 | Discovers list IDs needed for `--list` and `cup create -l`                                                                                                                                                                                                |
+| Errors                      | stderr with exit code 1                                                                                                                                                                                                                                   |
+| Parsing                     | Strict - excess/unknown arguments rejected                                                                                                                                                                                                                |
 
 ## Agent Workflow Examples
 
@@ -203,6 +203,7 @@ cup spaces --name "Engineering"      # find space ID by name
 cup lists <spaceId>                  # lists in a space (needs ID from cup spaces)
 cup sprints                          # all sprints across folders
 cup auth                             # verify token works
+cup config set sprintFolderId <id>   # pin sprint detection to a folder
 ```
 
 ### Standup

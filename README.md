@@ -162,14 +162,14 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Sprints & Planning
 
-| Feature                  | Command        | Status             |
-| ------------------------ | -------------- | ------------------ |
-| Active sprint tasks      | `cup sprint`   | :white_check_mark: |
-| List all sprints         | `cup sprints`  | :white_check_mark: |
-| Assigned tasks by status | `cup assigned` | :white_check_mark: |
-| Standup summary          | `cup summary`  | :white_check_mark: |
-| Overdue tasks            | `cup overdue`  | :white_check_mark: |
-| Recently updated         | `cup inbox`    | :white_check_mark: |
+| Feature                  | Command                 | Status             |
+| ------------------------ | ----------------------- | ------------------ |
+| Active sprint tasks      | `cup sprint [--folder]` | :white_check_mark: |
+| List all sprints         | `cup sprints`           | :white_check_mark: |
+| Assigned tasks by status | `cup assigned`          | :white_check_mark: |
+| Standup summary          | `cup summary`           | :white_check_mark: |
+| Overdue tasks            | `cup overdue`           | :white_check_mark: |
+| Recently updated         | `cup inbox`             | :white_check_mark: |
 
 ### Comments
 
@@ -304,7 +304,8 @@ Most commands scope to your assigned tasks by default - keeping output small and
 ```json
 {
   "apiToken": "pk_...",
-  "teamId": "12345678"
+  "teamId": "12345678",
+  "sprintFolderId": "optional - folder ID to skip auto-detection"
 }
 ```
 

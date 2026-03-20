@@ -58,7 +58,7 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 
 ### `cup init`
 
-First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cup/config.json`.
+First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cup/config.json`. Automatically migrates config from `~/.config/cu/` if present.
 
 ```bash
 cup init
@@ -83,14 +83,25 @@ cup tasks --json
 
 ### `cup sprint`
 
-List my tasks in the currently active sprint (auto-detected from sprint folder date ranges).
+List my tasks in the currently active sprint. Sprint detection searches for folders named sprint, iteration, cycle, or scrum, then parses list date ranges to find the active one. Supports multiple date formats (US, ISO, month-day, European). When multiple candidates match, TTY mode prompts for disambiguation.
+
+Override auto-detection with `--folder <id>` or permanently via `cup config set sprintFolderId <id>`.
 
 ```bash
 cup sprint
 cup sprint --status "in progress"
+cup sprint --folder 12345
 cup sprint --include-closed
 cup sprint --json
 ```
+
+| Flag                 | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `--status <status>`  | Filter by status (fuzzy matching)            |
+| `--space <nameOrId>` | Limit to a specific space                    |
+| `--folder <id>`      | Use this folder ID instead of auto-detection |
+| `--include-closed`   | Include closed/done tasks                    |
+| `--json`             | Force JSON output                            |
 
 ### `cup sprints`
 
@@ -637,7 +648,7 @@ cup config set teamId 12345
 cup config path
 ```
 
-Valid keys: `apiToken`, `teamId`. Setting `apiToken` validates the `pk_` prefix.
+Valid keys: `apiToken`, `teamId`, `sprintFolderId`. Setting `apiToken` validates the `pk_` prefix. Setting `sprintFolderId` pins `cup sprint` to a specific folder, skipping auto-detection.
 
 ### `cup completion <shell>`
 
