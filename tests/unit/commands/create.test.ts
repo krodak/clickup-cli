@@ -103,7 +103,7 @@ describe('createTask', () => {
       'l1',
       expect.objectContaining({
         name: 'Task',
-        due_date: new Date('2025-06-15').getTime(),
+        due_date: new Date(2025, 5, 15).getTime(),
         due_date_time: false,
       }),
     )

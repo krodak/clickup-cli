@@ -130,7 +130,7 @@ describe('parseDueDate', () => {
   it('parses YYYY-MM-DD format', async () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
     const result = parseDueDate('2025-03-15')
-    expect(result).toBe(new Date('2025-03-15').getTime())
+    expect(result).toBe(new Date(2025, 2, 15).getTime())
   })
 
   it('throws on invalid date format', async () => {
@@ -210,7 +210,7 @@ describe('buildUpdatePayload', () => {
   it('builds payload with due date', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ dueDate: '2025-06-01' })
-    expect(payload.due_date).toBe(new Date('2025-06-01').getTime())
+    expect(payload.due_date).toBe(new Date(2025, 5, 1).getTime())
     expect(payload.due_date_time).toBe(false)
   })
 
@@ -232,7 +232,7 @@ describe('buildUpdatePayload', () => {
     expect(payload.name).toBe('New name')
     expect(payload.status).toBe('done')
     expect(payload.priority).toBe(1)
-    expect(payload.due_date).toBe(new Date('2025-01-01').getTime())
+    expect(payload.due_date).toBe(new Date(2025, 0, 1).getTime())
     expect(payload.assignees).toEqual({ add: [99] })
   })
 

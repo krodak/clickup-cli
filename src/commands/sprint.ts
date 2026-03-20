@@ -73,7 +73,7 @@ export async function runSprintCommand(
     )
     if (spaces.length === 0) {
       throw new Error(
-        `No space matching "${opts.space}" found. Use \`cu spaces\` to list available spaces.`,
+        `No space matching "${opts.space}" found. Use \`cup spaces\` to list available spaces.`,
       )
     }
   } else {

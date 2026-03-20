@@ -22,7 +22,8 @@ export function parseDueDate(value: string): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error('Date must be in YYYY-MM-DD format')
   }
-  const date = new Date(value)
+  const parts = value.split('-')
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
   if (isNaN(date.getTime())) throw new Error(`Invalid date: ${value}`)
   return date.getTime()
 }
