@@ -9,8 +9,27 @@ export interface Config {
 
 function configDir(): string {
   const xdg = process.env.XDG_CONFIG_HOME
+  if (xdg) return join(xdg, 'cup')
+  return join(homedir(), '.config', 'cup')
+}
+
+function legacyConfigDir(): string {
+  const xdg = process.env.XDG_CONFIG_HOME
   if (xdg) return join(xdg, 'cu')
   return join(homedir(), '.config', 'cu')
+}
+
+let migrationChecked = false
+
+function migrateFromLegacy(): void {
+  if (migrationChecked) return
+  migrationChecked = true
+  const legacy = legacyConfigDir()
+  const current = configDir()
+  if (fs.existsSync(join(legacy, 'config.json')) && !fs.existsSync(join(current, 'config.json'))) {
+    fs.mkdirSync(current, { recursive: true, mode: 0o700 })
+    fs.copyFileSync(join(legacy, 'config.json'), join(current, 'config.json'))
+  }
 }
 
 function configPath(): string {
@@ -18,6 +37,7 @@ function configPath(): string {
 }
 
 export function loadConfig(): Config {
+  migrateFromLegacy()
   const envToken = process.env.CU_API_TOKEN?.trim()
   const envTeamId = process.env.CU_TEAM_ID?.trim()
 
@@ -54,6 +74,7 @@ export function loadConfig(): Config {
 }
 
 export function loadRawConfig(): Partial<Config> {
+  migrateFromLegacy()
   const path = configPath()
   if (!fs.existsSync(path)) return {}
   try {
@@ -64,6 +85,7 @@ export function loadRawConfig(): Partial<Config> {
 }
 
 export function getConfigPath(): string {
+  migrateFromLegacy()
   return configPath()
 }
 

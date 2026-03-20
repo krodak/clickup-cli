@@ -30,7 +30,7 @@ Use the following skills when working on this project:
 src/
   index.ts          # CLI entry point (Commander setup)
   api.ts            # ClickUp API client (ClickUpClient class + types)
-  config.ts         # Config loading (~/.config/cu/config.json)
+  config.ts         # Config loading (~/.config/cup/config.json)
   output.ts         # TTY detection, table formatting, shouldOutputJson
   interactive.ts    # Task pickers, TTY detail views (chalk)
   markdown.ts       # Markdown detail views (piped output)

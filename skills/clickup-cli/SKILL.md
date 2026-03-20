@@ -11,7 +11,7 @@ Keywords: ClickUp, task management, sprint, project management, agile, backlog, 
 
 ## Setup
 
-Config at `~/.config/cu/config.json` with `apiToken` and `teamId`. Run `cup init` to set up interactively.
+Config at `~/.config/cup/config.json` with `apiToken` and `teamId`. Run `cup init` to set up interactively.
 
 Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set.
 

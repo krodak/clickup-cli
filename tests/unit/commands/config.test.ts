@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockLoadRawConfig = vi.fn()
 const mockWriteConfig = vi.fn()
-const mockGetConfigPath = vi.fn().mockReturnValue('/mock/.config/cu/config.json')
+const mockGetConfigPath = vi.fn().mockReturnValue('/mock/.config/cup/config.json')
 
 vi.mock('../../../src/config.js', () => ({
   loadRawConfig: mockLoadRawConfig,
@@ -123,7 +123,7 @@ describe('config commands', () => {
   describe('configPath', () => {
     it('returns the config file path', async () => {
       const { configPath } = await import('../../../src/commands/config.js')
-      expect(configPath()).toBe('/mock/.config/cu/config.json')
+      expect(configPath()).toBe('/mock/.config/cup/config.json')
     })
   })
 })

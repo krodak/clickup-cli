@@ -150,7 +150,7 @@ describe('loadConfig', () => {
     process.env.XDG_CONFIG_HOME = '/tmp/custom-config'
     vi.resetModules()
     const { getConfigPath } = await import('../../src/config.js')
-    expect(getConfigPath()).toBe('/tmp/custom-config/cu/config.json')
+    expect(getConfigPath()).toBe('/tmp/custom-config/cup/config.json')
   })
 })
 
@@ -171,7 +171,7 @@ describe('writeConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
-    const expectedDir = path.join(os.homedir(), '.config', 'cu')
+    const expectedDir = path.join(os.homedir(), '.config', 'cup')
     expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(expectedDir, {
       recursive: true,
       mode: 0o700,
@@ -189,5 +189,66 @@ describe('writeConfig', () => {
     expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
     expect(call[2]).toEqual({ encoding: 'utf-8', mode: 0o600 })
     expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
+  })
+})
+
+describe('migrateFromLegacy', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.mocked(fs.copyFileSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('copies legacy config when cu/ exists and cup/ does not', async () => {
+    const legacyPath = path.join(os.homedir(), '.config', 'cu', 'config.json')
+    const newPath = path.join(os.homedir(), '.config', 'cup', 'config.json')
+    const newDir = path.join(os.homedir(), '.config', 'cup')
+    let migrated = false
+    vi.mocked(fs.copyFileSync).mockImplementation(() => {
+      migrated = true
+    })
+    vi.mocked(fs.existsSync).mockImplementation(p => {
+      if (String(p) === legacyPath) return true
+      if (String(p) === newPath) return migrated
+      return false
+    })
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_migrated', teamId: 'team_m' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(vi.mocked(fs.mkdirSync)).toHaveBeenCalledWith(newDir, { recursive: true, mode: 0o700 })
+    expect(vi.mocked(fs.copyFileSync)).toHaveBeenCalledWith(legacyPath, newPath)
+    expect(config.apiToken).toBe('pk_migrated')
+  })
+
+  it('does not migrate when cup/config.json already exists', async () => {
+    const legacyPath = path.join(os.homedir(), '.config', 'cu', 'config.json')
+    const newPath = path.join(os.homedir(), '.config', 'cup', 'config.json')
+    vi.mocked(fs.existsSync).mockImplementation(p => {
+      if (String(p) === legacyPath) return true
+      if (String(p) === newPath) return true
+      return true
+    })
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_existing', teamId: 'team_e' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    loadConfig()
+    expect(vi.mocked(fs.copyFileSync)).not.toHaveBeenCalled()
+  })
+
+  it('does not migrate when legacy config does not exist', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const { loadRawConfig } = await import('../../src/config.js')
+    loadRawConfig()
+    expect(vi.mocked(fs.copyFileSync)).not.toHaveBeenCalled()
   })
 })

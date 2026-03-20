@@ -58,7 +58,7 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 
 ### `cup init`
 
-First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cu/config.json`.
+First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cup/config.json`.
 
 ```bash
 cup init

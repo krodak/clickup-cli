@@ -299,7 +299,7 @@ Most commands scope to your assigned tasks by default - keeping output small and
 
 ### Config file
 
-`~/.config/cu/config.json` (or `$XDG_CONFIG_HOME/cu/config.json`):
+`~/.config/cup/config.json` (or `$XDG_CONFIG_HOME/cup/config.json`):
 
 ```json
 {
