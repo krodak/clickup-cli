@@ -13,6 +13,26 @@ export async function listSpaceTags(config: Config, spaceId: string): Promise<Sp
   return client.getSpaceTags(spaceId)
 }
 
+export async function createSpaceTag(
+  config: Config,
+  spaceId: string,
+  name: string,
+  fg?: string,
+  bg?: string,
+): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.createSpaceTag(spaceId, name, fg, bg)
+}
+
+export async function deleteSpaceTag(
+  config: Config,
+  spaceId: string,
+  tagName: string,
+): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteSpaceTag(spaceId, tagName)
+}
+
 export function formatTags(tags: SpaceTag[]): string {
   if (tags.length === 0) return 'No tags found'
   return tags.map(t => chalk.bold(t.name)).join(', ')

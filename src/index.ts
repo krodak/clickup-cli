@@ -95,7 +95,29 @@ import {
   formatTimeEntryMarkdown,
   formatTimeEntriesMarkdown,
 } from './commands/time.js'
-import { listSpaceTags, formatTags, formatTagsMarkdown } from './commands/tags.js'
+import {
+  listSpaceTags,
+  formatTags,
+  formatTagsMarkdown,
+  createSpaceTag,
+  deleteSpaceTag,
+} from './commands/tags.js'
+import { listMembers, formatMembers, formatMembersMarkdown } from './commands/members.js'
+import { listFields, formatFields, formatFieldsMarkdown } from './commands/fields.js'
+import { duplicateTask } from './commands/duplicate.js'
+import { bulkUpdateStatus } from './commands/bulk.js'
+import {
+  listGoals,
+  createGoal,
+  updateGoal,
+  listKeyResults,
+  createKeyResult,
+  updateKeyResult,
+  formatGoals,
+  formatGoalsMarkdown,
+  formatKeyResults,
+  formatKeyResultsMarkdown,
+} from './commands/goals.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -1027,6 +1049,257 @@ program
         console.log(formatTagsMarkdown(tags))
       }
     }),
+  )
+
+program
+  .command('tag-create <spaceId> <name>')
+  .description('Create a tag in a space')
+  .option('--fg <color>', 'Foreground color (hex)')
+  .option('--bg <color>', 'Background color (hex)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (spaceId: string, name: string, opts: { fg?: string; bg?: string; json?: boolean }) => {
+        const config = loadConfig()
+        await createSpaceTag(config, spaceId, name, opts.fg, opts.bg)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, spaceId, tag: name }, null, 2))
+        } else {
+          console.log(`Created tag "${name}" in space ${spaceId}`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('tag-delete <spaceId> <name>')
+  .description('Delete a tag from a space')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (spaceId: string, name: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteSpaceTag(config, spaceId, name)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, spaceId, tag: name }, null, 2))
+      } else {
+        console.log(`Deleted tag "${name}" from space ${spaceId}`)
+      }
+    }),
+  )
+
+program
+  .command('members')
+  .description('List workspace members')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const members = await listMembers(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(members, null, 2))
+      } else if (isTTY()) {
+        console.log(formatMembers(members))
+      } else {
+        console.log(formatMembersMarkdown(members))
+      }
+    }),
+  )
+
+program
+  .command('fields <listId>')
+  .description('List custom fields for a list')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (listId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const fields = await listFields(config, listId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(fields, null, 2))
+      } else if (isTTY()) {
+        console.log(formatFields(fields))
+      } else {
+        console.log(formatFieldsMarkdown(fields))
+      }
+    }),
+  )
+
+program
+  .command('duplicate <taskId>')
+  .description('Duplicate a task')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await duplicateTask(config, taskId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Duplicated as "${result.name}" (${result.id})`)
+      }
+    }),
+  )
+
+const bulkCmd = program.command('bulk').description('Bulk task operations')
+
+bulkCmd
+  .command('status <status> <taskIds...>')
+  .description('Update status of multiple tasks')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (status: string, taskIds: string[], opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const result = await bulkUpdateStatus(config, taskIds, status)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Updated ${result.updated} tasks to "${status}"`)
+        if (result.failed.length > 0) {
+          console.log(`Failed: ${result.failed.join(', ')}`)
+        }
+      }
+    }),
+  )
+
+program
+  .command('goals')
+  .description('List goals in your workspace')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const goals = await listGoals(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(goals, null, 2))
+      } else if (isTTY()) {
+        console.log(formatGoals(goals))
+      } else {
+        console.log(formatGoalsMarkdown(goals))
+      }
+    }),
+  )
+
+program
+  .command('goal-create <name>')
+  .description('Create a goal')
+  .option('-d, --description <text>', 'Goal description')
+  .option('--color <hex>', 'Goal color (hex)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (name: string, opts: { description?: string; color?: string; json?: boolean }) => {
+        const config = loadConfig()
+        const goal = await createGoal(config, name, {
+          description: opts.description,
+          color: opts.color,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(goal, null, 2))
+        } else {
+          console.log(`Created goal "${goal.name}" (${goal.id})`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('goal-update <goalId>')
+  .description('Update a goal')
+  .option('-n, --name <text>', 'New goal name')
+  .option('-d, --description <text>', 'New description')
+  .option('--color <hex>', 'New color (hex)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        goalId: string,
+        opts: { name?: string; description?: string; color?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        const goal = await updateGoal(config, goalId, {
+          name: opts.name,
+          description: opts.description,
+          color: opts.color,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(goal, null, 2))
+        } else {
+          console.log(`Updated goal "${goal.name}" (${goal.id})`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('key-results <goalId>')
+  .description('List key results for a goal')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (goalId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const krs = await listKeyResults(config, goalId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(krs, null, 2))
+      } else if (isTTY()) {
+        console.log(formatKeyResults(krs))
+      } else {
+        console.log(formatKeyResultsMarkdown(krs))
+      }
+    }),
+  )
+
+program
+  .command('key-result-create <goalId> <name>')
+  .description('Create a key result on a goal')
+  .option('--type <type>', 'Key result type (number or percentage)', 'number')
+  .option('--target <n>', 'Target value', '100')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        goalId: string,
+        name: string,
+        opts: { type?: string; target?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        const target = Number(opts.target ?? 100)
+        if (!Number.isFinite(target) || target <= 0) {
+          throw new Error('--target must be a positive number')
+        }
+        const kr = await createKeyResult(config, goalId, name, opts.type ?? 'number', target)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(kr, null, 2))
+        } else {
+          console.log(`Created key result "${kr.name}" (${kr.id})`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('key-result-update <keyResultId>')
+  .description('Update a key result')
+  .option('--progress <n>', 'Current progress value')
+  .option('--note <text>', 'Progress note')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (keyResultId: string, opts: { progress?: string; note?: string; json?: boolean }) => {
+        const config = loadConfig()
+        const updates: { progress?: number; note?: string } = {}
+        if (opts.progress !== undefined) {
+          const p = Number(opts.progress)
+          if (!Number.isFinite(p)) throw new Error('--progress must be a number')
+          updates.progress = p
+        }
+        if (opts.note !== undefined) updates.note = opts.note
+        const kr = await updateKeyResult(config, keyResultId, updates)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(kr, null, 2))
+        } else {
+          console.log(`Updated key result "${kr.name}" (${kr.id})`)
+        }
+      },
+    ),
   )
 
 program

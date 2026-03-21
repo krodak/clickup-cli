@@ -212,6 +212,38 @@ export interface DocPage {
   pages?: DocPage[]
 }
 
+export interface Member {
+  id: number
+  username: string
+  email: string
+  initials?: string
+  role?: number
+}
+
+export interface Goal {
+  id: string
+  name: string
+  description?: string
+  date_created: string
+  due_date?: string | null
+  start_date?: string | null
+  percent_completed: number
+  key_result_count: number
+  owner?: { id: number; username: string } | null
+  color: string
+  archived: boolean
+}
+
+export interface KeyResult {
+  id: string
+  name: string
+  type: string
+  unit?: string
+  steps_current: number
+  steps_end: number
+  percent_completed: number
+}
+
 interface ClientConfig {
   apiToken: string
   teamId?: string
@@ -685,6 +717,30 @@ export class ClickUpClient {
     return data.tags ?? []
   }
 
+  async createSpaceTag(spaceId: string, name: string, fg?: string, bg?: string): Promise<void> {
+    await this.request<Record<string, never>>(`/space/${spaceId}/tag`, {
+      method: 'POST',
+      body: JSON.stringify({
+        tag: { name, tag_fg: fg ?? '#000000', tag_bg: bg ?? '#04A9F4' },
+      }),
+    })
+  }
+
+  async deleteSpaceTag(spaceId: string, tagName: string): Promise<void> {
+    await this.request<Record<string, never>>(
+      `/space/${spaceId}/tag/${encodeURIComponent(tagName)}`,
+      { method: 'DELETE' },
+    )
+  }
+
+  async getWorkspaceMembers(teamId: string): Promise<Member[]> {
+    const data = await this.request<{
+      teams: Array<{ id: string; members: Array<{ user: Member }> }>
+    }>('/team')
+    const team = data.teams?.find(t => t.id === teamId)
+    return team?.members?.map(m => m.user) ?? []
+  }
+
   async deleteTimeEntry(teamId: string, timeEntryId: string): Promise<void> {
     await this.request<Record<string, never>>(`/team/${teamId}/time_entries/${timeEntryId}`, {
       method: 'DELETE',
@@ -796,5 +852,72 @@ export class ClickUpClient {
       `/workspaces/${workspaceId}/docs/${docId}/pages?content_format=text/md`,
     )
     return data.pages ?? []
+  }
+
+  async getGoals(teamId: string): Promise<Goal[]> {
+    const data = await this.request<{ goals: Goal[] }>(`/team/${teamId}/goal`)
+    return data.goals ?? []
+  }
+
+  async createGoal(
+    teamId: string,
+    name: string,
+    opts?: { description?: string; dueDate?: string; color?: string },
+  ): Promise<Goal> {
+    const body: Record<string, unknown> = { name, multiple_owners: true }
+    if (opts?.description) body.description = opts.description
+    if (opts?.dueDate) body.due_date = Number(opts.dueDate)
+    if (opts?.color) body.color = opts.color
+    const data = await this.request<{ goal: Goal }>(`/team/${teamId}/goal`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.goal
+  }
+
+  async updateGoal(
+    goalId: string,
+    updates: { name?: string; description?: string; color?: string },
+  ): Promise<Goal> {
+    const data = await this.request<{ goal: Goal }>(`/goal/${goalId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
+    return data.goal
+  }
+
+  async getKeyResults(goalId: string): Promise<KeyResult[]> {
+    const data = await this.request<{ goal: { key_results: KeyResult[] } }>(`/goal/${goalId}`)
+    return data.goal?.key_results ?? []
+  }
+
+  async createKeyResult(
+    goalId: string,
+    name: string,
+    type: string,
+    stepsEnd: number,
+  ): Promise<KeyResult> {
+    const data = await this.request<{ key_result: KeyResult }>(`/goal/${goalId}/key_result`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        type,
+        steps_start: 0,
+        steps_end: stepsEnd,
+        unit: type === 'number' ? 'items' : '%',
+      }),
+    })
+    return data.key_result
+  }
+
+  async updateKeyResult(
+    keyResultId: string,
+    updates: { steps_current?: number; note?: string },
+  ): Promise<KeyResult> {
+    const data = await this.request<{ key_result: KeyResult }>(`/key_result/${keyResultId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
+    return data.key_result
   }
 }

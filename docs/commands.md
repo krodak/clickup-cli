@@ -28,6 +28,10 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup auth`                           | Check authentication status           |
 | `cup folders <spaceId>`              | List folders in a space               |
 | `cup tags <spaceId>`                 | List tags in a space                  |
+| `cup members`                        | List workspace members                |
+| `cup fields <listId>`                | List custom fields for a list         |
+| `cup goals`                          | List goals in your workspace          |
+| `cup key-results <goalId>`           | List key results for a goal           |
 | `cup docs [query]`                   | List workspace docs                   |
 | `cup doc <docId> [pageId]`           | View a doc or doc page                |
 | `cup doc-pages <docId>`              | All pages in a doc with content       |
@@ -58,6 +62,18 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup doc-create <title>`             | Create a new doc                      |
 | `cup doc-page-create <docId> <name>` | Create a page in a doc                |
 | `cup doc-page-edit <docId> <pageId>` | Edit a doc page                       |
+| `cup tag-create <spaceId> <name>`    | Create a tag in a space               |
+| `cup tag-delete <spaceId> <name>`    | Delete a tag from a space             |
+| `cup members`                        | List workspace members                |
+| `cup fields <listId>`                | List custom fields for a list         |
+| `cup duplicate <taskId>`             | Duplicate a task                      |
+| `cup bulk status <s> <ids...>`       | Bulk update task status               |
+| `cup goals`                          | List goals in your workspace          |
+| `cup goal-create <name>`             | Create a goal                         |
+| `cup goal-update <goalId>`           | Update a goal                         |
+| `cup key-results <goalId>`           | List key results for a goal           |
+| `cup key-result-create <gId> <name>` | Create a key result on a goal         |
+| `cup key-result-update <krId>`       | Update a key result                   |
 | **Configuration**                    |                                       |
 | `cup config`                         | Manage CLI configuration              |
 | `cup completion <shell>`             | Output shell completion script        |
@@ -791,6 +807,178 @@ cup doc-page-edit abc123 page456 --name "Renamed" --json
 | `--name <text>` | one of two | New page name               |
 | `-c, --content` | one of two | New page content (markdown) |
 | `--json`        | no         | Force JSON output           |
+
+### `cup tag-create <spaceId> <name>`
+
+Create a tag in a space.
+
+```bash
+cup tag-create <spaceId> "bug"
+cup tag-create <spaceId> "urgent" --fg "#ffffff" --bg "#ff0000"
+cup tag-create <spaceId> "feature" --json
+```
+
+| Flag           | Required | Description            |
+| -------------- | -------- | ---------------------- |
+| `--fg <color>` | no       | Foreground color (hex) |
+| `--bg <color>` | no       | Background color (hex) |
+| `--json`       | no       | Force JSON output      |
+
+### `cup tag-delete <spaceId> <name>`
+
+Delete a tag from a space.
+
+```bash
+cup tag-delete <spaceId> "old-tag"
+cup tag-delete <spaceId> "deprecated" --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup members`
+
+List workspace members with username, ID, and email.
+
+```bash
+cup members
+cup members --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup fields <listId>`
+
+List custom fields available on a list. Shows field name, type, required status, and dropdown options.
+
+```bash
+cup fields <listId>
+cup fields <listId> --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup duplicate <taskId>`
+
+Duplicate a task. Creates a copy with "(copy)" appended to the name. Copies description, priority, tags, and time estimate. The new task is created in the same list.
+
+```bash
+cup duplicate abc123
+cup duplicate abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup bulk status <status> <taskIds...>`
+
+Update the status of multiple tasks at once. Failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk status "done" t1 t2 t3
+cup bulk status "in progress" t1 t2 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup goals`
+
+List goals in your workspace with name, progress percentage, and owner.
+
+```bash
+cup goals
+cup goals --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup goal-create <name>`
+
+Create a goal in your workspace.
+
+```bash
+cup goal-create "Ship v2"
+cup goal-create "Reduce bugs" -d "Track bug count reduction"
+cup goal-create "Q4 OKR" --color "#00ff00" --json
+```
+
+| Flag                       | Required | Description       |
+| -------------------------- | -------- | ----------------- |
+| `-d, --description <text>` | no       | Goal description  |
+| `--color <hex>`            | no       | Goal color (hex)  |
+| `--json`                   | no       | Force JSON output |
+
+### `cup goal-update <goalId>`
+
+Update a goal's name, description, or color.
+
+```bash
+cup goal-update g123 -n "Updated Goal Name"
+cup goal-update g123 -d "New description"
+cup goal-update g123 --color "#ff0000" --json
+```
+
+| Flag                       | Required | Description       |
+| -------------------------- | -------- | ----------------- |
+| `-n, --name <text>`        | no       | New goal name     |
+| `-d, --description <text>` | no       | New description   |
+| `--color <hex>`            | no       | New color (hex)   |
+| `--json`                   | no       | Force JSON output |
+
+### `cup key-results <goalId>`
+
+List key results for a goal with progress tracking.
+
+```bash
+cup key-results g123
+cup key-results g123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup key-result-create <goalId> <name>`
+
+Create a key result on a goal.
+
+```bash
+cup key-result-create g123 "Complete API endpoints"
+cup key-result-create g123 "Coverage" --type percentage --target 80
+cup key-result-create g123 "Ship features" --type number --target 10 --json
+```
+
+| Flag            | Required | Description                                      |
+| --------------- | -------- | ------------------------------------------------ |
+| `--type <type>` | no       | Type: `number` or `percentage` (default: number) |
+| `--target <n>`  | no       | Target value (default: 100)                      |
+| `--json`        | no       | Force JSON output                                |
+
+### `cup key-result-update <keyResultId>`
+
+Update a key result's progress or add a note.
+
+```bash
+cup key-result-update kr123 --progress 7
+cup key-result-update kr123 --note "Completed 3 more items"
+cup key-result-update kr123 --progress 10 --note "Done!" --json
+```
+
+| Flag             | Required | Description       |
+| ---------------- | -------- | ----------------- |
+| `--progress <n>` | no       | Current progress  |
+| `--note <text>`  | no       | Progress note     |
+| `--json`         | no       | Force JSON output |
 
 ---
 

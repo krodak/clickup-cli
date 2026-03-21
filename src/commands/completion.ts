@@ -11,7 +11,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags tag-create tag-delete checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders members fields duplicate bulk goals goal-create goal-update key-results key-result-create key-result-update config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -147,6 +147,44 @@ function bashCompletion(name: string): string {
     tags)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
+    tag-create)
+      COMPREPLY=($(compgen -W "--fg --bg --json" -- "$cur"))
+      ;;
+    tag-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    members)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    fields)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    duplicate)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    bulk)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "status" -- "$cur"))
+      fi
+      ;;
+    goals)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    goal-create)
+      COMPREPLY=($(compgen -W "-d --description --color --json" -- "$cur"))
+      ;;
+    goal-update)
+      COMPREPLY=($(compgen -W "-n --name -d --description --color --json" -- "$cur"))
+      ;;
+    key-results)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    key-result-create)
+      COMPREPLY=($(compgen -W "--type --target --json" -- "$cur"))
+      ;;
+    key-result-update)
+      COMPREPLY=($(compgen -W "--progress --note --json" -- "$cur"))
+      ;;
     folders)
       COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
       ;;
@@ -227,6 +265,18 @@ _${name}() {
     'doc-page-create:Create a page in a doc'
     'doc-page-edit:Edit a doc page'
     'tags:List tags in a space'
+    'tag-create:Create a tag in a space'
+    'tag-delete:Delete a tag from a space'
+    'members:List workspace members'
+    'fields:List custom fields for a list'
+    'duplicate:Duplicate a task'
+    'bulk:Bulk task operations'
+    'goals:List goals in your workspace'
+    'goal-create:Create a goal'
+    'goal-update:Update a goal'
+    'key-results:List key results for a goal'
+    'key-result-create:Create a key result on a goal'
+    'key-result-update:Update a key result'
     'folders:List folders in a space'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
@@ -571,6 +621,94 @@ _${name}() {
             '1:space_id:' \\
             '--json[Force JSON output]'
           ;;
+        tag-create)
+          _arguments \\
+            '1:space_id:' \\
+            '2:name:' \\
+            '--fg[Foreground color]:color:' \\
+            '--bg[Background color]:color:' \\
+            '--json[Force JSON output]'
+          ;;
+        tag-delete)
+          _arguments \\
+            '1:space_id:' \\
+            '2:name:' \\
+            '--json[Force JSON output]'
+          ;;
+        members)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        fields)
+          _arguments \\
+            '1:list_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        duplicate)
+          _arguments \\
+            '1:task_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        bulk)
+          local -a bulk_cmds
+          bulk_cmds=(
+            'status:Update status of multiple tasks'
+          )
+          _arguments -C \\
+            '1:bulk command:->bulk_cmd' \\
+            '*::bulk_arg:->bulk_args'
+          case $state in
+            bulk_cmd)
+              _describe 'bulk command' bulk_cmds
+              ;;
+            bulk_args)
+              case $words[1] in
+                status)
+                  _arguments '1:status:' '*:task_ids:' '--json[Force JSON output]'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
+        goals)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        goal-create)
+          _arguments \\
+            '1:name:' \\
+            '(-d --description)'{-d,--description}'[Goal description]:text:' \\
+            '--color[Goal color]:color:' \\
+            '--json[Force JSON output]'
+          ;;
+        goal-update)
+          _arguments \\
+            '1:goal_id:' \\
+            '(-n --name)'{-n,--name}'[New goal name]:text:' \\
+            '(-d --description)'{-d,--description}'[New description]:text:' \\
+            '--color[New color]:color:' \\
+            '--json[Force JSON output]'
+          ;;
+        key-results)
+          _arguments \\
+            '1:goal_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        key-result-create)
+          _arguments \\
+            '1:goal_id:' \\
+            '2:name:' \\
+            '--type[Key result type]:type:(number percentage)' \\
+            '--target[Target value]:number:' \\
+            '--json[Force JSON output]'
+          ;;
+        key-result-update)
+          _arguments \\
+            '1:key_result_id:' \\
+            '--progress[Current progress]:number:' \\
+            '--note[Progress note]:text:' \\
+            '--json[Force JSON output]'
+          ;;
         folders)
           _arguments \\
             '1:space_id:' \\
@@ -681,6 +819,18 @@ complete -c ${name} -n __fish_use_subcommand -a doc-pages -d 'List all pages in 
 complete -c ${name} -n __fish_use_subcommand -a doc-page-create -d 'Create a page in a doc'
 complete -c ${name} -n __fish_use_subcommand -a doc-page-edit -d 'Edit a doc page'
 complete -c ${name} -n __fish_use_subcommand -a tags -d 'List tags in a space'
+complete -c ${name} -n __fish_use_subcommand -a tag-create -d 'Create a tag in a space'
+complete -c ${name} -n __fish_use_subcommand -a tag-delete -d 'Delete a tag from a space'
+complete -c ${name} -n __fish_use_subcommand -a members -d 'List workspace members'
+complete -c ${name} -n __fish_use_subcommand -a fields -d 'List custom fields for a list'
+complete -c ${name} -n __fish_use_subcommand -a duplicate -d 'Duplicate a task'
+complete -c ${name} -n __fish_use_subcommand -a bulk -d 'Bulk task operations'
+complete -c ${name} -n __fish_use_subcommand -a goals -d 'List goals in your workspace'
+complete -c ${name} -n __fish_use_subcommand -a goal-create -d 'Create a goal'
+complete -c ${name} -n __fish_use_subcommand -a goal-update -d 'Update a goal'
+complete -c ${name} -n __fish_use_subcommand -a key-results -d 'List key results for a goal'
+complete -c ${name} -n __fish_use_subcommand -a key-result-create -d 'Create a key result on a goal'
+complete -c ${name} -n __fish_use_subcommand -a key-result-update -d 'Update a key result'
 complete -c ${name} -n __fish_use_subcommand -a folders -d 'List folders in a space'
 complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
@@ -842,6 +992,42 @@ complete -c ${name} -n '__fish_seen_subcommand_from doc' -l json -d 'Force JSON 
 complete -c ${name} -n '__fish_seen_subcommand_from doc-pages' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from tags' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l fg -d 'Foreground color'
+complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l bg -d 'Background color'
+complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from tag-delete' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from members' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from fields' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from duplicate' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status' -a status -d 'Update status of multiple tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from status; and __fish_seen_subcommand_from bulk' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from goals' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -s d -l description -d 'Goal description'
+complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -l color -d 'Goal color'
+complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -s n -l name -d 'New goal name'
+complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -s d -l description -d 'New description'
+complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -l color -d 'New color'
+complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from key-results' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l type -d 'Key result type' -a 'number percentage'
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l target -d 'Target value'
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l progress -d 'Current progress'
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l note -d 'Progress note'
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l name -d 'Filter by folder name'
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l json -d 'Force JSON output'

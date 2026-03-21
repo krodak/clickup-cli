@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results.'
 ---
 
 # ClickUp CLI (`cup`)
@@ -54,6 +54,10 @@ All commands support `--help` for full flag details.
 | `cup auth [--json]`                                                                                 | Check authentication status                        |
 | `cup folders <spaceId> [--name partial] [--json]`                                                   | Folders in a space (with their lists)              |
 | `cup tags <spaceId> [--json]`                                                                       | List tags available in a space                     |
+| `cup members [--json]`                                                                              | List workspace members                             |
+| `cup fields <listId> [--json]`                                                                      | List custom fields for a list                      |
+| `cup goals [--json]`                                                                                | List goals in your workspace                       |
+| `cup key-results <goalId> [--json]`                                                                 | List key results for a goal                        |
 | `cup docs [query] [--json]`                                                                         | List workspace docs (optionally filter by name)    |
 | `cup doc <docId> [pageId] [--json]`                                                                 | View doc metadata + page tree, or a specific page  |
 | `cup doc-pages <docId> [--json]`                                                                    | All pages in a doc with content                    |
@@ -93,6 +97,14 @@ All commands support `--help` for full flag details.
 | `cup doc-create <title> [-c content] [--json]`                                                                                                                                      | Create a new doc                                           |
 | `cup doc-page-create <docId> <name> [-c content] [--parent-page pageId] [--json]`                                                                                                   | Create a page in a doc                                     |
 | `cup doc-page-edit <docId> <pageId> [--name text] [-c content] [--json]`                                                                                                            | Edit a doc page                                            |
+| `cup tag-create <spaceId> <name> [--fg color] [--bg color] [--json]`                                                                                                                | Create a tag in a space                                    |
+| `cup tag-delete <spaceId> <name> [--json]`                                                                                                                                          | Delete a tag from a space                                  |
+| `cup duplicate <taskId> [--json]`                                                                                                                                                   | Duplicate a task (read + create copy)                      |
+| `cup bulk status <status> <taskIds...> [--json]`                                                                                                                                    | Bulk update status of multiple tasks                       |
+| `cup goal-create <name> [-d desc] [--color hex] [--json]`                                                                                                                           | Create a goal                                              |
+| `cup goal-update <goalId> [-n name] [-d desc] [--color hex] [--json]`                                                                                                               | Update a goal                                              |
+| `cup key-result-create <goalId> <name> [--type t] [--target n] [--json]`                                                                                                            | Create a key result on a goal                              |
+| `cup key-result-update <keyResultId> [--progress n] [--note text] [--json]`                                                                                                         | Update a key result                                        |
 | `cup config get <key>` / `cup config set <key> <value>` / `cup config path`                                                                                                         | Manage CLI config (keys: apiToken, teamId, sprintFolderId) |
 | `cup completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)                          |
 
@@ -127,6 +139,18 @@ All commands support `--help` for full flag details.
 | `cup open`                  | Tries task ID first, falls back to name search                                                                                                                                                                                                            |
 | `cup checklist`             | Full CRUD for task checklists: view, create, delete, add-item, edit-item, delete-item                                                                                                                                                                     |
 | `cup tags`                  | List available tags in a space. Useful for discovering valid tag names before using `cup tag`                                                                                                                                                             |
+| `cup tag-create`            | Create a new tag in a space. Optional `--fg` and `--bg` for colors                                                                                                                                                                                        |
+| `cup tag-delete`            | Delete a tag from a space                                                                                                                                                                                                                                 |
+| `cup members`               | List workspace members with username, ID, and email                                                                                                                                                                                                       |
+| `cup fields`                | List custom fields on a list. Shows field type, required status, and dropdown options                                                                                                                                                                     |
+| `cup duplicate`             | Duplicate a task. Creates a copy with name, description, priority, tags, and time estimate                                                                                                                                                                |
+| `cup bulk status`           | Update status of multiple tasks at once. Reports failures without stopping                                                                                                                                                                                |
+| `cup goals`                 | List goals with progress percentage and owner                                                                                                                                                                                                             |
+| `cup goal-create`           | Create a goal with optional description and color                                                                                                                                                                                                         |
+| `cup goal-update`           | Update goal name, description, or color                                                                                                                                                                                                                   |
+| `cup key-results`           | List key results for a goal with progress tracking                                                                                                                                                                                                        |
+| `cup key-result-create`     | Create a key result (number or percentage type) with a target value                                                                                                                                                                                       |
+| `cup key-result-update`     | Update key result progress or add a note                                                                                                                                                                                                                  |
 | `cup time`                  | Track time: start/stop timer, log entries, list history, update/delete entries. Duration format: "2h", "30m", "1h30m"                                                                                                                                     |
 | `cup time update`           | Update a time entry description or duration                                                                                                                                                                                                               |
 | `cup time delete`           | Delete a time entry                                                                                                                                                                                                                                       |
@@ -240,8 +264,30 @@ cup folders <spaceId>                # folders with their lists
 cup folders <spaceId> --name "sprint"  # filter folders by name
 cup lists <spaceId>                  # lists in a space (needs ID from cup spaces)
 cup sprints                          # all sprints across folders
+cup members                          # workspace members
+cup fields <listId>                  # custom fields on a list
 cup auth                             # verify token works
 cup config set sprintFolderId <id>   # pin sprint detection to a folder
+```
+
+### Bulk operations
+
+```bash
+cup duplicate abc123                 # duplicate a task
+cup bulk status "done" t1 t2 t3     # mark multiple tasks done
+cup tag-create <spaceId> "urgent"    # create a space tag
+cup tag-delete <spaceId> "old-tag"   # delete a space tag
+```
+
+### Goals and key results
+
+```bash
+cup goals                            # list all goals
+cup goal-create "Ship v2" -d "Release version 2"
+cup goal-update g123 -n "Updated name"
+cup key-results g123                 # key results for a goal
+cup key-result-create g123 "API coverage" --type percentage --target 80
+cup key-result-update kr456 --progress 60 --note "On track"
 ```
 
 ### Standup

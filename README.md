@@ -134,20 +134,20 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Tasks
 
-| Feature              | Command                 | Status             |
-| -------------------- | ----------------------- | ------------------ |
-| List my tasks        | `cup tasks`             | :white_check_mark: |
-| Get task details     | `cup task <id>`         | :white_check_mark: |
-| Create task          | `cup create`            | :white_check_mark: |
-| Update task          | `cup update <id>`       | :white_check_mark: |
-| Delete task          | `cup delete <id>`       | :white_check_mark: |
-| Search tasks         | `cup search <query>`    | :white_check_mark: |
-| Open in browser      | `cup open <query>`      | :white_check_mark: |
-| List subtasks        | `cup subtasks <id>`     | :white_check_mark: |
-| Assign / unassign    | `cup assign <id>`       | :white_check_mark: |
-| Duplicate task       | `cup duplicate <id>`    | :construction:     |
-| Create from template | `cup create --template` | :construction:     |
-| Bulk operations      | `cup bulk`              | :construction:     |
+| Feature              | Command              | Status             |
+| -------------------- | -------------------- | ------------------ |
+| List my tasks        | `cup tasks`          | :white_check_mark: |
+| Get task details     | `cup task <id>`      | :white_check_mark: |
+| Create task          | `cup create`         | :white_check_mark: |
+| Update task          | `cup update <id>`    | :white_check_mark: |
+| Delete task          | `cup delete <id>`    | :white_check_mark: |
+| Search tasks         | `cup search <query>` | :white_check_mark: |
+| Open in browser      | `cup open <query>`   | :white_check_mark: |
+| List subtasks        | `cup subtasks <id>`  | :white_check_mark: |
+| Assign / unassign    | `cup assign <id>`    | :white_check_mark: |
+| Duplicate task       | `cup duplicate <id>` | :white_check_mark: |
+| Create from template |                      | :no_entry_sign:    |
+| Bulk operations      | `cup bulk status`    | :white_check_mark: |
 
 ### Dependencies & Relations
 
@@ -203,15 +203,16 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | --------------------- | ------------------------- | ------------------ |
 | Set field value       | `cup field <id> --set`    | :white_check_mark: |
 | Remove field value    | `cup field <id> --remove` | :white_check_mark: |
-| List available fields | `cup fields <listId>`     | :construction:     |
+| List available fields | `cup fields <listId>`     | :white_check_mark: |
 
 ### Tags
 
-| Feature                 | Command              | Status             |
-| ----------------------- | -------------------- | ------------------ |
-| Add/remove tag on task  | `cup tag <id>`       | :white_check_mark: |
-| List space tags         | `cup tags <spaceId>` | :white_check_mark: |
-| Create/delete space tag |                      | :construction:     |
+| Feature                | Command                           | Status             |
+| ---------------------- | --------------------------------- | ------------------ |
+| Add/remove tag on task | `cup tag <id>`                    | :white_check_mark: |
+| List space tags        | `cup tags <spaceId>`              | :white_check_mark: |
+| Create space tag       | `cup tag-create <spaceId> <name>` | :white_check_mark: |
+| Delete space tag       | `cup tag-delete <spaceId> <name>` | :white_check_mark: |
 
 ### Time Tracking
 
@@ -233,15 +234,18 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | List lists   | `cup lists <spaceId>`   | :white_check_mark: |
 | Check auth   | `cup auth`              | :white_check_mark: |
 | List folders | `cup folders <spaceId>` | :white_check_mark: |
-| List members | `cup members`           | :construction:     |
+| List members | `cup members`           | :white_check_mark: |
 
 ### Goals & Key Results
 
-| Feature            | Command     | Status         |
-| ------------------ | ----------- | -------------- |
-| List goals         | `cup goals` | :construction: |
-| Create/update goal |             | :construction: |
-| Key results CRUD   |             | :construction: |
+| Feature           | Command                              | Status             |
+| ----------------- | ------------------------------------ | ------------------ |
+| List goals        | `cup goals`                          | :white_check_mark: |
+| Create goal       | `cup goal-create <name>`             | :white_check_mark: |
+| Update goal       | `cup goal-update <goalId>`           | :white_check_mark: |
+| List key results  | `cup key-results <goalId>`           | :white_check_mark: |
+| Create key result | `cup key-result-create <goalId> <n>` | :white_check_mark: |
+| Update key result | `cup key-result-update <krId>`       | :white_check_mark: |
 
 ### Docs
 
@@ -265,6 +269,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 | Feature               | Why                                                                         |
 | --------------------- | --------------------------------------------------------------------------- |
+| Create from template  | No public API for task templates.                                           |
 | Webhooks              | Server-side. A CLI can't listen for events.                                 |
 | OAuth flow            | `cup init` already handles auth with API tokens.                            |
 | Guest/ACL             | Enterprise admin. Not what you reach for in a terminal.                     |
