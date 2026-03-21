@@ -1,4 +1,5 @@
 const BASE_URL = 'https://api.clickup.com/api/v2'
+const BASE_URL_V3 = 'https://api.clickup.com/api/v3'
 const MAX_PAGES = 100
 
 export interface CustomField {
@@ -188,6 +189,29 @@ export interface Attachment {
   url: string
 }
 
+export interface Doc {
+  id: string
+  name: string
+  workspace_id: number
+  date_created?: string
+  date_updated?: string
+  pages?: DocPage[]
+}
+
+export interface DocPage {
+  id: string
+  doc_id: string
+  name: string
+  content?: string
+  parent_page_id?: string
+  date_created?: number
+  date_updated?: number
+  creator_id?: number
+  archived?: boolean
+  deleted?: boolean
+  pages?: DocPage[]
+}
+
 interface ClientConfig {
   apiToken: string
   teamId?: string
@@ -245,6 +269,30 @@ export class ClickUpClient {
       const raw = data.err ?? data.error ?? data.ECODE ?? res.statusText
       const errMsg = typeof raw === 'string' ? raw : JSON.stringify(raw)
       throw new Error(`ClickUp API error ${res.status}: ${errMsg}`)
+    }
+    return data as T
+  }
+
+  private async requestV3<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const res = await fetch(`${BASE_URL_V3}${path}`, {
+      ...options,
+      signal: AbortSignal.timeout(30_000),
+      headers: {
+        Authorization: this.apiToken,
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...options.headers,
+      },
+    })
+    let data: Record<string, unknown>
+    try {
+      data = (await res.json()) as Record<string, unknown>
+    } catch {
+      throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
+    }
+    if (!res.ok) {
+      const raw = data.err ?? data.error ?? data.ECODE ?? res.statusText
+      const msg = typeof raw === 'string' ? raw : JSON.stringify(raw)
+      throw new Error(`ClickUp API error ${res.status}: ${msg}`)
     }
     return data as T
   }
@@ -652,5 +700,62 @@ export class ClickUpClient {
       throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
     }
     return data
+  }
+
+  async getDocs(workspaceId: string): Promise<Doc[]> {
+    const data = await this.requestV3<{ docs: Doc[] }>(`/workspaces/${workspaceId}/docs`)
+    return data.docs ?? []
+  }
+
+  async getDocPage(workspaceId: string, docId: string, pageId: string): Promise<DocPage> {
+    return this.requestV3<DocPage>(
+      `/workspaces/${workspaceId}/docs/${docId}/pages/${pageId}?content_format=text/md`,
+    )
+  }
+
+  async createDoc(
+    workspaceId: string,
+    title: string,
+    content?: string,
+    parentId?: string,
+  ): Promise<Doc> {
+    const body: Record<string, unknown> = { title }
+    if (content) body.content = content
+    if (parentId) {
+      body.parent_id = parentId
+      body.parent_type = 'doc'
+    }
+    return this.requestV3<Doc>(`/workspaces/${workspaceId}/docs`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async createDocPage(
+    workspaceId: string,
+    docId: string,
+    name: string,
+    content?: string,
+    parentPageId?: string,
+  ): Promise<DocPage> {
+    const body: Record<string, unknown> = { name, content_format: 'text/md' }
+    if (content) body.content = content
+    if (parentPageId) body.parent_page_id = parentPageId
+    return this.requestV3<DocPage>(`/workspaces/${workspaceId}/docs/${docId}/pages`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async editDocPage(
+    workspaceId: string,
+    docId: string,
+    pageId: string,
+    updates: { name?: string; content?: string },
+  ): Promise<DocPage> {
+    return this.requestV3<DocPage>(`/workspaces/${workspaceId}/docs/${docId}/pages/${pageId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
   }
 }

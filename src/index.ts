@@ -68,6 +68,8 @@ import {
 } from './commands/replies.js'
 import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
+import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
+import { getDocPage, createDoc, createDocPage, editDocPage } from './commands/doc.js'
 import {
   startTimer,
   stopTimer,
@@ -948,6 +950,109 @@ timeCmd
         console.log(formatTimeEntriesMarkdown(entries))
       }
     }),
+  )
+
+program
+  .command('docs [query]')
+  .description('List workspace docs (optionally filter by name)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (query: string | undefined, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const docs = await listDocs(config, query)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(docs, null, 2))
+      } else if (isTTY()) {
+        console.log(formatDocs(docs))
+      } else {
+        console.log(formatDocsMarkdown(docs))
+      }
+    }),
+  )
+
+program
+  .command('doc <docId> <pageId>')
+  .description('View a doc page')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (docId: string, pageId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const page = await getDocPage(config, docId, pageId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(page, null, 2))
+      } else {
+        if (page.name) console.log(`# ${page.name}\n`)
+        console.log(page.content ?? '')
+      }
+    }),
+  )
+
+program
+  .command('doc-create <title>')
+  .description('Create a new doc')
+  .option('-c, --content <text>', 'Initial content (markdown)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (title: string, opts: { content?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const result = await createDoc(config, title, opts.content)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(result, null, 2))
+      } else {
+        console.log(`Created doc "${result.title}" (${result.id})`)
+      }
+    }),
+  )
+
+program
+  .command('doc-page-create <docId> <name>')
+  .description('Create a page in a doc')
+  .option('-c, --content <text>', 'Page content (markdown)')
+  .option('--parent-page <pageId>', 'Parent page ID for nesting')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        docId: string,
+        name: string,
+        opts: { content?: string; parentPage?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        const page = await createDocPage(config, docId, name, opts.content, opts.parentPage)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(page, null, 2))
+        } else {
+          console.log(`Created page "${page.name}" (${page.id}) in doc ${docId}`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('doc-page-edit <docId> <pageId>')
+  .description('Edit a doc page')
+  .option('--name <text>', 'New page name')
+  .option('-c, --content <text>', 'New page content (markdown)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        docId: string,
+        pageId: string,
+        opts: { name?: string; content?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        const page = await editDocPage(config, docId, pageId, {
+          name: opts.name,
+          content: opts.content,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(page, null, 2))
+        } else {
+          console.log(`Updated page "${page.name}" (${page.id})`)
+        }
+      },
+    ),
   )
 
 const configCmd = program.command('config').description('Manage CLI configuration')

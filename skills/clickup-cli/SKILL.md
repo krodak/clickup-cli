@@ -52,6 +52,8 @@ All commands support `--help` for full flag details.
 | `cup lists <spaceId> [--name partial] [--json]`                                                     | Lists in a space (including folder lists)          |
 | `cup open <query> [--json]`                                                                         | Open task in browser by ID or name                 |
 | `cup auth [--json]`                                                                                 | Check authentication status                        |
+| `cup docs [query] [--json]`                                                                         | List workspace docs (optionally filter by name)    |
+| `cup doc <docId> <pageId> [--json]`                                                                 | View a doc page (markdown content)                 |
 
 ### Write
 
@@ -83,6 +85,9 @@ All commands support `--help` for full flag details.
 | `cup time status [--json]`                                                                                                                                                          | Show currently running timer                               |
 | `cup time log <taskId> <duration> [-d desc] [--json]`                                                                                                                               | Log manual time entry (e.g. "2h", "30m")                   |
 | `cup time list [--days n] [--task id] [--json]`                                                                                                                                     | List recent time entries                                   |
+| `cup doc-create <title> [-c content] [--json]`                                                                                                                                      | Create a new doc                                           |
+| `cup doc-page-create <docId> <name> [-c content] [--parent-page pageId] [--json]`                                                                                                   | Create a page in a doc                                     |
+| `cup doc-page-edit <docId> <pageId> [--name text] [-c content] [--json]`                                                                                                            | Edit a doc page                                            |
 | `cup config get <key>` / `cup config set <key> <value>` / `cup config path`                                                                                                         | Manage CLI config (keys: apiToken, teamId, sprintFolderId) |
 | `cup completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)                          |
 
@@ -124,6 +129,11 @@ All commands support `--help` for full flag details.
 | `cup link` + custom IDs     | Both IDs must be the same type (both custom or both native). Mixing may not work                                                                                                                                                                          |
 | `cup link`                  | Link/unlink tasks (different from dependencies)                                                                                                                                                                                                           |
 | `cup attach`                | Upload files to tasks. Attachments shown in `cup task` detail view                                                                                                                                                                                        |
+| `cup docs`                  | List and search workspace docs by name                                                                                                                                                                                                                    |
+| `cup doc`                   | View a doc page content (markdown)                                                                                                                                                                                                                        |
+| `cup doc-create`            | Create a new doc with optional initial content                                                                                                                                                                                                            |
+| `cup doc-page-create`       | Create a page in a doc, optionally nested under a parent page                                                                                                                                                                                             |
+| `cup doc-page-edit`         | Edit a doc page name or content                                                                                                                                                                                                                           |
 | `cup task`                  | Shows custom fields, checklists, attachments, dependencies, and linked tasks in detail view                                                                                                                                                               |
 | `cup lists`                 | Discovers list IDs needed for `--list` and `cup create -l`                                                                                                                                                                                                |
 | Errors                      | stderr with exit code 1                                                                                                                                                                                                                                   |
@@ -193,6 +203,20 @@ cup time stop                                      # stop timer
 cup time log abc123def 2h -d "Code review"         # log manual entry
 cup time list --days 7                             # recent entries
 cup delete abc123def --confirm          # irreversible!
+```
+
+### Work with docs
+
+```bash
+cup docs                                       # list all docs
+cup docs "design"                              # search docs by name
+cup doc <docId> <pageId>                       # view page content
+cup doc-create "Architecture Notes"            # create a doc
+cup doc-create "Notes" -c "# Draft"            # create with content
+cup doc-page-create <docId> "New Section"      # add page to doc
+cup doc-page-create <docId> "Sub" --parent-page <pageId>  # nested page
+cup doc-page-edit <docId> <pageId> --name "Renamed"       # rename page
+cup doc-page-edit <docId> <pageId> -c "# Updated content" # edit content
 ```
 
 ### Discover workspace structure

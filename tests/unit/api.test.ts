@@ -835,6 +835,90 @@ describe('task links', () => {
   })
 })
 
+describe('Docs API v3 methods', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getDocs sends GET to v3 /workspaces/{id}/docs', async () => {
+    const docs = [{ id: 'd1', name: 'My Doc', workspace_id: 1 }]
+    mockFetch.mockReturnValue(mockResponse({ docs }))
+    const result = await client.getDocs('w1')
+    expect(result).toEqual(docs)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs')
+  })
+
+  it('getDocs returns empty array when docs is missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getDocs('w1')
+    expect(result).toEqual([])
+  })
+
+  it('getDocPage sends GET to v3 /workspaces/{id}/docs/{docId}/pages/{pageId}', async () => {
+    const page = { id: 'p1', doc_id: 'd1', name: 'Page 1', content: '# Hello' }
+    mockFetch.mockReturnValue(mockResponse(page))
+    const result = await client.getDocPage('w1', 'd1', 'p1')
+    expect(result).toEqual(page)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pages/p1')
+    expect(url).toContain('content_format=text/md')
+  })
+
+  it('createDoc sends POST to v3 /workspaces/{id}/docs', async () => {
+    const doc = { id: 'd1', name: 'New Doc', workspace_id: 1 }
+    mockFetch.mockReturnValue(mockResponse(doc))
+    const result = await client.createDoc('w1', 'New Doc', '# Content')
+    expect(result).toEqual(doc)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('https://api.clickup.com/api/v3/workspaces/w1/docs'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.title).toBe('New Doc')
+    expect(body.content).toBe('# Content')
+  })
+
+  it('createDocPage sends POST to v3 /workspaces/{id}/docs/{docId}/pages', async () => {
+    const page = { id: 'p1', doc_id: 'd1', name: 'Page 1' }
+    mockFetch.mockReturnValue(mockResponse(page))
+    const result = await client.createDocPage('w1', 'd1', 'Page 1', '# Content', 'p0')
+    expect(result).toEqual(page)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pages')
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.name).toBe('Page 1')
+    expect(body.content).toBe('# Content')
+    expect(body.parent_page_id).toBe('p0')
+    expect(body.content_format).toBe('text/md')
+  })
+
+  it('editDocPage sends PUT to v3 /workspaces/{id}/docs/{docId}/pages/{pageId}', async () => {
+    const page = { id: 'p1', doc_id: 'd1', name: 'Updated' }
+    mockFetch.mockReturnValue(mockResponse(page))
+    const result = await client.editDocPage('w1', 'd1', 'p1', { name: 'Updated', content: '# New' })
+    expect(result).toEqual(page)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pages/p1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ name: 'Updated', content: '# New' }),
+      }),
+    )
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

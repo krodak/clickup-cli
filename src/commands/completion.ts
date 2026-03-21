@@ -11,7 +11,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time docs doc doc-create doc-page-create doc-page-edit config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -135,6 +135,21 @@ function bashCompletion(name: string): string {
     attach)
       COMPREPLY=($(compgen -f -- "$cur"))
       ;;
+    docs)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    doc)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    doc-create)
+      COMPREPLY=($(compgen -W "-c --content --json" -- "$cur"))
+      ;;
+    doc-page-create)
+      COMPREPLY=($(compgen -W "-c --content --parent-page --json" -- "$cur"))
+      ;;
+    doc-page-edit)
+      COMPREPLY=($(compgen -W "--name -c --content --json" -- "$cur"))
+      ;;
     config)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "get set path" -- "$cur"))
@@ -196,6 +211,11 @@ _${name}() {
     'reply:Reply to a comment'
     'link:Add or remove a link between two tasks'
     'attach:Upload a file attachment to a task'
+    'docs:List workspace docs'
+    'doc:View a doc page'
+    'doc-create:Create a new doc'
+    'doc-page-create:Create a page in a doc'
+    'doc-page-edit:Edit a doc page'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -518,6 +538,39 @@ _${name}() {
             '2:file_path:_files' \\
             '--json[Force JSON output]'
           ;;
+        docs)
+          _arguments \\
+            '1:query:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc)
+          _arguments \\
+            '1:doc_id:' \\
+            '2:page_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc-create)
+          _arguments \\
+            '1:title:' \\
+            '(-c --content)'{-c,--content}'[Initial content]:text:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc-page-create)
+          _arguments \\
+            '1:doc_id:' \\
+            '2:name:' \\
+            '(-c --content)'{-c,--content}'[Page content]:text:' \\
+            '--parent-page[Parent page ID]:page_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc-page-edit)
+          _arguments \\
+            '1:doc_id:' \\
+            '2:page_id:' \\
+            '--name[New page name]:text:' \\
+            '(-c --content)'{-c,--content}'[New page content]:text:' \\
+            '--json[Force JSON output]'
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -593,6 +646,11 @@ complete -c ${name} -n __fish_use_subcommand -a replies -d 'List threaded replie
 complete -c ${name} -n __fish_use_subcommand -a reply -d 'Reply to a comment'
 complete -c ${name} -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
 complete -c ${name} -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
+complete -c ${name} -n __fish_use_subcommand -a docs -d 'List workspace docs'
+complete -c ${name} -n __fish_use_subcommand -a doc -d 'View a doc page'
+complete -c ${name} -n __fish_use_subcommand -a doc-create -d 'Create a new doc'
+complete -c ${name} -n __fish_use_subcommand -a doc-page-create -d 'Create a page in a doc'
+complete -c ${name} -n __fish_use_subcommand -a doc-page-edit -d 'Edit a doc page'
 complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -745,6 +803,21 @@ complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -s m -l messag
 complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'
 complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l unresolved -d 'Mark comment as unresolved'
 complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from docs' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -s c -l content -d 'Initial content'
+complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -s c -l content -d 'Page content'
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -l parent-page -d 'Parent page ID'
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -l name -d 'New page name'
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -s c -l content -d 'New page content'
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'

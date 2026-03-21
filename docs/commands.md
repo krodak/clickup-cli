@@ -6,51 +6,56 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 
 ## Quick Reference
 
-| Command                          | Description                           |
-| -------------------------------- | ------------------------------------- |
-| `cup init`                       | First-time setup wizard               |
-| **Read**                         |                                       |
-| `cup tasks`                      | List tasks assigned to me             |
-| `cup sprint`                     | My tasks in the active sprint         |
-| `cup sprints`                    | List all sprints across folders       |
-| `cup assigned`                   | My tasks grouped by pipeline stage    |
-| `cup inbox`                      | Recently updated tasks assigned to me |
-| `cup task <id>`                  | Get task details                      |
-| `cup subtasks <id>`              | List subtasks of a task               |
-| `cup comments <id>`              | List comments on a task               |
-| `cup activity <id>`              | Task details + comment history        |
-| `cup lists <spaceId>`            | List all lists in a space             |
-| `cup spaces`                     | List spaces in workspace              |
-| `cup open <query>`               | Open a task in the browser            |
-| `cup search <query>`             | Search my tasks by name               |
-| `cup summary`                    | Daily standup helper                  |
-| `cup overdue`                    | Tasks past their due date             |
-| `cup auth`                       | Check authentication status           |
-| **Write**                        |                                       |
-| `cup update <id>`                | Update a task                         |
-| `cup create`                     | Create a new task                     |
-| `cup delete <id>`                | Delete a task                         |
-| `cup field <id>`                 | Set or remove custom field values     |
-| `cup comment <id>`               | Post a comment on a task              |
-| `cup comment-edit <commentId>`   | Edit an existing comment              |
-| `cup comment-delete <commentId>` | Delete a comment                      |
-| `cup replies <commentId>`        | List threaded replies on a comment    |
-| `cup reply <commentId>`          | Reply to a comment                    |
-| `cup link <taskId> <linksTo>`    | Add or remove a link between tasks    |
-| `cup attach <taskId> <filePath>` | Upload a file attachment to a task    |
-| `cup assign <id>`                | Assign or unassign users              |
-| `cup depend <id>`                | Add or remove task dependencies       |
-| `cup move <id>`                  | Add or remove a task from a list      |
-| `cup tag <id>`                   | Add or remove tags on a task          |
-| `cup checklist`                  | Manage checklists on tasks            |
-| `cup time start <taskId>`        | Start tracking time on a task         |
-| `cup time stop`                  | Stop the running timer                |
-| `cup time status`                | Show the currently running timer      |
-| `cup time log <taskId> <dur>`    | Log a manual time entry               |
-| `cup time list`                  | List recent time entries              |
-| **Configuration**                |                                       |
-| `cup config`                     | Manage CLI configuration              |
-| `cup completion <shell>`         | Output shell completion script        |
+| Command                              | Description                           |
+| ------------------------------------ | ------------------------------------- |
+| `cup init`                           | First-time setup wizard               |
+| **Read**                             |                                       |
+| `cup tasks`                          | List tasks assigned to me             |
+| `cup sprint`                         | My tasks in the active sprint         |
+| `cup sprints`                        | List all sprints across folders       |
+| `cup assigned`                       | My tasks grouped by pipeline stage    |
+| `cup inbox`                          | Recently updated tasks assigned to me |
+| `cup task <id>`                      | Get task details                      |
+| `cup subtasks <id>`                  | List subtasks of a task               |
+| `cup comments <id>`                  | List comments on a task               |
+| `cup activity <id>`                  | Task details + comment history        |
+| `cup lists <spaceId>`                | List all lists in a space             |
+| `cup spaces`                         | List spaces in workspace              |
+| `cup open <query>`                   | Open a task in the browser            |
+| `cup search <query>`                 | Search my tasks by name               |
+| `cup summary`                        | Daily standup helper                  |
+| `cup overdue`                        | Tasks past their due date             |
+| `cup auth`                           | Check authentication status           |
+| `cup docs [query]`                   | List workspace docs                   |
+| `cup doc <docId> <pageId>`           | View a doc page                       |
+| **Write**                            |                                       |
+| `cup update <id>`                    | Update a task                         |
+| `cup create`                         | Create a new task                     |
+| `cup delete <id>`                    | Delete a task                         |
+| `cup field <id>`                     | Set or remove custom field values     |
+| `cup comment <id>`                   | Post a comment on a task              |
+| `cup comment-edit <commentId>`       | Edit an existing comment              |
+| `cup comment-delete <commentId>`     | Delete a comment                      |
+| `cup replies <commentId>`            | List threaded replies on a comment    |
+| `cup reply <commentId>`              | Reply to a comment                    |
+| `cup link <taskId> <linksTo>`        | Add or remove a link between tasks    |
+| `cup attach <taskId> <filePath>`     | Upload a file attachment to a task    |
+| `cup assign <id>`                    | Assign or unassign users              |
+| `cup depend <id>`                    | Add or remove task dependencies       |
+| `cup move <id>`                      | Add or remove a task from a list      |
+| `cup tag <id>`                       | Add or remove tags on a task          |
+| `cup checklist`                      | Manage checklists on tasks            |
+| `cup time start <taskId>`            | Start tracking time on a task         |
+| `cup time stop`                      | Stop the running timer                |
+| `cup time status`                    | Show the currently running timer      |
+| `cup time log <taskId> <dur>`        | Log a manual time entry               |
+| `cup time list`                      | List recent time entries              |
+| `cup doc-create <title>`             | Create a new doc                      |
+| `cup doc-page-create <docId> <name>` | Create a page in a doc                |
+| `cup doc-page-edit <docId> <pageId>` | Edit a doc page                       |
+| **Configuration**                    |                                       |
+| `cup config`                         | Manage CLI configuration              |
+| `cup completion <shell>`             | Output shell completion script        |
 
 ---
 
@@ -265,6 +270,33 @@ Check authentication status. Validates your API token and shows your user info.
 cup auth
 cup auth --json
 ```
+
+### `cup docs [query]`
+
+List docs in your workspace. Optionally filter by name.
+
+```bash
+cup docs
+cup docs "design"
+cup docs --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup doc <docId> <pageId>`
+
+View a doc page. Returns markdown content.
+
+```bash
+cup doc abc123 page456
+cup doc abc123 page456 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
 
 ---
 
@@ -633,6 +665,55 @@ cup time list --days 7 --json
 | `--days <n>`      | no       | Number of days to look back (default: 7) |
 | `--task <taskId>` | no       | Filter entries by task ID                |
 | `--json`          | no       | Force JSON output                        |
+
+### `cup doc-create <title>`
+
+Create a new doc in your workspace.
+
+```bash
+cup doc-create "Architecture Notes"
+cup doc-create "Draft" -c "# Initial content"
+cup doc-create "Plan" --json
+```
+
+| Flag            | Required | Description                |
+| --------------- | -------- | -------------------------- |
+| `-c, --content` | no       | Initial content (markdown) |
+| `--json`        | no       | Force JSON output          |
+
+### `cup doc-page-create <docId> <name>`
+
+Create a page in a doc. Optionally nest under a parent page.
+
+```bash
+cup doc-page-create abc123 "Getting Started"
+cup doc-page-create abc123 "Setup" -c "# Setup guide"
+cup doc-page-create abc123 "Sub Section" --parent-page page456
+cup doc-page-create abc123 "Page" --json
+```
+
+| Flag                     | Required | Description                |
+| ------------------------ | -------- | -------------------------- |
+| `-c, --content`          | no       | Page content (markdown)    |
+| `--parent-page <pageId>` | no       | Parent page ID for nesting |
+| `--json`                 | no       | Force JSON output          |
+
+### `cup doc-page-edit <docId> <pageId>`
+
+Edit a doc page name or content. Provide at least `--name` or `--content`.
+
+```bash
+cup doc-page-edit abc123 page456 --name "Renamed Section"
+cup doc-page-edit abc123 page456 -c "# Updated content"
+cup doc-page-edit abc123 page456 --name "New Name" -c "# New body"
+cup doc-page-edit abc123 page456 --name "Renamed" --json
+```
+
+| Flag            | Required   | Description                 |
+| --------------- | ---------- | --------------------------- |
+| `--name <text>` | one of two | New page name               |
+| `-c, --content` | one of two | New page content (markdown) |
+| `--json`        | no         | Force JSON output           |
 
 ---
 
