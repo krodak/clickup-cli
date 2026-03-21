@@ -61,6 +61,8 @@ All commands support `--help` for full flag details.
 | `cup docs [query] [--json]`                                                                         | List workspace docs (optionally filter by name)    |
 | `cup doc <docId> [pageId] [--json]`                                                                 | View doc metadata + page tree, or a specific page  |
 | `cup doc-pages <docId> [--json]`                                                                    | All pages in a doc with content                    |
+| `cup task-types [--json]`                                                                           | List custom task types in your workspace           |
+| `cup templates [--json]`                                                                            | List task templates in your workspace              |
 
 ### Write
 
@@ -105,6 +107,12 @@ All commands support `--help` for full flag details.
 | `cup goal-update <goalId> [-n name] [-d desc] [--color hex] [--json]`                                                                                                               | Update a goal                                              |
 | `cup key-result-create <goalId> <name> [--type t] [--target n] [--json]`                                                                                                            | Create a key result on a goal                              |
 | `cup key-result-update <keyResultId> [--progress n] [--note text] [--json]`                                                                                                         | Update a key result                                        |
+| `cup goal-delete <goalId> [--json]`                                                                                                                                                 | Delete a goal                                              |
+| `cup key-result-delete <keyResultId> [--json]`                                                                                                                                      | Delete a key result                                        |
+| `cup doc-delete <docId> [--json]`                                                                                                                                                   | Delete a doc                                               |
+| `cup doc-page-delete <docId> <pageId> [--json]`                                                                                                                                     | Delete a doc page                                          |
+| `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c] [--json]`                                                                                                    | Update a tag in a space                                    |
+| `cup create -n name -l listId --template <templateId> [--json]`                                                                                                                     | Create task from a template                                |
 | `cup config get <key>` / `cup config set <key> <value>` / `cup config path`                                                                                                         | Manage CLI config (keys: apiToken, teamId, sprintFolderId) |
 | `cup completion <shell>`                                                                                                                                                            | Shell completions (bash/zsh/fish)                          |
 
@@ -168,6 +176,14 @@ All commands support `--help` for full flag details.
 | `cup doc-create`            | Create a new doc with optional initial content                                                                                                                                                                                                            |
 | `cup doc-page-create`       | Create a page in a doc, optionally nested under a parent page                                                                                                                                                                                             |
 | `cup doc-page-edit`         | Edit a doc page name or content                                                                                                                                                                                                                           |
+| `cup doc-delete`            | Delete a doc                                                                                                                                                                                                                                              |
+| `cup doc-page-delete`       | Delete a doc page                                                                                                                                                                                                                                         |
+| `cup goal-delete`           | Delete a goal                                                                                                                                                                                                                                             |
+| `cup key-result-delete`     | Delete a key result                                                                                                                                                                                                                                       |
+| `cup tag-update`            | Rename a tag in a space, optionally update colors                                                                                                                                                                                                         |
+| `cup task-types`            | List custom task types (useful for discovering `--custom-item-id` values)                                                                                                                                                                                 |
+| `cup templates`             | List task templates (useful for `cup create --template`)                                                                                                                                                                                                  |
+| `--template`                | On `cup create`, create task from a template instead of from scratch                                                                                                                                                                                      |
 | `cup task`                  | Shows custom fields, checklists, attachments, dependencies, and linked tasks in detail view                                                                                                                                                               |
 | `cup lists`                 | Discovers list IDs needed for `--list` and `cup create -l`                                                                                                                                                                                                |
 | Errors                      | stderr with exit code 1                                                                                                                                                                                                                                   |
@@ -276,7 +292,25 @@ cup config set sprintFolderId <id>   # pin sprint detection to a folder
 cup duplicate abc123                 # duplicate a task
 cup bulk status "done" t1 t2 t3     # mark multiple tasks done
 cup tag-create <spaceId> "urgent"    # create a space tag
+cup tag-update <spaceId> "urgent" --name "critical"  # rename a tag
 cup tag-delete <spaceId> "old-tag"   # delete a space tag
+```
+
+### Templates and task types
+
+```bash
+cup task-types                       # list custom task types
+cup templates                        # list task templates
+cup create -n "Bug" -l <listId> --template <templateId>  # create from template
+```
+
+### Delete operations
+
+```bash
+cup goal-delete <goalId>             # delete a goal
+cup key-result-delete <krId>         # delete a key result
+cup doc-delete <docId>               # delete a doc
+cup doc-page-delete <docId> <pageId> # delete a doc page
 ```
 
 ### Goals and key results

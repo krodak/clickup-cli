@@ -27,7 +27,7 @@ describe('bulkUpdateStatus', () => {
     expect(result).toEqual({ updated: 3, failed: [] })
   })
 
-  it('collects failed task IDs', async () => {
+  it('collects failed task IDs with reasons', async () => {
     mockUpdateTask
       .mockResolvedValueOnce({})
       .mockRejectedValueOnce(new Error('Not found'))
@@ -36,7 +36,10 @@ describe('bulkUpdateStatus', () => {
     const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
     const result = await bulkUpdateStatus(mockConfig, ['t1', 't2', 't3'], 'in progress')
 
-    expect(result).toEqual({ updated: 2, failed: ['t2'] })
+    expect(result).toEqual({
+      updated: 2,
+      failed: [{ id: 't2', reason: 'Not found' }],
+    })
   })
 
   it('handles empty task list', async () => {
@@ -45,5 +48,14 @@ describe('bulkUpdateStatus', () => {
 
     expect(mockUpdateTask).not.toHaveBeenCalled()
     expect(result).toEqual({ updated: 0, failed: [] })
+  })
+
+  it('captures non-Error failure reasons', async () => {
+    mockUpdateTask.mockRejectedValueOnce('string error')
+
+    const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
+    const result = await bulkUpdateStatus(mockConfig, ['t1'], 'done')
+
+    expect(result.failed).toEqual([{ id: 't1', reason: 'string error' }])
   })
 })

@@ -7,6 +7,8 @@ const mockGetDocPages = vi.fn()
 const mockCreateDoc = vi.fn()
 const mockCreateDocPage = vi.fn()
 const mockEditDocPage = vi.fn()
+const mockDeleteDoc = vi.fn()
+const mockDeleteDocPage = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
@@ -17,6 +19,8 @@ vi.mock('../../../src/api.js', () => ({
     createDoc: mockCreateDoc,
     createDocPage: mockCreateDocPage,
     editDocPage: mockEditDocPage,
+    deleteDoc: mockDeleteDoc,
+    deleteDocPage: mockDeleteDocPage,
   })),
 }))
 
@@ -192,5 +196,31 @@ describe('editDocPage', () => {
     await expect(editDocPage(mockConfig, 'd1', 'p1', {})).rejects.toThrow(
       'Provide --name or --content to update',
     )
+  })
+})
+
+describe('deleteDoc', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes a doc via API', async () => {
+    mockDeleteDoc.mockResolvedValue(undefined)
+    const { deleteDoc } = await import('../../../src/commands/doc.js')
+    await deleteDoc(mockConfig, 'd1')
+    expect(mockDeleteDoc).toHaveBeenCalledWith('team1', 'd1')
+  })
+})
+
+describe('deleteDocPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes a doc page via API', async () => {
+    mockDeleteDocPage.mockResolvedValue(undefined)
+    const { deleteDocPage } = await import('../../../src/commands/doc.js')
+    await deleteDocPage(mockConfig, 'd1', 'p1')
+    expect(mockDeleteDocPage).toHaveBeenCalledWith('team1', 'd1', 'p1')
   })
 })

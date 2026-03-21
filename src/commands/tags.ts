@@ -33,6 +33,20 @@ export async function deleteSpaceTag(
   await client.deleteSpaceTag(spaceId, tagName)
 }
 
+export async function updateSpaceTag(
+  config: Config,
+  spaceId: string,
+  tagName: string,
+  updates: { name: string; fg?: string; bg?: string },
+): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.updateSpaceTag(spaceId, tagName, {
+    name: updates.name,
+    tag_fg: updates.fg,
+    tag_bg: updates.bg,
+  })
+}
+
 export function formatTags(tags: SpaceTag[]): string {
   if (tags.length === 0) return 'No tags found'
   return tags.map(t => chalk.bold(t.name)).join(', ')

@@ -5,14 +5,15 @@ export async function bulkUpdateStatus(
   config: Config,
   taskIds: string[],
   status: string,
-): Promise<{ updated: number; failed: string[] }> {
+): Promise<{ updated: number; failed: Array<{ id: string; reason: string }> }> {
   const client = new ClickUpClient(config)
-  const failed: string[] = []
+  const failed: Array<{ id: string; reason: string }> = []
   for (const id of taskIds) {
     try {
       await client.updateTask(id, { status })
-    } catch {
-      failed.push(id)
+    } catch (err: unknown) {
+      const reason = err instanceof Error ? err.message : String(err)
+      failed.push({ id, reason })
     }
   }
   return { updated: taskIds.length - failed.length, failed }

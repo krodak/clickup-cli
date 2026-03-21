@@ -3,18 +3,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockGetGoals = vi.fn()
 const mockCreateGoal = vi.fn()
 const mockUpdateGoal = vi.fn()
+const mockDeleteGoal = vi.fn()
 const mockGetKeyResults = vi.fn()
 const mockCreateKeyResult = vi.fn()
 const mockUpdateKeyResult = vi.fn()
+const mockDeleteKeyResult = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getGoals: mockGetGoals,
     createGoal: mockCreateGoal,
     updateGoal: mockUpdateGoal,
+    deleteGoal: mockDeleteGoal,
     getKeyResults: mockGetKeyResults,
     createKeyResult: mockCreateKeyResult,
     updateKeyResult: mockUpdateKeyResult,
+    deleteKeyResult: mockDeleteKeyResult,
   })),
 }))
 
@@ -208,5 +212,31 @@ describe('formatKeyResultsMarkdown', () => {
     const { formatKeyResultsMarkdown } = await import('../../../src/commands/goals.js')
     const result = formatKeyResultsMarkdown(sampleKeyResults)
     expect(result).toBe('- **Complete API** (kr1) - 7/10 (70%)')
+  })
+})
+
+describe('deleteGoal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes a goal via API', async () => {
+    mockDeleteGoal.mockResolvedValue(undefined)
+    const { deleteGoal } = await import('../../../src/commands/goals.js')
+    await deleteGoal(mockConfig, 'g1')
+    expect(mockDeleteGoal).toHaveBeenCalledWith('g1')
+  })
+})
+
+describe('deleteKeyResult', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('deletes a key result via API', async () => {
+    mockDeleteKeyResult.mockResolvedValue(undefined)
+    const { deleteKeyResult } = await import('../../../src/commands/goals.js')
+    await deleteKeyResult(mockConfig, 'kr1')
+    expect(mockDeleteKeyResult).toHaveBeenCalledWith('kr1')
   })
 })

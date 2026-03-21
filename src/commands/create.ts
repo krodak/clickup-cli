@@ -15,6 +15,7 @@ export interface CreateOptions {
   tags?: string
   customItemId?: string
   timeEstimate?: string
+  template?: string
 }
 
 export async function createTask(
@@ -30,6 +31,11 @@ export async function createTask(
   }
   if (!listId) {
     throw new Error('Provide --list or --parent (list is auto-detected from parent task)')
+  }
+
+  if (options.template) {
+    const task = await client.createTaskFromTemplate(listId, options.template, options.name)
+    return { id: task.id, name: task.name, url: task.url }
   }
 
   const payload: CreateTaskOptions = {

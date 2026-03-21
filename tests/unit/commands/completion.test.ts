@@ -21,6 +21,13 @@ const ALL_COMMANDS = [
   'assign',
   'config',
   'completion',
+  'goal-delete',
+  'key-result-delete',
+  'doc-delete',
+  'doc-page-delete',
+  'tag-update',
+  'task-types',
+  'templates',
 ]
 
 describe('generateCompletion', () => {
@@ -204,6 +211,65 @@ describe('generateCompletion', () => {
       const result = generateCompletion('fish')
       expect(result).toContain('apiToken')
       expect(result).toContain('teamId')
+    })
+  })
+
+  describe('time subcommand completions', () => {
+    it('bash includes update and delete subcommands', () => {
+      const result = generateCompletion('bash')
+      expect(result).toContain('start stop status log list update delete')
+    })
+
+    it('zsh includes update and delete subcommands', () => {
+      const result = generateCompletion('zsh')
+      expect(result).toContain("'update:Update a time entry'")
+      expect(result).toContain("'delete:Delete a time entry'")
+    })
+
+    it('fish includes update and delete subcommands', () => {
+      const result = generateCompletion('fish')
+      expect(result).toContain("-a update -d 'Update a time entry'")
+      expect(result).toContain("-a delete -d 'Delete a time entry'")
+    })
+  })
+
+  describe('new command completions', () => {
+    it('bash includes new commands', () => {
+      const result = generateCompletion('bash')
+      expect(result).toContain('goal-delete')
+      expect(result).toContain('key-result-delete')
+      expect(result).toContain('doc-delete')
+      expect(result).toContain('doc-page-delete')
+      expect(result).toContain('tag-update')
+      expect(result).toContain('task-types')
+      expect(result).toContain('templates')
+    })
+
+    it('bash includes --template in create', () => {
+      const result = generateCompletion('bash')
+      expect(result).toContain('--template')
+    })
+
+    it('zsh includes new commands', () => {
+      const result = generateCompletion('zsh')
+      expect(result).toContain('goal-delete')
+      expect(result).toContain('key-result-delete')
+      expect(result).toContain('doc-delete')
+      expect(result).toContain('doc-page-delete')
+      expect(result).toContain('tag-update')
+      expect(result).toContain('task-types')
+      expect(result).toContain('templates')
+    })
+
+    it('fish includes new commands', () => {
+      const result = generateCompletion('fish')
+      expect(result).toContain('goal-delete')
+      expect(result).toContain('key-result-delete')
+      expect(result).toContain('doc-delete')
+      expect(result).toContain('doc-page-delete')
+      expect(result).toContain('tag-update')
+      expect(result).toContain('task-types')
+      expect(result).toContain('templates')
     })
   })
 

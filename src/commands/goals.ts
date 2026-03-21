@@ -26,6 +26,16 @@ export async function updateGoal(
   return client.updateGoal(goalId, updates)
 }
 
+export async function deleteGoal(config: Config, goalId: string): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteGoal(goalId)
+}
+
+export async function deleteKeyResult(config: Config, keyResultId: string): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteKeyResult(keyResultId)
+}
+
 export async function listKeyResults(config: Config, goalId: string): Promise<KeyResult[]> {
   const client = new ClickUpClient(config)
   return client.getKeyResults(goalId)

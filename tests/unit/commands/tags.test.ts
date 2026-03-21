@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetSpaceTags = vi.fn()
+const mockUpdateSpaceTag = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     getSpaceTags: mockGetSpaceTags,
+    updateSpaceTag: mockUpdateSpaceTag,
   })),
 }))
 
@@ -58,5 +60,33 @@ describe('formatTagsMarkdown', () => {
       { name: 'feature', tag_fg: '#fff', tag_bg: '#0f0' },
     ])
     expect(result).toBe('- bug\n- feature')
+  })
+})
+
+describe('updateSpaceTag', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('updates a tag via API', async () => {
+    mockUpdateSpaceTag.mockResolvedValue(undefined)
+    const { updateSpaceTag } = await import('../../../src/commands/tags.js')
+    await updateSpaceTag(mockConfig, 's1', 'old-tag', { name: 'new-tag' })
+    expect(mockUpdateSpaceTag).toHaveBeenCalledWith('s1', 'old-tag', {
+      name: 'new-tag',
+      tag_fg: undefined,
+      tag_bg: undefined,
+    })
+  })
+
+  it('passes fg and bg colors', async () => {
+    mockUpdateSpaceTag.mockResolvedValue(undefined)
+    const { updateSpaceTag } = await import('../../../src/commands/tags.js')
+    await updateSpaceTag(mockConfig, 's1', 'tag', { name: 'renamed', fg: '#fff', bg: '#000' })
+    expect(mockUpdateSpaceTag).toHaveBeenCalledWith('s1', 'tag', {
+      name: 'renamed',
+      tag_fg: '#fff',
+      tag_bg: '#000',
+    })
   })
 })

@@ -24,7 +24,7 @@ describe('duplicateTask', () => {
       description: 'Some desc',
       markdown_content: '# Content',
       list: { id: 'list1', name: 'My List' },
-      priority: { priority: '2' },
+      priority: { priority: 'high' },
       tags: [{ name: 'bug' }],
       time_estimate: 3600000,
     })
@@ -80,5 +80,47 @@ describe('duplicateTask', () => {
       time_estimate: undefined,
     })
     expect(result.id).toBe('xyz')
+  })
+
+  it('maps priority string "urgent" to 1', async () => {
+    mockGetTask.mockResolvedValue({
+      id: 'abc',
+      name: 'Urgent Task',
+      list: { id: 'list1', name: 'My List' },
+      priority: { priority: 'urgent' },
+      tags: [],
+      time_estimate: null,
+    })
+    mockCreateTask.mockResolvedValue({
+      id: 'xyz',
+      name: 'Urgent Task (copy)',
+      url: 'https://app.clickup.com/t/xyz',
+    })
+
+    const { duplicateTask } = await import('../../../src/commands/duplicate.js')
+    await duplicateTask(mockConfig, 'abc')
+
+    expect(mockCreateTask).toHaveBeenCalledWith('list1', expect.objectContaining({ priority: 1 }))
+  })
+
+  it('maps priority string "low" to 4', async () => {
+    mockGetTask.mockResolvedValue({
+      id: 'abc',
+      name: 'Low Task',
+      list: { id: 'list1', name: 'My List' },
+      priority: { priority: 'Low' },
+      tags: [],
+      time_estimate: null,
+    })
+    mockCreateTask.mockResolvedValue({
+      id: 'xyz',
+      name: 'Low Task (copy)',
+      url: 'https://app.clickup.com/t/xyz',
+    })
+
+    const { duplicateTask } = await import('../../../src/commands/duplicate.js')
+    await duplicateTask(mockConfig, 'abc')
+
+    expect(mockCreateTask).toHaveBeenCalledWith('list1', expect.objectContaining({ priority: 4 }))
   })
 })

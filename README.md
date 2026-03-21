@@ -134,20 +134,20 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Tasks
 
-| Feature              | Command              | Status             |
-| -------------------- | -------------------- | ------------------ |
-| List my tasks        | `cup tasks`          | :white_check_mark: |
-| Get task details     | `cup task <id>`      | :white_check_mark: |
-| Create task          | `cup create`         | :white_check_mark: |
-| Update task          | `cup update <id>`    | :white_check_mark: |
-| Delete task          | `cup delete <id>`    | :white_check_mark: |
-| Search tasks         | `cup search <query>` | :white_check_mark: |
-| Open in browser      | `cup open <query>`   | :white_check_mark: |
-| List subtasks        | `cup subtasks <id>`  | :white_check_mark: |
-| Assign / unassign    | `cup assign <id>`    | :white_check_mark: |
-| Duplicate task       | `cup duplicate <id>` | :white_check_mark: |
-| Create from template |                      | :no_entry_sign:    |
-| Bulk operations      | `cup bulk status`    | :white_check_mark: |
+| Feature              | Command                 | Status             |
+| -------------------- | ----------------------- | ------------------ |
+| List my tasks        | `cup tasks`             | :white_check_mark: |
+| Get task details     | `cup task <id>`         | :white_check_mark: |
+| Create task          | `cup create`            | :white_check_mark: |
+| Update task          | `cup update <id>`       | :white_check_mark: |
+| Delete task          | `cup delete <id>`       | :white_check_mark: |
+| Search tasks         | `cup search <query>`    | :white_check_mark: |
+| Open in browser      | `cup open <query>`      | :white_check_mark: |
+| List subtasks        | `cup subtasks <id>`     | :white_check_mark: |
+| Assign / unassign    | `cup assign <id>`       | :white_check_mark: |
+| Duplicate task       | `cup duplicate <id>`    | :white_check_mark: |
+| Create from template | `cup create --template` | :white_check_mark: |
+| Bulk operations      | `cup bulk status`       | :white_check_mark: |
 
 ### Dependencies & Relations
 
@@ -212,6 +212,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Add/remove tag on task | `cup tag <id>`                    | :white_check_mark: |
 | List space tags        | `cup tags <spaceId>`              | :white_check_mark: |
 | Create space tag       | `cup tag-create <spaceId> <name>` | :white_check_mark: |
+| Update space tag       | `cup tag-update <spaceId> <name>` | :white_check_mark: |
 | Delete space tag       | `cup tag-delete <spaceId> <name>` | :white_check_mark: |
 
 ### Time Tracking
@@ -228,13 +229,15 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Workspace
 
-| Feature      | Command                 | Status             |
-| ------------ | ----------------------- | ------------------ |
-| List spaces  | `cup spaces`            | :white_check_mark: |
-| List lists   | `cup lists <spaceId>`   | :white_check_mark: |
-| Check auth   | `cup auth`              | :white_check_mark: |
-| List folders | `cup folders <spaceId>` | :white_check_mark: |
-| List members | `cup members`           | :white_check_mark: |
+| Feature        | Command                 | Status             |
+| -------------- | ----------------------- | ------------------ |
+| List spaces    | `cup spaces`            | :white_check_mark: |
+| List lists     | `cup lists <spaceId>`   | :white_check_mark: |
+| Check auth     | `cup auth`              | :white_check_mark: |
+| List folders   | `cup folders <spaceId>` | :white_check_mark: |
+| List members   | `cup members`           | :white_check_mark: |
+| Task types     | `cup task-types`        | :white_check_mark: |
+| Task templates | `cup templates`         | :white_check_mark: |
 
 ### Goals & Key Results
 
@@ -243,9 +246,11 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | List goals        | `cup goals`                          | :white_check_mark: |
 | Create goal       | `cup goal-create <name>`             | :white_check_mark: |
 | Update goal       | `cup goal-update <goalId>`           | :white_check_mark: |
+| Delete goal       | `cup goal-delete <goalId>`           | :white_check_mark: |
 | List key results  | `cup key-results <goalId>`           | :white_check_mark: |
 | Create key result | `cup key-result-create <goalId> <n>` | :white_check_mark: |
 | Update key result | `cup key-result-update <krId>`       | :white_check_mark: |
+| Delete key result | `cup key-result-delete <krId>`       | :white_check_mark: |
 
 ### Docs
 
@@ -257,6 +262,8 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Create doc       | `cup doc-create <title>`             | :white_check_mark: |
 | Create page      | `cup doc-page-create <docId> <name>` | :white_check_mark: |
 | Edit page        | `cup doc-page-edit <docId> <pageId>` | :white_check_mark: |
+| Delete doc       | `cup doc-delete <docId>`             | :white_check_mark: |
+| Delete page      | `cup doc-page-delete <docId> <pId>`  | :white_check_mark: |
 
 ### Attachments
 
@@ -267,16 +274,19 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### :no_entry_sign: Won't add
 
-| Feature               | Why                                                                         |
-| --------------------- | --------------------------------------------------------------------------- |
-| Create from template  | No public API for task templates.                                           |
-| Webhooks              | Server-side. A CLI can't listen for events.                                 |
-| OAuth flow            | `cup init` already handles auth with API tokens.                            |
-| Guest/ACL             | Enterprise admin. Not what you reach for in a terminal.                     |
-| Chat/DM               | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
-| Audit logs            | Enterprise admin.                                                           |
-| User/group management | Too destructive for a CLI - removing someone from a workspace is permanent. |
-| View CRUD             | Views are visual layouts. Configure them in the UI.                         |
+| Feature                 | Why                                                                         |
+| ----------------------- | --------------------------------------------------------------------------- |
+| Webhooks                | Server-side. A CLI can't listen for events.                                 |
+| OAuth flow              | `cup init` already handles auth with API tokens.                            |
+| Guest/ACL               | Enterprise admin. Not what you reach for in a terminal.                     |
+| Chat/DM                 | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
+| Audit logs              | Enterprise admin.                                                           |
+| User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
+| View CRUD               | Views are visual layouts. Configure them in the UI.                         |
+| List/Folder/Space CRUD  | Structural changes. Set these up in the UI.                                 |
+| View/List/Chat comments | API only supports task-level comments.                                      |
+| User Groups             | Enterprise admin feature.                                                   |
+| Shared Hierarchy        | Enterprise admin feature.                                                   |
 
 ### API Limitations
 

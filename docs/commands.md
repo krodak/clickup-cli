@@ -32,6 +32,8 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup fields <listId>`                | List custom fields for a list         |
 | `cup goals`                          | List goals in your workspace          |
 | `cup key-results <goalId>`           | List key results for a goal           |
+| `cup task-types`                     | List custom task types                |
+| `cup templates`                      | List task templates                   |
 | `cup docs [query]`                   | List workspace docs                   |
 | `cup doc <docId> [pageId]`           | View a doc or doc page                |
 | `cup doc-pages <docId>`              | All pages in a doc with content       |
@@ -71,9 +73,14 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup goals`                          | List goals in your workspace          |
 | `cup goal-create <name>`             | Create a goal                         |
 | `cup goal-update <goalId>`           | Update a goal                         |
+| `cup goal-delete <goalId>`           | Delete a goal                         |
 | `cup key-results <goalId>`           | List key results for a goal           |
 | `cup key-result-create <gId> <name>` | Create a key result on a goal         |
 | `cup key-result-update <krId>`       | Update a key result                   |
+| `cup key-result-delete <krId>`       | Delete a key result                   |
+| `cup doc-delete <docId>`             | Delete a doc                          |
+| `cup doc-page-delete <docId> <pId>`  | Delete a doc page                     |
+| `cup tag-update <spaceId> <name>`    | Update a tag in a space               |
 | **Configuration**                    |                                       |
 | `cup config`                         | Manage CLI configuration              |
 | `cup completion <shell>`             | Output shell completion script        |
@@ -395,23 +402,25 @@ cup create -n "Task" -l <listId> --priority high --due-date 2025-06-01
 cup create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
 cup create -n "Initiative" -l <listId> --custom-item-id 1
 cup create -n "Task" -l <listId> --time-estimate 2h
+cup create -n "From Template" -l <listId> --template <templateId>
 cup create -n "Fix bug" -l <listId> --json
 ```
 
-| Flag                         | Required         | Description                                          |
-| ---------------------------- | ---------------- | ---------------------------------------------------- |
-| `-n, --name <name>`          | yes              | Task name                                            |
-| `-l, --list <listId>`        | if no `--parent` | Target list ID                                       |
-| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                     |
-| `-d, --description <text>`   | no               | Description (markdown)                               |
-| `-s, --status <status>`      | no               | Initial status                                       |
-| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4) |
-| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`)                              |
-| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)      |
-| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                        |
-| `--tags <tags>`              | no               | Comma-separated tag names                            |
-| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)  |
-| `--json`                     | no               | Force JSON output even in terminal                   |
+| Flag                         | Required         | Description                                                   |
+| ---------------------------- | ---------------- | ------------------------------------------------------------- |
+| `-n, --name <name>`          | yes              | Task name                                                     |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID                                                |
+| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                              |
+| `-d, --description <text>`   | no               | Description (markdown)                                        |
+| `-s, --status <status>`      | no               | Initial status                                                |
+| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)          |
+| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`)                                       |
+| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)               |
+| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                 |
+| `--tags <tags>`              | no               | Comma-separated tag names                                     |
+| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)           |
+| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs) |
+| `--json`                     | no               | Force JSON output even in terminal                            |
 
 ### `cup delete <id>`
 
@@ -876,6 +885,32 @@ cup duplicate abc123 --json
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
 
+### `cup task-types`
+
+List custom task types in your workspace. Useful for discovering valid `--custom-item-id` values.
+
+```bash
+cup task-types
+cup task-types --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup templates`
+
+List task templates in your workspace. Useful for discovering template IDs for `cup create --template`.
+
+```bash
+cup templates
+cup templates --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
 ### `cup bulk status <status> <taskIds...>`
 
 Update the status of multiple tasks at once. Failed updates are reported but don't stop the operation.
@@ -979,6 +1014,75 @@ cup key-result-update kr123 --progress 10 --note "Done!" --json
 | `--progress <n>` | no       | Current progress  |
 | `--note <text>`  | no       | Progress note     |
 | `--json`         | no       | Force JSON output |
+
+### `cup goal-delete <goalId>`
+
+Delete a goal.
+
+```bash
+cup goal-delete g123
+cup goal-delete g123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup key-result-delete <keyResultId>`
+
+Delete a key result.
+
+```bash
+cup key-result-delete kr123
+cup key-result-delete kr123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup doc-delete <docId>`
+
+Delete a doc.
+
+```bash
+cup doc-delete abc123
+cup doc-delete abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup doc-page-delete <docId> <pageId>`
+
+Delete a doc page.
+
+```bash
+cup doc-page-delete abc123 page456
+cup doc-page-delete abc123 page456 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup tag-update <spaceId> <tagName>`
+
+Update a tag in a space. Rename it and optionally change colors.
+
+```bash
+cup tag-update <spaceId> "old-name" --name "new-name"
+cup tag-update <spaceId> "bug" --name "defect" --fg "#fff" --bg "#f00"
+cup tag-update <spaceId> "tag" --name "renamed" --json
+```
+
+| Flag            | Required | Description          |
+| --------------- | -------- | -------------------- |
+| `--name <text>` | yes      | New tag name         |
+| `--fg <color>`  | no       | New foreground color |
+| `--bg <color>`  | no       | New background color |
+| `--json`        | no       | Force JSON output    |
 
 ---
 

@@ -110,14 +110,20 @@ import {
   listGoals,
   createGoal,
   updateGoal,
+  deleteGoal,
   listKeyResults,
   createKeyResult,
   updateKeyResult,
+  deleteKeyResult,
   formatGoals,
   formatGoalsMarkdown,
   formatKeyResults,
   formatKeyResultsMarkdown,
 } from './commands/goals.js'
+import { deleteDoc, deleteDocPage } from './commands/doc.js'
+import { updateSpaceTag } from './commands/tags.js'
+import { listTaskTypes, formatTaskTypes, formatTaskTypesMarkdown } from './commands/task-types.js'
+import { listTemplates, formatTemplates, formatTemplatesMarkdown } from './commands/templates.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -267,6 +273,7 @@ program
   .option('--tags <tags>', 'Comma-separated tag names')
   .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
   .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
+  .option('--template <id>', 'Create from a task template')
   .option('--json', 'Force JSON output even in terminal')
   .action(
     wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
@@ -1154,7 +1161,9 @@ bulkCmd
       } else {
         console.log(`Updated ${result.updated} tasks to "${status}"`)
         if (result.failed.length > 0) {
-          console.log(`Failed: ${result.failed.join(', ')}`)
+          for (const f of result.failed) {
+            console.log(`  Failed ${f.id}: ${f.reason}`)
+          }
         }
       }
     }),
@@ -1230,6 +1239,22 @@ program
   )
 
 program
+  .command('goal-delete <goalId>')
+  .description('Delete a goal')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (goalId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteGoal(config, goalId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, goalId }, null, 2))
+      } else {
+        console.log(`Deleted goal ${goalId}`)
+      }
+    }),
+  )
+
+program
   .command('key-results <goalId>')
   .description('List key results for a goal')
   .option('--json', 'Force JSON output even in terminal')
@@ -1300,6 +1325,22 @@ program
         }
       },
     ),
+  )
+
+program
+  .command('key-result-delete <keyResultId>')
+  .description('Delete a key result')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (keyResultId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteKeyResult(config, keyResultId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, keyResultId }, null, 2))
+      } else {
+        console.log(`Deleted key result ${keyResultId}`)
+      }
+    }),
   )
 
 program
@@ -1451,6 +1492,109 @@ program
         }
       },
     ),
+  )
+
+program
+  .command('doc-delete <docId>')
+  .description('Delete a doc')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (docId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteDoc(config, docId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, docId }, null, 2))
+      } else {
+        console.log(`Deleted doc ${docId}`)
+      }
+    }),
+  )
+
+program
+  .command('doc-page-delete <docId> <pageId>')
+  .description('Delete a doc page')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (docId: string, pageId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteDocPage(config, docId, pageId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ success: true, docId, pageId }, null, 2))
+      } else {
+        console.log(`Deleted page ${pageId} from doc ${docId}`)
+      }
+    }),
+  )
+
+program
+  .command('tag-update <spaceId> <tagName>')
+  .description('Update a tag in a space')
+  .requiredOption('--name <newName>', 'New tag name')
+  .option('--fg <color>', 'New foreground color (hex)')
+  .option('--bg <color>', 'New background color (hex)')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        spaceId: string,
+        tagName: string,
+        opts: { name: string; fg?: string; bg?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        await updateSpaceTag(config, spaceId, tagName, {
+          name: opts.name,
+          fg: opts.fg,
+          bg: opts.bg,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(
+            JSON.stringify(
+              { success: true, spaceId, oldName: tagName, newName: opts.name },
+              null,
+              2,
+            ),
+          )
+        } else {
+          console.log(`Renamed tag "${tagName}" to "${opts.name}" in space ${spaceId}`)
+        }
+      },
+    ),
+  )
+
+program
+  .command('task-types')
+  .description('List custom task types in your workspace')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const types = await listTaskTypes(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(types, null, 2))
+      } else if (isTTY()) {
+        console.log(formatTaskTypes(types))
+      } else {
+        console.log(formatTaskTypesMarkdown(types))
+      }
+    }),
+  )
+
+program
+  .command('templates')
+  .description('List task templates in your workspace')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const templates = await listTemplates(config)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(templates, null, 2))
+      } else if (isTTY()) {
+        console.log(formatTemplates(templates))
+      } else {
+        console.log(formatTemplatesMarkdown(templates))
+      }
+    }),
   )
 
 const configCmd = program.command('config').description('Manage CLI configuration')

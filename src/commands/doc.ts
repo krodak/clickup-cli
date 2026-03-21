@@ -120,3 +120,13 @@ export async function editDocPage(
   const client = new ClickUpClient(config)
   return client.editDocPage(config.teamId, docId, pageId, updates)
 }
+
+export async function deleteDoc(config: Config, docId: string): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteDoc(config.teamId, docId)
+}
+
+export async function deleteDocPage(config: Config, docId: string, pageId: string): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteDocPage(config.teamId, docId, pageId)
+}

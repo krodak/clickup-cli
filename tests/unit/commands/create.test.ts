@@ -4,11 +4,13 @@ const mockGetTask = vi.fn()
 const mockCreateTask = vi
   .fn()
   .mockResolvedValue({ id: 'new1', name: 'New Task', url: 'http://cu/new1' })
+const mockCreateTaskFromTemplate = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
     createTask: mockCreateTask,
     getTask: mockGetTask,
+    createTaskFromTemplate: mockCreateTaskFromTemplate,
   })),
 }))
 
@@ -175,5 +177,21 @@ describe('createTask', () => {
       'l1',
       expect.objectContaining({ name: 'Task', time_estimate: 2 * 60 * 60 * 1000 }),
     )
+  })
+
+  it('creates task from template when --template is provided', async () => {
+    mockCreateTaskFromTemplate.mockResolvedValue({
+      id: 'tmpl_t',
+      name: 'From Template',
+      url: 'http://cu/tmpl_t',
+    })
+    const { createTask } = await import('../../../src/commands/create.js')
+    const result = await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'From Template', template: 'tmpl1' },
+    )
+    expect(mockCreateTaskFromTemplate).toHaveBeenCalledWith('l1', 'tmpl1', 'From Template')
+    expect(mockCreateTask).not.toHaveBeenCalled()
+    expect(result).toEqual({ id: 'tmpl_t', name: 'From Template', url: 'http://cu/tmpl_t' })
   })
 })

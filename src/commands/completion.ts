@@ -11,7 +11,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags tag-create tag-delete checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders members fields duplicate bulk goals goal-create goal-update key-results key-result-create key-result-update config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags tag-create tag-delete tag-update checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit doc-delete doc-page-delete folders members fields duplicate bulk goals goal-create goal-update goal-delete key-results key-result-create key-result-update key-result-delete task-types templates config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -42,7 +42,7 @@ function bashCompletion(name: string): string {
       COMPREPLY=($(compgen -W "-n --name -d --description -s --status --priority --due-date --time-estimate --assignee --parent --json" -- "$cur"))
       ;;
     create)
-      COMPREPLY=($(compgen -W "-l --list -n --name -d --description -p --parent -s --status --priority --due-date --assignee --tags --custom-item-id --time-estimate --json" -- "$cur"))
+      COMPREPLY=($(compgen -W "-l --list -n --name -d --description -p --parent -s --status --priority --due-date --assignee --tags --custom-item-id --time-estimate --template --json" -- "$cur"))
       ;;
     sprint)
       COMPREPLY=($(compgen -W "--status --space --folder --include-closed --json" -- "$cur"))
@@ -114,7 +114,7 @@ function bashCompletion(name: string): string {
       ;;
     time)
       if [[ $cword -eq 2 ]]; then
-        COMPREPLY=($(compgen -W "start stop status log list" -- "$cur"))
+        COMPREPLY=($(compgen -W "start stop status log list update delete" -- "$cur"))
       fi
       ;;
     comment-edit)
@@ -176,6 +176,9 @@ function bashCompletion(name: string): string {
     goal-update)
       COMPREPLY=($(compgen -W "-n --name -d --description --color --json" -- "$cur"))
       ;;
+    goal-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
     key-results)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
@@ -184,6 +187,9 @@ function bashCompletion(name: string): string {
       ;;
     key-result-update)
       COMPREPLY=($(compgen -W "--progress --note --json" -- "$cur"))
+      ;;
+    key-result-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
     folders)
       COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
@@ -196,6 +202,21 @@ function bashCompletion(name: string): string {
       ;;
     doc-page-edit)
       COMPREPLY=($(compgen -W "--name -c --content --json" -- "$cur"))
+      ;;
+    doc-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    doc-page-delete)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    tag-update)
+      COMPREPLY=($(compgen -W "--name --fg --bg --json" -- "$cur"))
+      ;;
+    task-types)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    templates)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
     config)
       if [[ $cword -eq 2 ]]; then
@@ -274,9 +295,16 @@ _${name}() {
     'goals:List goals in your workspace'
     'goal-create:Create a goal'
     'goal-update:Update a goal'
+    'goal-delete:Delete a goal'
     'key-results:List key results for a goal'
     'key-result-create:Create a key result on a goal'
     'key-result-update:Update a key result'
+    'key-result-delete:Delete a key result'
+    'doc-delete:Delete a doc'
+    'doc-page-delete:Delete a doc page'
+    'tag-update:Update a tag in a space'
+    'task-types:List custom task types'
+    'templates:List task templates'
     'folders:List folders in a space'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
@@ -335,6 +363,7 @@ _${name}() {
             '--tags[Comma-separated tag names]:tags:' \\
             '--custom-item-id[Custom task type ID]:id:' \\
             '--time-estimate[Time estimate]:duration:' \\
+            '--template[Create from a task template]:template_id:' \\
             '--json[Force JSON output]'
           ;;
         sprint)
@@ -523,6 +552,8 @@ _${name}() {
             'status:Show the currently running timer'
             'log:Log a manual time entry'
             'list:List recent time entries'
+            'update:Update a time entry'
+            'delete:Delete a time entry'
           )
           _arguments -C \\
             '1:time command:->time_cmd' \\
@@ -556,6 +587,18 @@ _${name}() {
                   _arguments \\
                     '--days[Number of days to look back]:days:' \\
                     '--task[Filter by task ID]:task_id:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                update)
+                  _arguments \\
+                    '1:time_entry_id:' \\
+                    '(-d --description)'{-d,--description}'[New description]:text:' \\
+                    '--duration[New duration]:duration:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                delete)
+                  _arguments \\
+                    '1:time_entry_id:' \\
                     '--json[Force JSON output]'
                   ;;
               esac
@@ -709,6 +752,44 @@ _${name}() {
             '--note[Progress note]:text:' \\
             '--json[Force JSON output]'
           ;;
+        key-result-delete)
+          _arguments \\
+            '1:key_result_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        goal-delete)
+          _arguments \\
+            '1:goal_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc-delete)
+          _arguments \\
+            '1:doc_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        doc-page-delete)
+          _arguments \\
+            '1:doc_id:' \\
+            '2:page_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        tag-update)
+          _arguments \\
+            '1:space_id:' \\
+            '2:tag_name:' \\
+            '--name[New tag name]:text:' \\
+            '--fg[New foreground color]:color:' \\
+            '--bg[New background color]:color:' \\
+            '--json[Force JSON output]'
+          ;;
+        task-types)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        templates)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
         folders)
           _arguments \\
             '1:space_id:' \\
@@ -831,6 +912,13 @@ complete -c ${name} -n __fish_use_subcommand -a goal-update -d 'Update a goal'
 complete -c ${name} -n __fish_use_subcommand -a key-results -d 'List key results for a goal'
 complete -c ${name} -n __fish_use_subcommand -a key-result-create -d 'Create a key result on a goal'
 complete -c ${name} -n __fish_use_subcommand -a key-result-update -d 'Update a key result'
+complete -c ${name} -n __fish_use_subcommand -a goal-delete -d 'Delete a goal'
+complete -c ${name} -n __fish_use_subcommand -a key-result-delete -d 'Delete a key result'
+complete -c ${name} -n __fish_use_subcommand -a doc-delete -d 'Delete a doc'
+complete -c ${name} -n __fish_use_subcommand -a doc-page-delete -d 'Delete a doc page'
+complete -c ${name} -n __fish_use_subcommand -a tag-update -d 'Update a tag in a space'
+complete -c ${name} -n __fish_use_subcommand -a task-types -d 'List custom task types'
+complete -c ${name} -n __fish_use_subcommand -a templates -d 'List task templates'
 complete -c ${name} -n __fish_use_subcommand -a folders -d 'List folders in a space'
 complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
@@ -868,6 +956,7 @@ complete -c ${name} -n '__fish_seen_subcommand_from create' -l assignee -d 'Assi
 complete -c ${name} -n '__fish_seen_subcommand_from create' -l tags -d 'Comma-separated tag names'
 complete -c ${name} -n '__fish_seen_subcommand_from create' -l custom-item-id -d 'Custom task type ID'
 complete -c ${name} -n '__fish_seen_subcommand_from create' -l time-estimate -d 'Time estimate'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l template -d 'Create from a task template'
 complete -c ${name} -n '__fish_seen_subcommand_from create' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l status -d 'Filter by status'
@@ -955,16 +1044,20 @@ complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l resolved -d 'M
 complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l unresolved -d 'Mark item as unresolved'
 complete -c ${name} -n '__fish_seen_subcommand_from edit-item' -l assignee -d 'Assign user by ID'
 
-complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a start -d 'Start tracking time on a task'
-complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a stop -d 'Stop the running timer'
-complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a status -d 'Show the currently running timer'
-complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a log -d 'Log a manual time entry'
-complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list' -a list -d 'List recent time entries'
-complete -c ${name} -n '__fish_seen_subcommand_from start stop status log list; and __fish_seen_subcommand_from time' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a start -d 'Start tracking time on a task'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a stop -d 'Stop the running timer'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a status -d 'Show the currently running timer'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a log -d 'Log a manual time entry'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a list -d 'List recent time entries'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a update -d 'Update a time entry'
+complete -c ${name} -n '__fish_seen_subcommand_from time; and not __fish_seen_subcommand_from start stop status log list update delete' -a delete -d 'Delete a time entry'
+complete -c ${name} -n '__fish_seen_subcommand_from start stop status log list update delete; and __fish_seen_subcommand_from time' -l json -d 'Force JSON output'
 complete -c ${name} -n '__fish_seen_subcommand_from start; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
 complete -c ${name} -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
 complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
 complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
+complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -s d -l description -d 'New description'
+complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -l duration -d 'New duration'
 
 complete -c ${name} -n '__fish_seen_subcommand_from comment-delete' -l json -d 'Force JSON output'
 
@@ -1028,6 +1121,23 @@ complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l json -
 complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l progress -d 'Current progress'
 complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l note -d 'Progress note'
 complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from goal-delete' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-delete' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-delete' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-page-delete' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l name -d 'New tag name'
+complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l fg -d 'New foreground color'
+complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l bg -d 'New background color'
+complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from task-types' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from templates' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l name -d 'Filter by folder name'
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l json -d 'Force JSON output'

@@ -244,6 +244,11 @@ export interface KeyResult {
   percent_completed: number
 }
 
+export interface TaskTemplate {
+  id: string
+  name: string
+}
+
 interface ClientConfig {
   apiToken: string
   teamId?: string
@@ -279,8 +284,8 @@ export class ClickUpClient {
     return ''
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const res = await fetch(`${BASE_URL}${path}`, {
+  private async _fetch<T>(baseUrl: string, path: string, options: RequestInit = {}): Promise<T> {
+    const res = await fetch(`${baseUrl}${path}`, {
       ...options,
       signal: AbortSignal.timeout(30_000),
       headers: {
@@ -289,8 +294,6 @@ export class ClickUpClient {
         ...options.headers,
       },
     })
-    // Trust boundary: ClickUp API responses are cast to T without runtime validation.
-    // res.json() is guarded against non-JSON bodies (e.g. HTML error pages from proxies).
     let data: Record<string, unknown>
     try {
       data = (await res.json()) as Record<string, unknown>
@@ -305,28 +308,12 @@ export class ClickUpClient {
     return data as T
   }
 
+  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    return this._fetch(BASE_URL, path, options)
+  }
+
   private async requestV3<T>(path: string, options: RequestInit = {}): Promise<T> {
-    const res = await fetch(`${BASE_URL_V3}${path}`, {
-      ...options,
-      signal: AbortSignal.timeout(30_000),
-      headers: {
-        Authorization: this.apiToken,
-        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-        ...options.headers,
-      },
-    })
-    let data: Record<string, unknown>
-    try {
-      data = (await res.json()) as Record<string, unknown>
-    } catch {
-      throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
-    }
-    if (!res.ok) {
-      const raw = data.err ?? data.error ?? data.ECODE ?? res.statusText
-      const msg = typeof raw === 'string' ? raw : JSON.stringify(raw)
-      throw new Error(`ClickUp API error ${res.status}: ${msg}`)
-    }
-    return data as T
+    return this._fetch(BASE_URL_V3, path, options)
   }
 
   async getMe(): Promise<{ id: number; username: string }> {
@@ -919,5 +906,60 @@ export class ClickUpClient {
       body: JSON.stringify(updates),
     })
     return data.key_result
+  }
+
+  async deleteGoal(goalId: string): Promise<void> {
+    await this.request<Record<string, never>>(`/goal/${goalId}`, { method: 'DELETE' })
+  }
+
+  async deleteKeyResult(keyResultId: string): Promise<void> {
+    await this.request<Record<string, never>>(`/key_result/${keyResultId}`, { method: 'DELETE' })
+  }
+
+  async deleteDoc(workspaceId: string, docId: string): Promise<void> {
+    await this.requestV3<Record<string, never>>(`/workspaces/${workspaceId}/docs/${docId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async deleteDocPage(workspaceId: string, docId: string, pageId: string): Promise<void> {
+    await this.requestV3<Record<string, never>>(
+      `/workspaces/${workspaceId}/docs/${docId}/pages/${pageId}`,
+      { method: 'DELETE' },
+    )
+  }
+
+  async updateSpaceTag(
+    spaceId: string,
+    tagName: string,
+    updates: { name: string; tag_fg?: string; tag_bg?: string },
+  ): Promise<void> {
+    await this.request<Record<string, never>>(
+      `/space/${spaceId}/tag/${encodeURIComponent(tagName)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          tag: {
+            name: updates.name,
+            tag_fg: updates.tag_fg ?? '#000000',
+            tag_bg: updates.tag_bg ?? '#04A9F4',
+          },
+        }),
+      },
+    )
+  }
+
+  async getTaskTemplates(teamId: string): Promise<TaskTemplate[]> {
+    const data = await this.request<{ templates: TaskTemplate[] }>(
+      `/team/${teamId}/taskTemplate?page=0`,
+    )
+    return data.templates ?? []
+  }
+
+  async createTaskFromTemplate(listId: string, templateId: string, name: string): Promise<Task> {
+    return this.request<Task>(`/list/${listId}/taskTemplate/${templateId}`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
   }
 }
