@@ -664,6 +664,27 @@ export class ClickUpClient {
     return entries
   }
 
+  async updateTimeEntry(
+    teamId: string,
+    timeEntryId: string,
+    updates: { description?: string; duration?: number; tags?: string[] },
+  ): Promise<TimeEntry> {
+    const data = await this.request<{ data: TimeEntry }>(
+      `/team/${teamId}/time_entries/${timeEntryId}`,
+      { method: 'PUT', body: JSON.stringify(updates) },
+    )
+    return data.data
+  }
+
+  async getSpaceTags(
+    spaceId: string,
+  ): Promise<Array<{ name: string; tag_fg: string; tag_bg: string }>> {
+    const data = await this.request<{
+      tags: Array<{ name: string; tag_fg: string; tag_bg: string }>
+    }>(`/space/${spaceId}/tag`)
+    return data.tags ?? []
+  }
+
   async deleteTimeEntry(teamId: string, timeEntryId: string): Promise<void> {
     await this.request<Record<string, never>>(`/team/${teamId}/time_entries/${timeEntryId}`, {
       method: 'DELETE',

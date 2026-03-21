@@ -88,11 +88,14 @@ import {
   timerStatus,
   logTime,
   listTimeEntries,
+  updateTimeEntry,
+  deleteTimeEntry,
   formatTimeEntries,
   formatTimeEntry,
   formatTimeEntryMarkdown,
   formatTimeEntriesMarkdown,
 } from './commands/time.js'
+import { listSpaceTags, formatTags, formatTagsMarkdown } from './commands/tags.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -960,6 +963,68 @@ timeCmd
         console.log(formatTimeEntries(entries))
       } else {
         console.log(formatTimeEntriesMarkdown(entries))
+      }
+    }),
+  )
+
+timeCmd
+  .command('update <timeEntryId>')
+  .description('Update a time entry')
+  .option('-d, --description <text>', 'New description')
+  .option('--duration <duration>', 'New duration (e.g. "2h", "30m")')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(
+      async (
+        timeEntryId: string,
+        opts: { description?: string; duration?: string; json?: boolean },
+      ) => {
+        const config = loadConfig()
+        const entry = await updateTimeEntry(config, timeEntryId, {
+          description: opts.description,
+          duration: opts.duration,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(entry, null, 2))
+        } else if (isTTY()) {
+          console.log(formatTimeEntry(entry))
+        } else {
+          console.log(formatTimeEntryMarkdown(entry))
+        }
+      },
+    ),
+  )
+
+timeCmd
+  .command('delete <timeEntryId>')
+  .description('Delete a time entry')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (timeEntryId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      await deleteTimeEntry(config, timeEntryId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify({ deleted: timeEntryId }))
+      } else {
+        console.log(`Deleted time entry ${timeEntryId}`)
+      }
+    }),
+  )
+
+program
+  .command('tags <spaceId>')
+  .description('List tags in a space')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (spaceId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const tags = await listSpaceTags(config, spaceId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(tags, null, 2))
+      } else if (isTTY()) {
+        console.log(formatTags(tags))
+      } else {
+        console.log(formatTagsMarkdown(tags))
       }
     }),
   )

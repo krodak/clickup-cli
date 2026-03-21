@@ -50,6 +50,26 @@ export async function listTimeEntries(
   })
 }
 
+export async function updateTimeEntry(
+  config: Config,
+  timeEntryId: string,
+  opts: { description?: string; duration?: string },
+): Promise<TimeEntry> {
+  if (!opts.description && !opts.duration) {
+    throw new Error('Provide --description or --duration to update')
+  }
+  const client = new ClickUpClient(config)
+  const updates: { description?: string; duration?: number } = {}
+  if (opts.description) updates.description = opts.description
+  if (opts.duration) updates.duration = parseTimeEstimate(opts.duration)
+  return client.updateTimeEntry(config.teamId, timeEntryId, updates)
+}
+
+export async function deleteTimeEntry(config: Config, timeEntryId: string): Promise<void> {
+  const client = new ClickUpClient(config)
+  await client.deleteTimeEntry(config.teamId, timeEntryId)
+}
+
 export function formatTimeEntry(entry: TimeEntry): string {
   const lines: string[] = []
   const taskName = entry.task?.name ?? 'No task'

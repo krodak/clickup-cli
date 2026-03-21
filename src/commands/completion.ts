@@ -11,7 +11,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -144,6 +144,9 @@ function bashCompletion(name: string): string {
     doc-pages)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
+    tags)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
     folders)
       COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
       ;;
@@ -223,6 +226,7 @@ _${name}() {
     'doc-pages:List all pages in a doc with content'
     'doc-page-create:Create a page in a doc'
     'doc-page-edit:Edit a doc page'
+    'tags:List tags in a space'
     'folders:List folders in a space'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
@@ -562,6 +566,11 @@ _${name}() {
             '1:doc_id:' \\
             '--json[Force JSON output]'
           ;;
+        tags)
+          _arguments \\
+            '1:space_id:' \\
+            '--json[Force JSON output]'
+          ;;
         folders)
           _arguments \\
             '1:space_id:' \\
@@ -671,6 +680,7 @@ complete -c ${name} -n __fish_use_subcommand -a doc-create -d 'Create a new doc'
 complete -c ${name} -n __fish_use_subcommand -a doc-pages -d 'List all pages in a doc with content'
 complete -c ${name} -n __fish_use_subcommand -a doc-page-create -d 'Create a page in a doc'
 complete -c ${name} -n __fish_use_subcommand -a doc-page-edit -d 'Edit a doc page'
+complete -c ${name} -n __fish_use_subcommand -a tags -d 'List tags in a space'
 complete -c ${name} -n __fish_use_subcommand -a folders -d 'List folders in a space'
 complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
@@ -830,6 +840,8 @@ complete -c ${name} -n '__fish_seen_subcommand_from docs' -l json -d 'Force JSON
 complete -c ${name} -n '__fish_seen_subcommand_from doc' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from doc-pages' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from tags' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l name -d 'Filter by folder name'
 complete -c ${name} -n '__fish_seen_subcommand_from folders' -l json -d 'Force JSON output'

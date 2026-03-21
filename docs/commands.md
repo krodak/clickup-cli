@@ -27,6 +27,7 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup overdue`                        | Tasks past their due date             |
 | `cup auth`                           | Check authentication status           |
 | `cup folders <spaceId>`              | List folders in a space               |
+| `cup tags <spaceId>`                 | List tags in a space                  |
 | `cup docs [query]`                   | List workspace docs                   |
 | `cup doc <docId> [pageId]`           | View a doc or doc page                |
 | `cup doc-pages <docId>`              | All pages in a doc with content       |
@@ -52,6 +53,8 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup time status`                    | Show the currently running timer      |
 | `cup time log <taskId> <dur>`        | Log a manual time entry               |
 | `cup time list`                      | List recent time entries              |
+| `cup time update <timeEntryId>`      | Update a time entry                   |
+| `cup time delete <timeEntryId>`      | Delete a time entry                   |
 | `cup doc-create <title>`             | Create a new doc                      |
 | `cup doc-page-create <docId> <name>` | Create a page in a doc                |
 | `cup doc-page-edit <docId> <pageId>` | Edit a doc page                       |
@@ -697,6 +700,48 @@ cup time list --days 7 --json
 | `--days <n>`      | no       | Number of days to look back (default: 7) |
 | `--task <taskId>` | no       | Filter entries by task ID                |
 | `--json`          | no       | Force JSON output                        |
+
+### `cup time update <timeEntryId>`
+
+Update a time entry's description or duration.
+
+```bash
+cup time update te123 -d "Updated description"
+cup time update te123 --duration 3h
+cup time update te123 -d "Review" --duration 1h30m --json
+```
+
+| Flag                    | Required   | Description                     |
+| ----------------------- | ---------- | ------------------------------- |
+| `-d, --description`     | one of two | New description                 |
+| `--duration <duration>` | one of two | New duration (e.g. "2h", "30m") |
+| `--json`                | no         | Force JSON output               |
+
+### `cup time delete <timeEntryId>`
+
+Delete a time entry.
+
+```bash
+cup time delete te123
+cup time delete te123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup tags <spaceId>`
+
+List tags available in a space. Useful for discovering valid tag names for `cup tag`.
+
+```bash
+cup tags <spaceId>
+cup tags <spaceId> --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
 
 ### `cup doc-create <title>`
 

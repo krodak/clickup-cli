@@ -5,6 +5,8 @@ const mockStopTimeEntry = vi.fn()
 const mockGetRunningTimeEntry = vi.fn()
 const mockCreateTimeEntry = vi.fn()
 const mockGetTimeEntries = vi.fn()
+const mockUpdateTimeEntry = vi.fn()
+const mockDeleteTimeEntry = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
@@ -13,6 +15,8 @@ vi.mock('../../../src/api.js', () => ({
     getRunningTimeEntry: mockGetRunningTimeEntry,
     createTimeEntry: mockCreateTimeEntry,
     getTimeEntries: mockGetTimeEntries,
+    updateTimeEntry: mockUpdateTimeEntry,
+    deleteTimeEntry: mockDeleteTimeEntry,
   })),
 }))
 
@@ -214,5 +218,46 @@ describe('formatTimeEntriesMarkdown', () => {
     const entries = [baseEntry, { ...baseEntry, id: 'te2' }]
     const output = formatTimeEntriesMarkdown(entries)
     expect(output.split('\n')).toHaveLength(2)
+  })
+})
+
+describe('updateTimeEntry', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('updates description', async () => {
+    mockUpdateTimeEntry.mockResolvedValue(baseEntry)
+    const { updateTimeEntry } = await import('../../../src/commands/time.js')
+    const result = await updateTimeEntry(config, 'te1', { description: 'new desc' })
+    expect(result).toEqual(baseEntry)
+    expect(mockUpdateTimeEntry).toHaveBeenCalledWith('tm_1', 'te1', { description: 'new desc' })
+  })
+
+  it('updates duration', async () => {
+    mockUpdateTimeEntry.mockResolvedValue(baseEntry)
+    const { updateTimeEntry } = await import('../../../src/commands/time.js')
+    await updateTimeEntry(config, 'te1', { duration: '2h' })
+    expect(mockUpdateTimeEntry).toHaveBeenCalledWith('tm_1', 'te1', { duration: 7200000 })
+  })
+
+  it('throws when no updates provided', async () => {
+    const { updateTimeEntry } = await import('../../../src/commands/time.js')
+    await expect(updateTimeEntry(config, 'te1', {})).rejects.toThrow(
+      'Provide --description or --duration to update',
+    )
+  })
+})
+
+describe('deleteTimeEntry', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('calls deleteTimeEntry on client', async () => {
+    mockDeleteTimeEntry.mockResolvedValue(undefined)
+    const { deleteTimeEntry } = await import('../../../src/commands/time.js')
+    await deleteTimeEntry(config, 'te1')
+    expect(mockDeleteTimeEntry).toHaveBeenCalledWith('tm_1', 'te1')
   })
 })

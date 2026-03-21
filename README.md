@@ -210,7 +210,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Feature                 | Command              | Status             |
 | ----------------------- | -------------------- | ------------------ |
 | Add/remove tag on task  | `cup tag <id>`       | :white_check_mark: |
-| List space tags         | `cup tags <spaceId>` | :construction:     |
+| List space tags         | `cup tags <spaceId>` | :white_check_mark: |
 | Create/delete space tag |                      | :construction:     |
 
 ### Time Tracking
@@ -222,8 +222,8 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Timer status   | `cup time status`              | :white_check_mark: |
 | Log time entry | `cup time log <id> <duration>` | :white_check_mark: |
 | List entries   | `cup time list`                | :white_check_mark: |
-| Update entry   | `cup time update <id>`         | :construction:     |
-| Delete entry   | `cup time delete <id>`         | :construction:     |
+| Update entry   | `cup time update <id>`         | :white_check_mark: |
+| Delete entry   | `cup time delete <id>`         | :white_check_mark: |
 
 ### Workspace
 

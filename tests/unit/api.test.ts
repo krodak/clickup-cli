@@ -735,6 +735,50 @@ describe('time tracking API methods', () => {
       expect.objectContaining({ method: 'DELETE' }),
     )
   })
+
+  it('updateTimeEntry sends PUT to /team/{teamId}/time_entries/{id}', async () => {
+    const entry = { id: 'te1', duration: 7200000 }
+    mockFetch.mockReturnValue(mockResponse({ data: entry }))
+    const result = await client.updateTimeEntry('team1', 'te1', { description: 'updated' })
+    expect(result).toEqual(entry)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/time_entries/te1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ description: 'updated' }),
+      }),
+    )
+  })
+})
+
+describe('getSpaceTags', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends GET to /space/{id}/tag', async () => {
+    const tags = [{ name: 'bug', tag_fg: '#fff', tag_bg: '#f00' }]
+    mockFetch.mockReturnValue(mockResponse({ tags }))
+    const result = await client.getSpaceTags('s1')
+    expect(result).toEqual(tags)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/space/s1/tag')
+  })
+
+  it('returns empty array when tags missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getSpaceTags('s1')
+    expect(result).toEqual([])
+  })
 })
 
 describe('deleteComment', () => {
