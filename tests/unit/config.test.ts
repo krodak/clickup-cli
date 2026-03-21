@@ -46,6 +46,36 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('invalid JSON')
   })
 
+  it('throws when config JSON root is not an object', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(['pk_test', 'team_1']))
+    const { loadConfig } = await import('../../src/config.js')
+    expect(() => loadConfig()).toThrow('must contain a JSON object')
+  })
+
+  it('throws when apiToken is not a string', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 123, teamId: 'team_1' }))
+    const { loadConfig } = await import('../../src/config.js')
+    expect(() => loadConfig()).toThrow('apiToken must be a string')
+  })
+
+  it('throws when teamId is not a string', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_test', teamId: 42 }))
+    const { loadConfig } = await import('../../src/config.js')
+    expect(() => loadConfig()).toThrow('teamId must be a string')
+  })
+
+  it('throws when sprintFolderId is not a string', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: false }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    expect(() => loadConfig()).toThrow('sprintFolderId must be a string')
+  })
+
   it('throws when apiToken is missing', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ teamId: 'team_1' }))
@@ -184,6 +214,26 @@ describe('loadConfig', () => {
   })
 })
 
+describe('loadRawConfig', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('throws when config JSON root is not an object', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(['pk_test', 'team_1']))
+    const { loadRawConfig } = await import('../../src/config.js')
+    expect(() => loadRawConfig()).toThrow('must contain a JSON object')
+  })
+})
+
 describe('writeConfig', () => {
   beforeEach(() => {
     vi.mocked(fs.existsSync).mockReset()
@@ -225,6 +275,46 @@ describe('writeConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
+  })
+
+  it('trims required strings before writing config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: '  pk_test  ', teamId: '  team_1  ' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+  })
+
+  it('drops blank sprintFolderId when writing config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: '   ' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+  })
+
+  it('omits blank required values instead of persisting empty-string sentinels', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_test', teamId: '   ' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = String(call[1])
+    const parsed = JSON.parse(written)
+    expect(parsed).toEqual({ apiToken: 'pk_test' })
+  })
+
+  it('trims sprintFolderId before writing when non-blank', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: '  folder_x  ' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
     const written = String(call[1])
     const parsed = JSON.parse(written)

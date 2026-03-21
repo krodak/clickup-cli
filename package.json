@@ -1,6 +1,6 @@
 {
   "name": "@krodak/clickup-cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "ClickUp CLI for AI agents and humans",
   "type": "module",
   "license": "MIT",
@@ -35,6 +35,7 @@
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:watch": "vitest",
+    "docs:sync": "tsx scripts/sync-command-docs.ts",
     "typecheck": "tsc --project tsconfig.build.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

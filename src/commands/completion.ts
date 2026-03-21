@@ -1,3 +1,77 @@
+import { commandMetadata, topLevelCommandDefinitions, topLevelCommandNames } from './metadata.js'
+import type { CommandFlagDefinition, CommandMetadata } from './metadata.js'
+
+const bashSpecialCaseCommands = new Set(['checklist', 'time', 'bulk', 'config', 'completion'])
+
+function escapeSingleQuotes(value: string): string {
+  return value.replaceAll("'", "'\\''")
+}
+
+function renderBashCommandCases(): string {
+  return commandMetadata
+    .filter(
+      (command: CommandMetadata) =>
+        !bashSpecialCaseCommands.has(command.name) &&
+        ((command.flags?.length ?? 0) > 0 || command.bashFileCompletion),
+    )
+    .map((command: CommandMetadata) => {
+      if (command.bashFileCompletion) {
+        return `    ${command.name})
+      if [[ "$cur" == -* ]]; then
+        COMPREPLY=($(compgen -W "${command.flags?.join(' ') ?? ''}" -- "$cur"))
+      else
+        COMPREPLY=($(compgen -f -- "$cur"))
+      fi
+      ;;`
+      }
+
+      return `    ${command.name})
+      COMPREPLY=($(compgen -W "${command.flags?.join(' ') ?? ''}" -- "$cur"))
+      ;;`
+    })
+    .join('\n')
+}
+
+function renderZshTopLevelCommands(name: string): string {
+  return topLevelCommandDefinitions(name)
+    .map(command => `    '${command.name}:${escapeSingleQuotes(command.description)}'`)
+    .join('\n')
+}
+
+function renderFishTopLevelCommands(name: string): string {
+  return topLevelCommandDefinitions(name)
+    .map(
+      command =>
+        `complete -c ${name} -n __fish_use_subcommand -a ${command.name} -d '${escapeSingleQuotes(command.description)}'`,
+    )
+    .join('\n')
+}
+
+function renderFishFlagDefinition(
+  name: string,
+  commandName: string,
+  flag: CommandFlagDefinition,
+): string {
+  const parts = [`complete -c ${name} -n '__fish_seen_subcommand_from ${commandName}'`]
+
+  if (flag.short) {
+    parts.push(`-s ${flag.short.slice(1)}`)
+  }
+
+  parts.push(`-l ${flag.long.slice(2)}`)
+
+  return parts.join(' ')
+}
+
+function renderFishTopLevelFlags(name: string): string {
+  return topLevelCommandDefinitions()
+    .filter(command => command.flags.length > 0)
+    .flatMap(command =>
+      command.flags.map(flag => renderFishFlagDefinition(name, command.name, flag)),
+    )
+    .join('\n')
+}
+
 function bashCompletion(name: string): string {
   return `_${name}_completions() {
   local cur prev words cword
@@ -11,7 +85,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag tags tag-create tag-delete tag-update checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit doc-delete doc-page-delete folders members fields duplicate bulk goals goal-create goal-update goal-delete key-results key-result-create key-result-update key-result-delete task-types templates config completion"
+  local commands="${topLevelCommandNames().join(' ')}"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -32,81 +106,7 @@ function bashCompletion(name: string): string {
   esac
 
   case "$cmd" in
-    tasks)
-      COMPREPLY=($(compgen -W "--status --list --space --name --type --include-closed --json" -- "$cur"))
-      ;;
-    task)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    update)
-      COMPREPLY=($(compgen -W "-n --name -d --description -s --status --priority --due-date --time-estimate --assignee --parent --json" -- "$cur"))
-      ;;
-    create)
-      COMPREPLY=($(compgen -W "-l --list -n --name -d --description -p --parent -s --status --priority --due-date --assignee --tags --custom-item-id --time-estimate --template --json" -- "$cur"))
-      ;;
-    sprint)
-      COMPREPLY=($(compgen -W "--status --space --folder --include-closed --json" -- "$cur"))
-      ;;
-    sprints)
-      COMPREPLY=($(compgen -W "--space --json" -- "$cur"))
-      ;;
-    subtasks)
-      COMPREPLY=($(compgen -W "--status --name --include-closed --json" -- "$cur"))
-      ;;
-    comment)
-      COMPREPLY=($(compgen -W "-m --message --notify-all --json" -- "$cur"))
-      ;;
-    comments)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    activity)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    lists)
-      COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
-      ;;
-    spaces)
-      COMPREPLY=($(compgen -W "--name --my --json" -- "$cur"))
-      ;;
-    inbox)
-      COMPREPLY=($(compgen -W "--include-closed --json --days" -- "$cur"))
-      ;;
-    assigned)
-      COMPREPLY=($(compgen -W "--status --include-closed --json" -- "$cur"))
-      ;;
-    open)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    search)
-      COMPREPLY=($(compgen -W "--status --include-closed --json" -- "$cur"))
-      ;;
-    summary)
-      COMPREPLY=($(compgen -W "--hours --json" -- "$cur"))
-      ;;
-    overdue)
-      COMPREPLY=($(compgen -W "--include-closed --json" -- "$cur"))
-      ;;
-    assign)
-      COMPREPLY=($(compgen -W "--to --remove --json" -- "$cur"))
-      ;;
-    auth)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    depend)
-      COMPREPLY=($(compgen -W "--on --blocks --remove --json" -- "$cur"))
-      ;;
-    move)
-      COMPREPLY=($(compgen -W "--to --remove --json" -- "$cur"))
-      ;;
-    field)
-      COMPREPLY=($(compgen -W "--set --remove --json" -- "$cur"))
-      ;;
-    delete)
-      COMPREPLY=($(compgen -W "--confirm --json" -- "$cur"))
-      ;;
-    tag)
-      COMPREPLY=($(compgen -W "--add --remove --json" -- "$cur"))
-      ;;
+${renderBashCommandCases()}
     checklist)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "view create delete add-item edit-item delete-item" -- "$cur"))
@@ -117,106 +117,10 @@ function bashCompletion(name: string): string {
         COMPREPLY=($(compgen -W "start stop status log list update delete" -- "$cur"))
       fi
       ;;
-    comment-edit)
-      COMPREPLY=($(compgen -W "-m --message --resolved --unresolved --json" -- "$cur"))
-      ;;
-    comment-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    replies)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    reply)
-      COMPREPLY=($(compgen -W "-m --message --notify-all --json" -- "$cur"))
-      ;;
-    link)
-      COMPREPLY=($(compgen -W "--remove --json" -- "$cur"))
-      ;;
-    attach)
-      COMPREPLY=($(compgen -f -- "$cur"))
-      ;;
-    docs)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    doc)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    doc-pages)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    tags)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    tag-create)
-      COMPREPLY=($(compgen -W "--fg --bg --json" -- "$cur"))
-      ;;
-    tag-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    members)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    fields)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    duplicate)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
     bulk)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "status" -- "$cur"))
       fi
-      ;;
-    goals)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    goal-create)
-      COMPREPLY=($(compgen -W "-d --description --color --json" -- "$cur"))
-      ;;
-    goal-update)
-      COMPREPLY=($(compgen -W "-n --name -d --description --color --json" -- "$cur"))
-      ;;
-    goal-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    key-results)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    key-result-create)
-      COMPREPLY=($(compgen -W "--type --target --json" -- "$cur"))
-      ;;
-    key-result-update)
-      COMPREPLY=($(compgen -W "--progress --note --json" -- "$cur"))
-      ;;
-    key-result-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    folders)
-      COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
-      ;;
-    doc-create)
-      COMPREPLY=($(compgen -W "-c --content --json" -- "$cur"))
-      ;;
-    doc-page-create)
-      COMPREPLY=($(compgen -W "-c --content --parent-page --json" -- "$cur"))
-      ;;
-    doc-page-edit)
-      COMPREPLY=($(compgen -W "--name -c --content --json" -- "$cur"))
-      ;;
-    doc-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    doc-page-delete)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    tag-update)
-      COMPREPLY=($(compgen -W "--name --fg --bg --json" -- "$cur"))
-      ;;
-    task-types)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
-      ;;
-    templates)
-      COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
     config)
       if [[ $cword -eq 2 ]]; then
@@ -245,69 +149,7 @@ function zshCompletion(name: string): string {
 _${name}() {
   local -a commands
   commands=(
-    'init:Set up ${name} for the first time'
-    'auth:Validate API token and show current user'
-    'tasks:List tasks assigned to me'
-    'task:Get task details'
-    'update:Update a task'
-    'create:Create a new task'
-    'sprint:List my tasks in the current active sprint'
-    'sprints:List all sprints in sprint folders'
-    'subtasks:List subtasks of a task or initiative'
-    'comment:Post a comment on a task'
-    'comments:List comments on a task'
-    'activity:Show task details and comments combined'
-    'lists:List all lists in a space'
-    'spaces:List spaces in your workspace'
-    'inbox:Recently updated tasks grouped by time period'
-    'assigned:Show all tasks assigned to me'
-    'open:Open a task in the browser by ID or name'
-    'search:Search my tasks by name'
-    'summary:Daily standup summary'
-    'overdue:List tasks that are past their due date'
-    'assign:Assign or unassign users from a task'
-    'depend:Add or remove task dependencies'
-    'move:Add or remove a task from a list'
-    'field:Set or remove a custom field value on a task'
-    'delete:Delete a task'
-    'tag:Add or remove tags from a task'
-    'checklist:Manage checklists on a task'
-    'time:Track time on tasks'
-    'comment-edit:Edit an existing comment'
-    'comment-delete:Delete a comment'
-    'replies:List threaded replies on a comment'
-    'reply:Reply to a comment'
-    'link:Add or remove a link between two tasks'
-    'attach:Upload a file attachment to a task'
-    'docs:List workspace docs'
-    'doc:View a doc or doc page'
-    'doc-create:Create a new doc'
-    'doc-pages:List all pages in a doc with content'
-    'doc-page-create:Create a page in a doc'
-    'doc-page-edit:Edit a doc page'
-    'tags:List tags in a space'
-    'tag-create:Create a tag in a space'
-    'tag-delete:Delete a tag from a space'
-    'members:List workspace members'
-    'fields:List custom fields for a list'
-    'duplicate:Duplicate a task'
-    'bulk:Bulk task operations'
-    'goals:List goals in your workspace'
-    'goal-create:Create a goal'
-    'goal-update:Update a goal'
-    'goal-delete:Delete a goal'
-    'key-results:List key results for a goal'
-    'key-result-create:Create a key result on a goal'
-    'key-result-update:Update a key result'
-    'key-result-delete:Delete a key result'
-    'doc-delete:Delete a doc'
-    'doc-page-delete:Delete a doc page'
-    'tag-update:Update a tag in a space'
-    'task-types:List custom task types'
-    'templates:List task templates'
-    'folders:List folders in a space'
-    'config:Manage CLI configuration'
-    'completion:Output shell completion script'
+${renderZshTopLevelCommands(name)}
   )
 
   _arguments -C \\
@@ -859,178 +701,13 @@ function fishCompletion(name: string): string {
 complete -c ${name} -n __fish_use_subcommand -s h -l help -d 'Show help'
 complete -c ${name} -n __fish_use_subcommand -s V -l version -d 'Show version'
 
-complete -c ${name} -n __fish_use_subcommand -a init -d 'Set up ${name} for the first time'
-complete -c ${name} -n __fish_use_subcommand -a auth -d 'Validate API token and show current user'
-complete -c ${name} -n __fish_use_subcommand -a tasks -d 'List tasks assigned to me'
-complete -c ${name} -n __fish_use_subcommand -a task -d 'Get task details'
-complete -c ${name} -n __fish_use_subcommand -a update -d 'Update a task'
-complete -c ${name} -n __fish_use_subcommand -a create -d 'Create a new task'
-complete -c ${name} -n __fish_use_subcommand -a sprint -d 'List my tasks in the current active sprint'
-complete -c ${name} -n __fish_use_subcommand -a sprints -d 'List all sprints in sprint folders'
-complete -c ${name} -n __fish_use_subcommand -a subtasks -d 'List subtasks of a task or initiative'
-complete -c ${name} -n __fish_use_subcommand -a comment -d 'Post a comment on a task'
-complete -c ${name} -n __fish_use_subcommand -a comments -d 'List comments on a task'
-complete -c ${name} -n __fish_use_subcommand -a activity -d 'Show task details and comments combined'
-complete -c ${name} -n __fish_use_subcommand -a lists -d 'List all lists in a space'
-complete -c ${name} -n __fish_use_subcommand -a spaces -d 'List spaces in your workspace'
-complete -c ${name} -n __fish_use_subcommand -a inbox -d 'Recently updated tasks grouped by time period'
-complete -c ${name} -n __fish_use_subcommand -a assigned -d 'Show all tasks assigned to me'
-complete -c ${name} -n __fish_use_subcommand -a open -d 'Open a task in the browser by ID or name'
-complete -c ${name} -n __fish_use_subcommand -a search -d 'Search my tasks by name'
-complete -c ${name} -n __fish_use_subcommand -a summary -d 'Daily standup summary'
-complete -c ${name} -n __fish_use_subcommand -a overdue -d 'List tasks that are past their due date'
-complete -c ${name} -n __fish_use_subcommand -a assign -d 'Assign or unassign users from a task'
-complete -c ${name} -n __fish_use_subcommand -a depend -d 'Add or remove task dependencies'
-complete -c ${name} -n __fish_use_subcommand -a move -d 'Add or remove a task from a list'
-complete -c ${name} -n __fish_use_subcommand -a field -d 'Set or remove a custom field value on a task'
-complete -c ${name} -n __fish_use_subcommand -a delete -d 'Delete a task'
-complete -c ${name} -n __fish_use_subcommand -a tag -d 'Add or remove tags from a task'
-complete -c ${name} -n __fish_use_subcommand -a checklist -d 'Manage checklists on a task'
-complete -c ${name} -n __fish_use_subcommand -a time -d 'Track time on tasks'
-complete -c ${name} -n __fish_use_subcommand -a comment-edit -d 'Edit an existing comment'
-complete -c ${name} -n __fish_use_subcommand -a comment-delete -d 'Delete a comment'
-complete -c ${name} -n __fish_use_subcommand -a replies -d 'List threaded replies on a comment'
-complete -c ${name} -n __fish_use_subcommand -a reply -d 'Reply to a comment'
-complete -c ${name} -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
-complete -c ${name} -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
-complete -c ${name} -n __fish_use_subcommand -a docs -d 'List workspace docs'
-complete -c ${name} -n __fish_use_subcommand -a doc -d 'View a doc or doc page'
-complete -c ${name} -n __fish_use_subcommand -a doc-create -d 'Create a new doc'
-complete -c ${name} -n __fish_use_subcommand -a doc-pages -d 'List all pages in a doc with content'
-complete -c ${name} -n __fish_use_subcommand -a doc-page-create -d 'Create a page in a doc'
-complete -c ${name} -n __fish_use_subcommand -a doc-page-edit -d 'Edit a doc page'
-complete -c ${name} -n __fish_use_subcommand -a tags -d 'List tags in a space'
-complete -c ${name} -n __fish_use_subcommand -a tag-create -d 'Create a tag in a space'
-complete -c ${name} -n __fish_use_subcommand -a tag-delete -d 'Delete a tag from a space'
-complete -c ${name} -n __fish_use_subcommand -a members -d 'List workspace members'
-complete -c ${name} -n __fish_use_subcommand -a fields -d 'List custom fields for a list'
-complete -c ${name} -n __fish_use_subcommand -a duplicate -d 'Duplicate a task'
-complete -c ${name} -n __fish_use_subcommand -a bulk -d 'Bulk task operations'
-complete -c ${name} -n __fish_use_subcommand -a goals -d 'List goals in your workspace'
-complete -c ${name} -n __fish_use_subcommand -a goal-create -d 'Create a goal'
-complete -c ${name} -n __fish_use_subcommand -a goal-update -d 'Update a goal'
-complete -c ${name} -n __fish_use_subcommand -a key-results -d 'List key results for a goal'
-complete -c ${name} -n __fish_use_subcommand -a key-result-create -d 'Create a key result on a goal'
-complete -c ${name} -n __fish_use_subcommand -a key-result-update -d 'Update a key result'
-complete -c ${name} -n __fish_use_subcommand -a goal-delete -d 'Delete a goal'
-complete -c ${name} -n __fish_use_subcommand -a key-result-delete -d 'Delete a key result'
-complete -c ${name} -n __fish_use_subcommand -a doc-delete -d 'Delete a doc'
-complete -c ${name} -n __fish_use_subcommand -a doc-page-delete -d 'Delete a doc page'
-complete -c ${name} -n __fish_use_subcommand -a tag-update -d 'Update a tag in a space'
-complete -c ${name} -n __fish_use_subcommand -a task-types -d 'List custom task types'
-complete -c ${name} -n __fish_use_subcommand -a templates -d 'List task templates'
-complete -c ${name} -n __fish_use_subcommand -a folders -d 'List folders in a space'
-complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
-complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
+${renderFishTopLevelCommands(name)}
 
-complete -c ${name} -n '__fish_seen_subcommand_from auth' -l json -d 'Force JSON output'
+${renderFishTopLevelFlags(name)}
 
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l status -d 'Filter by status'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l list -d 'Filter by list ID'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l space -d 'Filter by space ID'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l name -d 'Filter by name'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l type -d 'Filter by task type'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l include-closed -d 'Include done/closed tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from tasks' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from task' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from update' -s n -l name -d 'New task name'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -s d -l description -d 'New description'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -s s -l status -d 'New status'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l priority -d 'Priority level' -a 'urgent high normal low'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l due-date -d 'Due date'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l time-estimate -d 'Time estimate'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l assignee -d 'Add assignee'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l parent -d 'Set parent task'
-complete -c ${name} -n '__fish_seen_subcommand_from update' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from create' -s l -l list -d 'Target list ID'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -s n -l name -d 'Task name'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -s d -l description -d 'Task description'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -s p -l parent -d 'Parent task ID'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -s s -l status -d 'Initial status'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l priority -d 'Priority level' -a 'urgent high normal low'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l due-date -d 'Due date'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l assignee -d 'Assignee user ID'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l tags -d 'Comma-separated tag names'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l custom-item-id -d 'Custom task type ID'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l time-estimate -d 'Time estimate'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l template -d 'Create from a task template'
-complete -c ${name} -n '__fish_seen_subcommand_from create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l status -d 'Filter by status'
-complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l space -d 'Narrow sprint search to a space'
-complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l folder -d 'Sprint folder ID'
-complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l include-closed -d 'Include done/closed tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from sprint' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from sprints' -l space -d 'Filter by space'
-complete -c ${name} -n '__fish_seen_subcommand_from sprints' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l status -d 'Filter by status'
-complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l name -d 'Filter by name'
-complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l include-closed -d 'Include closed/done subtasks'
-complete -c ${name} -n '__fish_seen_subcommand_from subtasks' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from comment' -s m -l message -d 'Comment text'
-complete -c ${name} -n '__fish_seen_subcommand_from comment' -l notify-all -d 'Notify all assignees'
-complete -c ${name} -n '__fish_seen_subcommand_from comment' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from comments' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from activity' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from lists' -l name -d 'Filter by name'
-complete -c ${name} -n '__fish_seen_subcommand_from lists' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l name -d 'Filter spaces by name'
-complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l my -d 'Show only spaces where I have assigned tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from spaces' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l include-closed -d 'Include done/closed tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l json -d 'Force JSON output'
-complete -c ${name} -n '__fish_seen_subcommand_from inbox' -l days -d 'Lookback period in days'
-
-complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l status -d 'Show only tasks with this status'
-complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l include-closed -d 'Include done/closed tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from assigned' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from open' -l json -d 'Output task JSON instead of opening'
-
-complete -c ${name} -n '__fish_seen_subcommand_from search' -l status -d 'Filter by status'
-complete -c ${name} -n '__fish_seen_subcommand_from search' -l include-closed -d 'Include done/closed tasks in search'
-complete -c ${name} -n '__fish_seen_subcommand_from search' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from summary' -l hours -d 'Completed-tasks lookback in hours'
-complete -c ${name} -n '__fish_seen_subcommand_from summary' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from overdue' -l include-closed -d 'Include done/closed overdue tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from overdue' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from assign' -l to -d 'Add assignee'
-complete -c ${name} -n '__fish_seen_subcommand_from assign' -l remove -d 'Remove assignee'
-complete -c ${name} -n '__fish_seen_subcommand_from assign' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from depend' -l on -d 'Task that this task depends on'
-complete -c ${name} -n '__fish_seen_subcommand_from depend' -l blocks -d 'Task that this task blocks'
-complete -c ${name} -n '__fish_seen_subcommand_from depend' -l remove -d 'Remove the dependency'
-complete -c ${name} -n '__fish_seen_subcommand_from depend' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from move' -l to -d 'Add task to this list'
-complete -c ${name} -n '__fish_seen_subcommand_from move' -l remove -d 'Remove task from this list'
-complete -c ${name} -n '__fish_seen_subcommand_from move' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from field' -l set -d 'Set field name and value'
-complete -c ${name} -n '__fish_seen_subcommand_from field' -l remove -d 'Remove field value by name'
-complete -c ${name} -n '__fish_seen_subcommand_from field' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from delete' -l confirm -d 'Skip confirmation prompt'
-complete -c ${name} -n '__fish_seen_subcommand_from delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from tag' -l add -d 'Comma-separated tag names to add'
-complete -c ${name} -n '__fish_seen_subcommand_from tag' -l remove -d 'Comma-separated tag names to remove'
-complete -c ${name} -n '__fish_seen_subcommand_from tag' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from update' -l priority -a 'urgent high normal low'
+complete -c ${name} -n '__fish_seen_subcommand_from create' -l priority -a 'urgent high normal low'
+complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l type -a 'number percentage'
 
 complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a view -d 'View checklists on a task'
 complete -c ${name} -n '__fish_seen_subcommand_from checklist; and not __fish_seen_subcommand_from view create delete add-item edit-item delete-item' -a create -d 'Create a checklist on a task'
@@ -1059,99 +736,10 @@ complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcom
 complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -s d -l description -d 'New description'
 complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -l duration -d 'New duration'
 
-complete -c ${name} -n '__fish_seen_subcommand_from comment-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from replies' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from reply' -s m -l message -d 'Reply text'
-complete -c ${name} -n '__fish_seen_subcommand_from reply' -l notify-all -d 'Notify all assignees'
-complete -c ${name} -n '__fish_seen_subcommand_from reply' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from link' -l remove -d 'Remove the link'
-complete -c ${name} -n '__fish_seen_subcommand_from link' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from attach' -l json -d 'Force JSON output'
 complete -c ${name} -n '__fish_seen_subcommand_from attach' -F
-
-complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -s m -l message -d 'New comment text'
-complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l resolved -d 'Mark comment as resolved'
-complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l unresolved -d 'Mark comment as unresolved'
-complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from docs' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-pages' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from tags' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l fg -d 'Foreground color'
-complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l bg -d 'Background color'
-complete -c ${name} -n '__fish_seen_subcommand_from tag-create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from tag-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from members' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from fields' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from duplicate' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status' -a status -d 'Update status of multiple tasks'
 complete -c ${name} -n '__fish_seen_subcommand_from status; and __fish_seen_subcommand_from bulk' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from goals' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -s d -l description -d 'Goal description'
-complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -l color -d 'Goal color'
-complete -c ${name} -n '__fish_seen_subcommand_from goal-create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -s n -l name -d 'New goal name'
-complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -s d -l description -d 'New description'
-complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -l color -d 'New color'
-complete -c ${name} -n '__fish_seen_subcommand_from goal-update' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from key-results' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l type -d 'Key result type' -a 'number percentage'
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l target -d 'Target value'
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l progress -d 'Current progress'
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l note -d 'Progress note'
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-update' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from goal-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from key-result-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-delete' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l name -d 'New tag name'
-complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l fg -d 'New foreground color'
-complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l bg -d 'New background color'
-complete -c ${name} -n '__fish_seen_subcommand_from tag-update' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from task-types' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from templates' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from folders' -l name -d 'Filter by folder name'
-complete -c ${name} -n '__fish_seen_subcommand_from folders' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -s c -l content -d 'Initial content'
-complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -s c -l content -d 'Page content'
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -l parent-page -d 'Parent page ID'
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-create' -l json -d 'Force JSON output'
-
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -l name -d 'New page name'
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -s c -l content -d 'New page content'
-complete -c ${name} -n '__fish_seen_subcommand_from doc-page-edit' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'

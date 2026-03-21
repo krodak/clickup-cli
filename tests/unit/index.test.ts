@@ -1,35 +1,168 @@
-import { describe, it, expect } from 'vitest'
-import { execSync } from 'child_process'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
+const config = { apiToken: 'pk_test', teamId: 'team_1' }
+
+const mockLoadConfig = vi.fn(() => config)
+const mockGetTask = vi.fn()
+const mockRunSummaryCommand = vi.fn()
+const mockEditChecklistItem = vi.fn()
+const mockIsTTY = vi.fn<() => boolean>()
+const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
+const mockFormatTaskDetail = vi.fn()
+const mockFormatTaskDetailMarkdown = vi.fn()
+
+async function loadCli() {
+  vi.resetModules()
+
+  vi.doMock('../../src/config.js', () => ({
+    loadConfig: mockLoadConfig,
+  }))
+
+  vi.doMock('../../src/commands/get.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/get.js')>()
+    return {
+      ...actual,
+      getTask: mockGetTask,
+    }
+  })
+
+  vi.doMock('../../src/commands/summary.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/summary.js')>()
+    return {
+      ...actual,
+      runSummaryCommand: mockRunSummaryCommand,
+    }
+  })
+
+  vi.doMock('../../src/commands/checklist.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/checklist.js')>()
+    return {
+      ...actual,
+      editChecklistItem: mockEditChecklistItem,
+    }
+  })
+
+  vi.doMock('../../src/output.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/output.js')>()
+    return {
+      ...actual,
+      isTTY: mockIsTTY,
+      shouldOutputJson: mockShouldOutputJson,
+    }
+  })
+
+  vi.doMock('../../src/interactive.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/interactive.js')>()
+    return {
+      ...actual,
+      formatTaskDetail: mockFormatTaskDetail,
+    }
+  })
+
+  vi.doMock('../../src/markdown.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/markdown.js')>()
+    return {
+      ...actual,
+      formatTaskDetailMarkdown: mockFormatTaskDetailMarkdown,
+    }
+  })
+
+  return import('../../src/index.js')
+}
 
 describe('CLI entry point', () => {
-  it('shows help with --help', () => {
-    const output = execSync('node dist/index.js --help', { cwd: ROOT }).toString()
-    expect(output).toContain('init')
-    expect(output).toContain('tasks')
-    expect(output).toContain('task')
-    expect(output).toContain('update')
-    expect(output).toContain('create')
-    expect(output).toContain('sprint')
-    expect(output).toContain('sprints')
-    expect(output).toContain('subtasks')
-    expect(output).toContain('comment')
-    expect(output).toContain('comments')
-    expect(output).toContain('activity')
-    expect(output).toContain('lists')
-    expect(output).toContain('spaces')
-    expect(output).toContain('inbox')
-    expect(output).toContain('assigned')
-    expect(output).toContain('open')
-    expect(output).toContain('search')
-    expect(output).toContain('summary')
-    expect(output).toContain('overdue')
-    expect(output).toContain('assign')
-    expect(output).toContain('config')
-    expect(output).toContain('completion')
-    expect(output).toContain('auth')
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    mockLoadConfig.mockClear()
+    mockLoadConfig.mockReturnValue(config)
+    mockGetTask.mockReset()
+    mockRunSummaryCommand.mockReset()
+    mockEditChecklistItem.mockReset()
+    mockIsTTY.mockReset().mockReturnValue(false)
+    mockShouldOutputJson.mockReset().mockReturnValue(false)
+    mockFormatTaskDetail.mockReset().mockReturnValue('TTY detail')
+    mockFormatTaskDetailMarkdown.mockReset().mockReturnValue('# Markdown detail')
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('formats task detail as markdown when output is piped', async () => {
+    mockGetTask.mockResolvedValue({ id: 'task-1', name: 'Task One' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['task', 'task-1'], { from: 'user' })
+
+    expect(mockLoadConfig).toHaveBeenCalledOnce()
+    expect(mockGetTask).toHaveBeenCalledWith(config, 'task-1')
+    expect(mockFormatTaskDetailMarkdown).toHaveBeenCalledWith({ id: 'task-1', name: 'Task One' })
+    expect(mockFormatTaskDetail).not.toHaveBeenCalled()
+    expect(console.log).toHaveBeenCalledWith('# Markdown detail')
+  })
+
+  it('formats task detail for TTY output when json is not forced', async () => {
+    mockIsTTY.mockReturnValue(true)
+    mockGetTask.mockResolvedValue({ id: 'task-1', name: 'Task One' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['task', 'task-1'], { from: 'user' })
+
+    expect(mockFormatTaskDetail).toHaveBeenCalledWith({ id: 'task-1', name: 'Task One' })
+    expect(mockFormatTaskDetailMarkdown).not.toHaveBeenCalled()
+    expect(console.log).toHaveBeenCalledWith('TTY detail')
+  })
+
+  it('outputs task detail as JSON when --json is provided', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockGetTask.mockResolvedValue({ id: 'task-1', name: 'Task One' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['task', 'task-1', '--json'], { from: 'user' })
+
+    expect(mockFormatTaskDetail).not.toHaveBeenCalled()
+    expect(mockFormatTaskDetailMarkdown).not.toHaveBeenCalled()
+    expect(console.log).toHaveBeenCalledWith(
+      JSON.stringify({ id: 'task-1', name: 'Task One' }, null, 2),
+    )
+  })
+
+  it('parses summary hours before delegating to the command module', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['summary', '--hours', '6', '--json'], { from: 'user' })
+
+    expect(mockRunSummaryCommand).toHaveBeenCalledWith(config, { hours: 6, json: true })
+  })
+
+  it('rejects checklist assignee values that are not numeric', async () => {
+    const exitError = new Error('process.exit:1')
+    const exitSpy = vi
+      .spyOn(process, 'exit')
+      .mockImplementation((code?: string | number | null) => {
+        throw code === 1 ? exitError : new Error(`process.exit:${String(code)}`)
+      })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await expect(
+      program.parseAsync(['checklist', 'edit-item', 'chk-1', 'item-1', '--assignee', 'abc'], {
+        from: 'user',
+      }),
+    ).rejects.toBe(exitError)
+
+    expect(mockEditChecklistItem).not.toHaveBeenCalled()
+    expect(console.error).toHaveBeenCalledWith('--assignee must be a number or "null"')
+    expect(exitSpy).toHaveBeenCalledWith(1)
   })
 })

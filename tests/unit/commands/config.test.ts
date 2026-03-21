@@ -52,9 +52,23 @@ describe('config commands', () => {
       expect(getConfigValue('teamId')).toBeUndefined()
     })
 
+    it('returns undefined for non-string value', async () => {
+      mockLoadRawConfig.mockReturnValue({ apiToken: 123 })
+      const { getConfigValue } = await import('../../../src/commands/config.js')
+      expect(getConfigValue('apiToken')).toBeUndefined()
+    })
+
     it('throws for unknown key', async () => {
       const { getConfigValue } = await import('../../../src/commands/config.js')
       expect(() => getConfigValue('badKey')).toThrow('Unknown config key')
+    })
+
+    it('surfaces corrupt config root shape failures cleanly', async () => {
+      mockLoadRawConfig.mockImplementation(() => {
+        throw new Error('Config file at /mock/.config/cup/config.json must contain a JSON object.')
+      })
+      const { getConfigValue } = await import('../../../src/commands/config.js')
+      expect(() => getConfigValue('apiToken')).toThrow('must contain a JSON object')
     })
   })
 
@@ -95,13 +109,22 @@ describe('config commands', () => {
       setConfigValue('apiToken', 'pk_first')
       expect(mockWriteConfig).toHaveBeenCalledWith({
         apiToken: 'pk_first',
-        teamId: '',
       })
     })
 
     it('throws when apiToken does not start with pk_', async () => {
       const { setConfigValue } = await import('../../../src/commands/config.js')
       expect(() => setConfigValue('apiToken', 'bad_token')).toThrow('apiToken must start with pk_')
+    })
+
+    it('trims surrounding whitespace before validating and writing apiToken', async () => {
+      mockLoadRawConfig.mockReturnValue({ teamId: 'team_1' })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      setConfigValue('apiToken', '  pk_trimmed  ')
+      expect(mockWriteConfig).toHaveBeenCalledWith({
+        apiToken: 'pk_trimmed',
+        teamId: 'team_1',
+      })
     })
 
     it('throws when teamId is empty', async () => {
@@ -114,9 +137,48 @@ describe('config commands', () => {
       expect(() => setConfigValue('teamId', '   ')).toThrow('teamId must be non-empty')
     })
 
+    it('trims surrounding whitespace before validating and writing teamId', async () => {
+      mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_existing' })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      setConfigValue('teamId', '  team_trimmed  ')
+      expect(mockWriteConfig).toHaveBeenCalledWith({
+        apiToken: 'pk_existing',
+        teamId: 'team_trimmed',
+      })
+    })
+
+    it('trims surrounding whitespace before writing sprintFolderId', async () => {
+      mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_existing', teamId: 'team_1' })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      setConfigValue('sprintFolderId', '  folder_123  ')
+      expect(mockWriteConfig).toHaveBeenCalledWith({
+        apiToken: 'pk_existing',
+        teamId: 'team_1',
+        sprintFolderId: 'folder_123',
+      })
+    })
+
+    it('drops malformed non-string values from existing config when writing', async () => {
+      mockLoadRawConfig.mockReturnValue({ apiToken: 123 })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      setConfigValue('teamId', 'new_team')
+      expect(mockWriteConfig).toHaveBeenCalledWith({
+        teamId: 'new_team',
+      })
+    })
+
     it('throws for unknown key', async () => {
       const { setConfigValue } = await import('../../../src/commands/config.js')
       expect(() => setConfigValue('unknown', 'val')).toThrow('Unknown config key')
+    })
+
+    it('surfaces corrupt config root shape failures cleanly', async () => {
+      mockLoadRawConfig.mockImplementation(() => {
+        throw new Error('Config file at /mock/.config/cup/config.json must contain a JSON object.')
+      })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      expect(() => setConfigValue('apiToken', 'pk_newtoken')).toThrow('must contain a JSON object')
+      expect(mockWriteConfig).not.toHaveBeenCalled()
     })
   })
 

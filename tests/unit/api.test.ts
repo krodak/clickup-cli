@@ -213,11 +213,26 @@ describe('ClickUpClient', () => {
     await expect(client.getTasksFromList('list_1')).rejects.toThrow('not valid JSON')
   })
 
+  it('throws when API returns a non-object JSON payload', async () => {
+    mockFetch.mockReturnValue(mockResponse([]))
+    await expect(client.getTeams()).rejects.toThrow('expected JSON object')
+  })
+
+  it('throws when getMe response is missing a valid user object', async () => {
+    mockFetch.mockReturnValue(mockResponse({ user: null }))
+    await expect(client.getMe()).rejects.toThrow('expected user object')
+  })
+
   it('getTeams returns team array', async () => {
     mockFetch.mockReturnValue(mockResponse({ teams: [{ id: 't1', name: 'My Workspace' }] }))
     const teams = await client.getTeams()
     expect(teams).toEqual([{ id: 't1', name: 'My Workspace' }])
     expect(String(mockFetch.mock.calls[0]![0])).toMatch(/\/team$/)
+  })
+
+  it('throws when teams payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ teams: { id: 't1', name: 'My Workspace' } }))
+    await expect(client.getTeams()).rejects.toThrow('expected teams.teams to be an array')
   })
 
   it('getSpaces returns spaces for a team', async () => {
@@ -227,11 +242,21 @@ describe('ClickUpClient', () => {
     expect(String(mockFetch.mock.calls[0]![0])).toContain('/team/t1/space')
   })
 
+  it('throws when spaces payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ spaces: { id: 's1', name: 'Engineering' } }))
+    await expect(client.getSpaces('t1')).rejects.toThrow('expected spaces.spaces to be an array')
+  })
+
   it('getLists returns lists for a space', async () => {
     mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
     const lists = await client.getLists('s1')
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
     expect(String(mockFetch.mock.calls[0]![0])).toContain('/space/s1/list')
+  })
+
+  it('throws when space lists payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ lists: { id: 'l1', name: 'Sprint 1' } }))
+    await expect(client.getLists('s1')).rejects.toThrow('expected space lists.lists to be an array')
   })
 
   it('getFolders returns folders for a space', async () => {
@@ -241,11 +266,39 @@ describe('ClickUpClient', () => {
     expect(String(mockFetch.mock.calls[0]![0])).toContain('/space/s1/folder')
   })
 
+  it('throws when folders payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ folders: { id: 'f1', name: 'Q1 Work' } }))
+    await expect(client.getFolders('s1')).rejects.toThrow(
+      'expected space folders.folders to be an array',
+    )
+  })
+
   it('getFolderLists returns lists for a folder', async () => {
     mockFetch.mockReturnValue(mockResponse({ lists: [{ id: 'l1', name: 'Sprint 1' }] }))
     const lists = await client.getFolderLists('f1')
     expect(lists).toEqual([{ id: 'l1', name: 'Sprint 1' }])
     expect(String(mockFetch.mock.calls[0]![0])).toContain('/folder/f1/list')
+  })
+
+  it('throws when folder lists payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ lists: { id: 'l1', name: 'Sprint 1' } }))
+    await expect(client.getFolderLists('f1')).rejects.toThrow(
+      'expected folder lists.lists to be an array',
+    )
+  })
+
+  it('throws when custom task types payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ custom_items: { id: '1', name: 'Story' } }))
+    await expect(client.getCustomTaskTypes('t1')).rejects.toThrow(
+      'expected custom task types.custom_items to be an array',
+    )
+  })
+
+  it('throws when task comments payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ comments: { id: 'c1', comment_text: 'bad' } }))
+    await expect(client.getTaskComments('t1')).rejects.toThrow(
+      'expected task comments.comments to be an array',
+    )
   })
 })
 
@@ -328,6 +381,24 @@ describe('getMyTasks', () => {
     expect(tasks).toHaveLength(2)
     expect(tasks[0]!.id).toBe('t1')
     expect(tasks[1]!.id).toBe('t2')
+  })
+
+  it('rejects malformed non-array tasks payloads while paginating', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: { id: 't1' }, last_page: true }))
+
+    await expect(client.getMyTasks('team1')).rejects.toThrow('expected tasks array')
+  })
+
+  it('rejects malformed non-boolean last_page payloads while paginating', async () => {
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ user: { id: 42, username: 'me' } }))
+      .mockReturnValueOnce(mockResponse({ tasks: [], last_page: 'true' }))
+
+    await expect(client.getMyTasks('team1')).rejects.toThrow(
+      'expected task page.last_page to be a boolean',
+    )
   })
 })
 
@@ -571,6 +642,11 @@ describe('checklist API methods', () => {
         body: JSON.stringify({ name: 'QA' }),
       }),
     )
+  })
+
+  it('createChecklist throws when checklist is missing from response', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await expect(client.createChecklist('t1', 'QA')).rejects.toThrow('expected checklist object')
   })
 
   it('deleteChecklist sends DELETE to checklist endpoint', async () => {

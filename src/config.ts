@@ -8,6 +8,67 @@ export interface Config {
   sprintFolderId?: string
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function readConfigString(
+  parsed: Record<string, unknown>,
+  key: keyof Config,
+  path: string,
+  strict: boolean,
+): string | undefined {
+  const value = parsed[key]
+  if (value === undefined) return undefined
+  if (typeof value !== 'string') {
+    if (strict) {
+      throw new Error(`Config field ${key} must be a string in ${path}.`)
+    }
+    return undefined
+  }
+  const trimmed = value.trim()
+  return trimmed || undefined
+}
+
+function parseConfigFile(
+  raw: string,
+  path: string,
+  strictFields: boolean,
+  strictRoot = strictFields,
+): Partial<Config> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    if (strictRoot) {
+      throw new Error(`Config file at ${path} contains invalid JSON. Please check the file syntax.`)
+    }
+    return {}
+  }
+
+  if (!isRecord(parsed)) {
+    if (strictRoot) {
+      throw new Error(`Config file at ${path} must contain a JSON object.`)
+    }
+    return {}
+  }
+
+  const apiToken = readConfigString(parsed, 'apiToken', path, strictFields)
+  const teamId = readConfigString(parsed, 'teamId', path, strictFields)
+  const sprintFolderId = readConfigString(parsed, 'sprintFolderId', path, strictFields)
+
+  return {
+    ...(apiToken ? { apiToken } : {}),
+    ...(teamId ? { teamId } : {}),
+    ...(sprintFolderId ? { sprintFolderId } : {}),
+  }
+}
+
+function trimConfigValue(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed || undefined
+}
+
 function configDir(): string {
   const xdg = process.env.XDG_CONFIG_HOME
   if (xdg) return join(xdg, 'cup')
@@ -49,15 +110,10 @@ export function loadConfig(): Config {
   const path = configPath()
   if (fs.existsSync(path)) {
     const raw = fs.readFileSync(path, 'utf-8')
-    let parsed: Partial<Config>
-    try {
-      parsed = JSON.parse(raw) as Partial<Config>
-    } catch {
-      throw new Error(`Config file at ${path} contains invalid JSON. Please check the file syntax.`)
-    }
-    fileToken = parsed.apiToken?.trim()
-    fileTeamId = parsed.teamId?.trim()
-    fileSprintFolderId = parsed.sprintFolderId?.trim() || undefined
+    const parsed = parseConfigFile(raw, path, true)
+    fileToken = parsed.apiToken
+    fileTeamId = parsed.teamId
+    fileSprintFolderId = parsed.sprintFolderId
   }
 
   const apiToken = envToken || fileToken
@@ -80,11 +136,7 @@ export function loadRawConfig(): Partial<Config> {
   migrateFromLegacy()
   const path = configPath()
   if (!fs.existsSync(path)) return {}
-  try {
-    return JSON.parse(fs.readFileSync(path, 'utf-8')) as Partial<Config>
-  } catch {
-    return {}
-  }
+  return parseConfigFile(fs.readFileSync(path, 'utf-8'), path, false, true)
 }
 
 export function getConfigPath(): string {
@@ -92,13 +144,21 @@ export function getConfigPath(): string {
   return configPath()
 }
 
-export function writeConfig(config: Config): void {
+export function writeConfig(config: Partial<Config>): void {
   const dir = configDir()
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   }
   const filePath = join(dir, 'config.json')
-  fs.writeFileSync(filePath, JSON.stringify(config, null, 2) + '\n', {
+  const apiToken = trimConfigValue(config.apiToken) ?? ''
+  const teamId = trimConfigValue(config.teamId) ?? ''
+  const sprintFolderId = trimConfigValue(config.sprintFolderId)
+  const normalizedConfig: Partial<Config> = {
+    ...(apiToken ? { apiToken } : {}),
+    ...(teamId ? { teamId } : {}),
+    ...(sprintFolderId ? { sprintFolderId } : {}),
+  }
+  fs.writeFileSync(filePath, JSON.stringify(normalizedConfig, null, 2) + '\n', {
     encoding: 'utf-8',
     mode: 0o600,
   })
