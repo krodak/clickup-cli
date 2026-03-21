@@ -1,7 +1,7 @@
 {
   "name": "clickup-cli",
   "description": "ClickUp CLI skills for managing tasks, sprints, comments, checklists, custom fields, tags, and time tracking via the cup command",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "author": {
     "name": "Krzysztof Rodak"
   },
