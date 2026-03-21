@@ -232,7 +232,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | List spaces  | `cup spaces`            | :white_check_mark: |
 | List lists   | `cup lists <spaceId>`   | :white_check_mark: |
 | Check auth   | `cup auth`              | :white_check_mark: |
-| List folders | `cup folders <spaceId>` | :construction:     |
+| List folders | `cup folders <spaceId>` | :white_check_mark: |
 | List members | `cup members`           | :construction:     |
 
 ### Goals & Key Results
@@ -245,13 +245,14 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ### Docs
 
-| Feature           | Command                              | Status             |
-| ----------------- | ------------------------------------ | ------------------ |
-| Search docs       | `cup docs [query]`                   | :white_check_mark: |
-| View page content | `cup doc <docId> <pageId>`           | :white_check_mark: |
-| Create doc        | `cup doc-create <title>`             | :white_check_mark: |
-| Create page       | `cup doc-page-create <docId> <name>` | :white_check_mark: |
-| Edit page         | `cup doc-page-edit <docId> <pageId>` | :white_check_mark: |
+| Feature          | Command                              | Status             |
+| ---------------- | ------------------------------------ | ------------------ |
+| Search docs      | `cup docs [query]`                   | :white_check_mark: |
+| View doc / page  | `cup doc <docId> [pageId]`           | :white_check_mark: |
+| All page content | `cup doc-pages <docId>`              | :white_check_mark: |
+| Create doc       | `cup doc-create <title>`             | :white_check_mark: |
+| Create page      | `cup doc-page-create <docId> <name>` | :white_check_mark: |
+| Edit page        | `cup doc-page-edit <docId> <pageId>` | :white_check_mark: |
 
 ### Attachments
 

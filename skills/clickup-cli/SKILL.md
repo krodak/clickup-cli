@@ -52,8 +52,10 @@ All commands support `--help` for full flag details.
 | `cup lists <spaceId> [--name partial] [--json]`                                                     | Lists in a space (including folder lists)          |
 | `cup open <query> [--json]`                                                                         | Open task in browser by ID or name                 |
 | `cup auth [--json]`                                                                                 | Check authentication status                        |
+| `cup folders <spaceId> [--name partial] [--json]`                                                   | Folders in a space (with their lists)              |
 | `cup docs [query] [--json]`                                                                         | List workspace docs (optionally filter by name)    |
-| `cup doc <docId> <pageId> [--json]`                                                                 | View a doc page (markdown content)                 |
+| `cup doc <docId> [pageId] [--json]`                                                                 | View doc metadata + page tree, or a specific page  |
+| `cup doc-pages <docId> [--json]`                                                                    | All pages in a doc with content                    |
 
 ### Write
 
@@ -129,8 +131,10 @@ All commands support `--help` for full flag details.
 | `cup link` + custom IDs     | Both IDs must be the same type (both custom or both native). Mixing may not work                                                                                                                                                                          |
 | `cup link`                  | Link/unlink tasks (different from dependencies)                                                                                                                                                                                                           |
 | `cup attach`                | Upload files to tasks. Attachments shown in `cup task` detail view                                                                                                                                                                                        |
+| `cup folders`               | List folders in a space with their contained lists                                                                                                                                                                                                        |
 | `cup docs`                  | List and search workspace docs by name                                                                                                                                                                                                                    |
-| `cup doc`                   | View a doc page content (markdown)                                                                                                                                                                                                                        |
+| `cup doc`                   | View doc metadata + page tree (no pageId), or a specific page (with pageId)                                                                                                                                                                               |
+| `cup doc-pages`             | Dump all pages in a doc with full content                                                                                                                                                                                                                 |
 | `cup doc-create`            | Create a new doc with optional initial content                                                                                                                                                                                                            |
 | `cup doc-page-create`       | Create a page in a doc, optionally nested under a parent page                                                                                                                                                                                             |
 | `cup doc-page-edit`         | Edit a doc page name or content                                                                                                                                                                                                                           |
@@ -210,7 +214,9 @@ cup delete abc123def --confirm          # irreversible!
 ```bash
 cup docs                                       # list all docs
 cup docs "design"                              # search docs by name
+cup doc <docId>                                # doc metadata + page tree
 cup doc <docId> <pageId>                       # view page content
+cup doc-pages <docId>                          # all pages with content
 cup doc-create "Architecture Notes"            # create a doc
 cup doc-create "Notes" -c "# Draft"            # create with content
 cup doc-page-create <docId> "New Section"      # add page to doc
@@ -224,6 +230,8 @@ cup doc-page-edit <docId> <pageId> -c "# Updated content" # edit content
 ```bash
 cup spaces                           # all spaces
 cup spaces --name "Engineering"      # find space ID by name
+cup folders <spaceId>                # folders with their lists
+cup folders <spaceId> --name "sprint"  # filter folders by name
 cup lists <spaceId>                  # lists in a space (needs ID from cup spaces)
 cup sprints                          # all sprints across folders
 cup auth                             # verify token works

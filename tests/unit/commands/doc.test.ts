@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const mockGetDoc = vi.fn()
+const mockGetDocPageListing = vi.fn()
 const mockGetDocPage = vi.fn()
+const mockGetDocPages = vi.fn()
 const mockCreateDoc = vi.fn()
 const mockCreateDocPage = vi.fn()
 const mockEditDocPage = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(() => ({
+    getDoc: mockGetDoc,
+    getDocPageListing: mockGetDocPageListing,
     getDocPage: mockGetDocPage,
+    getDocPages: mockGetDocPages,
     createDoc: mockCreateDoc,
     createDocPage: mockCreateDocPage,
     editDocPage: mockEditDocPage,
@@ -15,6 +21,82 @@ vi.mock('../../../src/api.js', () => ({
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }
+
+describe('getDocInfo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns doc metadata and page listing', async () => {
+    const doc = { id: 'd1', name: 'My Doc', workspace_id: 1 }
+    const pages = [{ id: 'p1', doc_id: 'd1', name: 'Page 1' }]
+    mockGetDoc.mockResolvedValue(doc)
+    mockGetDocPageListing.mockResolvedValue(pages)
+    const { getDocInfo } = await import('../../../src/commands/doc.js')
+    const result = await getDocInfo(mockConfig, 'd1')
+    expect(result.doc).toEqual(doc)
+    expect(result.pages).toEqual(pages)
+    expect(mockGetDoc).toHaveBeenCalledWith('team1', 'd1')
+    expect(mockGetDocPageListing).toHaveBeenCalledWith('team1', 'd1')
+  })
+})
+
+describe('formatDocInfoMarkdown', () => {
+  it('renders doc name and page tree', async () => {
+    const { formatDocInfoMarkdown } = await import('../../../src/commands/doc.js')
+    const result = formatDocInfoMarkdown({ id: 'd1', name: 'My Doc', workspace_id: 1 }, [
+      { id: 'p1', doc_id: 'd1', name: 'Intro' },
+    ])
+    expect(result).toContain('# My Doc')
+    expect(result).toContain('d1')
+    expect(result).toContain('**Intro**')
+    expect(result).toContain('p1')
+  })
+
+  it('shows "No pages" when empty', async () => {
+    const { formatDocInfoMarkdown } = await import('../../../src/commands/doc.js')
+    const result = formatDocInfoMarkdown({ id: 'd1', name: 'Empty Doc', workspace_id: 1 }, [])
+    expect(result).toContain('No pages.')
+  })
+})
+
+describe('getAllDocPages', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns all pages with content', async () => {
+    const pages = [
+      { id: 'p1', doc_id: 'd1', name: 'Page 1', content: '# Hello' },
+      { id: 'p2', doc_id: 'd1', name: 'Page 2', content: '# World' },
+    ]
+    mockGetDocPages.mockResolvedValue(pages)
+    const { getAllDocPages } = await import('../../../src/commands/doc.js')
+    const result = await getAllDocPages(mockConfig, 'd1')
+    expect(result).toEqual(pages)
+    expect(mockGetDocPages).toHaveBeenCalledWith('team1', 'd1')
+  })
+})
+
+describe('formatDocPagesMarkdown', () => {
+  it('returns "No pages found" for empty array', async () => {
+    const { formatDocPagesMarkdown } = await import('../../../src/commands/doc.js')
+    expect(formatDocPagesMarkdown([])).toBe('No pages found')
+  })
+
+  it('renders all pages with content separated by hr', async () => {
+    const { formatDocPagesMarkdown } = await import('../../../src/commands/doc.js')
+    const result = formatDocPagesMarkdown([
+      { id: 'p1', doc_id: 'd1', name: 'Intro', content: 'Hello' },
+      { id: 'p2', doc_id: 'd1', name: 'Setup', content: 'World' },
+    ])
+    expect(result).toContain('# Intro')
+    expect(result).toContain('Hello')
+    expect(result).toContain('---')
+    expect(result).toContain('# Setup')
+    expect(result).toContain('World')
+  })
+})
 
 describe('getDocPage', () => {
   beforeEach(() => {

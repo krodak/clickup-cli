@@ -917,6 +917,46 @@ describe('Docs API v3 methods', () => {
       }),
     )
   })
+
+  it('getDoc sends GET to v3 /workspaces/{id}/docs/{docId}', async () => {
+    const doc = { id: 'd1', name: 'My Doc', workspace_id: 1 }
+    mockFetch.mockReturnValue(mockResponse(doc))
+    const result = await client.getDoc('w1', 'd1')
+    expect(result).toEqual(doc)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toBe('https://api.clickup.com/api/v3/workspaces/w1/docs/d1')
+  })
+
+  it('getDocPageListing sends GET to v3 /workspaces/{id}/docs/{docId}/pagelisting', async () => {
+    const pages = [{ id: 'p1', doc_id: 'd1', name: 'Page 1' }]
+    mockFetch.mockReturnValue(mockResponse({ pages }))
+    const result = await client.getDocPageListing('w1', 'd1')
+    expect(result).toEqual(pages)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pagelisting')
+  })
+
+  it('getDocPageListing returns empty array when pages missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getDocPageListing('w1', 'd1')
+    expect(result).toEqual([])
+  })
+
+  it('getDocPages sends GET to v3 /workspaces/{id}/docs/{docId}/pages with content_format', async () => {
+    const pages = [{ id: 'p1', doc_id: 'd1', name: 'Page 1', content: '# Hello' }]
+    mockFetch.mockReturnValue(mockResponse({ pages }))
+    const result = await client.getDocPages('w1', 'd1')
+    expect(result).toEqual(pages)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pages')
+    expect(url).toContain('content_format=text/md')
+  })
+
+  it('getDocPages returns empty array when pages missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getDocPages('w1', 'd1')
+    expect(result).toEqual([])
+  })
 })
 
 describe('postComment', () => {

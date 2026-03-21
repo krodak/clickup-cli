@@ -69,7 +69,19 @@ import {
 import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
 import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
-import { getDocPage, createDoc, createDocPage, editDocPage } from './commands/doc.js'
+import {
+  getDocInfo,
+  formatDocInfo,
+  formatDocInfoMarkdown,
+  getDocPage,
+  getAllDocPages,
+  formatDocPages,
+  formatDocPagesMarkdown,
+  createDoc,
+  createDocPage,
+  editDocPage,
+} from './commands/doc.js'
+import { listFolders, formatFolders, formatFoldersMarkdown } from './commands/folders.js'
 import {
   startTimer,
   stopTimer,
@@ -971,18 +983,66 @@ program
   )
 
 program
-  .command('doc <docId> <pageId>')
-  .description('View a doc page')
+  .command('doc <docId> [pageId]')
+  .description('View a doc (metadata + page tree) or a specific page')
   .option('--json', 'Force JSON output even in terminal')
   .action(
-    wrapAction(async (docId: string, pageId: string, opts: { json?: boolean }) => {
+    wrapAction(async (docId: string, pageId: string | undefined, opts: { json?: boolean }) => {
       const config = loadConfig()
-      const page = await getDocPage(config, docId, pageId)
-      if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify(page, null, 2))
+      if (pageId) {
+        const page = await getDocPage(config, docId, pageId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(page, null, 2))
+        } else {
+          if (page.name) console.log(`# ${page.name}\n`)
+          console.log(page.content ?? '')
+        }
       } else {
-        if (page.name) console.log(`# ${page.name}\n`)
-        console.log(page.content ?? '')
+        const { doc, pages } = await getDocInfo(config, docId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ ...doc, pages }, null, 2))
+        } else if (isTTY()) {
+          console.log(formatDocInfo(doc, pages))
+        } else {
+          console.log(formatDocInfoMarkdown(doc, pages))
+        }
+      }
+    }),
+  )
+
+program
+  .command('doc-pages <docId>')
+  .description('List all pages in a doc with content')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (docId: string, opts: { json?: boolean }) => {
+      const config = loadConfig()
+      const pages = await getAllDocPages(config, docId)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(pages, null, 2))
+      } else if (isTTY()) {
+        console.log(formatDocPages(pages))
+      } else {
+        console.log(formatDocPagesMarkdown(pages))
+      }
+    }),
+  )
+
+program
+  .command('folders <spaceId>')
+  .description('List folders in a space (with their lists)')
+  .option('--name <partial>', 'Filter folders by partial name match')
+  .option('--json', 'Force JSON output even in terminal')
+  .action(
+    wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
+      const config = loadConfig()
+      const folders = await listFolders(config, spaceId, opts.name)
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(folders, null, 2))
+      } else if (isTTY()) {
+        console.log(formatFolders(folders))
+      } else {
+        console.log(formatFoldersMarkdown(folders))
       }
     }),
   )

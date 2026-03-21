@@ -758,4 +758,22 @@ export class ClickUpClient {
       body: JSON.stringify(updates),
     })
   }
+
+  async getDoc(workspaceId: string, docId: string): Promise<Doc> {
+    return this.requestV3<Doc>(`/workspaces/${workspaceId}/docs/${docId}`)
+  }
+
+  async getDocPageListing(workspaceId: string, docId: string): Promise<DocPage[]> {
+    const data = await this.requestV3<{ pages: DocPage[] }>(
+      `/workspaces/${workspaceId}/docs/${docId}/pagelisting`,
+    )
+    return data.pages ?? []
+  }
+
+  async getDocPages(workspaceId: string, docId: string): Promise<DocPage[]> {
+    const data = await this.requestV3<{ pages: DocPage[] }>(
+      `/workspaces/${workspaceId}/docs/${docId}/pages?content_format=text/md`,
+    )
+    return data.pages ?? []
+  }
 }

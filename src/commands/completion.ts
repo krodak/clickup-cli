@@ -11,7 +11,7 @@ function bashCompletion(name: string): string {
     cword=$COMP_CWORD
   fi
 
-  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time docs doc doc-create doc-page-create doc-page-edit config completion"
+  local commands="init auth tasks task update create sprint sprints subtasks comment comment-edit comment-delete comments replies reply activity lists spaces inbox assigned open search summary overdue assign depend link attach move field delete tag checklist time docs doc doc-create doc-pages doc-page-create doc-page-edit folders config completion"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$commands --help --version" -- "$cur"))
@@ -141,6 +141,12 @@ function bashCompletion(name: string): string {
     doc)
       COMPREPLY=($(compgen -W "--json" -- "$cur"))
       ;;
+    doc-pages)
+      COMPREPLY=($(compgen -W "--json" -- "$cur"))
+      ;;
+    folders)
+      COMPREPLY=($(compgen -W "--name --json" -- "$cur"))
+      ;;
     doc-create)
       COMPREPLY=($(compgen -W "-c --content --json" -- "$cur"))
       ;;
@@ -212,10 +218,12 @@ _${name}() {
     'link:Add or remove a link between two tasks'
     'attach:Upload a file attachment to a task'
     'docs:List workspace docs'
-    'doc:View a doc page'
+    'doc:View a doc or doc page'
     'doc-create:Create a new doc'
+    'doc-pages:List all pages in a doc with content'
     'doc-page-create:Create a page in a doc'
     'doc-page-edit:Edit a doc page'
+    'folders:List folders in a space'
     'config:Manage CLI configuration'
     'completion:Output shell completion script'
   )
@@ -549,6 +557,17 @@ _${name}() {
             '2:page_id:' \\
             '--json[Force JSON output]'
           ;;
+        doc-pages)
+          _arguments \\
+            '1:doc_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        folders)
+          _arguments \\
+            '1:space_id:' \\
+            '--name[Filter by folder name]:text:' \\
+            '--json[Force JSON output]'
+          ;;
         doc-create)
           _arguments \\
             '1:title:' \\
@@ -647,10 +666,12 @@ complete -c ${name} -n __fish_use_subcommand -a reply -d 'Reply to a comment'
 complete -c ${name} -n __fish_use_subcommand -a link -d 'Add or remove a link between two tasks'
 complete -c ${name} -n __fish_use_subcommand -a attach -d 'Upload a file attachment to a task'
 complete -c ${name} -n __fish_use_subcommand -a docs -d 'List workspace docs'
-complete -c ${name} -n __fish_use_subcommand -a doc -d 'View a doc page'
+complete -c ${name} -n __fish_use_subcommand -a doc -d 'View a doc or doc page'
 complete -c ${name} -n __fish_use_subcommand -a doc-create -d 'Create a new doc'
+complete -c ${name} -n __fish_use_subcommand -a doc-pages -d 'List all pages in a doc with content'
 complete -c ${name} -n __fish_use_subcommand -a doc-page-create -d 'Create a page in a doc'
 complete -c ${name} -n __fish_use_subcommand -a doc-page-edit -d 'Edit a doc page'
+complete -c ${name} -n __fish_use_subcommand -a folders -d 'List folders in a space'
 complete -c ${name} -n __fish_use_subcommand -a config -d 'Manage CLI configuration'
 complete -c ${name} -n __fish_use_subcommand -a completion -d 'Output shell completion script'
 
@@ -807,6 +828,11 @@ complete -c ${name} -n '__fish_seen_subcommand_from comment-edit' -l json -d 'Fo
 complete -c ${name} -n '__fish_seen_subcommand_from docs' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from doc' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from doc-pages' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from folders' -l name -d 'Filter by folder name'
+complete -c ${name} -n '__fish_seen_subcommand_from folders' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -s c -l content -d 'Initial content'
 complete -c ${name} -n '__fish_seen_subcommand_from doc-create' -l json -d 'Force JSON output'

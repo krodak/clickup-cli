@@ -26,8 +26,10 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup summary`                        | Daily standup helper                  |
 | `cup overdue`                        | Tasks past their due date             |
 | `cup auth`                           | Check authentication status           |
+| `cup folders <spaceId>`              | List folders in a space               |
 | `cup docs [query]`                   | List workspace docs                   |
-| `cup doc <docId> <pageId>`           | View a doc page                       |
+| `cup doc <docId> [pageId]`           | View a doc or doc page                |
+| `cup doc-pages <docId>`              | All pages in a doc with content       |
 | **Write**                            |                                       |
 | `cup update <id>`                    | Update a task                         |
 | `cup create`                         | Create a new task                     |
@@ -285,18 +287,48 @@ cup docs --json
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
 
-### `cup doc <docId> <pageId>`
+### `cup doc <docId> [pageId]`
 
-View a doc page. Returns markdown content.
+View a doc's metadata and page tree (when pageId is omitted), or a specific page's content (when pageId is provided).
 
 ```bash
-cup doc abc123 page456
-cup doc abc123 page456 --json
+cup doc abc123                    # doc metadata + page tree
+cup doc abc123 page456            # specific page content
+cup doc abc123 --json             # doc metadata as JSON
+cup doc abc123 page456 --json     # page content as JSON
 ```
 
 | Flag     | Required | Description       |
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
+
+### `cup doc-pages <docId>`
+
+List all pages in a doc with their full content. Useful for dumping an entire doc.
+
+```bash
+cup doc-pages abc123
+cup doc-pages abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup folders <spaceId>`
+
+List folders in a space with their contained lists. Useful for discovering folder and list IDs.
+
+```bash
+cup folders <spaceId>
+cup folders <spaceId> --name "sprint"
+cup folders <spaceId> --json
+```
+
+| Flag               | Description                          |
+| ------------------ | ------------------------------------ |
+| `--name <partial>` | Filter folders by partial name match |
+| `--json`           | Force JSON output                    |
 
 ---
 
