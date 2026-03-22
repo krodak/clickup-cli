@@ -30,13 +30,17 @@ Install the CLI, add the skill file to your agent, and it works with ClickUp. No
 
 The agent reads the skill file, picks the right `cup` commands, and handles everything. You don't need to learn the CLI - the agent does.
 
-### Terminal mode
+### Agent mode
 
-![TTY Mode - interactive tables and detail views](demos/tty-mode.gif)
-
-### Agent mode (piped)
+When piped (no TTY), output is Markdown optimized for AI context windows. Pass `--json` for structured data.
 
 ![Agent Mode - markdown and JSON output](demos/agent-mode.gif)
+
+### Terminal mode
+
+In a terminal, you get interactive tables with colors. Most commands scope to your assigned tasks by default.
+
+![TTY Mode - interactive tables and detail views](demos/tty-mode.gif)
 
 ## Why a CLI and not MCP?
 
@@ -154,15 +158,6 @@ Full CRUD for the core ClickUp workflow:
 | 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                            |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
-
-## Output Modes
-
-| Context        | Default                     | Override                     |
-| -------------- | --------------------------- | ---------------------------- |
-| Terminal (TTY) | Interactive tables + picker | `--json`                     |
-| Piped (no TTY) | Markdown (optimized for AI) | `--json` or `CU_OUTPUT=json` |
-
-Most commands scope to your assigned tasks by default - keeping output small and relevant for agent context windows.
 
 ## Configuration
 
