@@ -1764,14 +1764,18 @@ process.on('SIGINT', () => {
   process.exit(130)
 })
 
-let isDirectExecution = false
-try {
-  isDirectExecution =
-    process.argv[1] !== undefined &&
-    fileURLToPath(import.meta.url) === realpathSync(resolve(process.argv[1]))
-} catch {
-  isDirectExecution = false
+function checkDirectExecution(): boolean {
+  try {
+    return (
+      process.argv[1] !== undefined &&
+      fileURLToPath(import.meta.url) === realpathSync(resolve(process.argv[1]))
+    )
+  } catch {
+    return false
+  }
 }
+
+const isDirectExecution = checkDirectExecution()
 
 if (isDirectExecution) {
   await run()
