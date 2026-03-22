@@ -1,12 +1,14 @@
-# cup - ClickUp CLI
+<p align="center">
+  <img src="banner.png" alt="cup - ClickUp CLI for AI agents (and humans)" width="100%">
+</p>
 
-> A ClickUp CLI built for AI agents that also works well for humans. Outputs Markdown when piped (optimized for AI context windows), interactive tables when run in a terminal.
-
-[![npm](https://img.shields.io/npm/v/@krodak/clickup-cli)](https://www.npmjs.com/package/@krodak/clickup-cli)
-[![node](https://img.shields.io/node/v/@krodak/clickup-cli)](https://nodejs.org)
-[![license](https://img.shields.io/npm/l/@krodak/clickup-cli)](./LICENSE)
-[![CI](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml)
-[![homebrew](https://img.shields.io/badge/homebrew-tap-FBB040?logo=homebrew&logoColor=black)](https://github.com/krodak/homebrew-tap)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@krodak/clickup-cli"><img src="https://img.shields.io/npm/v/@krodak/clickup-cli" alt="npm"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/node/v/@krodak/clickup-cli" alt="node"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/npm/l/@krodak/clickup-cli" alt="license"></a>
+  <a href="https://github.com/krodak/clickup-cli/actions/workflows/ci.yml"><img src="https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/krodak/homebrew-tap"><img src="https://img.shields.io/badge/homebrew-tap-FBB040?logo=homebrew&logoColor=black" alt="homebrew"></a>
+</p>
 
 ```bash
 npm install -g @krodak/clickup-cli && cup init
