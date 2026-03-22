@@ -80,6 +80,7 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | `cup key-result-update <keyResultId>`   | Update a key result                   |
 | `cup key-result-delete <keyResultId>`   | Delete a key result                   |
 | **Configuration**                       |                                       |
+| `cup profile`                           | Manage profiles                       |
 | `cup config`                            | Manage CLI configuration              |
 | `cup completion <shell>`                | Output shell completion script        |
 
@@ -1088,6 +1089,48 @@ cup tag-update <spaceId> "tag" --name "renamed" --json
 
 ## Configuration Commands
 
+### `cup profile`
+
+Manage named profiles for switching between ClickUp workspaces or accounts. All commands support the global `-p, --profile <name>` flag to override the default profile for a single invocation.
+
+#### `cup profile list`
+
+List all profiles. Marks the default profile.
+
+```bash
+cup profile list
+cup profile list --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+#### `cup profile add <name>`
+
+Add a new profile interactively. Prompts for API token, validates it, auto-detects workspaces, and saves.
+
+```bash
+cup profile add work
+cup profile add personal
+```
+
+#### `cup profile remove <name>`
+
+Remove a profile. Refuses to remove the last profile.
+
+```bash
+cup profile remove old-account
+```
+
+#### `cup profile use <name>`
+
+Set the default profile.
+
+```bash
+cup profile use personal
+```
+
 ### `cup config`
 
 Manage CLI configuration.
@@ -1098,7 +1141,7 @@ cup config set teamId 12345
 cup config path
 ```
 
-Valid keys: `apiToken`, `teamId`, `sprintFolderId`. Setting `apiToken` validates the `pk_` prefix. Setting `sprintFolderId` pins `cup sprint` to a specific folder, skipping auto-detection.
+Valid keys: `apiToken`, `teamId`, `sprintFolderId`. Setting `apiToken` validates the `pk_` prefix. Setting `sprintFolderId` pins `cup sprint` to a specific folder, skipping auto-detection. Operates on the active profile (use `-p <name>` to target a specific profile).
 
 ### `cup completion <shell>`
 

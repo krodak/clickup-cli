@@ -2,29 +2,43 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import type { MultiProfileConfig } from '../../src/config.js'
 
 vi.mock('fs')
 
 const savedEnv: Record<string, string | undefined> = {}
 
 function clearConfigEnv() {
-  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'XDG_CONFIG_HOME']) {
+  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'CU_PROFILE', 'XDG_CONFIG_HOME']) {
     savedEnv[key] = process.env[key]
     delete process.env[key]
   }
 }
 
 function restoreConfigEnv() {
-  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'XDG_CONFIG_HOME']) {
+  for (const key of ['CU_API_TOKEN', 'CU_TEAM_ID', 'CU_PROFILE', 'XDG_CONFIG_HOME']) {
     if (savedEnv[key] === undefined) delete process.env[key]
     else process.env[key] = savedEnv[key]
   }
+}
+
+function parseWrittenConfig(call: unknown[]): MultiProfileConfig {
+  return JSON.parse(String(call[1])) as MultiProfileConfig
+}
+
+function multiProfileConfig(
+  profiles: Record<string, Record<string, unknown>>,
+  defaultProfile: string,
+) {
+  return JSON.stringify({ defaultProfile, profiles })
 }
 
 describe('loadConfig', () => {
   beforeEach(() => {
     vi.mocked(fs.existsSync).mockReset()
     vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
     vi.resetModules()
     clearConfigEnv()
   })
@@ -53,21 +67,21 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('must contain a JSON object')
   })
 
-  it('throws when apiToken is not a string', async () => {
+  it('throws when apiToken is not a string in old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 123, teamId: 'team_1' }))
     const { loadConfig } = await import('../../src/config.js')
-    expect(() => loadConfig()).toThrow('apiToken must be a string')
+    expect(() => loadConfig()).toThrow('unrecognized format')
   })
 
-  it('throws when teamId is not a string', async () => {
+  it('throws when teamId is not a string in old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_test', teamId: 42 }))
     const { loadConfig } = await import('../../src/config.js')
-    expect(() => loadConfig()).toThrow('teamId must be a string')
+    expect(() => loadConfig()).toThrow('teamId')
   })
 
-  it('throws when sprintFolderId is not a string', async () => {
+  it('throws when sprintFolderId is not a string in old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: false }),
@@ -76,11 +90,11 @@ describe('loadConfig', () => {
     expect(() => loadConfig()).toThrow('sprintFolderId must be a string')
   })
 
-  it('throws when apiToken is missing', async () => {
+  it('throws when apiToken is missing from old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ teamId: 'team_1' }))
     const { loadConfig } = await import('../../src/config.js')
-    expect(() => loadConfig()).toThrow('apiToken')
+    expect(() => loadConfig()).toThrow('unrecognized format')
   })
 
   it('throws when apiToken does not start with pk_ without leaking token', async () => {
@@ -109,21 +123,21 @@ describe('loadConfig', () => {
     expect(config.apiToken).toBe('pk_trimmed')
   })
 
-  it('throws when teamId is missing', async () => {
+  it('throws when teamId is missing in old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x' }))
     const { loadConfig } = await import('../../src/config.js')
     expect(() => loadConfig()).toThrow('teamId')
   })
 
-  it('throws when teamId is empty string', async () => {
+  it('throws when teamId is empty string in old format', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ apiToken: 'pk_x', teamId: '' }))
     const { loadConfig } = await import('../../src/config.js')
     expect(() => loadConfig()).toThrow('teamId')
   })
 
-  it('loads valid config with teamId', async () => {
+  it('loads valid config from old format', async () => {
     const mockConfig = { apiToken: 'pk_test123', teamId: 'team_456' }
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig))
@@ -141,7 +155,7 @@ describe('loadConfig', () => {
     expect(config).not.toHaveProperty('lists')
   })
 
-  it('loads sprintFolderId when present in config file', async () => {
+  it('loads sprintFolderId when present in old format config file', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1', sprintFolderId: 'folder_123' }),
@@ -151,7 +165,7 @@ describe('loadConfig', () => {
     expect(config.sprintFolderId).toBe('folder_123')
   })
 
-  it('omits sprintFolderId when not present in config file', async () => {
+  it('omits sprintFolderId when not present in old format config file', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ apiToken: 'pk_abc', teamId: 'team_1' }),
@@ -175,7 +189,7 @@ describe('loadConfig', () => {
     process.env.CU_API_TOKEN = 'pk_env_token'
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify({ apiToken: 'pk_file_token', teamId: 'team_1' }),
+      multiProfileConfig({ work: { apiToken: 'pk_file_token', teamId: 'team_1' } }, 'work'),
     )
     vi.resetModules()
     const { loadConfig } = await import('../../src/config.js')
@@ -187,7 +201,7 @@ describe('loadConfig', () => {
     process.env.CU_TEAM_ID = 'env_team'
     vi.mocked(fs.existsSync).mockReturnValue(true)
     vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify({ apiToken: 'pk_test', teamId: 'file_team' }),
+      multiProfileConfig({ work: { apiToken: 'pk_test', teamId: 'file_team' } }, 'work'),
     )
     vi.resetModules()
     const { loadConfig } = await import('../../src/config.js')
@@ -214,10 +228,143 @@ describe('loadConfig', () => {
   })
 })
 
+describe('loadConfig multi-profile', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('loads from multi-profile config format', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.apiToken).toBe('pk_work')
+    expect(config.teamId).toBe('team_w')
+  })
+
+  it('selects profile by explicit name', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig('personal')
+    expect(config.apiToken).toBe('pk_personal')
+    expect(config.teamId).toBe('team_p')
+  })
+
+  it('selects profile from CU_PROFILE env var', async () => {
+    process.env.CU_PROFILE = 'personal'
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    vi.resetModules()
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.apiToken).toBe('pk_personal')
+  })
+
+  it('explicit profile name takes priority over CU_PROFILE env', async () => {
+    process.env.CU_PROFILE = 'personal'
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    vi.resetModules()
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig('work')
+    expect(config.apiToken).toBe('pk_work')
+  })
+
+  it('throws when profile not found with available profiles listed', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    expect(() => loadConfig('nonexistent')).toThrow('Profile "nonexistent" not found')
+    expect(() => loadConfig('nonexistent')).toThrow('Available: work, personal')
+  })
+
+  it('auto-migrates old flat config to multi-profile format', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ apiToken: 'pk_old', teamId: 'team_old', sprintFolderId: 'folder_1' }),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.apiToken).toBe('pk_old')
+    expect(config.teamId).toBe('team_old')
+    expect(config.sprintFolderId).toBe('folder_1')
+    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalled()
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const written = parseWrittenConfig(writeCall)
+    expect(written.defaultProfile).toBe('default')
+    expect(written.profiles.default?.apiToken).toBe('pk_old')
+  })
+
+  it('loads sprintFolderId from multi-profile config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        { work: { apiToken: 'pk_work', teamId: 'team_w', sprintFolderId: 'folder_x' } },
+        'work',
+      ),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    const config = loadConfig()
+    expect(config.sprintFolderId).toBe('folder_x')
+  })
+})
+
 describe('loadRawConfig', () => {
   beforeEach(() => {
     vi.mocked(fs.existsSync).mockReset()
     vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
     vi.resetModules()
     clearConfigEnv()
   })
@@ -232,6 +379,39 @@ describe('loadRawConfig', () => {
     const { loadRawConfig } = await import('../../src/config.js')
     expect(() => loadRawConfig()).toThrow('must contain a JSON object')
   })
+
+  it('loads from active profile in multi-profile config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { loadRawConfig } = await import('../../src/config.js')
+    const raw = loadRawConfig()
+    expect(raw.apiToken).toBe('pk_work')
+    expect(raw.teamId).toBe('team_w')
+  })
+
+  it('loads from specified profile in multi-profile config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { loadRawConfig } = await import('../../src/config.js')
+    const raw = loadRawConfig('personal')
+    expect(raw.apiToken).toBe('pk_personal')
+  })
 })
 
 describe('writeConfig', () => {
@@ -239,6 +419,7 @@ describe('writeConfig', () => {
     vi.mocked(fs.existsSync).mockReset()
     vi.mocked(fs.mkdirSync).mockReset()
     vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
     vi.resetModules()
     clearConfigEnv()
   })
@@ -258,67 +439,251 @@ describe('writeConfig', () => {
     })
   })
 
-  it('writes config as formatted JSON with restricted permissions', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+  it('writes config in multi-profile format', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1' })
-    expect(vi.mocked(fs.writeFileSync)).toHaveBeenCalledTimes(1)
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+    expect(parsed.defaultProfile).toBe('default')
     expect(call[2]).toEqual({ encoding: 'utf-8', mode: 0o600 })
-    expect(vi.mocked(fs.mkdirSync)).not.toHaveBeenCalled()
   })
 
   it('persists sprintFolderId when present', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({
+      apiToken: 'pk_test',
+      teamId: 'team_1',
+      sprintFolderId: 'folder_x',
+    })
   })
 
   it('trims required strings before writing config', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: '  pk_test  ', teamId: '  team_1  ' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
   })
 
   it('drops blank sprintFolderId when writing config', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: '   ' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({ apiToken: 'pk_test', teamId: 'team_1' })
   })
 
   it('omits blank required values instead of persisting empty-string sentinels', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: '   ' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({ apiToken: 'pk_test' })
   })
 
   it('trims sprintFolderId before writing when non-blank', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { writeConfig } = await import('../../src/config.js')
     writeConfig({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: '  folder_x  ' })
     const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
-    const written = String(call[1])
-    const parsed = JSON.parse(written)
-    expect(parsed).toEqual({ apiToken: 'pk_test', teamId: 'team_1', sprintFolderId: 'folder_x' })
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default).toEqual({
+      apiToken: 'pk_test',
+      teamId: 'team_1',
+      sprintFolderId: 'folder_x',
+    })
+  })
+
+  it('writes to the active profile in existing multi-profile config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_old', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_new', teamId: 'team_w' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.work?.apiToken).toBe('pk_new')
+    expect(parsed.profiles.personal?.apiToken).toBe('pk_personal')
+  })
+
+  it('writes to a specific profile when profileName is given', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { writeConfig } = await import('../../src/config.js')
+    writeConfig({ apiToken: 'pk_updated' }, 'personal')
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.personal?.apiToken).toBe('pk_updated')
+    expect(parsed.profiles.work?.apiToken).toBe('pk_work')
+  })
+})
+
+describe('profile management', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('addProfile adds a new profile', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { addProfile } = await import('../../src/config.js')
+    addProfile('personal', { apiToken: 'pk_p', teamId: 'team_p' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.personal).toEqual({ apiToken: 'pk_p', teamId: 'team_p' })
+    expect(parsed.profiles.work).toEqual({ apiToken: 'pk_work', teamId: 'team_w' })
+  })
+
+  it('addProfile sets defaultProfile if none exists', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const { addProfile } = await import('../../src/config.js')
+    addProfile('first', { apiToken: 'pk_first', teamId: 'team_f' })
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.defaultProfile).toBe('first')
+  })
+
+  it('removeProfile removes a profile', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { removeProfile } = await import('../../src/config.js')
+    removeProfile('personal')
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.personal).toBeUndefined()
+    expect(parsed.profiles.work).toBeDefined()
+  })
+
+  it('removeProfile refuses to remove the last profile', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { removeProfile } = await import('../../src/config.js')
+    expect(() => removeProfile('work')).toThrow('Cannot remove the last profile')
+  })
+
+  it('removeProfile throws when profile not found', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { removeProfile } = await import('../../src/config.js')
+    expect(() => removeProfile('nonexistent')).toThrow('Profile "nonexistent" not found')
+  })
+
+  it('removeProfile updates defaultProfile when removing the current default', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { removeProfile } = await import('../../src/config.js')
+    removeProfile('work')
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.defaultProfile).toBe('personal')
+  })
+
+  it('setDefaultProfile sets the default', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { setDefaultProfile } = await import('../../src/config.js')
+    setDefaultProfile('personal')
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.defaultProfile).toBe('personal')
+  })
+
+  it('setDefaultProfile throws when profile not found', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { setDefaultProfile } = await import('../../src/config.js')
+    expect(() => setDefaultProfile('nonexistent')).toThrow('Profile "nonexistent" not found')
+    expect(() => setDefaultProfile('nonexistent')).toThrow('Available: work')
+  })
+
+  it('listProfiles returns all profiles with default marker', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          work: { apiToken: 'pk_work', teamId: 'team_w' },
+          personal: { apiToken: 'pk_personal', teamId: 'team_p' },
+        },
+        'work',
+      ),
+    )
+    const { listProfiles } = await import('../../src/config.js')
+    const profiles = listProfiles()
+    expect(profiles).toEqual([
+      { name: 'work', isDefault: true, teamId: 'team_w' },
+      { name: 'personal', isDefault: false, teamId: 'team_p' },
+    ])
+  })
+
+  it('listProfiles returns empty array when no config', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const { listProfiles } = await import('../../src/config.js')
+    expect(listProfiles()).toEqual([])
   })
 })
 
@@ -328,6 +693,7 @@ describe('migrateFromLegacy', () => {
     vi.mocked(fs.mkdirSync).mockReset()
     vi.mocked(fs.copyFileSync).mockReset()
     vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
     vi.resetModules()
     clearConfigEnv()
   })
@@ -347,6 +713,7 @@ describe('migrateFromLegacy', () => {
     vi.mocked(fs.existsSync).mockImplementation(p => {
       if (String(p) === legacyPath) return true
       if (String(p) === newPath) return migrated
+      if (String(p) === newDir) return migrated
       return false
     })
     vi.mocked(fs.readFileSync).mockReturnValue(
@@ -368,7 +735,7 @@ describe('migrateFromLegacy', () => {
       return true
     })
     vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify({ apiToken: 'pk_existing', teamId: 'team_e' }),
+      multiProfileConfig({ default: { apiToken: 'pk_existing', teamId: 'team_e' } }, 'default'),
     )
     const { loadConfig } = await import('../../src/config.js')
     loadConfig()

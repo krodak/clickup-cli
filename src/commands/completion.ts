@@ -1,7 +1,14 @@
 import { commandMetadata, topLevelCommandDefinitions, topLevelCommandNames } from './metadata.js'
 import type { CommandFlagDefinition, CommandMetadata } from './metadata.js'
 
-const bashSpecialCaseCommands = new Set(['checklist', 'time', 'bulk', 'config', 'completion'])
+const bashSpecialCaseCommands = new Set([
+  'checklist',
+  'time',
+  'bulk',
+  'config',
+  'profile',
+  'completion',
+])
 
 function escapeSingleQuotes(value: string): string {
   return value.replaceAll("'", "'\\''")
@@ -120,6 +127,11 @@ ${renderBashCommandCases()}
     bulk)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "status" -- "$cur"))
+      fi
+      ;;
+    profile)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "list add remove use" -- "$cur"))
       fi
       ;;
     config)
@@ -660,6 +672,33 @@ ${renderZshTopLevelCommands(name)}
             '(-c --content)'{-c,--content}'[New page content]:text:' \\
             '--json[Force JSON output]'
           ;;
+        profile)
+          local -a profile_cmds
+          profile_cmds=(
+            'list:List all profiles'
+            'add:Add a new profile'
+            'remove:Remove a profile'
+            'use:Set the default profile'
+          )
+          _arguments -C \\
+            '1:profile command:->profile_cmd' \\
+            '*::profile_arg:->profile_args'
+          case $state in
+            profile_cmd)
+              _describe 'profile command' profile_cmds
+              ;;
+            profile_args)
+              case $words[1] in
+                list)
+                  _arguments '--json[Force JSON output]'
+                  ;;
+                add|remove|use)
+                  _arguments '1:name:'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
         config)
           local -a config_cmds
           config_cmds=(
@@ -740,6 +779,12 @@ complete -c ${name} -n '__fish_seen_subcommand_from attach' -F
 
 complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status' -a status -d 'Update status of multiple tasks'
 complete -c ${name} -n '__fish_seen_subcommand_from status; and __fish_seen_subcommand_from bulk' -l json -d 'Force JSON output'
+
+complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a list -d 'List all profiles'
+complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a add -d 'Add a new profile'
+complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a remove -d 'Remove a profile'
+complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a use -d 'Set the default profile'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from profile' -l json -d 'Force JSON output'
 
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a get -d 'Print a config value'
 complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from get set path' -a set -d 'Set a config value'

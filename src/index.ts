@@ -4,7 +4,7 @@ import { Command } from 'commander'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
 import { ClickUpClient } from './api.js'
-import { loadConfig } from './config.js'
+import { loadConfig, addProfile, removeProfile, setDefaultProfile, listProfiles } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
 import { updateTask, buildUpdatePayload, resolveAssigneeId } from './commands/update.js'
 import type { UpdateCommandOptions } from './commands/update.js'
@@ -167,6 +167,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('ClickUp CLI for AI agents')
     .version(version)
     .allowExcessArguments(false)
+    .option('-p, --profile <name>', 'Use a specific profile')
+
+  function getProfileName(): string | undefined {
+    return program.opts<{ profile?: string }>().profile
+  }
 
   program
     .command('init')
@@ -183,7 +188,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await checkAuth(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -210,7 +215,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: TaskFilterOpts) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const tasks = await fetchMyTasks(config, {
           typeFilter: opts.type,
           statuses: opts.status ? [opts.status] : undefined,
@@ -229,7 +234,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await getTask(config, taskId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -255,7 +260,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: UpdateCommandOptions & { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         if (opts.assignee === 'me') {
           const client = new ClickUpClient(config)
           opts.assignee = String(await resolveAssigneeId(client, 'me'))
@@ -288,7 +293,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         if (opts.assignee === 'me') {
           const client = new ClickUpClient(config)
           opts.assignee = String(await resolveAssigneeId(client, 'me'))
@@ -319,7 +324,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           includeClosed?: boolean
           json?: boolean
         }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           await runSprintCommand(config, opts)
         },
       ),
@@ -332,7 +337,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { space?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await listSprints(config, opts)
       }),
     )
@@ -350,7 +355,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           taskId: string,
           opts: { status?: string; name?: string; includeClosed?: boolean; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           let tasks = await fetchSubtasks(config, taskId, { includeClosed: opts.includeClosed })
           if (opts.status) {
             const lower = opts.status.toLowerCase()
@@ -374,7 +379,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (taskId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const result = await postComment(config, taskId, opts.message, opts.notifyAll)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
@@ -391,7 +396,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const comments = await fetchComments(config, taskId)
         printComments(comments, opts.json ?? false)
       }),
@@ -410,7 +415,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           commentId: string,
           opts: { message: string; resolved?: boolean; unresolved?: boolean; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           let resolved: boolean | undefined
           if (opts.resolved) resolved = true
           if (opts.unresolved) resolved = false
@@ -430,7 +435,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (commentId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteComment(config, commentId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, commentId }, null, 2))
@@ -446,7 +451,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (commentId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const replies = await getReplies(config, commentId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(replies, null, 2))
@@ -470,7 +475,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           commentId: string,
           opts: { message: string; notifyAll?: boolean; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           await createReply(config, commentId, opts.message, opts.notifyAll)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, commentId }, null, 2))
@@ -487,7 +492,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await fetchActivity(config, taskId)
         printActivity(result, opts.json ?? false)
       }),
@@ -500,7 +505,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const lists = await fetchLists(config, spaceId, { name: opts.name })
         printLists(lists, opts.json ?? false)
       }),
@@ -514,7 +519,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await listSpaces(config, opts)
       }),
     )
@@ -527,7 +532,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--days <n>', 'Lookback period in days', '30')
     .action(
       wrapAction(async (opts: { includeClosed?: boolean; json?: boolean; days?: string }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const days = Number(opts.days ?? 30)
         if (!Number.isFinite(days) || days <= 0) {
           throw new Error('--days must be a positive number')
@@ -545,7 +550,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { status?: string; includeClosed?: boolean; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await runAssignedCommand(config, opts)
       }),
     )
@@ -556,7 +561,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Output task JSON instead of opening')
     .action(
       wrapAction(async (query: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await openTask(config, query, opts)
       }),
     )
@@ -573,7 +578,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           query: string,
           opts: { status?: string; includeClosed?: boolean; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const tasks = await searchTasks(config, query, {
             status: opts.status,
             includeClosed: opts.includeClosed,
@@ -590,7 +595,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { hours?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const hours = Number(opts.hours ?? 24)
         if (!Number.isFinite(hours) || hours <= 0) {
           throw new Error('--hours must be a positive number')
@@ -606,7 +611,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const tasks = await fetchOverdueTasks(config, { includeClosed: opts.includeClosed })
         await printTasks(tasks, opts.json ?? false, config)
       }),
@@ -620,7 +625,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { to?: string; remove?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await assignTask(config, taskId, opts)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -639,7 +644,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: DependOptions & { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const message = await manageDependency(config, taskId, opts)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(
@@ -663,7 +668,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (taskId: string, linksTo: string, opts: { remove?: boolean; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const result = await manageTaskLink(config, taskId, linksTo, opts.remove ?? false)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(
@@ -686,7 +691,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, filePath: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await attachFile(config, taskId, filePath)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -705,7 +710,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: MoveOptions & { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const message = await moveTask(config, taskId, opts)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(
@@ -726,7 +731,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (taskId: string, opts: { set?: string[]; remove?: string; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const fieldOpts: { set?: [string, string]; remove?: string } = {}
           if (opts.set) {
             if (opts.set.length !== 2) {
@@ -760,7 +765,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { confirm?: boolean; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await deleteTaskCommand(config, taskId, opts)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -779,7 +784,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (taskId: string, opts: { add?: string; remove?: string; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const result = await manageTags(config, taskId, opts)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
@@ -801,7 +806,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const checklists = await viewChecklists(config, taskId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(checklists, null, 2))
@@ -819,7 +824,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, name: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await createChecklist(config, taskId, name)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -835,7 +840,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (checklistId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await deleteChecklist(config, checklistId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -851,7 +856,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (checklistId: string, name: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await addChecklistItem(config, checklistId, name)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -882,7 +887,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             json?: boolean
           },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const updates: { name?: string; resolved?: boolean; assignee?: number | null } = {}
           if (opts.name) updates.name = opts.name
           if (opts.resolved) updates.resolved = true
@@ -909,7 +914,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (checklistId: string, checklistItemId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await deleteChecklistItem(config, checklistId, checklistItemId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -928,7 +933,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { description?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await startTimer(config, taskId, opts.description)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -945,7 +950,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await stopTimer(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -963,7 +968,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await timerStatus(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -989,7 +994,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           duration: string,
           opts: { description?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const result = await logTime(config, taskId, duration, opts.description)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
@@ -1008,7 +1013,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { days?: string; task?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const days = opts.days ? Number(opts.days) : 7
         if (!Number.isFinite(days) || days <= 0) {
           throw new Error('--days must be a positive number')
@@ -1036,7 +1041,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           timeEntryId: string,
           opts: { description?: string; duration?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const entry = await updateTimeEntry(config, timeEntryId, {
             description: opts.description,
             duration: opts.duration,
@@ -1058,7 +1063,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (timeEntryId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteTimeEntry(config, timeEntryId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ deleted: timeEntryId }))
@@ -1074,7 +1079,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (spaceId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const tags = await listSpaceTags(config, spaceId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(tags, null, 2))
@@ -1099,7 +1104,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           name: string,
           opts: { fg?: string; bg?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           await createSpaceTag(config, spaceId, name, opts.fg, opts.bg)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, spaceId, tag: name }, null, 2))
@@ -1116,7 +1121,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (spaceId: string, name: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteSpaceTag(config, spaceId, name)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, spaceId, tag: name }, null, 2))
@@ -1132,7 +1137,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const members = await listMembers(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(members, null, 2))
@@ -1150,7 +1155,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (listId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const fields = await listFields(config, listId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(fields, null, 2))
@@ -1168,7 +1173,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (taskId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await duplicateTask(config, taskId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -1186,7 +1191,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (status: string, taskIds: string[], opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await bulkUpdateStatus(config, taskIds, status)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -1207,7 +1212,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const goals = await listGoals(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(goals, null, 2))
@@ -1228,7 +1233,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (name: string, opts: { description?: string; color?: string; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const goal = await createGoal(config, name, {
             description: opts.description,
             color: opts.color,
@@ -1255,7 +1260,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           goalId: string,
           opts: { name?: string; description?: string; color?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const goal = await updateGoal(config, goalId, {
             name: opts.name,
             description: opts.description,
@@ -1276,7 +1281,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (goalId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteGoal(config, goalId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, goalId }, null, 2))
@@ -1292,7 +1297,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (goalId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const krs = await listKeyResults(config, goalId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(krs, null, 2))
@@ -1317,7 +1322,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           name: string,
           opts: { type?: string; target?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const target = Number(opts.target ?? 100)
           if (!Number.isFinite(target) || target <= 0) {
             throw new Error('--target must be a positive number')
@@ -1341,7 +1346,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (keyResultId: string, opts: { progress?: string; note?: string; json?: boolean }) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const updates: { progress?: number; note?: string } = {}
           if (opts.progress !== undefined) {
             const p = Number(opts.progress)
@@ -1365,7 +1370,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (keyResultId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteKeyResult(config, keyResultId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, keyResultId }, null, 2))
@@ -1381,7 +1386,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (query: string | undefined, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const docs = await listDocs(config, query)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(docs, null, 2))
@@ -1399,7 +1404,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (docId: string, pageId: string | undefined, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         if (pageId) {
           const page = await getDocPage(config, docId, pageId)
           if (shouldOutputJson(opts.json ?? false)) {
@@ -1427,7 +1432,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (docId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const pages = await getAllDocPages(config, docId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(pages, null, 2))
@@ -1446,7 +1451,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const folders = await listFolders(config, spaceId, opts.name)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(folders, null, 2))
@@ -1465,7 +1470,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (title: string, opts: { content?: string; json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const result = await createDoc(config, title, opts.content)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(result, null, 2))
@@ -1488,7 +1493,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           name: string,
           opts: { content?: string; parentPage?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const page = await createDocPage(config, docId, name, opts.content, opts.parentPage)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(page, null, 2))
@@ -1512,7 +1517,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           pageId: string,
           opts: { name?: string; content?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           const page = await editDocPage(config, docId, pageId, {
             name: opts.name,
             content: opts.content,
@@ -1532,7 +1537,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (docId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteDoc(config, docId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, docId }, null, 2))
@@ -1548,7 +1553,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (docId: string, pageId: string, opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         await deleteDocPage(config, docId, pageId)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify({ success: true, docId, pageId }, null, 2))
@@ -1572,7 +1577,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           tagName: string,
           opts: { name: string; fg?: string; bg?: string; json?: boolean },
         ) => {
-          const config = loadConfig()
+          const config = loadConfig(getProfileName())
           await updateSpaceTag(config, spaceId, tagName, {
             name: opts.name,
             fg: opts.fg,
@@ -1599,7 +1604,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const types = await listTaskTypes(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(types, null, 2))
@@ -1617,7 +1622,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: { json?: boolean }) => {
-        const config = loadConfig()
+        const config = loadConfig(getProfileName())
         const templates = await listTemplates(config)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(JSON.stringify(templates, null, 2))
@@ -1629,6 +1634,80 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       }),
     )
 
+  const profileCmd = program.command('profile').description('Manage profiles')
+
+  profileCmd
+    .command('list')
+    .description('List all profiles')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const profiles = listProfiles()
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(profiles, null, 2))
+        } else {
+          for (const p of profiles) {
+            const marker = p.isDefault ? ' (default)' : ''
+            console.log(`${p.name}${marker}${p.teamId ? ` [team: ${p.teamId}]` : ''}`)
+          }
+          if (profiles.length === 0)
+            console.log('No profiles configured. Run: cup profile add <name>')
+        }
+      }),
+    )
+
+  profileCmd
+    .command('add <name>')
+    .description('Add a new profile')
+    .action(
+      wrapAction(async (name: string) => {
+        const { password, select } = await import('@inquirer/prompts')
+        const apiToken = (await password({ message: 'ClickUp API token (pk_...):' })).trim()
+        if (!apiToken.startsWith('pk_')) throw new Error('Token must start with pk_')
+
+        const client = new ClickUpClient({ apiToken })
+        const me = await client.getMe()
+        process.stdout.write(`Authenticated as @${me.username}\n`)
+
+        const teams = await client.getTeams()
+        if (teams.length === 0) throw new Error('No workspaces found for this token.')
+
+        let teamId: string
+        if (teams.length === 1) {
+          teamId = teams[0]!.id
+          process.stdout.write(`Workspace: ${teams[0]!.name}\n`)
+        } else {
+          teamId = await select({
+            message: 'Select workspace:',
+            choices: teams.map(t => ({ name: t.name, value: t.id })),
+          })
+        }
+
+        addProfile(name, { apiToken, teamId })
+        process.stdout.write(`Profile "${name}" added.\n`)
+      }),
+    )
+
+  profileCmd
+    .command('remove <name>')
+    .description('Remove a profile')
+    .action(
+      wrapAction(async (name: string) => {
+        removeProfile(name)
+        console.log(`Removed profile "${name}"`)
+      }),
+    )
+
+  profileCmd
+    .command('use <name>')
+    .description('Set the default profile')
+    .action(
+      wrapAction(async (name: string) => {
+        setDefaultProfile(name)
+        console.log(`Default profile set to "${name}"`)
+      }),
+    )
+
   const configCmd = program.command('config').description('Manage CLI configuration')
 
   configCmd
@@ -1636,7 +1715,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Print a config value')
     .action(
       wrapAction(async (key: string) => {
-        const value = getConfigValue(key)
+        const value = getConfigValue(key, getProfileName())
         if (value !== undefined) {
           console.log(value)
         }
@@ -1648,7 +1727,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Set a config value')
     .action(
       wrapAction(async (key: string, value: string) => {
-        setConfigValue(key, value)
+        setConfigValue(key, value, getProfileName())
       }),
     )
 

@@ -9,9 +9,11 @@ Reference for AI agents using the `cup` CLI tool. Covers task management, sprint
 
 ## Setup
 
-Config at `~/.config/cup/config.json` with `apiToken` and `teamId`. Optional: `sprintFolderId` to pin sprint detection to a specific folder. Run `cup init` to set up interactively.
+Config at `~/.config/cup/config.json` with named profiles. Each profile has `apiToken` and `teamId`. Optional: `sprintFolderId` to pin sprint detection to a specific folder. Run `cup init` to set up interactively.
 
-Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set.
+Multiple profiles supported - use `cup profile add <name>` to create, `cup profile use <name>` to switch, or `-p <name>` flag for one-off overrides.
+
+Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set. `CU_PROFILE` selects a profile (overridden by `-p` flag).
 
 ## Output Modes
 
@@ -109,8 +111,19 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup tag-create <spaceId> <name> [--fg color] [--bg color]`                                                                                                                                | Create space tag                    |
 | `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c]`                                                                                                                    | Update space tag                    |
 | `cup tag-delete <spaceId> <name>`                                                                                                                                                          | Delete space tag                    |
+| `cup profile list [--json]`                                                                                                                                                                | List all profiles                   |
+| `cup profile add <name>`                                                                                                                                                                   | Add a new profile (interactive)     |
+| `cup profile remove <name>`                                                                                                                                                                | Remove a profile                    |
+| `cup profile use <name>`                                                                                                                                                                   | Set the default profile             |
 | `cup config get <key>` / `set <key> <value>` / `path`                                                                                                                                      | Manage config                       |
 | `cup completion <shell>`                                                                                                                                                                   | Shell completions (bash/zsh/fish)   |
+
+## Global Flags
+
+| Flag                | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `-p, --profile <n>` | Use a specific profile for this command       |
+| `--json`            | Force JSON output (available on all commands) |
 
 ## Flags & Conventions
 
@@ -216,6 +229,15 @@ cup goal-create "Ship v2" -d "Release version 2"
 cup key-results g123
 cup key-result-create g123 "API coverage" --type percentage --target 80
 cup key-result-update kr456 --progress 60 --note "On track"
+```
+
+### Profiles
+
+```bash
+cup profile add personal             # add a profile (interactive)
+cup profile list                     # list all profiles
+cup profile use personal             # switch default
+cup tasks -p work                    # use specific profile for one command
 ```
 
 ### Standup

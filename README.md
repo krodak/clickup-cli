@@ -165,17 +165,40 @@ Most commands scope to your assigned tasks by default - keeping output small and
 
 ## Configuration
 
+### Profiles
+
+Multiple profiles for different workspaces or accounts:
+
+```bash
+cup profile add work        # interactive setup
+cup profile add personal    # another workspace
+cup profile list            # show all profiles
+cup profile use personal    # switch default
+cup tasks -p work           # one-off profile override
+```
+
 ### Config file
 
 `~/.config/cup/config.json` (or `$XDG_CONFIG_HOME/cup/config.json`):
 
 ```json
 {
-  "apiToken": "pk_...",
-  "teamId": "12345678",
-  "sprintFolderId": "optional - folder ID to skip auto-detection"
+  "defaultProfile": "work",
+  "profiles": {
+    "work": {
+      "apiToken": "pk_...",
+      "teamId": "12345678",
+      "sprintFolderId": "optional"
+    },
+    "personal": {
+      "apiToken": "pk_...",
+      "teamId": "87654321"
+    }
+  }
 }
 ```
+
+Old flat configs (pre-profiles) are auto-migrated on first load.
 
 ### Environment variables
 
@@ -185,9 +208,10 @@ Environment variables override config file values:
 | -------------- | ----------------------------------------------------------------- |
 | `CU_API_TOKEN` | ClickUp personal API token (`pk_`)                                |
 | `CU_TEAM_ID`   | Workspace (team) ID                                               |
+| `CU_PROFILE`   | Profile name (overrides `defaultProfile`, overridden by `-p`)     |
 | `CU_OUTPUT`    | Set to `json` to force JSON output when piped (default: markdown) |
 
-When both are set, the config file is not required. Useful for CI/CD and containerized agents.
+When both `CU_API_TOKEN` and `CU_TEAM_ID` are set, the config file is not required. Useful for CI/CD and containerized agents.
 
 ## Custom Task IDs
 

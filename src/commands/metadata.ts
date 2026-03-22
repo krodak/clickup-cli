@@ -616,6 +616,13 @@ export const commandMetadata = [
     quickReference: [{ section: 'read', usage: 'templates', description: 'List task templates' }],
   },
   {
+    name: 'profile',
+    description: 'Manage profiles',
+    quickReference: [
+      { section: 'configuration', usage: 'profile', description: 'Manage profiles' },
+    ],
+  },
+  {
     name: 'config',
     description: 'Manage CLI configuration',
     quickReference: [

@@ -15,13 +15,13 @@ function assertValidKey(key: string): asserts key is keyof Config {
   }
 }
 
-export function getConfigValue(key: string): string | undefined {
+export function getConfigValue(key: string, profileName?: string): string | undefined {
   assertValidKey(key)
-  const raw = loadRawConfig()
+  const raw = loadRawConfig(profileName)
   return readStoredString(raw[key])
 }
 
-export function setConfigValue(key: string, value: string): void {
+export function setConfigValue(key: string, value: string, profileName?: string): void {
   assertValidKey(key)
   const normalizedValue = readStoredString(value)
 
@@ -32,7 +32,7 @@ export function setConfigValue(key: string, value: string): void {
     throw new Error('teamId must be non-empty')
   }
 
-  const raw = loadRawConfig()
+  const raw = loadRawConfig(profileName)
   const sprintFolderId = readStoredString(raw.sprintFolderId)
   const merged: Partial<Config> = {
     ...(readStoredString(raw.apiToken) ? { apiToken: readStoredString(raw.apiToken) } : {}),
@@ -48,7 +48,7 @@ export function setConfigValue(key: string, value: string): void {
   } else {
     merged[key] = normalizedValue
   }
-  writeConfig(merged)
+  writeConfig(merged, profileName)
 }
 
 export function configPath(): string {
