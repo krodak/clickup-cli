@@ -70,6 +70,12 @@ describe('config commands', () => {
       const { getConfigValue } = await import('../../../src/commands/config.js')
       expect(() => getConfigValue('apiToken')).toThrow('must contain a JSON object')
     })
+
+    it('passes profileName to loadRawConfig', async () => {
+      const { getConfigValue } = await import('../../../src/commands/config.js')
+      getConfigValue('apiToken', 'work')
+      expect(mockLoadRawConfig).toHaveBeenCalledWith('work')
+    })
   })
 
   describe('setConfigValue', () => {
@@ -77,39 +83,37 @@ describe('config commands', () => {
       mockLoadRawConfig.mockReturnValue({ teamId: 'team_1' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('apiToken', 'pk_newtoken')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_newtoken',
-        teamId: 'team_1',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_newtoken', teamId: 'team_1' },
+        undefined,
+      )
     })
 
     it('writes teamId to config', async () => {
       mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_existing' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('teamId', 'new_team')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_existing',
-        teamId: 'new_team',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_existing', teamId: 'new_team' },
+        undefined,
+      )
     })
 
     it('merges with existing config', async () => {
       mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_old', teamId: 'team_old' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('teamId', 'team_new')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_old',
-        teamId: 'team_new',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_old', teamId: 'team_new' },
+        undefined,
+      )
     })
 
     it('writes to empty config', async () => {
       mockLoadRawConfig.mockReturnValue({})
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('apiToken', 'pk_first')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_first',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith({ apiToken: 'pk_first' }, undefined)
     })
 
     it('throws when apiToken does not start with pk_', async () => {
@@ -121,10 +125,10 @@ describe('config commands', () => {
       mockLoadRawConfig.mockReturnValue({ teamId: 'team_1' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('apiToken', '  pk_trimmed  ')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_trimmed',
-        teamId: 'team_1',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_trimmed', teamId: 'team_1' },
+        undefined,
+      )
     })
 
     it('throws when teamId is empty', async () => {
@@ -141,30 +145,27 @@ describe('config commands', () => {
       mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_existing' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('teamId', '  team_trimmed  ')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_existing',
-        teamId: 'team_trimmed',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_existing', teamId: 'team_trimmed' },
+        undefined,
+      )
     })
 
     it('trims surrounding whitespace before writing sprintFolderId', async () => {
       mockLoadRawConfig.mockReturnValue({ apiToken: 'pk_existing', teamId: 'team_1' })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('sprintFolderId', '  folder_123  ')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        apiToken: 'pk_existing',
-        teamId: 'team_1',
-        sprintFolderId: 'folder_123',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith(
+        { apiToken: 'pk_existing', teamId: 'team_1', sprintFolderId: 'folder_123' },
+        undefined,
+      )
     })
 
     it('drops malformed non-string values from existing config when writing', async () => {
       mockLoadRawConfig.mockReturnValue({ apiToken: 123 })
       const { setConfigValue } = await import('../../../src/commands/config.js')
       setConfigValue('teamId', 'new_team')
-      expect(mockWriteConfig).toHaveBeenCalledWith({
-        teamId: 'new_team',
-      })
+      expect(mockWriteConfig).toHaveBeenCalledWith({ teamId: 'new_team' }, undefined)
     })
 
     it('throws for unknown key', async () => {
@@ -179,6 +180,14 @@ describe('config commands', () => {
       const { setConfigValue } = await import('../../../src/commands/config.js')
       expect(() => setConfigValue('apiToken', 'pk_newtoken')).toThrow('must contain a JSON object')
       expect(mockWriteConfig).not.toHaveBeenCalled()
+    })
+
+    it('passes profileName to loadRawConfig and writeConfig', async () => {
+      mockLoadRawConfig.mockReturnValue({ teamId: 'team_1' })
+      const { setConfigValue } = await import('../../../src/commands/config.js')
+      setConfigValue('apiToken', 'pk_new', 'work')
+      expect(mockLoadRawConfig).toHaveBeenCalledWith('work')
+      expect(mockWriteConfig).toHaveBeenCalledWith({ apiToken: 'pk_new', teamId: 'team_1' }, 'work')
     })
   })
 
