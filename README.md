@@ -6,6 +6,7 @@
 [![node](https://img.shields.io/node/v/@krodak/clickup-cli)](https://nodejs.org)
 [![license](https://img.shields.io/npm/l/@krodak/clickup-cli)](./LICENSE)
 [![CI](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/krodak/clickup-cli/actions/workflows/ci.yml)
+[![homebrew](https://img.shields.io/badge/homebrew-tap-FBB040?logo=homebrew&logoColor=black)](https://github.com/krodak/homebrew-tap)
 
 ```bash
 npm install -g @krodak/clickup-cli && cup init
@@ -28,6 +29,14 @@ Install the CLI, add the skill file to your agent, and it works with ClickUp. No
 > **"Update the description with your findings and flag blockers in a comment."**
 
 The agent reads the skill file, picks the right `cup` commands, and handles everything. You don't need to learn the CLI - the agent does.
+
+### Terminal mode
+
+![TTY Mode - interactive tables and detail views](demos/tty-mode.gif)
+
+### Agent mode (piped)
+
+![Agent Mode - markdown and JSON output](demos/agent-mode.gif)
 
 ## Why a CLI and not MCP?
 
