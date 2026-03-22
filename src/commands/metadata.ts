@@ -757,7 +757,9 @@ export function syncQuickReferenceSection(document: string, programName = 'cup')
 
   const replacement = [
     quickReferenceStartMarker,
+    '',
     renderQuickReferenceSection(programName),
+    '',
     quickReferenceEndMarker,
   ].join('\n')
 

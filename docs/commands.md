@@ -5,6 +5,7 @@ All commands support `--help` for full flag details. When piped (no TTY), comman
 All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc123xyz`) and custom task IDs (e.g., `PROJ-123`). Custom task IDs are detected automatically by their `PREFIX-DIGITS` format.
 
 <!-- quick-reference:start -->
+
 ## Quick Reference
 
 | Command                                 | Description                           |
@@ -81,6 +82,7 @@ All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc12
 | **Configuration**                       |                                       |
 | `cup config`                            | Manage CLI configuration              |
 | `cup completion <shell>`                | Output shell completion script        |
+
 <!-- quick-reference:end -->
 
 ---
