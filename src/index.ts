@@ -1,3 +1,4 @@
+import { realpathSync } from 'fs'
 import { basename, resolve } from 'path'
 import { Command } from 'commander'
 import { createRequire } from 'module'
@@ -1685,7 +1686,8 @@ process.on('SIGINT', () => {
 })
 
 const isDirectExecution =
-  process.argv[1] !== undefined && fileURLToPath(import.meta.url) === resolve(process.argv[1])
+  process.argv[1] !== undefined &&
+  fileURLToPath(import.meta.url) === realpathSync(resolve(process.argv[1]))
 
 if (isDirectExecution) {
   await run()
