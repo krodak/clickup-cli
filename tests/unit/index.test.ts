@@ -1,4 +1,8 @@
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const execFileAsync = promisify(execFile)
 
 const config = { apiToken: 'pk_test', teamId: 'team_1' }
 
@@ -90,6 +94,32 @@ describe('CLI entry point', () => {
     vi.unstubAllGlobals()
   })
 
+  it('run() invokes parseAsync and processes commands', async () => {
+    mockGetTask.mockResolvedValue({ id: 'task-1', name: 'Task One' })
+
+    const { run } = await loadCli()
+    await run(['node', 'cup', 'task', 'task-1'])
+
+    expect(mockGetTask).toHaveBeenCalledWith(config, 'task-1')
+  })
+
+  it('buildProgram responds to --version', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+    program.exitOverride()
+
+    let versionOutput = ''
+    program.configureOutput({ writeOut: (str: string) => (versionOutput = str) })
+
+    try {
+      await program.parseAsync(['--version'], { from: 'user' })
+    } catch {
+      // Commander throws on --version with exitOverride
+    }
+
+    expect(versionOutput.trim()).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+
   it('formats task detail as markdown when output is piped', async () => {
     mockGetTask.mockResolvedValue({ id: 'task-1', name: 'Task One' })
 
@@ -164,5 +194,19 @@ describe('CLI entry point', () => {
     expect(mockEditChecklistItem).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith('--assignee must be a number or "null"')
     expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+})
+
+describe('binary smoke test', () => {
+  it('node dist/index.js --version outputs a valid semver', async () => {
+    const { stdout } = await execFileAsync('node', ['dist/index.js', '--version'])
+    expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+
+  it('node dist/index.js --help lists commands', async () => {
+    const { stdout } = await execFileAsync('node', ['dist/index.js', '--help'])
+    expect(stdout).toContain('tasks')
+    expect(stdout).toContain('sprint')
+    expect(stdout).toContain('config')
   })
 })
