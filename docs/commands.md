@@ -2,7 +2,22 @@
 
 All commands support `--help` for full flag details. When piped (no TTY), commands output Markdown by default. Pass `--json` for JSON output.
 
-All `<id>` and `<taskId>` arguments accept both native ClickUp IDs (e.g., `abc123xyz`) and custom task IDs (e.g., `PROJ-123`). Custom task IDs are detected automatically by their `PREFIX-DIGITS` format.
+## Custom Task IDs
+
+ClickUp workspaces can configure custom task IDs with a prefix per space (e.g., `PROJ-123`, `DEV-42`). The CLI detects these automatically - any ID matching the `PREFIX-DIGITS` format (uppercase letters, hyphen, digits) is treated as a custom task ID.
+
+All commands that accept task IDs work with both native IDs and custom IDs:
+
+```bash
+cup task PROJ-123
+cup update DEV-42 --status done
+cup comment PROJ-456 -m "Fixed in latest commit"
+cup subtasks DEV-100
+```
+
+Custom ID resolution uses the `teamId` from your config, which is required (`cup init` sets it up).
+
+**Task links with custom IDs:** The `cup link` command passes both task IDs in a single API request. When both IDs are custom, this works correctly. However, mixing custom and native IDs in a single link command may not work as expected because the ClickUp API applies the `custom_task_ids` flag to all IDs in the request.
 
 <!-- quick-reference:start -->
 

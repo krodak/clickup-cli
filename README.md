@@ -130,27 +130,19 @@ The skill file follows the [Agent Skills](https://agentskills.io) open standard.
 
 Full CRUD for the core ClickUp workflow:
 
-**Tasks** - create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk status updates
-
-**Comments** - post, edit, delete, threaded replies, notify all
-
-**Docs** - list, read, create, edit, delete (v3 API)
-
-**Time Tracking** - start/stop timer, log entries, list/update/delete history
-
-**Checklists** - view, create, delete, add/edit/delete items
-
-**Custom Fields** - list, set, remove values (dropdown, date, checkbox, text, etc.)
-
-**Tags** - add/remove on tasks, space-level create/update/delete
-
-**Goals & OKRs** - goals CRUD, key results CRUD
-
-**Sprints** - auto-detect active sprint, flexible date parsing, config override
-
-**Workspace** - spaces, folders, lists, members, task types, templates
-
-**Attachments** - upload files to tasks, shown in detail views
+| Area                 | Capabilities                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ✅ **Tasks**         | Create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk status updates |
+| 💬 **Comments**      | Post, edit, delete, threaded replies, notify all                                                                        |
+| 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                               |
+| ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                               |
+| ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                             |
+| 🔧 **Custom Fields** | List, set, remove values (dropdown, date, checkbox, text, etc.)                                                         |
+| 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                   |
+| 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                            |
+| 🏃 **Sprints**       | Auto-detect active sprint, flexible date parsing, config override                                                       |
+| 🏢 **Workspace**     | Spaces, folders, lists, members, task types, templates                                                                  |
+| 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                            |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
 
@@ -212,23 +204,6 @@ Environment variables override config file values:
 | `CU_OUTPUT`    | Set to `json` to force JSON output when piped (default: markdown) |
 
 When both `CU_API_TOKEN` and `CU_TEAM_ID` are set, the config file is not required. Useful for CI/CD and containerized agents.
-
-## Custom Task IDs
-
-ClickUp workspaces can configure custom task IDs with a prefix per space (e.g., `PROJ-123`, `DEV-42`). The CLI detects these automatically - any ID matching the `PREFIX-DIGITS` format (uppercase letters, hyphen, digits) is treated as a custom task ID.
-
-All commands that accept task IDs work with both native IDs and custom IDs:
-
-```bash
-cup task PROJ-123
-cup update DEV-42 --status done
-cup comment PROJ-456 -m "Fixed in latest commit"
-cup subtasks DEV-100
-```
-
-Custom ID resolution uses the `teamId` from your config, which is required (`cup init` sets it up).
-
-**Task links with custom IDs:** The `cup link` command passes both task IDs in a single API request. When both IDs are custom, this works correctly. However, mixing custom and native IDs in a single link command may not work as expected because the ClickUp API applies the `custom_task_ids` flag to all IDs in the request.
 
 ## Development
 
