@@ -136,7 +136,7 @@ function wrapAction<T extends unknown[]>(
   return async (...args: T) => {
     await fn(...args).catch((err: unknown) => {
       console.error(err instanceof Error ? err.message : String(err))
-      process.exit(1)
+      process.exitCode = 1
     })
   }
 }
@@ -1761,7 +1761,7 @@ export async function run(argv = process.argv): Promise<void> {
 
 process.on('SIGINT', () => {
   process.stderr.write('\nInterrupted\n')
-  process.exit(130)
+  process.exitCode = 130
 })
 
 function checkDirectExecution(): boolean {
