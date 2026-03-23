@@ -154,7 +154,7 @@ Full CRUD for the core ClickUp workflow:
 | 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                   |
 | 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                            |
 | 🏃 **Sprints**       | Auto-detect active sprint, flexible date parsing, config override                                                       |
-| 🏢 **Workspace**     | Spaces, folders, lists, members, task types, templates                                                                  |
+| 🏢 **Workspace**     | Spaces, folders, lists (read + create), members, task types, templates                                                  |
 | 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                            |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)

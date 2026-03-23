@@ -489,6 +489,38 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'space-create',
+    description: 'Create a new space in your workspace',
+    flags: ['--json'],
+    quickReference: [
+      { section: 'write', usage: 'space-create <name>', description: 'Create a space' },
+    ],
+  },
+  {
+    name: 'list-create',
+    description: 'Create a new list in a space',
+    flags: ['--folder', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'list-create <spaceId> <name>',
+        description: 'Create a list in a space',
+      },
+    ],
+  },
+  {
+    name: 'folder-create',
+    description: 'Create a new folder in a space',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'folder-create <spaceId> <name>',
+        description: 'Create a folder in a space',
+      },
+    ],
+  },
+  {
     name: 'members',
     description: 'List workspace members',
     flags: ['--json'],

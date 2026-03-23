@@ -515,6 +515,13 @@ export class ClickUpClient {
     return this.request<ListWithStatuses>(`/list/${listId}`)
   }
 
+  async createSpace(teamId: string, name: string): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/team/${teamId}/space`, {
+      method: 'POST',
+      body: JSON.stringify({ name, multiple_assignees: true }),
+    })
+  }
+
   async getSpaces(teamId: string): Promise<Space[]> {
     const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space?archived=false`)
     return readCollectionField<Space>(data as Record<string, unknown>, 'spaces', 'spaces')
@@ -529,6 +536,27 @@ export class ClickUpClient {
       'custom_items',
       'custom task types',
     )
+  }
+
+  async createList(spaceId: string, name: string): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/space/${spaceId}/list`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
+  }
+
+  async createFolderList(folderId: string, name: string): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/folder/${folderId}/list`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
+  }
+
+  async createFolder(spaceId: string, name: string): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/space/${spaceId}/folder`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
   }
 
   async getLists(spaceId: string): Promise<List[]> {
