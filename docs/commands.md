@@ -23,84 +23,85 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 
 ## Quick Reference
 
-| Command                                 | Description                           |
-| --------------------------------------- | ------------------------------------- |
-| `cup init`                              | First-time setup wizard               |
-| **Read**                                |                                       |
-| `cup auth`                              | Check authentication status           |
-| `cup tasks`                             | List tasks assigned to me             |
-| `cup task <taskId>`                     | Get task details                      |
-| `cup sprint`                            | My tasks in the active sprint         |
-| `cup sprints`                           | List all sprints across folders       |
-| `cup subtasks <taskId>`                 | List subtasks of a task               |
-| `cup comments <taskId>`                 | List comments on a task               |
-| `cup replies <commentId>`               | List threaded replies on a comment    |
-| `cup activity <taskId>`                 | Task details + comment history        |
-| `cup lists <spaceId>`                   | List all lists in a space             |
-| `cup spaces`                            | List spaces in workspace              |
-| `cup inbox`                             | Recently updated tasks assigned to me |
-| `cup assigned`                          | My tasks grouped by pipeline stage    |
-| `cup open <query>`                      | Open a task in the browser            |
-| `cup search <query>`                    | Search my tasks by name               |
-| `cup summary`                           | Daily standup helper                  |
-| `cup overdue`                           | Tasks past their due date             |
-| `cup tags <spaceId>`                    | List tags in a space                  |
-| `cup docs [query]`                      | List workspace docs                   |
-| `cup doc <docId> [pageId]`              | View a doc or doc page                |
-| `cup doc-pages <docId>`                 | All pages in a doc with content       |
-| `cup folders <spaceId>`                 | List folders in a space               |
-| `cup members`                           | List workspace members                |
-| `cup fields <listId>`                   | List custom fields for a list         |
-| `cup goals`                             | List goals in your workspace          |
-| `cup key-results <goalId>`              | List key results for a goal           |
-| `cup task-types`                        | List custom task types                |
-| `cup templates`                         | List task templates                   |
-| **Write**                               |                                       |
-| `cup update <taskId>`                   | Update a task                         |
-| `cup create`                            | Create a new task                     |
-| `cup comment <taskId>`                  | Post a comment on a task              |
-| `cup comment-edit <commentId>`          | Edit an existing comment              |
-| `cup comment-delete <commentId>`        | Delete a comment                      |
-| `cup reply <commentId>`                 | Reply to a comment                    |
-| `cup assign <taskId>`                   | Assign or unassign users              |
-| `cup depend <taskId>`                   | Add or remove task dependencies       |
-| `cup link <taskId> <linksTo>`           | Add or remove a link between tasks    |
-| `cup attach <taskId> <filePath>`        | Upload a file attachment to a task    |
-| `cup move <taskId>`                     | Add or remove a task from a list      |
-| `cup field <taskId>`                    | Set or remove custom field values     |
-| `cup delete <taskId>`                   | Delete a task                         |
-| `cup tag <taskId>`                      | Add or remove tags on a task          |
-| `cup tag-create <spaceId> <name>`       | Create a tag in a space               |
-| `cup tag-delete <spaceId> <name>`       | Delete a tag from a space             |
-| `cup tag-update <spaceId> <tagName>`    | Update a tag in a space               |
-| `cup checklist`                         | Manage checklists on tasks            |
-| `cup time start <taskId>`               | Start tracking time on a task         |
-| `cup time stop`                         | Stop the running timer                |
-| `cup time status`                       | Show the currently running timer      |
-| `cup time log <taskId> <duration>`      | Log a manual time entry               |
-| `cup time list`                         | List recent time entries              |
-| `cup time update <timeEntryId>`         | Update a time entry                   |
-| `cup time delete <timeEntryId>`         | Delete a time entry                   |
-| `cup doc-create <title>`                | Create a new doc                      |
-| `cup doc-page-create <docId> <name>`    | Create a page in a doc                |
-| `cup doc-page-edit <docId> <pageId>`    | Edit a doc page                       |
-| `cup doc-delete <docId>`                | Delete a doc                          |
-| `cup doc-page-delete <docId> <pageId>`  | Delete a doc page                     |
-| `cup space-create <name>`               | Create a space                        |
-| `cup list-create <spaceId> <name>`      | Create a list in a space              |
-| `cup folder-create <spaceId> <name>`    | Create a folder in a space            |
-| `cup duplicate <taskId>`                | Duplicate a task                      |
-| `cup bulk status <status> <taskIds...>` | Bulk update task status               |
-| `cup goal-create <name>`                | Create a goal                         |
-| `cup goal-update <goalId>`              | Update a goal                         |
-| `cup goal-delete <goalId>`              | Delete a goal                         |
-| `cup key-result-create <goalId> <name>` | Create a key result on a goal         |
-| `cup key-result-update <keyResultId>`   | Update a key result                   |
-| `cup key-result-delete <keyResultId>`   | Delete a key result                   |
-| **Configuration**                       |                                       |
-| `cup profile`                           | Manage profiles                       |
-| `cup config`                            | Manage CLI configuration              |
-| `cup completion <shell>`                | Output shell completion script        |
+| Command                                 | Description                             |
+| --------------------------------------- | --------------------------------------- |
+| `cup init`                              | First-time setup wizard                 |
+| **Read**                                |                                         |
+| `cup auth`                              | Check authentication status             |
+| `cup tasks`                             | List tasks assigned to me               |
+| `cup task <taskId>`                     | Get task details                        |
+| `cup sprint`                            | My tasks in the active sprint           |
+| `cup sprints`                           | List all sprints across folders         |
+| `cup subtasks <taskId>`                 | List subtasks of a task                 |
+| `cup comments <taskId>`                 | List comments on a task                 |
+| `cup replies <commentId>`               | List threaded replies on a comment      |
+| `cup activity <taskId>`                 | Task details + comment history          |
+| `cup lists <spaceId>`                   | List all lists in a space               |
+| `cup spaces`                            | List spaces in workspace                |
+| `cup inbox`                             | Recently updated tasks assigned to me   |
+| `cup assigned`                          | My tasks grouped by pipeline stage      |
+| `cup open <query>`                      | Open a task in the browser              |
+| `cup search <query>`                    | Search my tasks by name                 |
+| `cup summary`                           | Daily standup helper                    |
+| `cup overdue`                           | Tasks past their due date               |
+| `cup tags <spaceId>`                    | List tags in a space                    |
+| `cup docs [query]`                      | List workspace docs                     |
+| `cup doc <docId> [pageId]`              | View a doc or doc page                  |
+| `cup doc-pages <docId>`                 | All pages in a doc with content         |
+| `cup folders <spaceId>`                 | List folders in a space                 |
+| `cup members`                           | List workspace members                  |
+| `cup fields <listId>`                   | List custom fields for a list           |
+| `cup goals`                             | List goals in your workspace            |
+| `cup key-results <goalId>`              | List key results for a goal             |
+| `cup task-types`                        | List custom task types                  |
+| `cup templates`                         | List task templates                     |
+| **Write**                               |                                         |
+| `cup update <taskId>`                   | Update a task                           |
+| `cup create`                            | Create a new task                       |
+| `cup comment <taskId>`                  | Post a comment on a task                |
+| `cup comment-edit <commentId>`          | Edit an existing comment                |
+| `cup comment-delete <commentId>`        | Delete a comment                        |
+| `cup reply <commentId>`                 | Reply to a comment                      |
+| `cup assign <taskId>`                   | Assign or unassign users                |
+| `cup depend <taskId>`                   | Add or remove task dependencies         |
+| `cup link <taskId> <linksTo>`           | Add or remove a link between tasks      |
+| `cup attach <taskId> <filePath>`        | Upload a file attachment to a task      |
+| `cup move <taskId>`                     | Add or remove a task from a list        |
+| `cup field <taskId>`                    | Set or remove custom field values       |
+| `cup delete <taskId>`                   | Delete a task                           |
+| `cup tag <taskId>`                      | Add or remove tags on a task            |
+| `cup tag-create <spaceId> <name>`       | Create a tag in a space                 |
+| `cup tag-delete <spaceId> <name>`       | Delete a tag from a space               |
+| `cup tag-update <spaceId> <tagName>`    | Update a tag in a space                 |
+| `cup checklist`                         | Manage checklists on tasks              |
+| `cup time start <taskId>`               | Start tracking time on a task           |
+| `cup time stop`                         | Stop the running timer                  |
+| `cup time status`                       | Show the currently running timer        |
+| `cup time log <taskId> <duration>`      | Log a manual time entry                 |
+| `cup time list`                         | List recent time entries                |
+| `cup time update <timeEntryId>`         | Update a time entry                     |
+| `cup time delete <timeEntryId>`         | Delete a time entry                     |
+| `cup doc-create <title>`                | Create a new doc                        |
+| `cup doc-page-create <docId> <name>`    | Create a page in a doc                  |
+| `cup doc-page-edit <docId> <pageId>`    | Edit a doc page                         |
+| `cup doc-delete <docId>`                | Delete a doc                            |
+| `cup doc-page-delete <docId> <pageId>`  | Delete a doc page                       |
+| `cup space-create <name>`               | Create a space                          |
+| `cup list-create <spaceId> <name>`      | Create a list in a space                |
+| `cup folder-create <spaceId> <name>`    | Create a folder in a space              |
+| `cup field-create <name>`               | Create a custom field in your workspace |
+| `cup duplicate <taskId>`                | Duplicate a task                        |
+| `cup bulk status <status> <taskIds...>` | Bulk update task status                 |
+| `cup goal-create <name>`                | Create a goal                           |
+| `cup goal-update <goalId>`              | Update a goal                           |
+| `cup goal-delete <goalId>`              | Delete a goal                           |
+| `cup key-result-create <goalId> <name>` | Create a key result on a goal           |
+| `cup key-result-update <keyResultId>`   | Update a key result                     |
+| `cup key-result-delete <keyResultId>`   | Delete a key result                     |
+| **Configuration**                       |                                         |
+| `cup profile`                           | Manage profiles                         |
+| `cup config`                            | Manage CLI configuration                |
+| `cup completion <shell>`                | Output shell completion script          |
 
 <!-- quick-reference:end -->
 
@@ -482,6 +483,25 @@ cup field abc123 --set "Points" 3 --json
 | `--json`                   | Force JSON output                                                                                                                |
 
 Both `--set` and `--remove` can be used together in one invocation.
+
+### `cup field-create <name>`
+
+Create a custom field in your workspace. Requires specifying the field type.
+
+```bash
+cup field-create "Story Points" -t number
+cup field-create "Priority Level" -t drop_down
+cup field-create "Approved" -t checkbox --required
+cup field-create "Notes" -t text -d "Internal notes for the team"
+cup field-create "Contact Email" -t email --json
+```
+
+| Flag                | Required | Description                                                                                          |
+| ------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `-t, --type <type>` | yes      | Field type: text, short_text, number, date, checkbox, drop_down, labels, email, phone, url, currency |
+| `-d, --description` | no       | Field description                                                                                    |
+| `--required`        | no       | Make the field required                                                                              |
+| `--json`            | no       | Force JSON output                                                                                    |
 
 ### `cup comment <id>`
 

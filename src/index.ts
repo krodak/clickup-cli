@@ -1168,6 +1168,56 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
+    .command('field-create <name>')
+    .description('Create a custom field in your workspace')
+    .requiredOption(
+      '-t, --type <type>',
+      'Field type (text, number, date, checkbox, drop_down, labels, email, phone, url, currency, short_text)',
+    )
+    .option('-d, --description <text>', 'Field description')
+    .option('--required', 'Make the field required')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          name: string,
+          opts: { type: string; description?: string; required?: boolean; json?: boolean },
+        ) => {
+          if (!name.trim()) throw new Error('Field name cannot be empty')
+          const validTypes = [
+            'text',
+            'short_text',
+            'number',
+            'date',
+            'checkbox',
+            'drop_down',
+            'labels',
+            'email',
+            'phone',
+            'url',
+            'currency',
+          ]
+          if (!validTypes.includes(opts.type)) {
+            throw new Error(
+              `Invalid field type "${opts.type}". Valid types: ${validTypes.join(', ')}`,
+            )
+          }
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const field = await client.createCustomField(config.teamId, name, opts.type, {
+            description: opts.description,
+            required: opts.required,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(field, null, 2))
+          } else {
+            console.log(`Created field "${field.name}" (${field.id}) type: ${field.type}`)
+          }
+        },
+      ),
+    )
+
+  program
     .command('duplicate <taskId>')
     .description('Duplicate a task')
     .option('--json', 'Force JSON output even in terminal')

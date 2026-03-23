@@ -150,7 +150,7 @@ Full CRUD for the core ClickUp workflow:
 | 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                               |
 | ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                               |
 | ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                             |
-| 🔧 **Custom Fields** | List, set, remove values (dropdown, date, checkbox, text, etc.)                                                         |
+| 🔧 **Custom Fields** | List, create, set, remove values (dropdown, date, checkbox, text, etc.)                                                 |
 | 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                   |
 | 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                            |
 | 🏃 **Sprints**       | Auto-detect active sprint, flexible date parsing, config override                                                       |

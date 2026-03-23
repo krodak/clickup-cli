@@ -535,6 +535,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'field-create',
+    description: 'Create a custom field in your workspace',
+    flags: ['-t', '--type', '-d', '--description', '--required', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'field-create <name>',
+        description: 'Create a custom field in your workspace',
+      },
+    ],
+  },
+  {
     name: 'duplicate',
     description: 'Duplicate a task',
     flags: ['--json'],

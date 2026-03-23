@@ -74,6 +74,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Set field value       | `cup field <id> --set`    | :white_check_mark: |
 | Remove field value    | `cup field <id> --remove` | :white_check_mark: |
 | List available fields | `cup fields <listId>`     | :white_check_mark: |
+| Create custom field   | `cup field-create <name>` | :white_check_mark: |
 
 ## Tags
 

@@ -1260,6 +1260,57 @@ describe('createFolder', () => {
   })
 })
 
+describe('createCustomField', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /field with workspace_id query param', async () => {
+    const fieldData = { id: 'cf1', name: 'Story Points', type: 'number' }
+    mockFetch.mockReturnValue(mockResponse({ data: fieldData }))
+    const result = await client.createCustomField('team123', 'Story Points', 'number')
+    expect(result).toEqual(fieldData)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/field?workspace_id=team123')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('includes name and type in the request body', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'cf1', name: 'Status', type: 'text' } }))
+    await client.createCustomField('team123', 'Status', 'text', {
+      description: 'Task status',
+      required: true,
+    })
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.name).toBe('Status')
+    expect(body.type).toBe('text')
+    expect(body.description).toBe('Task status')
+    expect(body.required).toBe(true)
+  })
+
+  it('defaults description to empty string and required to false', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: { id: 'cf1', name: 'Notes', type: 'text' } }))
+    await client.createCustomField('team123', 'Notes', 'text')
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.description).toBe('')
+    expect(body.required).toBe(false)
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

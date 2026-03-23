@@ -1117,4 +1117,31 @@ export class ClickUpClient {
       body: JSON.stringify({ name }),
     })
   }
+
+  async createCustomField(
+    teamId: string,
+    name: string,
+    type: string,
+    opts?: { description?: string; required?: boolean },
+  ): Promise<{ id: string; name: string; type: string }> {
+    const body: Record<string, unknown> = {
+      name,
+      type,
+      type_config: {},
+      description: opts?.description ?? '',
+      required: opts?.required ?? false,
+      pinned: false,
+      hide_from_guests: false,
+      required_on_subtasks: false,
+      private: false,
+      permission_level: null,
+      members: [],
+      groups: [],
+    }
+    const data = await this.request<{ data: { id: string; name: string; type: string } }>(
+      `/field?workspace_id=${teamId}`,
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+    return data.data
+  }
 }
