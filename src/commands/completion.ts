@@ -541,6 +541,14 @@ ${renderZshTopLevelCommands(name)}
             '1:list_id:' \\
             '--json[Force JSON output]'
           ;;
+        field-create)
+          _arguments \\
+            '1:name:' \\
+            '(-t --type)'{-t,--type}'[Field type]:type:(text short_text number date checkbox drop_down labels email phone url currency)' \\
+            '(-d --description)'{-d,--description}'[Field description]:text:' \\
+            '--required[Make the field required]' \\
+            '--json[Force JSON output]'
+          ;;
         duplicate)
           _arguments \\
             '1:task_id:' \\
