@@ -83,6 +83,20 @@ describe('createTask', () => {
     ).rejects.toThrow('--list or --parent')
   })
 
+  it('throws on empty name', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await expect(
+      createTask({ apiToken: 'pk_t', teamId: 'tm_1' }, { list: 'l1', name: '' }),
+    ).rejects.toThrow('Task name cannot be empty')
+  })
+
+  it('throws on whitespace-only name', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await expect(
+      createTask({ apiToken: 'pk_t', teamId: 'tm_1' }, { list: 'l1', name: '   ' }),
+    ).rejects.toThrow('Task name cannot be empty')
+  })
+
   it('passes priority to API as numeric value', async () => {
     const { createTask } = await import('../../../src/commands/create.js')
     await createTask(

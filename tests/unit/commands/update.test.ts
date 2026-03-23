@@ -252,6 +252,16 @@ describe('buildUpdatePayload', () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     expect(() => buildUpdatePayload({ assignee: 'abc' })).toThrow('numeric user ID')
   })
+
+  it('throws on empty name', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    expect(() => buildUpdatePayload({ name: '' })).toThrow('Task name cannot be empty')
+  })
+
+  it('throws on whitespace-only name', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    expect(() => buildUpdatePayload({ name: '   ' })).toThrow('Task name cannot be empty')
+  })
 })
 
 describe('fuzzy status matching', () => {

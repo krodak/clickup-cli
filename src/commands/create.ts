@@ -22,6 +22,8 @@ export async function createTask(
   config: Config,
   options: CreateOptions,
 ): Promise<{ id: string; name: string; url: string }> {
+  if (!options.name.trim()) throw new Error('Task name cannot be empty')
+
   const client = new ClickUpClient(config)
 
   let listId = options.list
