@@ -175,25 +175,16 @@ describe('CLI entry point', () => {
   })
 
   it('rejects checklist assignee values that are not numeric', async () => {
-    const exitError = new Error('process.exit:1')
-    const exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation((code?: string | number | null) => {
-        throw code === 1 ? exitError : new Error(`process.exit:${String(code)}`)
-      })
-
     const { buildProgram } = await loadCli()
     const program = buildProgram('cup')
 
-    await expect(
-      program.parseAsync(['checklist', 'edit-item', 'chk-1', 'item-1', '--assignee', 'abc'], {
-        from: 'user',
-      }),
-    ).rejects.toBe(exitError)
+    await program.parseAsync(['checklist', 'edit-item', 'chk-1', 'item-1', '--assignee', 'abc'], {
+      from: 'user',
+    })
 
     expect(mockEditChecklistItem).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith('--assignee must be a number or "null"')
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exitCode).toBe(1)
   })
 })
 
