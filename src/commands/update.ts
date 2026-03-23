@@ -68,7 +68,10 @@ export interface UpdateCommandOptions {
 
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
   const payload: UpdateTaskOptions = {}
-  if (opts.name !== undefined) payload.name = opts.name
+  if (opts.name !== undefined) {
+    if (!opts.name.trim()) throw new Error('Task name cannot be empty')
+    payload.name = opts.name
+  }
   if (opts.description !== undefined) payload.markdown_content = opts.description
   if (opts.status !== undefined) payload.status = opts.status
   if (opts.priority !== undefined) payload.priority = parsePriority(opts.priority)

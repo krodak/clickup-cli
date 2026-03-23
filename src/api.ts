@@ -365,6 +365,12 @@ export class ClickUpClient {
         ...options.headers,
       },
     })
+    if (res.status === 204 || res.headers.get('content-length') === '0') {
+      if (!res.ok) {
+        throw new Error(`ClickUp API error ${res.status}: ${res.statusText}`)
+      }
+      return {} as T
+    }
     let parsed: unknown
     try {
       parsed = await res.json()
