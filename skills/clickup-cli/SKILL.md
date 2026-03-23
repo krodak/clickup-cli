@@ -108,6 +108,9 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-page-edit <docId> <pageId> [--name text] [-c content]`                                                                                                                            | Edit doc page                       |
 | `cup doc-delete <docId>`                                                                                                                                                                   | Delete a doc                        |
 | `cup doc-page-delete <docId> <pageId>`                                                                                                                                                     | Delete doc page                     |
+| `cup space-create <name>`                                                                                                                                                                  | Create a space                      |
+| `cup list-create <spaceId> <name> [--folder folderId]`                                                                                                                                     | Create a list in a space or folder  |
+| `cup folder-create <spaceId> <name>`                                                                                                                                                       | Create a folder in a space          |
 | `cup tag-create <spaceId> <name> [--fg color] [--bg color]`                                                                                                                                | Create space tag                    |
 | `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c]`                                                                                                                    | Update space tag                    |
 | `cup tag-delete <spaceId> <name>`                                                                                                                                                          | Delete space tag                    |
@@ -215,6 +218,10 @@ cup doc-page-edit <docId> <pageId> -c "# Updated"
 cup spaces --name "Engineering"      # find space ID
 cup folders <spaceId>                # folders with their lists
 cup lists <spaceId>                  # lists in a space
+cup space-create "New Space"         # create a space
+cup folder-create <spaceId> "Q2"     # create a folder
+cup list-create <spaceId> "Backlog"  # create a list
+cup list-create <spaceId> "Sprint" --folder <folderId>
 cup members                          # workspace members
 cup fields <listId>                  # custom fields on a list
 cup task-types                       # custom task types

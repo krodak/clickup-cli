@@ -86,6 +86,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup doc-page-edit <docId> <pageId>`    | Edit a doc page                       |
 | `cup doc-delete <docId>`                | Delete a doc                          |
 | `cup doc-page-delete <docId> <pageId>`  | Delete a doc page                     |
+| `cup space-create <name>`               | Create a space                        |
+| `cup list-create <spaceId> <name>`      | Create a list in a space              |
+| `cup folder-create <spaceId> <name>`    | Create a folder in a space            |
 | `cup duplicate <taskId>`                | Duplicate a task                      |
 | `cup bulk status <status> <taskIds...>` | Bulk update task status               |
 | `cup goal-create <name>`                | Create a goal                         |
@@ -778,6 +781,47 @@ List tags available in a space. Useful for discovering valid tag names for `cup 
 ```bash
 cup tags <spaceId>
 cup tags <spaceId> --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup space-create <name>`
+
+Create a new space in your workspace.
+
+```bash
+cup space-create "Engineering"
+cup space-create "Design" --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup list-create <spaceId> <name>`
+
+Create a new list in a space. Optionally create it inside a folder with `--folder`.
+
+```bash
+cup list-create <spaceId> "Backlog"
+cup list-create <spaceId> "Sprint 1" --folder <folderId>
+cup list-create <spaceId> "Tasks" --json
+```
+
+| Flag                  | Required | Description                     |
+| --------------------- | -------- | ------------------------------- |
+| `--folder <folderId>` | no       | Create the list inside a folder |
+| `--json`              | no       | Force JSON output               |
+
+### `cup folder-create <spaceId> <name>`
+
+Create a new folder in a space.
+
+```bash
+cup folder-create <spaceId> "Q2 Work"
+cup folder-create <spaceId> "Sprints" --json
 ```
 
 | Flag     | Required | Description       |

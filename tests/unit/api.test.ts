@@ -1148,6 +1148,118 @@ describe('Docs API v3 methods', () => {
   })
 })
 
+describe('createSpace', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /team/{teamId}/space with name and multiple_assignees', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 's1', name: 'Engineering' }))
+    const result = await client.createSpace('team1', 'Engineering')
+    expect(result).toEqual({ id: 's1', name: 'Engineering' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/space'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Engineering', multiple_assignees: true }),
+      }),
+    )
+  })
+})
+
+describe('createList', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /space/{spaceId}/list with name', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'l1', name: 'Backlog' }))
+    const result = await client.createList('s1', 'Backlog')
+    expect(result).toEqual({ id: 'l1', name: 'Backlog' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/space/s1/list'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Backlog' }),
+      }),
+    )
+  })
+})
+
+describe('createFolderList', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /folder/{folderId}/list with name', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'l2', name: 'Sprint 1' }))
+    const result = await client.createFolderList('f1', 'Sprint 1')
+    expect(result).toEqual({ id: 'l2', name: 'Sprint 1' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/folder/f1/list'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Sprint 1' }),
+      }),
+    )
+  })
+})
+
+describe('createFolder', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /space/{spaceId}/folder with name', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'f1', name: 'Q1 Work' }))
+    const result = await client.createFolder('s1', 'Q1 Work')
+    expect(result).toEqual({ id: 'f1', name: 'Q1 Work' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/space/s1/folder'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Q1 Work' }),
+      }),
+    )
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

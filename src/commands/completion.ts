@@ -650,6 +650,24 @@ ${renderZshTopLevelCommands(name)}
             '--name[Filter by folder name]:text:' \\
             '--json[Force JSON output]'
           ;;
+        space-create)
+          _arguments \\
+            '1:name:' \\
+            '--json[Force JSON output]'
+          ;;
+        list-create)
+          _arguments \\
+            '1:space_id:' \\
+            '2:name:' \\
+            '--folder[Create inside a folder]:folder_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        folder-create)
+          _arguments \\
+            '1:space_id:' \\
+            '2:name:' \\
+            '--json[Force JSON output]'
+          ;;
         doc-create)
           _arguments \\
             '1:title:' \\

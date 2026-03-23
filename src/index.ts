@@ -1464,6 +1464,65 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
+    .command('space-create <name>')
+    .description('Create a new space in your workspace')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (name: string, opts: { json?: boolean }) => {
+        if (!name.trim()) throw new Error('Space name cannot be empty')
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const space = await client.createSpace(config.teamId, name)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(space, null, 2))
+        } else {
+          console.log(`Created space "${space.name}" (${space.id})`)
+        }
+      }),
+    )
+
+  program
+    .command('list-create <spaceId> <name>')
+    .description('Create a new list in a space')
+    .option('--folder <folderId>', 'Create the list inside a folder')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (spaceId: string, name: string, opts: { folder?: string; json?: boolean }) => {
+          if (!name.trim()) throw new Error('List name cannot be empty')
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const list = opts.folder
+            ? await client.createFolderList(opts.folder, name)
+            : await client.createList(spaceId, name)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(list, null, 2))
+          } else {
+            console.log(`Created list "${list.name}" (${list.id})`)
+          }
+        },
+      ),
+    )
+
+  program
+    .command('folder-create <spaceId> <name>')
+    .description('Create a new folder in a space')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (spaceId: string, name: string, opts: { json?: boolean }) => {
+        if (!name.trim()) throw new Error('Folder name cannot be empty')
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const folder = await client.createFolder(spaceId, name)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(folder, null, 2))
+        } else {
+          console.log(`Created folder "${folder.name}" (${folder.id})`)
+        }
+      }),
+    )
+
+  program
     .command('doc-create <title>')
     .description('Create a new doc')
     .option('-c, --content <text>', 'Initial content (markdown)')
