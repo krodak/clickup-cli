@@ -7,6 +7,7 @@ function mockResponse(data: unknown, ok = true) {
     ok,
     status: ok ? 200 : 400,
     statusText: ok ? 'OK' : 'Bad Request',
+    headers: new Headers({ 'content-length': '1' }),
     json: () => Promise.resolve(data),
   })
 }
@@ -207,6 +208,7 @@ describe('ClickUpClient', () => {
         ok: false,
         status: 502,
         statusText: 'Bad Gateway',
+        headers: new Headers({ 'content-length': '1' }),
         json: () => Promise.reject(new SyntaxError('Unexpected token')),
       }),
     )
@@ -491,6 +493,60 @@ describe('custom fields', () => {
   })
 })
 
+describe('HTTP 204 No Content handling', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('handles 204 response without throwing', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: true,
+        status: 204,
+        statusText: 'No Content',
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      }),
+    )
+    await expect(client.deleteTask('t1')).resolves.not.toThrow()
+  })
+
+  it('handles response with content-length 0', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers({ 'content-length': '0' }),
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      }),
+    )
+    await expect(client.deleteComment('c1')).resolves.not.toThrow()
+  })
+
+  it('throws on non-ok 204 response', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: false,
+        status: 204,
+        statusText: 'No Content',
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      }),
+    )
+    await expect(client.deleteTask('t1')).rejects.toThrow('ClickUp API error 204: No Content')
+  })
+})
+
 describe('deleteTask', () => {
   let client: import('../../src/api.js').ClickUpClient
 
@@ -512,6 +568,19 @@ describe('deleteTask', () => {
       'https://api.clickup.com/api/v2/task/t1',
       expect.objectContaining({ method: 'DELETE' }),
     )
+  })
+
+  it('succeeds with 204 No Content response', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: true,
+        status: 204,
+        statusText: 'No Content',
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      }),
+    )
+    await expect(client.deleteTask('t1')).resolves.not.toThrow()
   })
 })
 
