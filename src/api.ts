@@ -1122,12 +1122,19 @@ export class ClickUpClient {
     teamId: string,
     name: string,
     type: string,
-    opts?: { description?: string; required?: boolean },
+    opts?: { description?: string; required?: boolean; options?: string[] },
   ): Promise<{ id: string; name: string; type: string }> {
+    const typeConfig: Record<string, unknown> = {}
+    if (opts?.options?.length) {
+      typeConfig.options = opts.options.map((optName, i) => ({
+        name: optName,
+        orderindex: i,
+      }))
+    }
     const body: Record<string, unknown> = {
       name,
       type,
-      type_config: {},
+      type_config: typeConfig,
       description: opts?.description ?? '',
       required: opts?.required ?? false,
       pinned: false,
