@@ -1175,13 +1175,20 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       'Field type (text, number, date, checkbox, drop_down, labels, email, phone, url, currency, short_text)',
     )
     .option('-d, --description <text>', 'Field description')
+    .option('--options <items>', 'Comma-separated options for drop_down or labels types')
     .option('--required', 'Make the field required')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
         async (
           name: string,
-          opts: { type: string; description?: string; required?: boolean; json?: boolean },
+          opts: {
+            type: string
+            description?: string
+            options?: string
+            required?: boolean
+            json?: boolean
+          },
         ) => {
           if (!name.trim()) throw new Error('Field name cannot be empty')
           const validTypes = [
@@ -1204,9 +1211,21 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           }
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
+          const options = opts.options
+            ? opts.options
+                .split(',')
+                .map(o => o.trim())
+                .filter(Boolean)
+            : undefined
+          if ((opts.type === 'drop_down' || opts.type === 'labels') && !options?.length) {
+            throw new Error(
+              `--options is required for ${opts.type} fields (comma-separated values)`,
+            )
+          }
           const field = await client.createCustomField(config.teamId, name, opts.type, {
             description: opts.description,
             required: opts.required,
+            options,
           })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(field, null, 2))
