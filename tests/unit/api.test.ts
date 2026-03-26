@@ -197,6 +197,80 @@ describe('ClickUpClient', () => {
     )
   })
 
+  it('gets list templates for a workspace', async () => {
+    mockFetch.mockReturnValue(mockResponse({ templates: [{ id: 'tmpl_1', name: 'Sprint Board' }] }))
+    const templates = await client.getListTemplates('team_1')
+    expect(templates).toEqual([{ id: 'tmpl_1', name: 'Sprint Board' }])
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/team/team_1/list_template')
+  })
+
+  it('gets folder templates for a workspace', async () => {
+    mockFetch.mockReturnValue(
+      mockResponse({ templates: [{ id: 'tmpl_1', name: 'Engineering Sprint Folder' }] }),
+    )
+    const templates = await client.getFolderTemplates('team_1')
+    expect(templates).toEqual([{ id: 'tmpl_1', name: 'Engineering Sprint Folder' }])
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/team/team_1/folder_template')
+  })
+
+  it('gets a single view by ID', async () => {
+    const view = { id: 'v1', name: 'Board', type: 'board' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.getView('v1')
+    expect(result).toEqual(view)
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('/view/v1')
+  })
+
+  it('creates a view on a list', async () => {
+    const view = { id: 'v2', name: 'Table', type: 'table' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.createListView('list_1', { name: 'Table', type: 'table' })
+    expect(result).toEqual(view)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/list/list_1/view'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Table', type: 'table' }),
+      }),
+    )
+  })
+
+  it('updates a view', async () => {
+    const view = { id: 'v1', name: 'Renamed', type: 'board' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.updateView('v1', { name: 'Renamed' })
+    expect(result).toEqual(view)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/view/v1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ name: 'Renamed' }),
+      }),
+    )
+  })
+
+  it('deletes a view', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteView('v1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/view/v1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+
+  it('creates a list from a template in a space', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'list_1' }))
+    const result = await client.createListFromTemplate('space_1', 'tmpl_1', 'Sprint Board', 'space')
+    expect(result).toEqual({ id: 'list_1' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/space/space_1/list_template/tmpl_1'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Sprint Board' }),
+      }),
+    )
+  })
+
   it('throws on API error with message', async () => {
     mockFetch.mockReturnValue(mockResponse({ err: 'Not found' }, false))
     await expect(client.getTasksFromList('bad_list')).rejects.toThrow('Not found')

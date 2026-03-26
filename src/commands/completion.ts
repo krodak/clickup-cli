@@ -652,6 +652,46 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '--json[Force JSON output]'
           ;;
+        list-templates)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        folder-templates)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        views)
+          _arguments \\
+            '1:list_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        view)
+          _arguments \\
+            '1:view_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        view-create)
+          _arguments \\
+            '1:list_id:' \\
+            '2:name:' \\
+            '-t[View type]:type:(list board calendar table timeline workload activity map chat gantt)' \\
+            '--type[View type]:type:(list board calendar table timeline workload activity map chat gantt)' \\
+            '--group-by[Group by field]:field:(status priority assignee tag dueDate)' \\
+            '--json[Force JSON output]'
+          ;;
+        view-update)
+          _arguments \\
+            '1:view_id:' \\
+            '--name[New view name]:name:' \\
+            '--group-by[Group by field]:field:(status priority assignee tag dueDate)' \\
+            '--json[Force JSON output]'
+          ;;
+        view-delete)
+          _arguments \\
+            '1:view_id:' \\
+            '--confirm[Skip confirmation prompt]' \\
+            '--json[Force JSON output]'
+          ;;
         folders)
           _arguments \\
             '1:space_id:' \\
@@ -668,6 +708,14 @@ ${renderZshTopLevelCommands(name)}
             '1:space_id:' \\
             '2:name:' \\
             '--folder[Create inside a folder]:folder_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        list-from-template)
+          _arguments \\
+            '1:name:' \\
+            '--template[List template ID]:template_id:' \\
+            '--space[Create the list in a space]:space_id:' \\
+            '--folder[Create the list in a folder]:folder_id:' \\
             '--json[Force JSON output]'
           ;;
         folder-create)

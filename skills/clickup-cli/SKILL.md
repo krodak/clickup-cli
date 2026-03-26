@@ -60,6 +60,10 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-pages <docId>`                                                                    | All pages in a doc with content                                           |
 | `cup task-types`                                                                           | Custom task types (for `--custom-item-id`)                                |
 | `cup templates`                                                                            | Task templates (for `--template`)                                         |
+| `cup list-templates`                                                                       | List templates (for `cup list-from-template`)                             |
+| `cup folder-templates`                                                                     | Folder templates                                                          |
+| `cup views <listId>`                                                                       | Views on a list (custom + default)                                        |
+| `cup view <viewId>`                                                                        | Full view details (grouping, columns, filters, settings)                  |
 | `cup open <query>`                                                                         | Open task in browser by ID or name                                        |
 | `cup auth`                                                                                 | Check authentication status                                               |
 
@@ -111,7 +115,11 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-page-delete <docId> <pageId>`                                                                                                                                                     | Delete doc page                     |
 | `cup space-create <name>`                                                                                                                                                                  | Create a space                      |
 | `cup list-create <spaceId> <name> [--folder folderId]`                                                                                                                                     | Create a list in a space or folder  |
+| `cup list-from-template <name> --template <templateId> (--space <spaceId> \| --folder <folderId>)`                                                                                         | Create a list from a list template  |
 | `cup folder-create <spaceId> <name>`                                                                                                                                                       | Create a folder in a space          |
+| `cup view-create <listId> <name> -t <type> [--group-by field]`                                                                                                                             | Create a view on a list             |
+| `cup view-update <viewId> [--name n] [--group-by field]`                                                                                                                                   | Update a view                       |
+| `cup view-delete <viewId> [--confirm]`                                                                                                                                                     | Delete a view                       |
 | `cup tag-create <spaceId> <name> [--fg color] [--bg color]`                                                                                                                                | Create space tag                    |
 | `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c]`                                                                                                                    | Update space tag                    |
 | `cup tag-delete <spaceId> <name>`                                                                                                                                                          | Delete space tag                    |
@@ -228,6 +236,14 @@ cup members                          # workspace members
 cup fields <listId>                  # custom fields on a list
 cup task-types                       # custom task types
 cup templates                        # task templates
+cup list-templates                   # list templates
+cup folder-templates                 # folder templates
+cup list-from-template "Sprint" --template <templateId> --space <spaceId>
+cup views <listId>                   # views on a list
+cup view <viewId>                    # full view config (grouping, columns, filters)
+cup view-create <listId> "Board" -t board --group-by status
+cup view-update <viewId> --name "Renamed" --group-by priority
+cup view-delete <viewId> --confirm
 ```
 
 ### Goals

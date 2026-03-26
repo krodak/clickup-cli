@@ -115,10 +115,28 @@ interface Folder {
   name: string
 }
 
-interface View {
+export interface ViewSummary {
   id: string
   name: string
   type: string
+}
+
+export interface View extends ViewSummary {
+  parent?: { id: string; type: number }
+  grouping?: Record<string, unknown>
+  divide?: Record<string, unknown>
+  sorting?: Record<string, unknown>
+  filters?: Record<string, unknown>
+  columns?: Record<string, unknown>
+  team_sidebar?: Record<string, unknown>
+  settings?: Record<string, unknown>
+  date_created?: string
+  creator?: number
+  visibility?: string
+  protected?: boolean
+  orderindex?: number
+  public?: boolean
+  public_url?: string
 }
 
 export interface Comment {
@@ -246,6 +264,16 @@ export interface KeyResult {
 }
 
 export interface TaskTemplate {
+  id: string
+  name: string
+}
+
+export interface ListTemplate {
+  id: string
+  name: string
+}
+
+export interface FolderTemplate {
   id: string
   name: string
 }
@@ -583,6 +611,37 @@ export class ClickUpClient {
     return this.request<{ views: View[]; required_views: Record<string, View | null> }>(
       `/list/${listId}/view`,
     )
+  }
+
+  async getView(viewId: string): Promise<View> {
+    const data = await this.request<{ view: View }>(`/view/${viewId}`)
+    return data.view
+  }
+
+  async createListView(
+    listId: string,
+    payload: { name: string; type: string; [key: string]: unknown },
+  ): Promise<View> {
+    const data = await this.request<{ view: View }>(`/list/${listId}/view`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+    return data.view
+  }
+
+  async updateView(
+    viewId: string,
+    payload: Record<string, unknown>,
+  ): Promise<View> {
+    const data = await this.request<{ view: View }>(`/view/${viewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+    return data.view
+  }
+
+  async deleteView(viewId: string): Promise<void> {
+    await this.request(`/view/${viewId}`, { method: 'DELETE' })
   }
 
   async getViewTasks(viewId: string): Promise<Task[]> {
@@ -1117,6 +1176,43 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify({ name }),
     })
+  }
+
+  async getListTemplates(teamId: string): Promise<ListTemplate[]> {
+    const data = await this.request<{ templates: ListTemplate[] }>(
+      `/team/${teamId}/list_template`,
+    )
+    return readCollectionField<ListTemplate>(
+      data as Record<string, unknown>,
+      'templates',
+      'list templates',
+    )
+  }
+
+  async getFolderTemplates(teamId: string): Promise<FolderTemplate[]> {
+    const data = await this.request<{ templates: FolderTemplate[] }>(
+      `/team/${teamId}/folder_template`,
+    )
+    return readCollectionField<FolderTemplate>(
+      data as Record<string, unknown>,
+      'templates',
+      'folder templates',
+    )
+  }
+
+  async createListFromTemplate(
+    containerId: string,
+    templateId: string,
+    name: string,
+    containerType: 'space' | 'folder',
+  ): Promise<{ id: string }> {
+    return this.request<{ id: string }>(
+      `/${containerType}/${containerId}/list_template/${templateId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      },
+    )
   }
 
   async createCustomField(

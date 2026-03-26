@@ -14,6 +14,22 @@ const mockIsTTY = vi.fn<() => boolean>()
 const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
 const mockFormatTaskDetail = vi.fn()
 const mockFormatTaskDetailMarkdown = vi.fn()
+const mockListListTemplates = vi.fn()
+const mockFormatListTemplates = vi.fn()
+const mockFormatListTemplatesMarkdown = vi.fn()
+const mockListFolderTemplates = vi.fn()
+const mockFormatFolderTemplates = vi.fn()
+const mockFormatFolderTemplatesMarkdown = vi.fn()
+const mockCreateListFromTemplate = vi.fn()
+const mockListViews = vi.fn()
+const mockFormatViews = vi.fn()
+const mockFormatViewsMarkdown = vi.fn()
+const mockGetViewCmd = vi.fn()
+const mockFormatView = vi.fn()
+const mockFormatViewMarkdown = vi.fn()
+const mockCreateView = vi.fn()
+const mockUpdateViewCommand = vi.fn()
+const mockDeleteViewCommand = vi.fn()
 
 async function loadCli() {
   vi.resetModules()
@@ -71,6 +87,78 @@ async function loadCli() {
     }
   })
 
+  vi.doMock('../../src/commands/list-templates.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/list-templates.js')>()
+    return {
+      ...actual,
+      listListTemplates: mockListListTemplates,
+      formatListTemplates: mockFormatListTemplates,
+      formatListTemplatesMarkdown: mockFormatListTemplatesMarkdown,
+    }
+  })
+
+  vi.doMock('../../src/commands/folder-templates.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/folder-templates.js')>()
+    return {
+      ...actual,
+      listFolderTemplates: mockListFolderTemplates,
+      formatFolderTemplates: mockFormatFolderTemplates,
+      formatFolderTemplatesMarkdown: mockFormatFolderTemplatesMarkdown,
+    }
+  })
+
+  vi.doMock('../../src/commands/list-from-template.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/list-from-template.js')>()
+    return {
+      ...actual,
+      createListFromTemplate: mockCreateListFromTemplate,
+    }
+  })
+
+  vi.doMock('../../src/commands/views.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/views.js')>()
+    return {
+      ...actual,
+      listViews: mockListViews,
+      formatViews: mockFormatViews,
+      formatViewsMarkdown: mockFormatViewsMarkdown,
+    }
+  })
+
+  vi.doMock('../../src/commands/view.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/view.js')>()
+    return {
+      ...actual,
+      getView: mockGetViewCmd,
+      formatView: mockFormatView,
+      formatViewMarkdown: mockFormatViewMarkdown,
+    }
+  })
+
+  vi.doMock('../../src/commands/view-create.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/view-create.js')>()
+    return {
+      ...actual,
+      createView: mockCreateView,
+    }
+  })
+
+  vi.doMock('../../src/commands/view-update.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/view-update.js')>()
+    return {
+      ...actual,
+      updateViewCommand: mockUpdateViewCommand,
+    }
+  })
+
+  vi.doMock('../../src/commands/view-delete.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/view-delete.js')>()
+    return {
+      ...actual,
+      deleteViewCommand: mockDeleteViewCommand,
+    }
+  })
+
   return import('../../src/index.js')
 }
 
@@ -86,6 +174,24 @@ describe('CLI entry point', () => {
     mockShouldOutputJson.mockReset().mockReturnValue(false)
     mockFormatTaskDetail.mockReset().mockReturnValue('TTY detail')
     mockFormatTaskDetailMarkdown.mockReset().mockReturnValue('# Markdown detail')
+    mockListListTemplates.mockReset()
+    mockFormatListTemplates.mockReset().mockReturnValue('TTY list templates')
+    mockFormatListTemplatesMarkdown.mockReset().mockReturnValue('- **Sprint Board** (tmpl_1)')
+    mockListFolderTemplates.mockReset()
+    mockFormatFolderTemplates.mockReset().mockReturnValue('TTY folder templates')
+    mockFormatFolderTemplatesMarkdown
+      .mockReset()
+      .mockReturnValue('- **Engineering Sprint Folder** (tmpl_1)')
+    mockCreateListFromTemplate.mockReset()
+    mockListViews.mockReset()
+    mockFormatViews.mockReset().mockReturnValue('TTY views')
+    mockFormatViewsMarkdown.mockReset().mockReturnValue('- **Board** (v1) — board')
+    mockGetViewCmd.mockReset()
+    mockFormatView.mockReset().mockReturnValue('TTY view detail')
+    mockFormatViewMarkdown.mockReset().mockReturnValue('## Board')
+    mockCreateView.mockReset()
+    mockUpdateViewCommand.mockReset()
+    mockDeleteViewCommand.mockReset()
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
@@ -185,6 +291,152 @@ describe('CLI entry point', () => {
     expect(mockEditChecklistItem).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith('--assignee must be a number or "null"')
     expect(process.exitCode).toBe(1)
+  })
+
+  it('formats list templates as markdown when output is piped', async () => {
+    mockListListTemplates.mockResolvedValue([{ id: 'tmpl_1', name: 'Sprint Board' }])
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['list-templates'], { from: 'user' })
+
+    expect(mockListListTemplates).toHaveBeenCalledWith(config)
+    expect(mockFormatListTemplatesMarkdown).toHaveBeenCalledWith([
+      { id: 'tmpl_1', name: 'Sprint Board' },
+    ])
+    expect(console.log).toHaveBeenCalledWith('- **Sprint Board** (tmpl_1)')
+  })
+
+  it('formats folder templates for TTY output when json is not forced', async () => {
+    mockIsTTY.mockReturnValue(true)
+    mockListFolderTemplates.mockResolvedValue([{ id: 'tmpl_1', name: 'Engineering Sprint Folder' }])
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['folder-templates'], { from: 'user' })
+
+    expect(mockListFolderTemplates).toHaveBeenCalledWith(config)
+    expect(mockFormatFolderTemplates).toHaveBeenCalledWith([
+      { id: 'tmpl_1', name: 'Engineering Sprint Folder' },
+    ])
+    expect(console.log).toHaveBeenCalledWith('TTY folder templates')
+  })
+
+  it('outputs lists created from templates as JSON when --json is provided', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockCreateListFromTemplate.mockResolvedValue({ id: 'list_1', name: 'Sprint Board' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      [
+        'list-from-template',
+        'Sprint Board',
+        '--template',
+        'tmpl_1',
+        '--space',
+        'space_1',
+        '--json',
+      ],
+      { from: 'user' },
+    )
+
+    expect(mockCreateListFromTemplate).toHaveBeenCalledWith(config, 'Sprint Board', {
+      template: 'tmpl_1',
+      space: 'space_1',
+      json: true,
+    })
+    expect(console.log).toHaveBeenCalledWith(
+      JSON.stringify({ id: 'list_1', name: 'Sprint Board' }, null, 2),
+    )
+  })
+
+  it('prints a success message when a list is created from a template', async () => {
+    mockCreateListFromTemplate.mockResolvedValue({ id: 'list_2', name: 'Roadmap' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      ['list-from-template', 'Roadmap', '--template', 'tmpl_2', '--folder', 'folder_1'],
+      { from: 'user' },
+    )
+
+    expect(console.log).toHaveBeenCalledWith('Created list "Roadmap" (list_2) from template')
+  })
+
+  it('formats views as markdown when output is piped', async () => {
+    mockListViews.mockResolvedValue([{ id: 'v1', name: 'Board', type: 'board' }])
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['views', 'list_1'], { from: 'user' })
+
+    expect(mockListViews).toHaveBeenCalledWith(config, 'list_1')
+    expect(mockFormatViewsMarkdown).toHaveBeenCalledWith([
+      { id: 'v1', name: 'Board', type: 'board' },
+    ])
+    expect(console.log).toHaveBeenCalledWith('- **Board** (v1) — board')
+  })
+
+  it('formats view detail as markdown when output is piped', async () => {
+    mockGetViewCmd.mockResolvedValue({ id: 'v1', name: 'Board', type: 'board' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['view', 'v1'], { from: 'user' })
+
+    expect(mockGetViewCmd).toHaveBeenCalledWith(config, 'v1')
+    expect(mockFormatViewMarkdown).toHaveBeenCalled()
+    expect(console.log).toHaveBeenCalledWith('## Board')
+  })
+
+  it('creates a view and prints success message', async () => {
+    mockCreateView.mockResolvedValue({ id: 'v1', name: 'Sprint Board', type: 'board' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      ['view-create', 'list_1', 'Sprint Board', '--type', 'board'],
+      { from: 'user' },
+    )
+
+    expect(mockCreateView).toHaveBeenCalledWith(config, 'list_1', 'Sprint Board', {
+      type: 'board',
+    })
+    expect(console.log).toHaveBeenCalledWith(
+      'Created board view "Sprint Board" (v1)',
+    )
+  })
+
+  it('updates a view and prints success message', async () => {
+    mockUpdateViewCommand.mockResolvedValue({ id: 'v1', name: 'Renamed', type: 'board' })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['view-update', 'v1', '--name', 'Renamed'], { from: 'user' })
+
+    expect(mockUpdateViewCommand).toHaveBeenCalledWith(config, 'v1', { name: 'Renamed' })
+    expect(console.log).toHaveBeenCalledWith('Updated view "Renamed" (v1)')
+  })
+
+  it('deletes a view and prints success message', async () => {
+    mockDeleteViewCommand.mockResolvedValue({ viewId: 'v1', deleted: true })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['view-delete', 'v1', '--confirm'], { from: 'user' })
+
+    expect(mockDeleteViewCommand).toHaveBeenCalledWith(config, 'v1', { confirm: true })
+    expect(console.log).toHaveBeenCalledWith('Deleted view v1')
   })
 })
 

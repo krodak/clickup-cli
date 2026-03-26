@@ -164,7 +164,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Chat/DM                 | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
 | Audit logs              | Enterprise admin.                                                           |
 | User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
-| View CRUD               | Views are visual layouts. Configure them in the UI.                         |
+| ~~View CRUD~~           | Now supported: `views`, `view`, `view-create`, `view-update`, `view-delete` |
 | List/Folder/Space U+D   | Update/delete structural items in the UI. Create is supported.              |
 | View/List/Chat comments | API only supports task-level comments.                                      |
 | User Groups             | Enterprise admin feature.                                                   |

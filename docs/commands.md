@@ -55,6 +55,10 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup key-results <goalId>`              | List key results for a goal             |
 | `cup task-types`                        | List custom task types                  |
 | `cup templates`                         | List task templates                     |
+| `cup list-templates`                    | List list templates                     |
+| `cup folder-templates`                  | List folder templates                   |
+| `cup views <listId>`                    | List views on a list                    |
+| `cup view <viewId>`                     | Get view details                        |
 | **Write**                               |                                         |
 | `cup update <taskId>`                   | Update a task                           |
 | `cup create`                            | Create a new task                       |
@@ -89,6 +93,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup doc-page-delete <docId> <pageId>`  | Delete a doc page                       |
 | `cup space-create <name>`               | Create a space                          |
 | `cup list-create <spaceId> <name>`      | Create a list in a space                |
+| `cup list-from-template <name>`         | Create a list from a list template      |
 | `cup folder-create <spaceId> <name>`    | Create a folder in a space              |
 | `cup field-create <name>`               | Create a custom field in your workspace |
 | `cup duplicate <taskId>`                | Duplicate a task                        |
@@ -99,6 +104,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup key-result-create <goalId> <name>` | Create a key result on a goal           |
 | `cup key-result-update <keyResultId>`   | Update a key result                     |
 | `cup key-result-delete <keyResultId>`   | Delete a key result                     |
+| `cup view-create <listId> <name>`       | Create a view on a list                 |
+| `cup view-update <viewId>`              | Update a view                           |
+| `cup view-delete <viewId>`              | Delete a view                           |
 | **Configuration**                       |                                         |
 | `cup profile`                           | Manage profiles                         |
 | `cup config`                            | Manage CLI configuration                |
@@ -836,6 +844,23 @@ cup list-create <spaceId> "Tasks" --json
 | `--folder <folderId>` | no       | Create the list inside a folder |
 | `--json`              | no       | Force JSON output               |
 
+### `cup list-from-template <name>`
+
+Create a new list from a list template. Use `cup list-templates` to find template IDs, then choose either `--space` or `--folder` as the destination.
+
+```bash
+cup list-from-template "Sprint Board" --template <templateId> --space <spaceId>
+cup list-from-template "Team Backlog" --template <templateId> --folder <folderId>
+cup list-from-template "Roadmap" --template <templateId> --space <spaceId> --json
+```
+
+| Flag                      | Required         | Description                 |
+| ------------------------- | ---------------- | --------------------------- |
+| `--template <templateId>` | yes              | List template ID            |
+| `--space <spaceId>`       | if no `--folder` | Create the list in a space  |
+| `--folder <folderId>`     | if no `--space`  | Create the list in a folder |
+| `--json`                  | no               | Force JSON output           |
+
 ### `cup folder-create <spaceId> <name>`
 
 Create a new folder in a space.
@@ -991,6 +1016,105 @@ cup templates --json
 | Flag     | Required | Description       |
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
+
+### `cup list-templates`
+
+List list templates in your workspace. Useful for discovering template IDs for `cup list-from-template`.
+
+```bash
+cup list-templates
+cup list-templates --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup folder-templates`
+
+List folder templates in your workspace.
+
+```bash
+cup folder-templates
+cup folder-templates --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup views <listId>`
+
+List all views on a list, including both custom and required (default) views.
+
+```bash
+cup views 901113361372
+cup views 901113361372 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup view <viewId>`
+
+Get full details of a view including grouping, sorting, filters, columns, and settings.
+
+```bash
+cup view 81dkq-23151
+cup view 81dkq-23151 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup view-create <listId> <name>`
+
+Create a view on a list. Requires `--type` to specify the view type.
+
+```bash
+cup view-create 901113361372 "Sprint Board" --type board
+cup view-create 901113361372 "By Priority" --type table --group-by priority
+cup view-create 901113361372 "Timeline" --type timeline --json
+```
+
+| Flag                 | Required | Description                                                                     |
+| -------------------- | -------- | ------------------------------------------------------------------------------- |
+| `-t, --type <type>`  | yes      | View type: list, board, calendar, table, timeline, workload, activity, map, chat, gantt |
+| `--group-by <field>` | no       | Group by: status, priority, assignee, tag, dueDate                              |
+| `--json`             | no       | Force JSON output                                                               |
+
+### `cup view-update <viewId>`
+
+Update a view's name or grouping. Provide at least one option.
+
+```bash
+cup view-update 81dkq-23151 --name "Renamed View"
+cup view-update 81dkq-23151 --group-by priority
+cup view-update 81dkq-23151 --name "By Status" --group-by status --json
+```
+
+| Flag                 | Required   | Description                                          |
+| -------------------- | ---------- | ---------------------------------------------------- |
+| `--name <name>`      | one of two | New view name                                        |
+| `--group-by <field>` | one of two | Group by: status, priority, assignee, tag, dueDate   |
+| `--json`             | no         | Force JSON output                                    |
+
+### `cup view-delete <viewId>`
+
+Delete a view. Requires confirmation.
+
+```bash
+cup view-delete 81dkq-23151
+cup view-delete 81dkq-23151 --confirm
+cup view-delete 81dkq-23151 --confirm --json
+```
+
+| Flag        | Required | Description                                             |
+| ----------- | -------- | ------------------------------------------------------- |
+| `--confirm` | no       | Skip confirmation prompt (required in non-interactive)  |
+| `--json`    | no       | Force JSON output                                       |
 
 ### `cup bulk status <status> <taskIds...>`
 

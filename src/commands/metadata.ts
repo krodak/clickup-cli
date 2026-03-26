@@ -517,6 +517,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'list-from-template',
+    description: 'Create a list from a list template',
+    flags: ['--template', '--space', '--folder', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'list-from-template <name>',
+        description: 'Create a list from a list template',
+      },
+    ],
+  },
+  {
     name: 'folder-create',
     description: 'Create a new folder in a space',
     flags: ['--json'],
@@ -666,6 +678,66 @@ export const commandMetadata = [
     description: 'List task templates in your workspace',
     flags: ['--json'],
     quickReference: [{ section: 'read', usage: 'templates', description: 'List task templates' }],
+  },
+  {
+    name: 'list-templates',
+    description: 'List list templates in your workspace',
+    flags: ['--json'],
+    quickReference: [
+      { section: 'read', usage: 'list-templates', description: 'List list templates' },
+    ],
+  },
+  {
+    name: 'folder-templates',
+    description: 'List folder templates in your workspace',
+    flags: ['--json'],
+    quickReference: [
+      { section: 'read', usage: 'folder-templates', description: 'List folder templates' },
+    ],
+  },
+  {
+    name: 'views',
+    description: 'List views on a list',
+    flags: ['--json'],
+    quickReference: [
+      { section: 'read', usage: 'views <listId>', description: 'List views on a list' },
+    ],
+  },
+  {
+    name: 'view',
+    description: 'Get view details',
+    flags: ['--json'],
+    quickReference: [
+      { section: 'read', usage: 'view <viewId>', description: 'Get view details' },
+    ],
+  },
+  {
+    name: 'view-create',
+    description: 'Create a view on a list',
+    flags: ['-t', '--type', '--group-by', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'view-create <listId> <name>',
+        description: 'Create a view on a list',
+      },
+    ],
+  },
+  {
+    name: 'view-update',
+    description: 'Update a view',
+    flags: ['--name', '--group-by', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'view-update <viewId>', description: 'Update a view' },
+    ],
+  },
+  {
+    name: 'view-delete',
+    description: 'Delete a view',
+    flags: ['--confirm', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'view-delete <viewId>', description: 'Delete a view' },
+    ],
   },
   {
     name: 'profile',

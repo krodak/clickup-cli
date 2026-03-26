@@ -114,7 +114,7 @@ describe('formatCustomFieldValue', () => {
       id: 'f1',
       name: 'Target',
       type: 'date',
-      value: 1704067200000,
+      value: 1704110400000,
     }
     const result = formatCustomFieldValue(field)
     expect(result).toContain('2024')
