@@ -11,17 +11,19 @@ const mockDeleteDoc = vi.fn()
 const mockDeleteDocPage = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getDoc: mockGetDoc,
-    getDocPageListing: mockGetDocPageListing,
-    getDocPage: mockGetDocPage,
-    getDocPages: mockGetDocPages,
-    createDoc: mockCreateDoc,
-    createDocPage: mockCreateDocPage,
-    editDocPage: mockEditDocPage,
-    deleteDoc: mockDeleteDoc,
-    deleteDocPage: mockDeleteDocPage,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getDoc: mockGetDoc,
+      getDocPageListing: mockGetDocPageListing,
+      getDocPage: mockGetDocPage,
+      getDocPages: mockGetDocPages,
+      createDoc: mockCreateDoc,
+      createDocPage: mockCreateDocPage,
+      editDocPage: mockEditDocPage,
+      deleteDoc: mockDeleteDoc,
+      deleteDocPage: mockDeleteDocPage,
+    }
+  }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

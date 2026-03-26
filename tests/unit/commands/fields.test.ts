@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockGetListCustomFields = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getListCustomFields: mockGetListCustomFields,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getListCustomFields: mockGetListCustomFields,
+    }
+  }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

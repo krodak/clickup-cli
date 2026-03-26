@@ -1311,6 +1311,201 @@ describe('createCustomField', () => {
   })
 })
 
+describe('getView', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('GETs view by ID', async () => {
+    const view = { id: 'v1', name: 'Board', type: 'board' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.getView('v1')
+    expect(result).toEqual(view)
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/view/v1'), expect.any(Object))
+  })
+})
+
+describe('createListView', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('POSTs to list view endpoint', async () => {
+    const view = { id: 'v1', name: 'Board', type: 'board' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.createListView('list1', { name: 'Board', type: 'board' })
+    expect(result).toEqual(view)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/list/list1/view')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+})
+
+describe('updateView', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('PUTs to view endpoint', async () => {
+    const view = { id: 'v1', name: 'Updated', type: 'board' }
+    mockFetch.mockReturnValue(mockResponse({ view }))
+    const result = await client.updateView('v1', { name: 'Updated' })
+    expect(result).toEqual(view)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/view/v1'),
+      expect.objectContaining({ method: 'PUT' }),
+    )
+  })
+})
+
+describe('deleteView', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('DELETEs view by ID', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: true,
+        status: 204,
+        statusText: 'No Content',
+        headers: new Headers({ 'content-length': '0' }),
+        json: () => Promise.resolve({}),
+      }),
+    )
+    await client.deleteView('v1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/view/v1'),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('getListTemplates', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('fetches list templates', async () => {
+    const templates = [{ id: 'lt1', name: 'Sprint Board' }]
+    mockFetch.mockReturnValue(mockResponse({ templates }))
+    const result = await client.getListTemplates('team1')
+    expect(result).toEqual(templates)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/list_template'),
+      expect.any(Object),
+    )
+  })
+})
+
+describe('getFolderTemplates', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('fetches folder templates', async () => {
+    const templates = [{ id: 'ft1', name: 'Department' }]
+    mockFetch.mockReturnValue(mockResponse({ templates }))
+    const result = await client.getFolderTemplates('team1')
+    expect(result).toEqual(templates)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/team/team1/folder_template'),
+      expect.any(Object),
+    )
+  })
+})
+
+describe('createListFromTemplate', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('POSTs to space list_template endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'newlist1' }))
+    const result = await client.createListFromTemplate('space1', 'tmpl1', 'My List', 'space')
+    expect(result).toEqual({ id: 'newlist1' })
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/space/space1/list_template/tmpl1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('POSTs to folder list_template endpoint', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'newlist2' }))
+    await client.createListFromTemplate('folder1', 'tmpl2', 'My List', 'folder')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/folder/folder1/list_template/tmpl2')
+  })
+})
+
 describe('postComment', () => {
   let client: import('../../src/api.js').ClickUpClient
 

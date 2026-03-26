@@ -3,9 +3,11 @@ import { describe, it, expect, vi } from 'vitest'
 const mockGetMe = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getMe: mockGetMe,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getMe: mockGetMe,
+    }
+  }),
 }))
 
 describe('checkAuth', () => {

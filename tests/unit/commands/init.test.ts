@@ -15,10 +15,12 @@ vi.mock('@inquirer/prompts', () => ({
 }))
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getMe: mockGetMe,
-    getTeams: mockGetTeams,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getMe: mockGetMe,
+      getTeams: mockGetTeams,
+    }
+  }),
 }))
 
 vi.mock('../../../src/config.js', () => ({

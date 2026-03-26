@@ -8,14 +8,16 @@ const mockEditChecklistItem = vi.fn()
 const mockDeleteChecklistItem = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getTask: mockGetTask,
-    createChecklist: mockCreateChecklist,
-    deleteChecklist: mockDeleteChecklist,
-    createChecklistItem: mockCreateChecklistItem,
-    editChecklistItem: mockEditChecklistItem,
-    deleteChecklistItem: mockDeleteChecklistItem,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getTask: mockGetTask,
+      createChecklist: mockCreateChecklist,
+      deleteChecklist: mockDeleteChecklist,
+      createChecklistItem: mockCreateChecklistItem,
+      editChecklistItem: mockEditChecklistItem,
+      deleteChecklistItem: mockDeleteChecklistItem,
+    }
+  }),
 }))
 
 const config = { apiToken: 'pk_test', teamId: 'tm_1' }

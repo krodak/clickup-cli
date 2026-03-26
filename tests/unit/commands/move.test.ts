@@ -4,10 +4,12 @@ const mockAddTaskToList = vi.fn().mockResolvedValue(undefined)
 const mockRemoveTaskFromList = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    addTaskToList: mockAddTaskToList,
-    removeTaskFromList: mockRemoveTaskFromList,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      addTaskToList: mockAddTaskToList,
+      removeTaskFromList: mockRemoveTaskFromList,
+    }
+  }),
 }))
 
 describe('moveTask', () => {

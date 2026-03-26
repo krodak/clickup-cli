@@ -55,6 +55,10 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup key-results <goalId>`              | List key results for a goal             |
 | `cup task-types`                        | List custom task types                  |
 | `cup templates`                         | List task templates                     |
+| `cup list-templates`                    | List list templates                     |
+| `cup folder-templates`                  | List folder templates                   |
+| `cup views <listId>`                    | List views on a list                    |
+| `cup view <viewId>`                     | Get view details                        |
 | **Write**                               |                                         |
 | `cup update <taskId>`                   | Update a task                           |
 | `cup create`                            | Create a new task                       |
@@ -99,6 +103,10 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup key-result-create <goalId> <name>` | Create a key result on a goal           |
 | `cup key-result-update <keyResultId>`   | Update a key result                     |
 | `cup key-result-delete <keyResultId>`   | Delete a key result                     |
+| `cup list-from-template <name>`         | Create a list from a template           |
+| `cup view-create <listId> <name>`       | Create a view on a list                 |
+| `cup view-update <viewId>`              | Update a view                           |
+| `cup view-delete <viewId>`              | Delete a view                           |
 | **Configuration**                       |                                         |
 | `cup profile`                           | Manage profiles                         |
 | `cup config`                            | Manage CLI configuration                |
@@ -1164,6 +1172,125 @@ cup tag-update <spaceId> "tag" --name "renamed" --json
 | `--fg <color>`  | no       | New foreground color |
 | `--bg <color>`  | no       | New background color |
 | `--json`        | no       | Force JSON output    |
+
+### `cup list-templates`
+
+List list templates in your workspace.
+
+```bash
+cup list-templates
+cup list-templates --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup folder-templates`
+
+List folder templates in your workspace.
+
+```bash
+cup folder-templates
+cup folder-templates --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup list-from-template <name>`
+
+Create a list from a list template. Specify where to create the list with `--space` or `--folder`.
+
+```bash
+cup list-from-template "Sprint Board" --template <id> --space <spaceId>
+cup list-from-template "Backlog" --template <id> --folder <folderId>
+cup list-from-template "Tasks" --template <id> --space <spaceId> --json
+```
+
+| Flag                  | Required | Description                                  |
+| --------------------- | -------- | -------------------------------------------- |
+| `--template <id>`     | yes      | Template ID (find with `cup list-templates`) |
+| `--space <spaceId>`   | one of   | Create the list in this space                |
+| `--folder <folderId>` | one of   | Create the list in this folder               |
+| `--json`              | no       | Force JSON output                            |
+
+### `cup views <listId>`
+
+List views on a list.
+
+```bash
+cup views <listId>
+cup views <listId> --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup view <viewId>`
+
+Get view details including type, visibility, and creation date.
+
+```bash
+cup view <viewId>
+cup view <viewId> --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup view-create <listId> <name>`
+
+Create a view on a list.
+
+```bash
+cup view-create <listId> "Sprint Board" -t board
+cup view-create <listId> "Calendar" -t calendar
+cup view-create <listId> "Status Board" -t board --group-by status
+cup view-create <listId> "Team View" -t board --group-by assignee --json
+```
+
+| Flag         | Required | Description                                                 |
+| ------------ | -------- | ----------------------------------------------------------- |
+| `-t, --type` | yes      | View type: list, board, calendar, gantt, table, timeline    |
+| `--group-by` | no       | Group by: status, assignee, priority, due_date, tag, sprint |
+| `--json`     | no       | Force JSON output                                           |
+
+### `cup view-update <viewId>`
+
+Update a view's name or grouping.
+
+```bash
+cup view-update <viewId> -n "New Name"
+cup view-update <viewId> --group-by priority
+cup view-update <viewId> -n "Updated" --group-by assignee --json
+```
+
+| Flag         | Required | Description                                                 |
+| ------------ | -------- | ----------------------------------------------------------- |
+| `-n, --name` | no       | New view name                                               |
+| `--group-by` | no       | Group by: status, assignee, priority, due_date, tag, sprint |
+| `--json`     | no       | Force JSON output                                           |
+
+### `cup view-delete <viewId>`
+
+Delete a view. **DESTRUCTIVE - cannot be undone.**
+
+```bash
+cup view-delete <viewId>
+cup view-delete <viewId> --confirm
+cup view-delete <viewId> --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the view name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Required | Description                                                 |
+| ----------- | -------- | ----------------------------------------------------------- |
+| `--confirm` | no       | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | no       | Force JSON output                                           |
 
 ---
 

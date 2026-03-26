@@ -4,10 +4,12 @@ const mockGetThreadedComments = vi.fn()
 const mockCreateThreadedComment = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getThreadedComments: mockGetThreadedComments,
-    createThreadedComment: mockCreateThreadedComment,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getThreadedComments: mockGetThreadedComments,
+      createThreadedComment: mockCreateThreadedComment,
+    }
+  }),
 }))
 
 vi.mock('chalk', () => ({

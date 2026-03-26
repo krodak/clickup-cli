@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockGetWorkspaceMembers = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getWorkspaceMembers: mockGetWorkspaceMembers,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getWorkspaceMembers: mockGetWorkspaceMembers,
+    }
+  }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

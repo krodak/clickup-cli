@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockUpdateComment = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    updateComment: mockUpdateComment,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      updateComment: mockUpdateComment,
+    }
+  }),
 }))
 
 describe('editComment', () => {

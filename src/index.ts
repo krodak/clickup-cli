@@ -127,6 +127,22 @@ import { deleteDoc, deleteDocPage } from './commands/doc.js'
 import { updateSpaceTag } from './commands/tags.js'
 import { listTaskTypes, formatTaskTypes, formatTaskTypesMarkdown } from './commands/task-types.js'
 import { listTemplates, formatTemplates, formatTemplatesMarkdown } from './commands/templates.js'
+import {
+  listListTemplates,
+  formatListTemplates,
+  formatListTemplatesMarkdown,
+} from './commands/list-templates.js'
+import {
+  listFolderTemplates,
+  formatFolderTemplates,
+  formatFolderTemplatesMarkdown,
+} from './commands/folder-templates.js'
+import { createListFromTemplate } from './commands/list-from-template.js'
+import { listViews, formatViews, formatViewsMarkdown } from './commands/views.js'
+import { getView as getViewDetail, formatView, formatViewMarkdown } from './commands/view.js'
+import { createView } from './commands/view-create.js'
+import { updateView as updateViewCommand } from './commands/view-update.js'
+import { deleteViewCommand } from './commands/view-delete.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -1782,6 +1798,178 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatTemplates(templates))
         } else {
           console.log(formatTemplatesMarkdown(templates))
+        }
+      }),
+    )
+
+  program
+    .command('list-templates')
+    .description('List list templates in your workspace')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const templates = await listListTemplates(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(templates, null, 2))
+        } else if (isTTY()) {
+          console.log(formatListTemplates(templates))
+        } else {
+          console.log(formatListTemplatesMarkdown(templates))
+        }
+      }),
+    )
+
+  program
+    .command('folder-templates')
+    .description('List folder templates in your workspace')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const templates = await listFolderTemplates(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(templates, null, 2))
+        } else if (isTTY()) {
+          console.log(formatFolderTemplates(templates))
+        } else {
+          console.log(formatFolderTemplatesMarkdown(templates))
+        }
+      }),
+    )
+
+  program
+    .command('list-from-template <name>')
+    .description('Create a list from a list template')
+    .requiredOption('--template <id>', 'Template ID (find with list-templates)')
+    .option('--space <spaceId>', 'Create in this space')
+    .option('--folder <folderId>', 'Create in this folder')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          name: string,
+          opts: { template: string; space?: string; folder?: string; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await createListFromTemplate(config, name, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Created list "${name}" (${result.id}) from template`)
+          }
+        },
+      ),
+    )
+
+  program
+    .command('views <listId>')
+    .description('List views on a list')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (listId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const views = await listViews(config, listId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(views, null, 2))
+        } else if (isTTY()) {
+          console.log(formatViews(views))
+        } else {
+          console.log(formatViewsMarkdown(views))
+        }
+      }),
+    )
+
+  program
+    .command('view <viewId>')
+    .description('Get view details')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (viewId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const view = await getViewDetail(config, viewId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(view, null, 2))
+        } else if (!isTTY()) {
+          console.log(formatViewMarkdown(view))
+        } else {
+          console.log(formatView(view))
+        }
+      }),
+    )
+
+  program
+    .command('view-create <listId> <name>')
+    .description('Create a view on a list')
+    .requiredOption(
+      '-t, --type <type>',
+      'View type (list, board, calendar, gantt, table, timeline)',
+    )
+    .option(
+      '--group-by <field>',
+      'Group by field (status, assignee, priority, due_date, tag, sprint)',
+    )
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          listId: string,
+          name: string,
+          opts: { type: string; groupBy?: string; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const view = await createView(config, listId, name, {
+            type: opts.type,
+            groupBy: opts.groupBy,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(view, null, 2))
+          } else {
+            console.log(`Created view "${view.name}" (${view.id}) type: ${view.type}`)
+          }
+        },
+      ),
+    )
+
+  program
+    .command('view-update <viewId>')
+    .description('Update a view')
+    .option('-n, --name <text>', 'New view name')
+    .option(
+      '--group-by <field>',
+      'Group by field (status, assignee, priority, due_date, tag, sprint)',
+    )
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (viewId: string, opts: { name?: string; groupBy?: string; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const view = await updateViewCommand(config, viewId, {
+            name: opts.name,
+            groupBy: opts.groupBy,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(view, null, 2))
+          } else {
+            console.log(`Updated view "${view.name}" (${view.id})`)
+          }
+        },
+      ),
+    )
+
+  program
+    .command('view-delete <viewId>')
+    .description('Delete a view (requires confirmation)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (viewId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await deleteViewCommand(config, viewId, opts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Deleted view ${result.viewId}`)
         }
       }),
     )

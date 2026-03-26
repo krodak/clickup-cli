@@ -652,6 +652,53 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '--json[Force JSON output]'
           ;;
+        list-templates)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        folder-templates)
+          _arguments \\
+            '--json[Force JSON output]'
+          ;;
+        list-from-template)
+          _arguments \\
+            '1:name:' \\
+            '--template[Template ID]:template_id:' \\
+            '--space[Create in this space]:space_id:' \\
+            '--folder[Create in this folder]:folder_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        views)
+          _arguments \\
+            '1:list_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        view)
+          _arguments \\
+            '1:view_id:' \\
+            '--json[Force JSON output]'
+          ;;
+        view-create)
+          _arguments \\
+            '1:list_id:' \\
+            '2:name:' \\
+            '(-t --type)'{-t,--type}'[View type]:type:(list board calendar gantt table timeline)' \\
+            '--group-by[Group by field]:field:(status assignee priority due_date tag sprint)' \\
+            '--json[Force JSON output]'
+          ;;
+        view-update)
+          _arguments \\
+            '1:view_id:' \\
+            '(-n --name)'{-n,--name}'[New view name]:text:' \\
+            '--group-by[Group by field]:field:(status assignee priority due_date tag sprint)' \\
+            '--json[Force JSON output]'
+          ;;
+        view-delete)
+          _arguments \\
+            '1:view_id:' \\
+            '--confirm[Skip confirmation prompt]' \\
+            '--json[Force JSON output]'
+          ;;
         folders)
           _arguments \\
             '1:space_id:' \\

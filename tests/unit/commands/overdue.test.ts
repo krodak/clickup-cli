@@ -6,11 +6,13 @@ const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getMyTasks: mockGetMyTasks,
-    getMe: mockGetMe,
-    getCustomTaskTypes: mockGetCustomTaskTypes,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getMyTasks: mockGetMyTasks,
+      getMe: mockGetMe,
+      getCustomTaskTypes: mockGetCustomTaskTypes,
+    }
+  }),
 }))
 
 const now = Date.now()
