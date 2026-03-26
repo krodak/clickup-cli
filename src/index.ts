@@ -49,6 +49,7 @@ import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
 import { setCustomField } from './commands/field.js'
 import { deleteTaskCommand } from './commands/delete.js'
+import { archiveTaskCommand } from './commands/archive.js'
 import { manageTags } from './commands/tag.js'
 import {
   viewChecklists,
@@ -773,6 +774,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(`Deleted task ${result.taskId}`)
         }
       }),
+    )
+
+  program
+    .command('archive <taskId>')
+    .description('Archive a task (or unarchive with --unarchive)')
+    .option('--unarchive', 'Unarchive instead of archiving')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          taskId: string,
+          opts: { unarchive?: boolean; confirm?: boolean; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await archiveTaskCommand(config, taskId, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`${result.archived ? 'Archived' : 'Unarchived'} task ${result.taskId}`)
+          }
+        },
+      ),
     )
 
   program

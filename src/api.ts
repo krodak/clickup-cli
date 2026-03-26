@@ -62,6 +62,7 @@ export interface UpdateTaskOptions {
   time_estimate?: number
   assignees?: { add?: number[]; rem?: number[] }
   parent?: string
+  archived?: boolean
 }
 
 export interface CreateTaskOptions {
