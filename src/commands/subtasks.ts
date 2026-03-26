@@ -16,7 +16,7 @@ export async function fetchSubtasks(
   const typeMap = buildTypeMap(customTypes)
   const tasks = await client.getTasksFromList(
     parent.list.id,
-    { parent: taskId, subtasks: 'false' },
+    { parent: parent.id, subtasks: 'false' },
     { includeClosed: options.includeClosed },
   )
   return tasks.map(t => summarize(t, typeMap))
