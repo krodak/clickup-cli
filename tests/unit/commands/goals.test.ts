@@ -10,7 +10,7 @@ const mockUpdateKeyResult = vi.fn()
 const mockDeleteKeyResult = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getGoals: mockGetGoals,
     createGoal: mockCreateGoal,
     updateGoal: mockUpdateGoal,
@@ -19,7 +19,7 @@ vi.mock('../../../src/api.js', () => ({
     createKeyResult: mockCreateKeyResult,
     updateKeyResult: mockUpdateKeyResult,
     deleteKeyResult: mockDeleteKeyResult,
-  })),
+  } }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

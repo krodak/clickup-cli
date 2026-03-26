@@ -10,9 +10,9 @@ const mockCreateTaskAttachment = vi.fn().mockResolvedValue({
 })
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     createTaskAttachment: mockCreateTaskAttachment,
-  })),
+  } }),
 }))
 
 vi.mock('node:fs/promises', () => ({

@@ -5,11 +5,11 @@ const mockSetCustomFieldValue = vi.fn().mockResolvedValue(undefined)
 const mockRemoveCustomFieldValue = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getTask: mockGetTask,
     setCustomFieldValue: mockSetCustomFieldValue,
     removeCustomFieldValue: mockRemoveCustomFieldValue,
-  })),
+  } }),
 }))
 
 const config = { apiToken: 'pk_test', teamId: 'team1' }

@@ -4,10 +4,10 @@ const mockAddTagToTask = vi.fn().mockResolvedValue(undefined)
 const mockRemoveTagFromTask = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     addTagToTask: mockAddTagToTask,
     removeTagFromTask: mockRemoveTagFromTask,
-  })),
+  } }),
 }))
 
 describe('manageTags', () => {

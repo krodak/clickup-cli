@@ -4,10 +4,12 @@ const mockGetSpaces = vi.fn()
 const mockGetMyTasks = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
-    getSpaces: mockGetSpaces,
-    getMyTasks: mockGetMyTasks,
-  })),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getSpaces: mockGetSpaces,
+      getMyTasks: mockGetMyTasks,
+    }
+  }),
 }))
 
 const mockIsTTY = vi.fn<() => boolean>()
@@ -38,7 +40,10 @@ describe('listSpaces', () => {
     mockGetMyTasks.mockReset()
     mockIsTTY.mockReset()
     mockShouldOutputJson.mockReset()
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    logSpy = vi
+      .spyOn(console, 'log')
+      .mockClear()
+      .mockImplementation(() => {})
     mockGetSpaces.mockResolvedValue(sampleSpaces)
   })
 

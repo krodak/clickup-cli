@@ -4,10 +4,12 @@ const mockGetTask = vi.fn()
 const mockGetTaskComments = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
-    getTask: mockGetTask,
-    getTaskComments: mockGetTaskComments,
-  })),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getTask: mockGetTask,
+      getTaskComments: mockGetTaskComments,
+    }
+  }),
 }))
 
 const mockTask = {
@@ -39,7 +41,10 @@ describe('printActivity', () => {
   let logSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    logSpy = vi
+      .spyOn(console, 'log')
+      .mockClear()
+      .mockImplementation(() => {})
   })
 
   it('outputs JSON when forceJson is true', async () => {

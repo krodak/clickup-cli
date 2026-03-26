@@ -9,7 +9,7 @@ const mockUpdateTimeEntry = vi.fn()
 const mockDeleteTimeEntry = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     startTimeEntry: mockStartTimeEntry,
     stopTimeEntry: mockStopTimeEntry,
     getRunningTimeEntry: mockGetRunningTimeEntry,
@@ -17,7 +17,7 @@ vi.mock('../../../src/api.js', () => ({
     getTimeEntries: mockGetTimeEntries,
     updateTimeEntry: mockUpdateTimeEntry,
     deleteTimeEntry: mockDeleteTimeEntry,
-  })),
+  } }),
 }))
 
 const config = { apiToken: 'pk_test', teamId: 'tm_1' }

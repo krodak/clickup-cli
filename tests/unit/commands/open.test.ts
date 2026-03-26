@@ -10,12 +10,12 @@ vi.mock('../../../src/api.js', async importOriginal => {
   const actual = await importOriginal<typeof import('../../../src/api.js')>()
   return {
     ...actual,
-    ClickUpClient: vi.fn().mockImplementation(() => ({
+    ClickUpClient: vi.fn().mockImplementation(function () { return {
       getTask: mockGetTask,
       getMyTasks: mockGetMyTasks,
       getMe: mockGetMe,
       getCustomTaskTypes: mockGetCustomTaskTypes,
-    })),
+    } }),
   }
 })
 

@@ -6,11 +6,11 @@ const mockGetFolders = vi.fn()
 const mockGetFolderLists = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getLists: mockGetLists,
     getFolders: mockGetFolders,
     getFolderLists: mockGetFolderLists,
-  })),
+  } }),
 }))
 
 const mockIsTTY = vi.fn<() => boolean>()

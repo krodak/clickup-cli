@@ -6,11 +6,13 @@ const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
-    getMyTasks: mockGetMyTasks,
-    getMe: mockGetMe,
-    getCustomTaskTypes: mockGetCustomTaskTypes,
-  })),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getMyTasks: mockGetMyTasks,
+      getMe: mockGetMe,
+      getCustomTaskTypes: mockGetCustomTaskTypes,
+    }
+  }),
 }))
 
 vi.mock('../../../src/output.js', async () => {
@@ -177,7 +179,9 @@ describe('runSummaryCommand', () => {
   beforeEach(() => {
     mockGetMyTasks.mockReset()
     mockGetMe.mockReset().mockResolvedValue({ id: 42, username: 'me' })
-    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'log')
+      .mockClear()
+      .mockImplementation(() => {})
   })
 
   it('outputs JSON with correct structure', async () => {
