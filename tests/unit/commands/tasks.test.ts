@@ -8,10 +8,10 @@ const mockGetCustomTaskTypes = vi
   ])
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getMyTasks: mockGetMyTasks,
     getCustomTaskTypes: mockGetCustomTaskTypes,
-  })),
+  } }),
 }))
 
 const mockIsTTY = vi.fn<() => boolean>()

@@ -31,11 +31,11 @@ const mockGetListWithStatuses = vi.fn().mockResolvedValue({
 })
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     updateTask: mockUpdateTask,
     getTask: mockGetTask,
     getListWithStatuses: mockGetListWithStatuses,
-  })),
+  } }),
 }))
 
 describe('updateTask', () => {

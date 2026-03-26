@@ -4,11 +4,13 @@ const mockGetMyTasks = vi.fn()
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
-    getMyTasks: mockGetMyTasks,
-    getTask: vi.fn(),
-    getCustomTaskTypes: mockGetCustomTaskTypes,
-  })),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getMyTasks: mockGetMyTasks,
+      getTask: vi.fn(),
+      getCustomTaskTypes: mockGetCustomTaskTypes,
+    }
+  }),
 }))
 
 vi.mock('../../../src/interactive.js', () => ({
@@ -121,7 +123,9 @@ describe('groupByStatus', () => {
 describe('runAssignedCommand', () => {
   beforeEach(() => {
     mockGetMyTasks.mockReset()
-    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'log')
+      .mockClear()
+      .mockImplementation(() => {})
   })
 
   it('outputs JSON grouped by status when json option is set', async () => {

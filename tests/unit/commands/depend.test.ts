@@ -4,10 +4,10 @@ const mockAddDependency = vi.fn().mockResolvedValue(undefined)
 const mockDeleteDependency = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     addDependency: mockAddDependency,
     deleteDependency: mockDeleteDependency,
-  })),
+  } }),
 }))
 
 describe('manageDependency', () => {

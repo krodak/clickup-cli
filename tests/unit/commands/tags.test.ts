@@ -4,10 +4,10 @@ const mockGetSpaceTags = vi.fn()
 const mockUpdateSpaceTag = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getSpaceTags: mockGetSpaceTags,
     updateSpaceTag: mockUpdateSpaceTag,
-  })),
+  } }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

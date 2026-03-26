@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockPostComment = vi.fn().mockResolvedValue({ id: 'c1' })
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     postComment: mockPostComment,
-  })),
+  } }),
 }))
 
 describe('postComment', () => {

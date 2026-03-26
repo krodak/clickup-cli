@@ -4,10 +4,10 @@ const mockAddTaskLink = vi.fn().mockResolvedValue(undefined)
 const mockDeleteTaskLink = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     addTaskLink: mockAddTaskLink,
     deleteTaskLink: mockDeleteTaskLink,
-  })),
+  } }),
 }))
 
 const config = { apiToken: 'pk_t', teamId: 'team1' }

@@ -5,11 +5,11 @@ const mockGetTasksFromList = vi.fn()
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getTask: mockGetTask,
     getTasksFromList: mockGetTasksFromList,
     getCustomTaskTypes: mockGetCustomTaskTypes,
-  })),
+  } }),
 }))
 
 const baseTask = (overrides = {}) => ({

@@ -3,9 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const mockGetTaskComments = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     getTaskComments: mockGetTaskComments,
-  })),
+  } }),
 }))
 
 const mockIsTTY = vi.fn<() => boolean>()

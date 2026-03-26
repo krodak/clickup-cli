@@ -4,10 +4,10 @@ const mockDeleteTask = vi.fn().mockResolvedValue(undefined)
 const mockGetTask = vi.fn().mockResolvedValue({ id: 'abc123', name: 'My Task' })
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(() => ({
+  ClickUpClient: vi.fn().mockImplementation(function () { return {
     deleteTask: mockDeleteTask,
     getTask: mockGetTask,
-  })),
+  } }),
 }))
 
 vi.mock('../../../src/output.js', async () => {
