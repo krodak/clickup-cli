@@ -7,11 +7,13 @@ const mockCreateTask = vi
 const mockCreateTaskFromTemplate = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    createTask: mockCreateTask,
-    getTask: mockGetTask,
-    createTaskFromTemplate: mockCreateTaskFromTemplate,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      createTask: mockCreateTask,
+      getTask: mockGetTask,
+      createTaskFromTemplate: mockCreateTaskFromTemplate,
+    }
+  }),
 }))
 
 describe('createTask', () => {

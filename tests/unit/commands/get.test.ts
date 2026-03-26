@@ -15,9 +15,11 @@ const mockTask = {
 const mockGetTask = vi.fn().mockResolvedValue(mockTask)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getTask: mockGetTask,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getTask: mockGetTask,
+    }
+  }),
 }))
 
 describe('getTask', () => {

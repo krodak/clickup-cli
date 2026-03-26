@@ -100,18 +100,31 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Workspace
 
-| Feature        | Command                            | Status             |
-| -------------- | ---------------------------------- | ------------------ |
-| List spaces    | `cup spaces`                       | :white_check_mark: |
-| Create space   | `cup space-create <name>`          | :white_check_mark: |
-| List lists     | `cup lists <spaceId>`              | :white_check_mark: |
-| Create list    | `cup list-create <spaceId> <name>` | :white_check_mark: |
-| List folders   | `cup folders <spaceId>`            | :white_check_mark: |
-| Create folder  | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
-| Check auth     | `cup auth`                         | :white_check_mark: |
-| List members   | `cup members`                      | :white_check_mark: |
-| Task types     | `cup task-types`                   | :white_check_mark: |
-| Task templates | `cup templates`                    | :white_check_mark: |
+| Feature         | Command                            | Status             |
+| --------------- | ---------------------------------- | ------------------ |
+| List spaces     | `cup spaces`                       | :white_check_mark: |
+| Create space    | `cup space-create <name>`          | :white_check_mark: |
+| List lists      | `cup lists <spaceId>`              | :white_check_mark: |
+| Create list     | `cup list-create <spaceId> <name>` | :white_check_mark: |
+| List folders    | `cup folders <spaceId>`            | :white_check_mark: |
+| Create folder   | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
+| Check auth      | `cup auth`                         | :white_check_mark: |
+| List members    | `cup members`                      | :white_check_mark: |
+| Task types      | `cup task-types`                   | :white_check_mark: |
+| Task templates  | `cup templates`                    | :white_check_mark: |
+| List templates  | `cup list-templates`               | :white_check_mark: |
+| Folder tmpl.    | `cup folder-templates`             | :white_check_mark: |
+| Create from tpl | `cup list-from-template <name>`    | :white_check_mark: |
+
+## Views
+
+| Feature     | Command                           | Status             |
+| ----------- | --------------------------------- | ------------------ |
+| List views  | `cup views <listId>`              | :white_check_mark: |
+| Get view    | `cup view <viewId>`               | :white_check_mark: |
+| Create view | `cup view-create <listId> <name>` | :white_check_mark: |
+| Update view | `cup view-update <viewId>`        | :white_check_mark: |
+| Delete view | `cup view-delete <viewId>`        | :white_check_mark: |
 
 ## Goals & Key Results
 
@@ -164,7 +177,6 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Chat/DM                 | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
 | Audit logs              | Enterprise admin.                                                           |
 | User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
-| View CRUD               | Views are visual layouts. Configure them in the UI.                         |
 | List/Folder/Space U+D   | Update/delete structural items in the UI. Create is supported.              |
 | View/List/Chat comments | API only supports task-level comments.                                      |
 | User Groups             | Enterprise admin feature.                                                   |

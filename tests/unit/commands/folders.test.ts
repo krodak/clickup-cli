@@ -4,10 +4,12 @@ const mockGetFolders = vi.fn()
 const mockGetFolderLists = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    getFolders: mockGetFolders,
-    getFolderLists: mockGetFolderLists,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      getFolders: mockGetFolders,
+      getFolderLists: mockGetFolderLists,
+    }
+  }),
 }))
 
 const mockConfig = { apiToken: 'pk_test', teamId: 'team1' }

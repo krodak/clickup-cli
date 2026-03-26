@@ -60,6 +60,10 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-pages <docId>`                                                                    | All pages in a doc with content                                           |
 | `cup task-types`                                                                           | Custom task types (for `--custom-item-id`)                                |
 | `cup templates`                                                                            | Task templates (for `--template`)                                         |
+| `cup list-templates`                                                                       | List templates (for `list-from-template`)                                 |
+| `cup folder-templates`                                                                     | Folder templates                                                          |
+| `cup views <listId>`                                                                       | List views on a list                                                      |
+| `cup view <viewId>`                                                                        | Get view details                                                          |
 | `cup open <query>`                                                                         | Open task in browser by ID or name                                        |
 | `cup auth`                                                                                 | Check authentication status                                               |
 
@@ -115,6 +119,10 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup tag-create <spaceId> <name> [--fg color] [--bg color]`                                                                                                                                | Create space tag                    |
 | `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c]`                                                                                                                    | Update space tag                    |
 | `cup tag-delete <spaceId> <name>`                                                                                                                                                          | Delete space tag                    |
+| `cup list-from-template <name> --template <id> [--space id] [--folder id]`                                                                                                                 | Create list from template           |
+| `cup view-create <listId> <name> -t <type> [--group-by field]`                                                                                                                             | Create a view on a list             |
+| `cup view-update <viewId> [-n name] [--group-by field]`                                                                                                                                    | Update a view                       |
+| `cup view-delete <viewId> [--confirm]`                                                                                                                                                     | Delete a view (DESTRUCTIVE)         |
 | `cup profile list [--json]`                                                                                                                                                                | List all profiles                   |
 | `cup profile add <name>`                                                                                                                                                                   | Add a new profile (interactive)     |
 | `cup profile remove <name>`                                                                                                                                                                | Remove a profile                    |

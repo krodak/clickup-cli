@@ -59,11 +59,7 @@ export function formatCustomFieldValue(field: CustomField): string | null {
     case 'date': {
       const ts = Number(field.value)
       if (!Number.isFinite(ts)) return stringifyFieldValue(field.value)
-      return new Date(ts).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      return formatDate(String(ts))
     }
     case 'checkbox':
       return field.value === true || field.value === 'true' ? 'Yes' : 'No'

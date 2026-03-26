@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockDeleteComment = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    deleteComment: mockDeleteComment,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      deleteComment: mockDeleteComment,
+    }
+  }),
 }))
 
 describe('comment-delete', () => {

@@ -4,10 +4,12 @@ const mockUpdateTask = vi.fn()
 const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
 
 vi.mock('../../../src/api.js', () => ({
-  ClickUpClient: vi.fn().mockImplementation(function () { return {
-    updateTask: mockUpdateTask,
-    getMe: mockGetMe,
-  } }),
+  ClickUpClient: vi.fn().mockImplementation(function () {
+    return {
+      updateTask: mockUpdateTask,
+      getMe: mockGetMe,
+    }
+  }),
 }))
 
 const config = { apiToken: 'pk_test', teamId: 'team1' }
