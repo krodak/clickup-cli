@@ -250,6 +250,14 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'archive',
+    description: 'Archive a task (or unarchive with --unarchive)',
+    flags: ['--unarchive', '--confirm', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'archive <taskId>', description: 'Archive or unarchive a task' },
+    ],
+  },
+  {
     name: 'assign',
     description: 'Assign or unassign users from a task',
     flags: ['--to', '--remove', '--json'],
