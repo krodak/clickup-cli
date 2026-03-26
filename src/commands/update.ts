@@ -43,6 +43,7 @@ export async function resolveAssigneeId(client: ClickUpClient, value: string): P
 }
 
 export function parseTimeEstimate(value: string): number {
+  if (value === '0' || value.toLowerCase() === 'none' || value === '') return 0
   const pattern = /^(?:(\d+)h)?(?:(\d+)m)?$/i
   const match = value.match(pattern)
   if (match && (match[1] || match[2])) {
@@ -51,8 +52,10 @@ export function parseTimeEstimate(value: string): number {
     return (hours * 60 + minutes) * 60 * 1000
   }
   const ms = Number(value)
-  if (Number.isFinite(ms) && ms > 0) return ms
-  throw new Error('Time estimate must be a duration (e.g. "2h", "30m", "1h30m") or milliseconds')
+  if (Number.isFinite(ms) && ms >= 0) return ms
+  throw new Error(
+    'Time estimate must be a duration (e.g. "2h", "30m", "1h30m"), milliseconds, or "0" to clear',
+  )
 }
 
 export interface UpdateCommandOptions {

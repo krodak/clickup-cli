@@ -189,7 +189,14 @@ describe('parseTimeEstimate', () => {
     const { parseTimeEstimate } = await import('../../../src/commands/update.js')
     expect(() => parseTimeEstimate('abc')).toThrow('duration')
     expect(() => parseTimeEstimate('-1')).toThrow('duration')
-    expect(() => parseTimeEstimate('0')).toThrow('duration')
+  })
+
+  it('returns 0 for zero values to clear estimate', async () => {
+    const { parseTimeEstimate } = await import('../../../src/commands/update.js')
+    expect(parseTimeEstimate('0')).toBe(0)
+    expect(parseTimeEstimate('none')).toBe(0)
+    expect(parseTimeEstimate('None')).toBe(0)
+    expect(parseTimeEstimate('')).toBe(0)
   })
 })
 
