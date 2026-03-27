@@ -11,11 +11,11 @@ function isOverdue(task: Task, now: number): boolean {
 
 export async function fetchOverdueTasks(
   config: Config,
-  opts: { includeClosed?: boolean } = {},
+  opts: { all?: boolean; includeClosed?: boolean } = {},
 ): Promise<TaskSummary[]> {
   const client = new ClickUpClient(config)
   const [allTasks, customTypes] = await Promise.all([
-    client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed }),
+    client.getMyTasks(config.teamId, { all: opts.all, includeClosed: opts.includeClosed }),
     client.getCustomTaskTypes(config.teamId),
   ])
   const typeMap = buildTypeMap(customTypes)

@@ -47,6 +47,7 @@ export interface TaskFilters {
   spaceIds?: string[]
   subtasks?: boolean
   includeClosed?: boolean
+  all?: boolean
 }
 
 export type Priority = 1 | 2 | 3 | 4
@@ -461,12 +462,14 @@ export class ClickUpClient {
   }
 
   async getMyTasks(teamId: string, filters: TaskFilters = {}): Promise<Task[]> {
-    const me = await this.getMe()
     const baseParams = new URLSearchParams({
       subtasks: String(filters.subtasks ?? true),
     })
     if (filters.includeClosed) baseParams.set('include_closed', 'true')
-    baseParams.append('assignees[]', String(me.id))
+    if (!filters.all) {
+      const me = await this.getMe()
+      baseParams.append('assignees[]', String(me.id))
+    }
     for (const s of filters.statuses ?? []) baseParams.append('statuses[]', s)
     for (const id of filters.listIds ?? []) baseParams.append('list_ids[]', id)
     for (const id of filters.spaceIds ?? []) baseParams.append('space_ids[]', id)

@@ -33,39 +33,39 @@ All commands support `--help` for full flag details. All commands support `--jso
 
 ### Read
 
-| Command                                                                                    | What it returns                                                           |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `cup tasks [--status s] [--name q] [--type t] [--list id] [--space id] [--include-closed]` | My tasks (filter by status, name, type, list, space)                      |
-| `cup assigned [--status s] [--include-closed]`                                             | All my tasks grouped by status                                            |
-| `cup sprint [--status s] [--space nameOrId] [--folder id] [--include-closed]`              | Tasks in active sprint (auto-detected)                                    |
-| `cup sprints [--space nameOrId]`                                                           | List all sprints (marks active with \*)                                   |
-| `cup search <query> [--status s] [--include-closed]`                                       | Search my tasks by name                                                   |
-| `cup task <id>`                                                                            | Single task details (custom fields, checklists, attachments, deps, links) |
-| `cup subtasks <id> [--status s] [--name q] [--include-closed]`                             | Subtasks of a task                                                        |
-| `cup comments <id>`                                                                        | Comments on a task                                                        |
-| `cup activity <id>`                                                                        | Task details + comment history combined                                   |
-| `cup inbox [--days n] [--include-closed]`                                                  | Tasks updated in last n days (default 30)                                 |
-| `cup summary [--hours n]`                                                                  | Standup: completed, in-progress, overdue                                  |
-| `cup overdue [--include-closed]`                                                           | Tasks past due date (most overdue first)                                  |
-| `cup spaces [--name partial] [--my]`                                                       | List/filter workspace spaces                                              |
-| `cup lists <spaceId> [--name partial]`                                                     | Lists in a space (including folder lists)                                 |
-| `cup folders <spaceId> [--name partial]`                                                   | Folders in a space (with their lists)                                     |
-| `cup members`                                                                              | Workspace members (username, ID, email)                                   |
-| `cup fields <listId>`                                                                      | Custom fields on a list (type, required, options)                         |
-| `cup tags <spaceId>`                                                                       | Tags available in a space                                                 |
-| `cup goals`                                                                                | Workspace goals with progress                                             |
-| `cup key-results <goalId>`                                                                 | Key results for a goal                                                    |
-| `cup docs [query]`                                                                         | Workspace docs (optionally filter by name)                                |
-| `cup doc <docId> [pageId]`                                                                 | Doc metadata + page tree, or a specific page                              |
-| `cup doc-pages <docId>`                                                                    | All pages in a doc with content                                           |
-| `cup task-types`                                                                           | Custom task types (for `--custom-item-id`)                                |
-| `cup templates`                                                                            | Task templates (for `--template`)                                         |
-| `cup list-templates`                                                                       | List templates (for `list-from-template`)                                 |
-| `cup folder-templates`                                                                     | Folder templates                                                          |
-| `cup views <listId>`                                                                       | List views on a list                                                      |
-| `cup view <viewId>`                                                                        | Get view details                                                          |
-| `cup open <query>`                                                                         | Open task in browser by ID or name                                        |
-| `cup auth`                                                                                 | Check authentication status                                               |
+| Command                                                                                            | What it returns                                                                          |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `cup tasks [--status s] [--name q] [--type t] [--list id] [--space id] [--all] [--include-closed]` | My tasks (filter by status, name, type, list, space). `--all` for all tasks in workspace |
+| `cup assigned [--status s] [--include-closed]`                                                     | All my tasks grouped by status                                                           |
+| `cup sprint [--status s] [--space nameOrId] [--folder id] [--include-closed]`                      | Tasks in active sprint (auto-detected)                                                   |
+| `cup sprints [--space nameOrId]`                                                                   | List all sprints (marks active with \*)                                                  |
+| `cup search <query> [--status s] [--all] [--include-closed]`                                       | Search my tasks by name. `--all` for all tasks                                           |
+| `cup task <id>`                                                                                    | Single task details (custom fields, checklists, attachments, deps, links)                |
+| `cup subtasks <id> [--status s] [--name q] [--include-closed]`                                     | Subtasks of a task                                                                       |
+| `cup comments <id>`                                                                                | Comments on a task                                                                       |
+| `cup activity <id>`                                                                                | Task details + comment history combined                                                  |
+| `cup inbox [--days n] [--include-closed]`                                                          | Tasks updated in last n days (default 30)                                                |
+| `cup summary [--hours n]`                                                                          | Standup: completed, in-progress, overdue                                                 |
+| `cup overdue [--include-closed]`                                                                   | Tasks past due date (most overdue first)                                                 |
+| `cup spaces [--name partial] [--my]`                                                               | List/filter workspace spaces                                                             |
+| `cup lists <spaceId> [--name partial]`                                                             | Lists in a space (including folder lists)                                                |
+| `cup folders <spaceId> [--name partial]`                                                           | Folders in a space (with their lists)                                                    |
+| `cup members`                                                                                      | Workspace members (username, ID, email)                                                  |
+| `cup fields <listId>`                                                                              | Custom fields on a list (type, required, options)                                        |
+| `cup tags <spaceId>`                                                                               | Tags available in a space                                                                |
+| `cup goals`                                                                                        | Workspace goals with progress                                                            |
+| `cup key-results <goalId>`                                                                         | Key results for a goal                                                                   |
+| `cup docs [query]`                                                                                 | Workspace docs (optionally filter by name)                                               |
+| `cup doc <docId> [pageId]`                                                                         | Doc metadata + page tree, or a specific page                                             |
+| `cup doc-pages <docId>`                                                                            | All pages in a doc with content                                                          |
+| `cup task-types`                                                                                   | Custom task types (for `--custom-item-id`)                                               |
+| `cup templates`                                                                                    | Task templates (for `--template`)                                                        |
+| `cup list-templates`                                                                               | List templates (for `list-from-template`)                                                |
+| `cup folder-templates`                                                                             | Folder templates                                                                         |
+| `cup views <listId>`                                                                               | List views on a list                                                                     |
+| `cup view <viewId>`                                                                                | Get view details                                                                         |
+| `cup open <query>`                                                                                 | Open task in browser by ID or name                                                       |
+| `cup auth`                                                                                         | Check authentication status                                                              |
 
 ### Write
 
@@ -152,6 +152,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `--custom-item-id` | Custom task type ID for `cup create` (find with `cup task-types`)                                                                                                             |
 | `--space`          | Partial name match or exact ID                                                                                                                                                |
 | `--name`           | Partial match, case-insensitive                                                                                                                                               |
+| `--all`            | Show all tasks in workspace, not just assigned to me. Available on `tasks`, `search`, `overdue`. Default: my tasks only (smaller output for agent context windows)            |
 | `--include-closed` | Include closed/done tasks                                                                                                                                                     |
 | `--list` on create | Optional when `--parent` is given (auto-detected)                                                                                                                             |
 | `cup field --set`  | Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email. Names resolved case-insensitively; errors list available fields/options |
@@ -179,6 +180,7 @@ cup activity abc123def               # task + comments combined
 cup tasks --status "in progress"     # by status
 cup tasks --name "login"             # by partial name
 cup tasks --type initiative          # initiatives only
+cup tasks --list 12345 --all         # all tasks in list, not just mine
 cup search "payment flow"            # multi-word search
 cup search auth --status "prog"      # fuzzy status match
 cup sprint                           # current sprint

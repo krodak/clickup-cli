@@ -35,9 +35,20 @@ export const commandMetadata = [
   },
   {
     name: 'tasks',
-    description: 'List tasks assigned to me',
-    flags: ['--status', '--list', '--space', '--name', '--type', '--include-closed', '--json'],
-    quickReference: [{ section: 'read', usage: 'tasks', description: 'List tasks assigned to me' }],
+    description: 'List tasks assigned to me (use --all for all tasks)',
+    flags: [
+      '--status',
+      '--list',
+      '--space',
+      '--name',
+      '--type',
+      '--all',
+      '--include-closed',
+      '--json',
+    ],
+    quickReference: [
+      { section: 'read', usage: 'tasks', description: 'List tasks assigned to me (--all for all)' },
+    ],
   },
   {
     name: 'task',
@@ -230,8 +241,8 @@ export const commandMetadata = [
   },
   {
     name: 'search',
-    description: 'Search my tasks by name',
-    flags: ['--status', '--include-closed', '--json'],
+    description: 'Search my tasks by name (use --all for all tasks)',
+    flags: ['--status', '--all', '--include-closed', '--json'],
     quickReference: [
       { section: 'read', usage: 'search <query>', description: 'Search my tasks by name' },
     ],
@@ -245,7 +256,7 @@ export const commandMetadata = [
   {
     name: 'overdue',
     description: 'List tasks that are past their due date',
-    flags: ['--include-closed', '--json'],
+    flags: ['--all', '--include-closed', '--json'],
     quickReference: [
       { section: 'read', usage: 'overdue', description: 'Tasks past their due date' },
     ],
