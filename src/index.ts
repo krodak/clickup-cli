@@ -274,22 +274,36 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
+    .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (taskId: string, opts: UpdateCommandOptions & { json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        if (opts.assignee === 'me') {
-          const client = new ClickUpClient(config)
-          opts.assignee = String(await resolveAssigneeId(client, 'me'))
-        }
-        const payload = buildUpdatePayload(opts)
-        const result = await updateTask(config, taskId, payload)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(formatUpdateConfirmation(result.id, result.name))
-        }
-      }),
+      wrapAction(
+        async (
+          taskId: string,
+          opts: UpdateCommandOptions & { field?: string[]; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          if (opts.assignee === 'me') {
+            const client = new ClickUpClient(config)
+            opts.assignee = String(await resolveAssigneeId(client, 'me'))
+          }
+          const payload = buildUpdatePayload(opts)
+          const result = await updateTask(config, taskId, payload)
+          if (opts.field?.length) {
+            if (opts.field.length % 2 !== 0) {
+              throw new Error('--field requires pairs: --field "Name" value')
+            }
+            for (let i = 0; i < opts.field.length; i += 2) {
+              await setCustomField(config, taskId, { set: [opts.field[i]!, opts.field[i + 1]!] })
+            }
+          }
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(formatUpdateConfirmation(result.id, result.name))
+          }
+        },
+      ),
     )
 
   program

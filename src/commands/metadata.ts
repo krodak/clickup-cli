@@ -60,6 +60,7 @@ export const commandMetadata = [
       '--time-estimate',
       '--assignee',
       '--parent',
+      '--field',
       '--json',
     ],
     quickReference: [{ section: 'write', usage: 'update <taskId>', description: 'Update a task' }],
