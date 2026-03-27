@@ -13,6 +13,7 @@ export interface TaskSummary {
   task_type: string
   priority: string
   due_date: string
+  dueRaw?: string
   list: string
   url: string
   parent?: string
@@ -49,6 +50,7 @@ export function summarize(task: Task, typeMap?: Map<number, string>): TaskSummar
     task_type: resolveTaskType(task, typeMap ?? new Map<number, string>()),
     priority: task.priority?.priority ?? 'none',
     due_date: formatDueDate(task.due_date),
+    ...(task.due_date ? { dueRaw: task.due_date } : {}),
     list: task.list.name,
     url: task.url,
     ...(task.parent ? { parent: task.parent } : {}),

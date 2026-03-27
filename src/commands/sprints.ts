@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { List, Space } from '../api.js'
 import type { Config } from '../config.js'
@@ -20,11 +21,17 @@ interface SprintRow {
   id: string
   sprint: string
   dates: string
+  active: boolean
 }
 
 const SPRINT_COLUMNS: Column<SprintRow>[] = [
   { key: 'id', label: 'ID' },
-  { key: 'sprint', label: 'SPRINT', maxWidth: 60 },
+  {
+    key: 'sprint',
+    label: 'SPRINT',
+    maxWidth: 60,
+    format: (v, row) => (row.active ? chalk.green(v) : v),
+  },
   { key: 'dates', label: 'DATES' },
 ]
 
@@ -110,6 +117,7 @@ export async function listSprints(
       id: s.id,
       sprint: s.active ? `* ${s.name}` : s.name,
       dates: dateStr,
+      active: s.active,
     }
   })
 
