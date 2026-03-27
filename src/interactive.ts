@@ -4,6 +4,7 @@ import chalk from 'chalk'
 import type { CustomField, Task } from './api.js'
 import type { TaskSummary } from './commands/tasks.js'
 import { formatDate, formatDuration } from './date.js'
+import { colorStatus, colorPriority, colorDueDate } from './output.js'
 
 export function openUrl(url: string): void {
   switch (process.platform) {
@@ -78,16 +79,16 @@ export function formatTaskDetail(task: Task): string {
 
   const fields: Array<[string, string | undefined]> = [
     ['ID', task.id],
-    ['Status', task.status?.status],
+    ['Status', task.status?.status ? colorStatus(task.status.status) : undefined],
     ['Type', typeLabel],
     ['List', task.list?.name],
     [
       'Assignees',
       task.assignees?.length ? task.assignees.map(a => a.username).join(', ') : undefined,
     ],
-    ['Priority', task.priority?.priority],
+    ['Priority', task.priority?.priority ? colorPriority(task.priority.priority) : undefined],
     ['Start', task.start_date ? formatDate(task.start_date) : undefined],
-    ['Due', task.due_date ? formatDate(task.due_date) : undefined],
+    ['Due', task.due_date ? colorDueDate(formatDate(task.due_date), task.due_date) : undefined],
     ['Estimate', task.time_estimate ? formatDuration(task.time_estimate) : undefined],
     ['Tracked', task.time_spent ? formatDuration(task.time_spent) : undefined],
     ['Tags', task.tags?.length ? task.tags.map(t => t.name).join(', ') : undefined],
@@ -164,8 +165,9 @@ export function formatTaskDetail(task: Task): string {
 function formatChoiceName(task: TaskSummary): string {
   const id = task.id.padEnd(12)
   const name = task.name.length > 50 ? task.name.slice(0, 49) + '\u2026' : task.name.padEnd(50)
-  const status = task.status
-  return `${id}  ${name}  ${chalk.dim(status)}`
+  const status = colorStatus(task.status)
+  const priority = task.priority !== 'none' ? colorPriority(task.priority) : ''
+  return `${id}  ${name}  ${status}${priority ? '  ' + priority : ''}`
 }
 
 export async function interactiveTaskPicker(tasks: TaskSummary[]): Promise<TaskSummary[]> {

@@ -1,5 +1,13 @@
+import chalk from 'chalk'
 import { describe, it, expect } from 'vitest'
-import { formatTable, isTTY, shouldOutputJson } from '../../src/output.js'
+import {
+  formatTable,
+  isTTY,
+  shouldOutputJson,
+  colorStatus,
+  colorPriority,
+  colorDueDate,
+} from '../../src/output.js'
 
 describe('formatTable', () => {
   it('includes column labels in output', () => {
@@ -85,6 +93,14 @@ describe('formatTable', () => {
     expect(result).toContain('…')
     expect(result).not.toContain(longName)
   })
+
+  it('applies format callback to cell values', () => {
+    const result = formatTable(
+      [{ name: 'hello' }],
+      [{ key: 'name', label: 'NAME', format: v => `[${v}]` }],
+    )
+    expect(result).toContain('[hello]')
+  })
 })
 
 describe('shouldOutputJson', () => {
@@ -151,5 +167,71 @@ describe('isTTY', () => {
       if (original === undefined) delete process.env.NO_COLOR
       else process.env.NO_COLOR = original
     }
+  })
+})
+
+describe('colorStatus', () => {
+  it('returns green for done statuses', () => {
+    expect(colorStatus('done')).toBe(chalk.green('done'))
+    expect(colorStatus('Complete')).toBe(chalk.green('Complete'))
+    expect(colorStatus('closed')).toBe(chalk.green('closed'))
+  })
+
+  it('returns yellow for in-progress statuses', () => {
+    expect(colorStatus('in progress')).toBe(chalk.yellow('in progress'))
+    expect(colorStatus('in review')).toBe(chalk.yellow('in review'))
+    expect(colorStatus('active')).toBe(chalk.yellow('active'))
+  })
+
+  it('returns red for blocked statuses', () => {
+    expect(colorStatus('blocked')).toBe(chalk.red('blocked'))
+    expect(colorStatus('stuck')).toBe(chalk.red('stuck'))
+  })
+
+  it('returns dim for unrecognized statuses', () => {
+    expect(colorStatus('open')).toBe(chalk.dim('open'))
+    expect(colorStatus('to do')).toBe(chalk.dim('to do'))
+  })
+})
+
+describe('colorPriority', () => {
+  it('returns red for urgent', () => {
+    expect(colorPriority('urgent')).toBe(chalk.red('urgent'))
+  })
+
+  it('returns yellow for high', () => {
+    expect(colorPriority('high')).toBe(chalk.yellow('high'))
+  })
+
+  it('returns uncolored for normal', () => {
+    expect(colorPriority('normal')).toBe('normal')
+  })
+
+  it('returns dim for low', () => {
+    expect(colorPriority('low')).toBe(chalk.dim('low'))
+  })
+
+  it('returns uncolored for unknown priorities', () => {
+    expect(colorPriority('custom')).toBe('custom')
+  })
+})
+
+describe('colorDueDate', () => {
+  it('returns red for past timestamps', () => {
+    const past = String(Date.now() - 86400000)
+    expect(colorDueDate('Jan 1', past)).toBe(chalk.red('Jan 1'))
+  })
+
+  it('returns uncolored for future timestamps', () => {
+    const future = String(Date.now() + 86400000)
+    expect(colorDueDate('Dec 31', future)).toBe('Dec 31')
+  })
+
+  it('returns uncolored when no timestamp provided', () => {
+    expect(colorDueDate('Jan 1')).toBe('Jan 1')
+  })
+
+  it('returns empty string unchanged', () => {
+    expect(colorDueDate('')).toBe('')
   })
 })
