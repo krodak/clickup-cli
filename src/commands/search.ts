@@ -6,6 +6,7 @@ import { summarize, buildTypeMap } from './tasks.js'
 
 interface SearchOptions {
   status?: string
+  all?: boolean
   includeClosed?: boolean
 }
 
@@ -21,7 +22,7 @@ export async function searchTasks(
 
   const client = new ClickUpClient(config)
   const [allTasks, customTypes] = await Promise.all([
-    client.getMyTasks(config.teamId, { includeClosed: opts.includeClosed }),
+    client.getMyTasks(config.teamId, { all: opts.all, includeClosed: opts.includeClosed }),
     client.getCustomTaskTypes(config.teamId),
   ])
   const typeMap = buildTypeMap(customTypes)

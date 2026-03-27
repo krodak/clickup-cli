@@ -164,6 +164,7 @@ interface TaskFilterOpts {
   space?: string
   name?: string
   type?: string
+  all?: boolean
   includeClosed?: boolean
   json?: boolean
 }
@@ -219,7 +220,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('tasks')
-    .description('List tasks assigned to me')
+    .description('List tasks assigned to me (use --all for all tasks)')
     .option('--status <status>', 'Filter by status (e.g. "in progress")')
     .option('--list <listId>', 'Filter by list ID')
     .option('--space <spaceId>', 'Filter by space ID')
@@ -228,6 +229,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       '--type <type>',
       'Filter by task type (e.g. "task", "initiative", or custom type name/ID)',
     )
+    .option('--all', 'Include all tasks, not just mine')
     .option('--include-closed', 'Include done/closed tasks')
     .option('--json', 'Force JSON output even in terminal')
     .action(
@@ -239,6 +241,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           listIds: opts.list ? [opts.list] : undefined,
           spaceIds: opts.space ? [opts.space] : undefined,
           name: opts.name,
+          all: opts.all,
           includeClosed: opts.includeClosed,
         })
         await printTasks(tasks, opts.json ?? false, config)
@@ -599,19 +602,21 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('search <query>')
-    .description('Search my tasks by name')
+    .description('Search my tasks by name (use --all for all tasks)')
     .option('--status <status>', 'Filter by status')
+    .option('--all', 'Search all tasks, not just mine')
     .option('--include-closed', 'Include done/closed tasks in search')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
         async (
           query: string,
-          opts: { status?: string; includeClosed?: boolean; json?: boolean },
+          opts: { status?: string; all?: boolean; includeClosed?: boolean; json?: boolean },
         ) => {
           const config = loadConfig(getProfileName())
           const tasks = await searchTasks(config, query, {
             status: opts.status,
+            all: opts.all,
             includeClosed: opts.includeClosed,
           })
           await printTasks(tasks, opts.json ?? false, config)
@@ -638,12 +643,16 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('overdue')
     .description('List tasks that are past their due date')
+    .option('--all', 'Include all tasks, not just mine')
     .option('--include-closed', 'Include done/closed overdue tasks')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (opts: { includeClosed?: boolean; json?: boolean }) => {
+      wrapAction(async (opts: { all?: boolean; includeClosed?: boolean; json?: boolean }) => {
         const config = loadConfig(getProfileName())
-        const tasks = await fetchOverdueTasks(config, { includeClosed: opts.includeClosed })
+        const tasks = await fetchOverdueTasks(config, {
+          all: opts.all,
+          includeClosed: opts.includeClosed,
+        })
         await printTasks(tasks, opts.json ?? false, config)
       }),
     )
