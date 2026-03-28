@@ -292,7 +292,15 @@ cup search auth
 cup search "payment flow" --json
 cup search auth --status "prog"     # fuzzy matches "in progress"
 cup search "old task" --include-closed
+cup search "payment" --all          # search all workspace tasks
 ```
+
+| Flag               | Description                               |
+| ------------------ | ----------------------------------------- |
+| `--status <s>`     | Filter by status, supports fuzzy matching |
+| `--include-closed` | Include done/closed tasks                 |
+| `--all`            | Search all workspace tasks, not just mine |
+| `--json`           | Force JSON output                         |
 
 ### `cup summary`
 
@@ -316,8 +324,15 @@ List tasks that are past their due date (excludes done/closed tasks by default).
 ```bash
 cup overdue
 cup overdue --include-closed
+cup overdue --all
 cup overdue --json
 ```
+
+| Flag               | Description                              |
+| ------------------ | ---------------------------------------- |
+| `--include-closed` | Include done/closed overdue tasks        |
+| `--all`            | Check all workspace tasks, not just mine |
+| `--json`           | Force JSON output                        |
 
 ### `cup auth`
 
@@ -534,18 +549,19 @@ cup comment abc123 -m "Done" --json
 
 ### `cup comment-edit <commentId>`
 
-Edit an existing comment on a task.
+Edit an existing comment on a task. Provide `--message`, `--resolved`, or `--unresolved` (or any combination).
 
 ```bash
 cup comment-edit <commentId> -m "Updated text"
 cup comment-edit <commentId> -m "Fixed" --resolved
+cup comment-edit <commentId> --resolved
 cup comment-edit <commentId> -m "Reopening" --unresolved
 cup comment-edit <commentId> -m "Updated" --json
 ```
 
 | Flag            | Required | Description                |
 | --------------- | -------- | -------------------------- |
-| `-m, --message` | yes      | New comment text           |
+| `-m, --message` | no       | New comment text           |
 | `--resolved`    | no       | Mark comment as resolved   |
 | `--unresolved`  | no       | Mark comment as unresolved |
 | `--json`        | no       | Force JSON output          |
@@ -582,6 +598,24 @@ cup reply 12345 -m "Done" --json
 | `-m, --message` | yes      | Reply text                |
 | `--notify-all`  | no       | Notify all task assignees |
 | `--json`        | no       | Force JSON output         |
+
+### `cup archive <taskId>`
+
+Archive or unarchive a task. In TTY mode prompts for confirmation unless `--confirm` is passed.
+
+```bash
+cup archive abc123
+cup archive abc123 --confirm
+cup archive abc123 --unarchive
+cup archive abc123 --unarchive --confirm
+cup archive abc123 --json
+```
+
+| Flag          | Description                                                 |
+| ------------- | ----------------------------------------------------------- |
+| `--unarchive` | Unarchive instead of archiving                              |
+| `--confirm`   | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`      | Force JSON output                                           |
 
 ### `cup assign <id>`
 

@@ -32,6 +32,7 @@ const sampleGoals = [
     name: 'Ship v2',
     description: 'Release version 2',
     date_created: '1700000000000',
+    due_date: '1750000000000',
     percent_completed: 0.75,
     key_result_count: 3,
     owner: { id: 1, username: 'alice' },
@@ -167,12 +168,13 @@ describe('formatGoals', () => {
     expect(formatGoals([])).toBe('No goals found')
   })
 
-  it('formats goals with name, id, and percentage', async () => {
+  it('formats goals with name, id, percentage, and due date', async () => {
     const { formatGoals } = await import('../../../src/commands/goals.js')
     const result = formatGoals(sampleGoals)
     expect(result).toContain('Ship v2')
     expect(result).toContain('75%')
     expect(result).toContain('alice')
+    expect(result).toContain('2025-')
   })
 })
 
@@ -182,10 +184,10 @@ describe('formatGoalsMarkdown', () => {
     expect(formatGoalsMarkdown([])).toBe('No goals found')
   })
 
-  it('formats goals as markdown list', async () => {
+  it('formats goals as markdown list with due date', async () => {
     const { formatGoalsMarkdown } = await import('../../../src/commands/goals.js')
     const result = formatGoalsMarkdown(sampleGoals)
-    expect(result).toContain('- **Ship v2** (g1) - 75% - @alice')
+    expect(result).toContain('- **Ship v2** (g1) - 75% - @alice - due 2025-')
     expect(result).toContain('- **Reduce bugs** (g2) - 50%')
   })
 })

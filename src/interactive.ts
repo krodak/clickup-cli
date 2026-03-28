@@ -92,6 +92,7 @@ export function formatTaskDetail(task: Task): string {
     ['Estimate', task.time_estimate ? formatDuration(task.time_estimate) : undefined],
     ['Tracked', task.time_spent ? formatDuration(task.time_spent) : undefined],
     ['Tags', task.tags?.length ? task.tags.map(t => t.name).join(', ') : undefined],
+    ['Lists', task.locations?.length ? task.locations.map(l => l.name).join(', ') : undefined],
     ['Parent', task.parent || undefined],
     ['URL', task.url],
   ]

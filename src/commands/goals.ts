@@ -4,12 +4,14 @@ import type { Config } from '../config.js'
 import type { Goal, KeyResult } from '../api.js'
 import { formatTable } from '../output.js'
 import type { Column } from '../output.js'
+import { formatDateISO } from '../date.js'
 
 interface GoalRow {
   name: string
   id: string
   progress: string
   owner: string
+  due_date: string
 }
 
 interface KeyResultRow {
@@ -32,6 +34,7 @@ const GOAL_COLUMNS: Column<GoalRow>[] = [
   { key: 'name', label: 'Name', maxWidth: 40 },
   { key: 'progress', label: 'Progress', maxWidth: 10, format: v => colorProgress(v) },
   { key: 'owner', label: 'Owner', maxWidth: 20 },
+  { key: 'due_date', label: 'Due', maxWidth: 12 },
 ]
 
 const KEY_RESULT_COLUMNS: Column<KeyResultRow>[] = [
@@ -109,6 +112,7 @@ export function formatGoals(goals: Goal[]): string {
     id: g.id,
     progress: `${Math.round(g.percent_completed * 100)}%`,
     owner: g.owner ? `@${g.owner.username}` : '',
+    due_date: g.due_date ? formatDateISO(g.due_date) : '',
   }))
   return formatTable(rows, GOAL_COLUMNS)
 }
@@ -119,7 +123,8 @@ export function formatGoalsMarkdown(goals: Goal[]): string {
     .map(g => {
       const pct = Math.round(g.percent_completed * 100)
       const owner = g.owner ? ` - @${g.owner.username}` : ''
-      return `- **${g.name}** (${g.id}) - ${pct}%${owner}`
+      const due = g.due_date ? ` - due ${formatDateISO(g.due_date)}` : ''
+      return `- **${g.name}** (${g.id}) - ${pct}%${owner}${due}`
     })
     .join('\n')
 }

@@ -6,6 +6,7 @@ import { formatTable } from '../output.js'
 import type { Column } from '../output.js'
 
 interface FieldRow {
+  id: string
   name: string
   type: string
   required: string
@@ -13,6 +14,7 @@ interface FieldRow {
 }
 
 const FIELD_COLUMNS: Column<FieldRow>[] = [
+  { key: 'id', label: 'ID', maxWidth: 20 },
   { key: 'name', label: 'Name', maxWidth: 30 },
   { key: 'type', label: 'Type', maxWidth: 15 },
   {
@@ -32,6 +34,7 @@ export async function listFields(config: Config, listId: string): Promise<Custom
 export function formatFields(fields: CustomFieldDefinition[]): string {
   if (fields.length === 0) return 'No custom fields'
   const rows: FieldRow[] = fields.map(f => ({
+    id: f.id,
     name: f.name,
     type: f.type,
     required: f.required ? 'yes' : 'no',
@@ -46,7 +49,7 @@ export function formatFieldsMarkdown(fields: CustomFieldDefinition[]): string {
     .map(f => {
       const options = f.type_config?.options?.map(o => o.name).join(', ')
       const optStr = options ? ` [${options}]` : ''
-      return `- **${f.name}** (${f.type})${f.required ? ' - required' : ''}${optStr}`
+      return `- **${f.name}** \`${f.id}\` (${f.type})${f.required ? ' - required' : ''}${optStr}`
     })
     .join('\n')
 }

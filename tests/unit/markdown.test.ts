@@ -88,10 +88,10 @@ describe('formatTasksMarkdown', () => {
 })
 
 describe('formatCommentsMarkdown', () => {
-  it('formats comments with user, date, and text', () => {
+  it('formats comments with user, formatted date, and text', () => {
     const comments: CommentSummary[] = [
-      { id: '1', user: 'alice', date: '2024-01-15', text: 'Hello world' },
-      { id: '2', user: 'bob', date: '2024-01-16', text: 'Goodbye' },
+      { id: '1', user: 'alice', date: '1705276800000', text: 'Hello world' },
+      { id: '2', user: 'bob', date: '1705363200000', text: 'Goodbye' },
     ]
     const result = formatCommentsMarkdown(comments)
     expect(result).toBe(

@@ -21,6 +21,9 @@ const taskWithFields = {
   name: 'Test Task',
   custom_fields: [
     { id: 'uuid-text', name: 'Notes', type: 'text', value: null, type_config: {} },
+    { id: 'uuid-short', name: 'Summary', type: 'short_text', value: null, type_config: {} },
+    { id: 'uuid-phone', name: 'Phone', type: 'phone', value: null, type_config: {} },
+    { id: 'uuid-currency', name: 'Budget', type: 'currency', value: null, type_config: {} },
     { id: 'uuid-num', name: 'Score', type: 'number', value: null, type_config: {} },
     {
       id: 'uuid-dd',
@@ -162,6 +165,27 @@ describe('setCustomField', () => {
     await expect(setCustomField(config, 'task1', {})).rejects.toThrow(
       'Provide at least one of: --set, --remove',
     )
+  })
+
+  it('sets a short_text field (pass-through string)', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Summary', 'quick note'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-short', 'quick note')
+    expect(results[0]!.value).toBe('quick note')
+  })
+
+  it('sets a phone field (pass-through string)', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Phone', '+1-555-0100'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-phone', '+1-555-0100')
+    expect(results[0]!.value).toBe('+1-555-0100')
+  })
+
+  it('sets a currency field (pass-through string)', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Budget', '5000'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-currency', '5000')
+    expect(results[0]!.value).toBe('5000')
   })
 
   it('throws on unsupported field type', async () => {

@@ -295,6 +295,7 @@ ${renderZshTopLevelCommands(name)}
             '1:query:' \\
             '--status[Filter by status]:status:(open "in progress" "in review" done closed)' \\
             '--include-closed[Include done/closed tasks in search]' \\
+            '--all[Search all workspace tasks, not just mine]' \\
             '--json[Force JSON output]'
           ;;
         summary)
@@ -305,6 +306,7 @@ ${renderZshTopLevelCommands(name)}
         overdue)
           _arguments \\
             '--include-closed[Include done/closed overdue tasks]' \\
+            '--all[Check all workspace tasks, not just mine]' \\
             '--json[Force JSON output]'
           ;;
         assign)

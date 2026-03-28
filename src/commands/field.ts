@@ -18,7 +18,18 @@ interface FieldResults {
   results: FieldResult[]
 }
 
-const SUPPORTED_TYPES = new Set(['text', 'number', 'drop_down', 'checkbox', 'date', 'url', 'email'])
+const SUPPORTED_TYPES = new Set([
+  'text',
+  'short_text',
+  'number',
+  'currency',
+  'phone',
+  'drop_down',
+  'checkbox',
+  'date',
+  'url',
+  'email',
+])
 
 function findFieldByName(fields: CustomField[], name: string): CustomField {
   const lower = name.toLowerCase()
