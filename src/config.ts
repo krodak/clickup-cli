@@ -227,7 +227,7 @@ export function loadConfig(profileName?: string): Config {
     }
   }
 
-  const multi = migrateToMultiProfile(parsed, path)
+  const multi = loadMultiProfileConfig()
 
   const resolvedProfile = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile
   if (!resolvedProfile) {

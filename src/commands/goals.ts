@@ -5,6 +5,7 @@ import type { Goal, KeyResult } from '../api.js'
 import { formatTable } from '../output.js'
 import type { Column } from '../output.js'
 import { formatDateISO } from '../date.js'
+import { parseDueDate } from './update.js'
 
 interface GoalRow {
   name: string
@@ -55,7 +56,12 @@ export async function createGoal(
   opts?: { description?: string; dueDate?: string; color?: string },
 ): Promise<Goal> {
   const client = new ClickUpClient(config)
-  return client.createGoal(config.teamId, name, opts)
+  const timezone = await client.getUserTimezone()
+  return client.createGoal(config.teamId, name, {
+    description: opts?.description,
+    color: opts?.color,
+    ...(opts?.dueDate ? { dueDate: parseDueDate(opts.dueDate, timezone) } : {}),
+  })
 }
 
 export async function updateGoal(

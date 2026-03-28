@@ -18,14 +18,51 @@ export function parsePriority(value: string): Priority {
   throw new Error('Priority must be urgent, high, normal, low, or 1-4')
 }
 
-export function parseDueDate(value: string): number {
+export function parseDueDate(value: string, timezone?: string): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error('Date must be in YYYY-MM-DD format')
   }
-  const parts = value.split('-')
-  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
-  if (isNaN(date.getTime())) throw new Error(`Invalid date: ${value}`)
-  return date.getTime()
+  const parts = value.split('-').map(Number)
+  const y = parts[0] as number
+  const m = parts[1] as number
+  const d = parts[2] as number
+
+  if (timezone) {
+    try {
+      const ms = dateToTimezoneMs(y, m, d, timezone)
+      if (!isNaN(ms)) return ms
+    } catch {
+      // Invalid timezone string — fall through to UTC midnight
+    }
+  }
+
+  const ms = Date.UTC(y, m - 1, d)
+  if (isNaN(ms)) throw new Error(`Invalid date: ${value}`)
+  return ms
+}
+
+function dateToTimezoneMs(year: number, month: number, day: number, timezone: string): number {
+  // Find the UTC epoch that corresponds to midnight on YYYY-MM-DD in the given IANA timezone.
+  // Step 1: treat the date as UTC midnight (approximate starting point).
+  const approxUtc = new Date(Date.UTC(year, month - 1, day))
+  // Step 2: express that UTC instant in the target timezone to find the TZ offset.
+  const tzStr = approxUtc.toLocaleString('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+  // Step 3: parse the TZ-local string as if it were UTC to get its epoch.
+  const tzDate = new Date(tzStr + ' UTC')
+  // Step 4: offset = approxUtc - tzDate.
+  // e.g. for UTC-4: approxUtc=00:00Z, tzDate=20:00Z (prev day) → offset=+4h
+  // Midnight in the TZ = approxUtc + offset (shifts UTC midnight forward by the tz offset).
+  const offset = approxUtc.getTime() - tzDate.getTime()
+  return approxUtc.getTime() + offset
 }
 
 export function parseAssigneeId(value: string): number {
@@ -74,7 +111,10 @@ export interface UpdateCommandOptions {
   unarchive?: boolean
 }
 
-export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
+export function buildUpdatePayload(
+  opts: UpdateCommandOptions,
+  timezone?: string,
+): UpdateTaskOptions {
   if (opts.archive && opts.unarchive) {
     throw new Error('Cannot use --archive and --unarchive together')
   }
@@ -93,12 +133,12 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
     if (opts.dueDate === 'none' || opts.dueDate === 'clear') {
       payload.due_date = null
     } else {
-      payload.due_date = parseDueDate(opts.dueDate)
+      payload.due_date = parseDueDate(opts.dueDate, timezone)
       payload.due_date_time = false
     }
   }
   if (opts.startDate !== undefined) {
-    payload.start_date = parseDueDate(opts.startDate)
+    payload.start_date = parseDueDate(opts.startDate, timezone)
     payload.start_date_time = false
   }
   if (opts.assignee !== undefined || opts.removeAssignee !== undefined) {
@@ -172,10 +212,11 @@ export async function updateTask(
 
   const client = new ClickUpClient(config)
 
-  if (options.status !== undefined) {
-    options.status = await resolveStatus(client, taskId, options.status)
+  const resolved: UpdateTaskOptions = { ...options }
+  if (resolved.status !== undefined) {
+    resolved.status = await resolveStatus(client, taskId, resolved.status)
   }
 
-  const task = await client.updateTask(taskId, options)
+  const task = await client.updateTask(taskId, resolved)
   return { id: task.id, name: task.name }
 }

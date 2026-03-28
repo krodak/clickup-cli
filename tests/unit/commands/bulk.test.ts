@@ -12,6 +12,7 @@ vi.mock('../../../src/api.js', () => ({
       getMe: mockGetMe,
       addTagToTask: mockAddTagToTask,
       removeTagFromTask: mockRemoveTagFromTask,
+      getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
 }))
@@ -131,7 +132,7 @@ describe('bulkDueDate', () => {
     const { bulkDueDate } = await import('../../../src/commands/bulk.js')
     const result = await bulkDueDate(mockConfig, '2025-06-15', ['t1', 't2'])
 
-    const expectedMs = new Date(2025, 5, 15).getTime()
+    const expectedMs = Date.UTC(2025, 5, 15)
     expect(mockUpdateTask).toHaveBeenCalledTimes(2)
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', {
       due_date: expectedMs,

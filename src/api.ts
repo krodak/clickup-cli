@@ -367,7 +367,7 @@ export function isCustomTaskId(id: string): boolean {
 export class ClickUpClient {
   private apiToken: string
   private teamId: string | undefined
-  private meCache: { id: number; username: string } | null = null
+  private meCache: { id: number; username: string; timezone?: string } | null = null
 
   constructor(config: ClientConfig) {
     this.apiToken = config.apiToken
@@ -429,15 +429,24 @@ export class ClickUpClient {
     return this._fetch(BASE_URL_V3, path, options)
   }
 
-  async getMe(): Promise<{ id: number; username: string }> {
+  async getMe(): Promise<{ id: number; username: string; timezone?: string }> {
     if (this.meCache) return this.meCache
-    const data = await this.request<{ user: { id: number; username: string } }>('/user')
+    const data = await this.request<{ user: { id: number; username: string; timezone?: string } }>(
+      '/user',
+    )
     const user = expectRecordField(data as Record<string, unknown>, 'user', 'user')
+    const timezone = typeof user.timezone === 'string' && user.timezone ? user.timezone : undefined
     this.meCache = {
       id: expectNumericField(user, 'id', 'user'),
       username: expectStringField(user, 'username', 'user'),
+      ...(timezone ? { timezone } : {}),
     }
     return this.meCache
+  }
+
+  async getUserTimezone(): Promise<string | undefined> {
+    const me = await this.getMe()
+    return me.timezone
   }
 
   private async paginate(buildPath: (page: number) => string): Promise<Task[]> {
@@ -653,7 +662,7 @@ export class ClickUpClient {
 
   async getView(viewId: string): Promise<View> {
     const data = await this.request<{ view: View }>(`/view/${viewId}`)
-    return data.view
+    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
   }
 
   async createListView(
@@ -664,7 +673,7 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify(payload),
     })
-    return data.view
+    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
   }
 
   async updateView(viewId: string, payload: Record<string, unknown>): Promise<View> {
@@ -672,7 +681,7 @@ export class ClickUpClient {
       method: 'PUT',
       body: JSON.stringify(payload),
     })
-    return data.view
+    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
   }
 
   async deleteView(viewId: string): Promise<void> {
@@ -1133,11 +1142,11 @@ export class ClickUpClient {
   async createGoal(
     teamId: string,
     name: string,
-    opts?: { description?: string; dueDate?: string; color?: string },
+    opts?: { description?: string; dueDate?: number; color?: string },
   ): Promise<Goal> {
     const body: Record<string, unknown> = { name, multiple_owners: true }
     if (opts?.description) body.description = opts.description
-    if (opts?.dueDate) body.due_date = Number(opts.dueDate)
+    if (opts?.dueDate != null) body.due_date = opts.dueDate
     if (opts?.color) body.color = opts.color
     const data = await this.request<{ goal: Goal }>(`/team/${teamId}/goal`, {
       method: 'POST',

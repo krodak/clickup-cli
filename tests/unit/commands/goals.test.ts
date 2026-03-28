@@ -20,6 +20,7 @@ vi.mock('../../../src/api.js', () => ({
       createKeyResult: mockCreateKeyResult,
       updateKeyResult: mockUpdateKeyResult,
       deleteKeyResult: mockDeleteKeyResult,
+      getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
 }))
@@ -96,7 +97,9 @@ describe('createGoal', () => {
     mockCreateGoal.mockResolvedValue(newGoal)
     const { createGoal } = await import('../../../src/commands/goals.js')
     await createGoal(mockConfig, 'Dated Goal', { dueDate: '2025-12-31' })
-    expect(mockCreateGoal).toHaveBeenCalledWith('team1', 'Dated Goal', { dueDate: '2025-12-31' })
+    expect(mockCreateGoal).toHaveBeenCalledWith('team1', 'Dated Goal', {
+      dueDate: Date.UTC(2025, 11, 31),
+    })
   })
 })
 

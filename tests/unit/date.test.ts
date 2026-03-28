@@ -58,18 +58,24 @@ describe('formatDuration', () => {
 })
 
 describe('formatDateISO', () => {
-  it('formats a timestamp as YYYY-MM-DD in local time', () => {
-    const ts = new Date(2025, 5, 15, 12, 0).getTime()
+  it('formats a UTC timestamp as YYYY-MM-DD', () => {
+    const ts = Date.UTC(2025, 5, 15)
     expect(formatDateISO(ts)).toBe('2025-06-15')
   })
 
   it('handles string input', () => {
-    const ts = String(new Date(2025, 0, 1, 12, 0).getTime())
+    const ts = String(Date.UTC(2025, 0, 1))
     expect(formatDateISO(ts)).toBe('2025-01-01')
   })
 
   it('pads single-digit months and days', () => {
-    const ts = new Date(2025, 2, 5, 12, 0).getTime()
+    const ts = Date.UTC(2025, 2, 5)
     expect(formatDateISO(ts)).toBe('2025-03-05')
+  })
+
+  it('is not affected by local machine timezone', () => {
+    // UTC midnight should always format as that date regardless of local TZ
+    const ts = Date.UTC(2025, 11, 31)
+    expect(formatDateISO(ts)).toBe('2025-12-31')
   })
 })

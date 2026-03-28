@@ -41,6 +41,8 @@ export async function createTask(
     return { id: task.id, name: task.name, url: task.url }
   }
 
+  const timezone = await client.getUserTimezone()
+
   const payload: CreateTaskOptions = {
     name: options.name,
     ...(options.description !== undefined ? { markdown_content: options.description } : {}),
@@ -52,11 +54,11 @@ export async function createTask(
     payload.priority = parsePriority(options.priority)
   }
   if (options.dueDate !== undefined) {
-    payload.due_date = parseDueDate(options.dueDate)
+    payload.due_date = parseDueDate(options.dueDate, timezone)
     payload.due_date_time = false
   }
   if (options.startDate !== undefined) {
-    payload.start_date = parseDueDate(options.startDate)
+    payload.start_date = parseDueDate(options.startDate, timezone)
     payload.start_date_time = false
   }
   if (options.assignee !== undefined) {
