@@ -408,7 +408,6 @@ export const commandMetadata = [
   {
     name: 'time',
     description: 'Track time on tasks',
-    flags: ['--all', '--days', '--task', '--space', '--list', '--assignee', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -530,7 +529,7 @@ export const commandMetadata = [
   {
     name: 'list-create',
     description: 'Create a new list in a space',
-    flags: ['--folder', '--json'],
+    flags: ['--folder', '--copy-statuses-from', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -593,6 +592,21 @@ export const commandMetadata = [
         section: 'write',
         usage: 'bulk status <status> <taskIds...>',
         description: 'Bulk update task status',
+      },
+      {
+        section: 'write',
+        usage: 'bulk assign <taskIds...>',
+        description: 'Bulk assign user to tasks',
+      },
+      {
+        section: 'write',
+        usage: 'bulk due-date <date> <taskIds...>',
+        description: 'Bulk set due date',
+      },
+      {
+        section: 'write',
+        usage: 'bulk tag <tag> <taskIds...>',
+        description: 'Bulk add/remove tag',
       },
     ],
   },

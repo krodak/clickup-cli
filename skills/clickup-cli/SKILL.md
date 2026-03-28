@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results, saved filters.'
 ---
 
 # ClickUp CLI (`cup`)
@@ -14,6 +14,21 @@ Config at `~/.config/cup/config.json` with named profiles. Each profile has `api
 Multiple profiles supported - use `cup profile add <name>` to create, `cup profile use <name>` to switch, or `-p <name>` flag for one-off overrides.
 
 Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set. `CU_PROFILE` selects a profile (overridden by `-p` flag).
+
+## Saved Filters (Quick Shortcuts)
+
+At the start of each session, run `cup filter list` to discover saved shortcuts for this workspace.
+
+| Command                                            | What it does                                                     |
+| -------------------------------------------------- | ---------------------------------------------------------------- |
+| `cup filter list [--json]`                         | List all saved shortcuts with commands and descriptions          |
+| `cup filter run <name>`                            | Execute a saved shortcut (identical to running the full command) |
+| `cup filter save <name> <cmd> [args...] [-d desc]` | Save a command shortcut                                          |
+| `cup filter delete <name>`                         | Remove a shortcut                                                |
+| `cup filter show <name> [--json]`                  | Show a single shortcut's details                                 |
+
+Example: `cup filter save sprint-tasks tasks --status "in progress" --list l1 -d "Current sprint tasks"`
+Then: `cup filter run sprint-tasks` is equivalent to `cup tasks --status "in progress" --list l1`
 
 ## Output Modes
 
@@ -89,6 +104,9 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup delete <id> [--confirm]`                                                                                                                                                                                                                     | Delete task (DESTRUCTIVE)                    |
 | `cup duplicate <taskId>`                                                                                                                                                                                                                          | Duplicate a task                             |
 | `cup bulk status <status> <taskIds...>`                                                                                                                                                                                                           | Bulk update status                           |
+| `cup bulk assign <taskIds...> [--to userId\|me] [--remove userId\|me]`                                                                                                                                                                            | Bulk assign/unassign user from tasks         |
+| `cup bulk due-date <date\|none\|clear> <taskIds...>`                                                                                                                                                                                              | Bulk set or clear due dates                  |
+| `cup bulk tag <tagName> <taskIds...> [--add] [--remove]`                                                                                                                                                                                          | Bulk add/remove tag from tasks               |
 | `cup checklist view <id>`                                                                                                                                                                                                                         | View checklists on a task                    |
 | `cup checklist create <id> <name>`                                                                                                                                                                                                                | Create a checklist                           |
 | `cup checklist delete <checklistId>`                                                                                                                                                                                                              | Delete a checklist                           |
@@ -99,7 +117,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup time stop`                                                                                                                                                                                                                                   | Stop running timer                           |
 | `cup time status`                                                                                                                                                                                                                                 | Show running timer                           |
 | `cup time log <taskId> <duration> [-d desc]`                                                                                                                                                                                                      | Log manual entry (e.g. "2h", "30m")          |
-| `cup time list [--days n] [--task id]`                                                                                                                                                                                                            | List recent time entries                     |
+| `cup time list [--days n] [--task id] [--all]`                                                                                                                                                                                                    | List my recent time entries (--all for team) |
 | `cup time update <timeEntryId> [-d desc] [--duration dur]`                                                                                                                                                                                        | Update time entry                            |
 | `cup time delete <timeEntryId>`                                                                                                                                                                                                                   | Delete time entry                            |
 | `cup goal-create <name> [-d desc] [--color hex]`                                                                                                                                                                                                  | Create a goal                                |
@@ -114,7 +132,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-delete <docId>`                                                                                                                                                                                                                          | Delete a doc                                 |
 | `cup doc-page-delete <docId> <pageId>`                                                                                                                                                                                                            | Delete doc page                              |
 | `cup space-create <name>`                                                                                                                                                                                                                         | Create a space                               |
-| `cup list-create <spaceId> <name> [--folder folderId]`                                                                                                                                                                                            | Create a list in a space or folder           |
+| `cup list-create <spaceId> <name> [--folder folderId] [--copy-statuses-from id]`                                                                                                                                                                  | Create a list in a space or folder           |
 | `cup folder-create <spaceId> <name>`                                                                                                                                                                                                              | Create a folder in a space                   |
 | `cup tag-create <spaceId> <name> [--fg color] [--bg color]`                                                                                                                                                                                       | Create space tag                             |
 | `cup tag-update <spaceId> <tagName> --name <newName> [--fg c] [--bg c]`                                                                                                                                                                           | Update space tag                             |

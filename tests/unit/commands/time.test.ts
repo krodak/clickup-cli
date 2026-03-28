@@ -7,6 +7,7 @@ const mockCreateTimeEntry = vi.fn()
 const mockGetTimeEntries = vi.fn()
 const mockUpdateTimeEntry = vi.fn()
 const mockDeleteTimeEntry = vi.fn()
+const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'testuser' })
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -18,6 +19,7 @@ vi.mock('../../../src/api.js', () => ({
       getTimeEntries: mockGetTimeEntries,
       updateTimeEntry: mockUpdateTimeEntry,
       deleteTimeEntry: mockDeleteTimeEntry,
+      getMe: mockGetMe,
     }
   }),
 }))
@@ -123,6 +125,7 @@ describe('logTime', () => {
 describe('listTimeEntries', () => {
   beforeEach(() => {
     mockGetTimeEntries.mockClear()
+    mockGetMe.mockClear()
   })
 
   it('calls getTimeEntries with date range', async () => {
@@ -178,6 +181,40 @@ describe('listTimeEntries', () => {
     expect(mockGetTimeEntries).toHaveBeenCalledWith(
       'tm_1',
       expect.objectContaining({ assigneeId: '42' }),
+    )
+  })
+
+  it('calls getMe and passes assigneeId when --all is not set', async () => {
+    mockGetTimeEntries.mockResolvedValue([])
+    mockGetMe.mockResolvedValue({ id: 42, username: 'me' })
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config)
+    expect(mockGetMe).toHaveBeenCalled()
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.objectContaining({ assigneeId: '42' }),
+    )
+  })
+
+  it('does not call getMe when --all is set', async () => {
+    mockGetTimeEntries.mockResolvedValue([])
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config, { all: true })
+    expect(mockGetMe).not.toHaveBeenCalled()
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.not.objectContaining({ assigneeId: expect.anything() }),
+    )
+  })
+
+  it('does not call getMe when explicit assigneeId is provided', async () => {
+    mockGetTimeEntries.mockResolvedValue([])
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config, { assigneeId: '99' })
+    expect(mockGetMe).not.toHaveBeenCalled()
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.objectContaining({ assigneeId: '99' }),
     )
   })
 })

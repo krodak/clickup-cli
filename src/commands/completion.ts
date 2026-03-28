@@ -127,7 +127,7 @@ ${renderBashCommandCases()}
       ;;
     bulk)
       if [[ $cword -eq 2 ]]; then
-        COMPREPLY=($(compgen -W "status" -- "$cur"))
+        COMPREPLY=($(compgen -W "status assign due-date tag" -- "$cur"))
       fi
       ;;
     profile)
@@ -567,6 +567,9 @@ ${renderZshTopLevelCommands(name)}
           local -a bulk_cmds
           bulk_cmds=(
             'status:Update status of multiple tasks'
+            'assign:Bulk assign or unassign a user from tasks'
+            'due-date:Bulk set due date on tasks'
+            'tag:Bulk add or remove a tag on tasks'
           )
           _arguments -C \\
             '1:bulk command:->bulk_cmd' \\
@@ -579,6 +582,15 @@ ${renderZshTopLevelCommands(name)}
               case $words[1] in
                 status)
                   _arguments '1:status:' '*:task_ids:' '--json[Force JSON output]'
+                  ;;
+                assign)
+                  _arguments '*:task_ids:' '--to[Add user (ID or me)]:userId:' '--remove[Remove user (ID or me)]:userId:' '--json[Force JSON output]'
+                  ;;
+                due-date)
+                  _arguments '1:date:' '*:task_ids:' '--json[Force JSON output]'
+                  ;;
+                tag)
+                  _arguments '1:tagName:' '*:task_ids:' '--add[Add tag]' '--remove[Remove tag]' '--json[Force JSON output]'
                   ;;
               esac
               ;;
@@ -724,6 +736,7 @@ ${renderZshTopLevelCommands(name)}
             '1:space_id:' \\
             '2:name:' \\
             '--folder[Create inside a folder]:folder_id:' \\
+            '--copy-statuses-from[Copy statuses from list or space]:id:' \\
             '--json[Force JSON output]'
           ;;
         folder-create)
@@ -903,8 +916,15 @@ complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subc
 
 complete -c ${name} -n '__fish_seen_subcommand_from attach' -F
 
-complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status' -a status -d 'Update status of multiple tasks'
-complete -c ${name} -n '__fish_seen_subcommand_from status; and __fish_seen_subcommand_from bulk' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status assign due-date tag' -a status -d 'Update status of multiple tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status assign due-date tag' -a assign -d 'Bulk assign or unassign a user from tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status assign due-date tag' -a due-date -d 'Bulk set due date on tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from bulk; and not __fish_seen_subcommand_from status assign due-date tag' -a tag -d 'Bulk add or remove a tag on tasks'
+complete -c ${name} -n '__fish_seen_subcommand_from status assign due-date tag; and __fish_seen_subcommand_from bulk' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from assign; and __fish_seen_subcommand_from bulk' -l to -d 'Add user (ID or me)'
+complete -c ${name} -n '__fish_seen_subcommand_from assign; and __fish_seen_subcommand_from bulk' -l remove -d 'Remove user (ID or me)'
+complete -c ${name} -n '__fish_seen_subcommand_from tag; and __fish_seen_subcommand_from bulk' -l add -d 'Add tag'
+complete -c ${name} -n '__fish_seen_subcommand_from tag; and __fish_seen_subcommand_from bulk' -l remove -d 'Remove tag'
 
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a list -d 'List all profiles'
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a add -d 'Add a new profile'
@@ -918,6 +938,14 @@ complete -c ${name} -n '__fish_seen_subcommand_from config; and not __fish_seen_
 complete -c ${name} -n '__fish_seen_subcommand_from get set' -a 'apiToken teamId sprintFolderId' -d 'Config key'
 
 complete -c ${name} -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish' -d 'Shell type'
+
+complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a save -d 'Save a command shortcut'
+complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a run -d 'Run a saved shortcut'
+complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a list -d 'List saved shortcuts'
+complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a delete -d 'Delete a saved shortcut'
+complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a show -d 'Show details of a saved shortcut'
+complete -c ${name} -n '__fish_seen_subcommand_from save run list delete show; and __fish_seen_subcommand_from filter' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from save; and __fish_seen_subcommand_from filter' -s d -l description -d 'Filter description'
 `
 }
 
