@@ -126,6 +126,13 @@ describe('runFilter', () => {
     expect(process.exitCode).toBe(1)
     process.exitCode = 0
   })
+
+  it('throws when spawnSync reports a spawn error', async () => {
+    const spawnError = new Error('ENOENT')
+    mockSpawnSync.mockReturnValue({ status: null, error: spawnError })
+    const { runFilter } = await import('../../../src/commands/filter.js')
+    expect(() => runFilter('my-filter', { command: ['tasks'] })).toThrow('ENOENT')
+  })
 })
 
 describe('getFilters', () => {

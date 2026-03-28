@@ -36,6 +36,7 @@ export function runFilter(name: string, entry: FilterEntry): void {
   const result = spawnSync(process.execPath, [process.argv[1]!, ...entry.command], {
     stdio: 'inherit',
   })
+  if (result.error) throw result.error
   if (result.status !== null && result.status !== 0) {
     process.exitCode = result.status
   }
