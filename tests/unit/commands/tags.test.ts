@@ -55,13 +55,22 @@ describe('formatTagsMarkdown', () => {
     expect(formatTagsMarkdown([])).toBe('No tags found')
   })
 
-  it('formats tags as markdown list', async () => {
+  it('formats tags as markdown list with colors', async () => {
     const { formatTagsMarkdown } = await import('../../../src/commands/tags.js')
     const result = formatTagsMarkdown([
       { name: 'bug', tag_fg: '#fff', tag_bg: '#f00' },
       { name: 'feature', tag_fg: '#fff', tag_bg: '#0f0' },
     ])
-    expect(result).toBe('- bug\n- feature')
+    expect(result).toContain('- bug')
+    expect(result).toContain('- feature')
+    expect(result).toContain('#f00')
+    expect(result).toContain('#0f0')
+  })
+
+  it('formats tags without colors when none set', async () => {
+    const { formatTagsMarkdown } = await import('../../../src/commands/tags.js')
+    const result = formatTagsMarkdown([{ name: 'plain', tag_fg: '', tag_bg: '' }])
+    expect(result).toBe('- plain')
   })
 })
 

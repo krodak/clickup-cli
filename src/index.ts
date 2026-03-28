@@ -293,19 +293,33 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             opts.assignee = String(await resolveAssigneeId(client, 'me'))
           }
           const payload = buildUpdatePayload(opts)
-          const result = await updateTask(config, taskId, payload)
-          if (opts.field?.length) {
-            if (opts.field.length % 2 !== 0) {
+          const hasFields = (opts.field?.length ?? 0) > 0
+          if (!hasFields && Object.keys(payload).length === 0) {
+            throw new Error(
+              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent, --archive, --unarchive, --field',
+            )
+          }
+          let result: { id: string; name: string } | undefined
+          if (Object.keys(payload).length > 0) {
+            result = await updateTask(config, taskId, payload)
+          }
+          if (hasFields) {
+            if ((opts.field?.length ?? 0) % 2 !== 0) {
               throw new Error('--field requires pairs: --field "Name" value')
             }
-            for (let i = 0; i < opts.field.length; i += 2) {
-              await setCustomField(config, taskId, { set: [opts.field[i]!, opts.field[i + 1]!] })
+            for (let i = 0; i < (opts.field?.length ?? 0); i += 2) {
+              await setCustomField(config, taskId, { set: [opts.field![i]!, opts.field![i + 1]!] })
+            }
+            if (!result) {
+              const client = new ClickUpClient(config)
+              const task = await client.getTask(taskId)
+              result = { id: task.id, name: task.name }
             }
           }
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else {
-            console.log(formatUpdateConfirmation(result.id, result.name))
+            console.log(formatUpdateConfirmation(result!.id, result!.name))
           }
         },
       ),
@@ -441,7 +455,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('comment-edit <commentId>')
     .description('Edit an existing comment')
-    .requiredOption('-m, --message <text>', 'New comment text')
+    .option('-m, --message <text>', 'New comment text')
     .option('--resolved', 'Mark comment as resolved')
     .option('--unresolved', 'Mark comment as unresolved')
     .option('--json', 'Force JSON output even in terminal')
@@ -449,7 +463,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           commentId: string,
-          opts: { message: string; resolved?: boolean; unresolved?: boolean; json?: boolean },
+          opts: { message?: string; resolved?: boolean; unresolved?: boolean; json?: boolean },
         ) => {
           const config = loadConfig(getProfileName())
           let resolved: boolean | undefined

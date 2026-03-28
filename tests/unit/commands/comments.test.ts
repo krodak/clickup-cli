@@ -104,6 +104,7 @@ describe('printComments', () => {
     expect(output).toContain('First comment')
     expect(output).toContain('---')
     expect(output).not.toContain('"id"')
+    expect(output).not.toContain('1700000000000')
   })
 
   it('outputs JSON when forceJson is true', async () => {

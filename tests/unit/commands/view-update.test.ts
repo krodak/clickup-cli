@@ -49,4 +49,9 @@ describe('updateView', () => {
       'name cannot be empty',
     )
   })
+
+  it('throws when no options provided', async () => {
+    const { updateView } = await import('../../../src/commands/view-update.js')
+    await expect(updateView(mockConfig, 'v1', {})).rejects.toThrow('Provide at least one of')
+  })
 })

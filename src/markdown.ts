@@ -40,7 +40,9 @@ export function formatTasksMarkdown(tasks: TaskSummary[]): string {
 
 export function formatCommentsMarkdown(comments: CommentSummary[]): string {
   if (comments.length === 0) return 'No comments found.'
-  return comments.map(c => `**${c.user}** (${c.date})\n\n${c.text}`).join('\n\n---\n\n')
+  return comments
+    .map(c => `**${c.user}** (${formatDateISO(c.date)})\n\n${c.text}`)
+    .join('\n\n---\n\n')
 }
 
 const LIST_MD_COLUMNS: MarkdownColumn<ListSummary>[] = [
@@ -104,6 +106,12 @@ export function formatTaskDetailMarkdown(task: Task): string {
       task.time_spent != null && task.time_spent > 0 ? formatDuration(task.time_spent) : undefined,
     ],
     ['Tags', task.tags && task.tags.length > 0 ? task.tags.map(t => t.name).join(', ') : undefined],
+    [
+      'Lists',
+      task.locations && task.locations.length > 0
+        ? task.locations.map(l => l.name).join(', ')
+        : undefined,
+    ],
     ['Created', task.date_created ? formatDateISO(task.date_created) : undefined],
     ['Updated', task.date_updated ? formatDateISO(task.date_updated) : undefined],
   ]

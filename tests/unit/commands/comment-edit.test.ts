@@ -46,4 +46,17 @@ describe('editComment', () => {
       'empty',
     )
   })
+
+  it('resolves when only resolved flag is provided (no message)', async () => {
+    const { editComment } = await import('../../../src/commands/comment-edit.js')
+    await editComment({ apiToken: 'pk_t', teamId: 'team1' }, 'c1', undefined, true)
+    expect(mockUpdateComment).toHaveBeenCalledWith('c1', '', true)
+  })
+
+  it('throws when neither message nor resolved flag provided', async () => {
+    const { editComment } = await import('../../../src/commands/comment-edit.js')
+    await expect(
+      editComment({ apiToken: 'pk_t', teamId: 'team1' }, 'c1', undefined, undefined),
+    ).rejects.toThrow('Provide at least one of')
+  })
 })

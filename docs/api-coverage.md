@@ -31,7 +31,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 | Feature          | Command                  | Status             |
 | ---------------- | ------------------------ | ------------------ |
-| Add task to list | `cup move <id> --add`    | :white_check_mark: |
+| Add task to list | `cup move <id> --to`     | :white_check_mark: |
 | Remove from list | `cup move <id> --remove` | :white_check_mark: |
 
 ## Sprints & Planning

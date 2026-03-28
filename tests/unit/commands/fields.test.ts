@@ -48,9 +48,11 @@ describe('formatFields', () => {
     expect(formatFields([])).toBe('No custom fields')
   })
 
-  it('formats fields with name, type, and options', async () => {
+  it('formats fields with id, name, type, and options', async () => {
     const { formatFields } = await import('../../../src/commands/fields.js')
     const result = formatFields(sampleFields)
+    expect(result).toContain('f1')
+    expect(result).toContain('f2')
     expect(result).toContain('Priority Level')
     expect(result).toContain('Notes')
     expect(result).toContain('Low')
@@ -64,10 +66,10 @@ describe('formatFieldsMarkdown', () => {
     expect(formatFieldsMarkdown([])).toBe('No custom fields')
   })
 
-  it('formats fields as markdown list', async () => {
+  it('formats fields as markdown list with id', async () => {
     const { formatFieldsMarkdown } = await import('../../../src/commands/fields.js')
     const result = formatFieldsMarkdown(sampleFields)
-    expect(result).toContain('- **Priority Level** (drop_down) - required [Low, High]')
-    expect(result).toContain('- **Notes** (text)')
+    expect(result).toContain('- **Priority Level** `f1` (drop_down) - required [Low, High]')
+    expect(result).toContain('- **Notes** `f2` (text)')
   })
 })

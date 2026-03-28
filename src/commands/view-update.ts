@@ -21,6 +21,9 @@ export async function updateView(
   viewId: string,
   opts: ViewUpdateOptions,
 ): Promise<View> {
+  if (opts.name === undefined && opts.groupBy === undefined) {
+    throw new Error('Provide at least one of: --name, --group-by')
+  }
   if (opts.name !== undefined && !opts.name.trim()) {
     throw new Error('View name cannot be empty')
   }
