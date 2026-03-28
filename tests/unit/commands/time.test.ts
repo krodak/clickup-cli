@@ -150,6 +150,36 @@ describe('listTimeEntries', () => {
       expect.objectContaining({ taskId: 't1' }),
     )
   })
+
+  it('passes spaceId filter', async () => {
+    mockGetTimeEntries.mockResolvedValue([baseEntry])
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config, { spaceId: 's1' })
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.objectContaining({ spaceId: 's1' }),
+    )
+  })
+
+  it('passes listId filter', async () => {
+    mockGetTimeEntries.mockResolvedValue([baseEntry])
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config, { listId: 'l1' })
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.objectContaining({ listId: 'l1' }),
+    )
+  })
+
+  it('passes assigneeId filter', async () => {
+    mockGetTimeEntries.mockResolvedValue([baseEntry])
+    const { listTimeEntries } = await import('../../../src/commands/time.js')
+    await listTimeEntries(config, { assigneeId: '42' })
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(
+      'tm_1',
+      expect.objectContaining({ assigneeId: '42' }),
+    )
+  })
 })
 
 describe('formatTimeEntries', () => {

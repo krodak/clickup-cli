@@ -51,11 +51,14 @@ export async function updateSpaceTag(
   config: Config,
   spaceId: string,
   tagName: string,
-  updates: { name: string; fg?: string; bg?: string },
+  updates: { name?: string; fg?: string; bg?: string },
 ): Promise<void> {
+  if (!updates.name && !updates.fg && !updates.bg) {
+    throw new Error('Provide at least one of: --name, --fg, --bg')
+  }
   const client = new ClickUpClient(config)
   await client.updateSpaceTag(spaceId, tagName, {
-    name: updates.name,
+    name: updates.name ?? tagName,
     tag_fg: updates.fg,
     tag_bg: updates.bg,
   })

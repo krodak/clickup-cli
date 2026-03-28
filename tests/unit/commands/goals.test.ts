@@ -90,6 +90,14 @@ describe('createGoal', () => {
     expect(result).toEqual(newGoal)
     expect(mockCreateGoal).toHaveBeenCalledWith('team1', 'New Goal', { description: 'A goal' })
   })
+
+  it('creates a goal with due date', async () => {
+    const newGoal = { id: 'g4', name: 'Dated Goal' }
+    mockCreateGoal.mockResolvedValue(newGoal)
+    const { createGoal } = await import('../../../src/commands/goals.js')
+    await createGoal(mockConfig, 'Dated Goal', { dueDate: '2025-12-31' })
+    expect(mockCreateGoal).toHaveBeenCalledWith('team1', 'Dated Goal', { dueDate: '2025-12-31' })
+  })
 })
 
 describe('updateGoal', () => {

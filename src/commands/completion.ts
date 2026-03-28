@@ -198,10 +198,12 @@ ${renderZshTopLevelCommands(name)}
             '(-d --description)'{-d,--description}'[New description]:text:' \\
             '(-s --status)'{-s,--status}'[New status]:status:(open "in progress" "in review" done closed)' \\
             '--priority[Priority level]:priority:(urgent high normal low)' \\
-            '--due-date[Due date]:date:' \\
+            '--due-date[Due date (YYYY-MM-DD or "none" to clear)]:date:' \\
+            '--start-date[Start date]:date:' \\
             '--time-estimate[Time estimate]:duration:' \\
             '--assignee[Add assignee]:user_id:' \\
             '--parent[Set parent task]:task_id:' \\
+            '--detach[Remove parent task]' \\
             '--archive[Archive the task]' \\
             '--unarchive[Unarchive the task]' \\
             '--field[Set custom field]:field_name_and_value:' \\

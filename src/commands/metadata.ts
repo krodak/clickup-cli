@@ -68,9 +68,11 @@ export const commandMetadata = [
       '--status',
       '--priority',
       '--due-date',
+      '--start-date',
       '--time-estimate',
       '--assignee',
       '--parent',
+      '--detach',
       '--archive',
       '--unarchive',
       '--field',
@@ -94,6 +96,7 @@ export const commandMetadata = [
       '--status',
       '--priority',
       '--due-date',
+      '--start-date',
       '--assignee',
       '--tags',
       '--custom-item-id',
@@ -598,7 +601,7 @@ export const commandMetadata = [
   {
     name: 'goal-create',
     description: 'Create a goal',
-    flags: ['-d', '--description', '--color', '--json'],
+    flags: ['-d', '--description', '--color', '--due-date', '--json'],
     quickReference: [
       { section: 'write', usage: 'goal-create <name>', description: 'Create a goal' },
     ],
@@ -711,10 +714,14 @@ export const commandMetadata = [
   },
   {
     name: 'views',
-    description: 'List views on a list',
-    flags: ['--json'],
+    description: 'List views on a list, space, folder, or workspace',
+    flags: ['--space', '--folder', '--workspace', '--json'],
     quickReference: [
-      { section: 'read', usage: 'views <listId>', description: 'List views on a list' },
+      {
+        section: 'read',
+        usage: 'views <id>',
+        description: 'List views on a list, space, folder, or workspace',
+      },
     ],
   },
   {

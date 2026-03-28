@@ -127,6 +127,22 @@ describe('createTask', () => {
     )
   })
 
+  it('passes start date to API as unix timestamp', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Task', startDate: '2025-06-01' },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({
+        name: 'Task',
+        start_date: new Date(2025, 5, 1).getTime(),
+        start_date_time: false,
+      }),
+    )
+  })
+
   it('passes assignee to API as numeric array', async () => {
     const { createTask } = await import('../../../src/commands/create.js')
     await createTask(

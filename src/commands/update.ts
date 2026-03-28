@@ -64,9 +64,11 @@ export interface UpdateCommandOptions {
   status?: string
   priority?: string
   dueDate?: string
+  startDate?: string
   assignee?: string
   timeEstimate?: string
   parent?: string
+  detach?: boolean
   archive?: boolean
   unarchive?: boolean
 }
@@ -74,6 +76,9 @@ export interface UpdateCommandOptions {
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
   if (opts.archive && opts.unarchive) {
     throw new Error('Cannot use --archive and --unarchive together')
+  }
+  if (opts.parent !== undefined && opts.detach) {
+    throw new Error('Cannot use --parent and --detach together')
   }
   const payload: UpdateTaskOptions = {}
   if (opts.name !== undefined) {
@@ -84,8 +89,16 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
   if (opts.status !== undefined) payload.status = opts.status
   if (opts.priority !== undefined) payload.priority = parsePriority(opts.priority)
   if (opts.dueDate !== undefined) {
-    payload.due_date = parseDueDate(opts.dueDate)
-    payload.due_date_time = false
+    if (opts.dueDate === 'none' || opts.dueDate === 'clear') {
+      payload.due_date = null
+    } else {
+      payload.due_date = parseDueDate(opts.dueDate)
+      payload.due_date_time = false
+    }
+  }
+  if (opts.startDate !== undefined) {
+    payload.start_date = parseDueDate(opts.startDate)
+    payload.start_date_time = false
   }
   if (opts.assignee !== undefined) {
     payload.assignees = { add: [parseAssigneeId(opts.assignee)] }
@@ -93,7 +106,11 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
   if (opts.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
   }
-  if (opts.parent !== undefined) payload.parent = opts.parent
+  if (opts.detach) {
+    payload.parent = null
+  } else if (opts.parent !== undefined) {
+    payload.parent = opts.parent
+  }
   if (opts.archive) payload.archived = true
   if (opts.unarchive) payload.archived = false
   return payload
@@ -107,6 +124,7 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.status !== undefined ||
     options.priority !== undefined ||
     options.due_date !== undefined ||
+    options.start_date !== undefined ||
     options.time_estimate !== undefined ||
     options.assignees !== undefined ||
     options.parent !== undefined ||
@@ -142,7 +160,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options))
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent, --archive, --unarchive',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --parent, --detach, --archive, --unarchive',
     )
 
   const client = new ClickUpClient(config)
