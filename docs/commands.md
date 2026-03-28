@@ -102,7 +102,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup bulk status <status> <taskIds...>` | Bulk update task status                           |
 | `cup bulk assign <taskIds...>`          | Bulk assign user to tasks                         |
 | `cup bulk due-date <date> <taskIds...>` | Bulk set due date                                 |
-| `cup bulk tag <tag> <taskIds...>`       | Bulk add/remove tag                               |
+| `cup bulk tag <tagName> <taskIds...>`   | Bulk add/remove tag                               |
 | `cup goal-create <name>`                | Create a goal                                     |
 | `cup goal-update <goalId>`              | Update a goal                                     |
 | `cup goal-delete <goalId>`              | Delete a goal                                     |
