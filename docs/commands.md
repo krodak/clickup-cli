@@ -100,6 +100,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup field-create <name>`               | Create a custom field in your workspace           |
 | `cup duplicate <taskId>`                | Duplicate a task                                  |
 | `cup bulk status <status> <taskIds...>` | Bulk update task status                           |
+| `cup bulk assign <taskIds...>`          | Bulk assign user to tasks                         |
+| `cup bulk due-date <date> <taskIds...>` | Bulk set due date                                 |
+| `cup bulk tag <tag> <taskIds...>`       | Bulk add/remove tag                               |
 | `cup goal-create <name>`                | Create a goal                                     |
 | `cup goal-update <goalId>`              | Update a goal                                     |
 | `cup goal-delete <goalId>`              | Delete a goal                                     |
@@ -809,10 +812,13 @@ cup time log abc123 1h30m --json
 
 ### `cup time list`
 
-List recent time entries. Defaults to the last 7 days for the authenticated user.
+List recent time entries. Defaults to the current user's entries (last 7 days). Use `--all` to show all team entries.
+
+**Breaking change:** previously returned all team entries by default. Now returns only the authenticated user's entries unless `--all` is passed.
 
 ```bash
 cup time list
+cup time list --all           # all team entries
 cup time list --days 14
 cup time list --task abc123
 cup time list --space <spaceId>
@@ -821,14 +827,15 @@ cup time list --assignee <userId>
 cup time list --days 7 --json
 ```
 
-| Flag                  | Required | Description                              |
-| --------------------- | -------- | ---------------------------------------- |
-| `--days <n>`          | no       | Number of days to look back (default: 7) |
-| `--task <taskId>`     | no       | Filter entries by task ID                |
-| `--space <spaceId>`   | no       | Filter entries by space ID               |
-| `--list <listId>`     | no       | Filter entries by list ID                |
-| `--assignee <userId>` | no       | Filter entries by assignee user ID       |
-| `--json`              | no       | Force JSON output                        |
+| Flag                  | Required | Description                                |
+| --------------------- | -------- | ------------------------------------------ |
+| `--days <n>`          | no       | Number of days to look back (default: 7)   |
+| `--task <taskId>`     | no       | Filter entries by task ID                  |
+| `--space <spaceId>`   | no       | Filter entries by space ID                 |
+| `--list <listId>`     | no       | Filter entries by list ID                  |
+| `--assignee <userId>` | no       | Filter entries by assignee user ID         |
+| `--all`               | no       | Show all team entries (default: only mine) |
+| `--json`              | no       | Force JSON output                          |
 
 ### `cup time update <timeEntryId>`
 
@@ -887,18 +894,21 @@ cup space-create "Design" --json
 
 ### `cup list-create <spaceId> <name>`
 
-Create a new list in a space. Optionally create it inside a folder with `--folder`.
+Create a new list in a space. Optionally create it inside a folder with `--folder`. Use `--copy-statuses-from` to copy the status set from an existing list or space.
 
 ```bash
 cup list-create <spaceId> "Backlog"
 cup list-create <spaceId> "Sprint 1" --folder <folderId>
 cup list-create <spaceId> "Tasks" --json
+cup list-create <spaceId> "Sprint 5" --copy-statuses-from <existingListId>
+cup list-create <spaceId> "New List" --copy-statuses-from <spaceId>
 ```
 
-| Flag                  | Required | Description                     |
-| --------------------- | -------- | ------------------------------- |
-| `--folder <folderId>` | no       | Create the list inside a folder |
-| `--json`              | no       | Force JSON output               |
+| Flag                        | Required | Description                                |
+| --------------------------- | -------- | ------------------------------------------ |
+| `--folder <folderId>`       | no       | Create the list inside a folder            |
+| `--copy-statuses-from <id>` | no       | Copy status set from this list or space ID |
+| `--json`                    | no       | Force JSON output                          |
 
 ### `cup folder-create <spaceId> <name>`
 
@@ -1068,6 +1078,52 @@ cup bulk status "in progress" t1 t2 --json
 | Flag     | Required | Description       |
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
+
+### `cup bulk assign <taskIds...>`
+
+Bulk assign or unassign a user from multiple tasks. Use `--to` to add a user and `--remove` to unassign. Failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk assign t1 t2 t3 --to 12345
+cup bulk assign t1 t2 --to me
+cup bulk assign t1 t2 t3 --remove 12345 --json
+```
+
+| Flag                | Required | Description                        |
+| ------------------- | -------- | ---------------------------------- |
+| `--to <userId>`     | one of   | Add this user (user ID or "me")    |
+| `--remove <userId>` | one of   | Remove this user (user ID or "me") |
+| `--json`            | no       | Force JSON output                  |
+
+### `cup bulk due-date <date> <taskIds...>`
+
+Bulk set or clear the due date on multiple tasks. Use `none` or `clear` to remove due dates. Failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk due-date 2025-12-31 t1 t2 t3
+cup bulk due-date none t1 t2
+cup bulk due-date clear t1 t2 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup bulk tag <tagName> <taskIds...>`
+
+Bulk add or remove a tag from multiple tasks. Defaults to adding; use `--remove` to remove the tag. Failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk tag bug t1 t2 t3
+cup bulk tag bug t1 t2 --remove
+cup bulk tag frontend t1 t2 --add --json
+```
+
+| Flag       | Required | Description                  |
+| ---------- | -------- | ---------------------------- |
+| `--add`    | no       | Add tag (default behavior)   |
+| `--remove` | no       | Remove tag instead of adding |
+| `--json`   | no       | Force JSON output            |
 
 ### `cup goals`
 
@@ -1355,6 +1411,76 @@ In TTY mode without `--confirm`: shows the view name and prompts for confirmatio
 | ----------- | -------- | ----------------------------------------------------------- |
 | `--confirm` | no       | Skip confirmation prompt (required in non-interactive mode) |
 | `--json`    | no       | Force JSON output                                           |
+
+---
+
+## Saved Filters
+
+Saved filters let you store frequently used `cup` commands under a short name and re-run them with `cup filter run <name>`. Filters are stored per-profile in `~/.config/cup/config.json`.
+
+### `cup filter save <name> [args...]`
+
+Save a command as a named shortcut.
+
+```bash
+cup filter save sprint-tasks tasks --status "in progress" --list l1 -d "Current sprint tasks"
+cup filter save my-overdue overdue
+cup filter save standup summary --hours 24
+```
+
+| Flag                | Required | Description                |
+| ------------------- | -------- | -------------------------- |
+| `-d, --description` | no       | Description for the filter |
+| `--json`            | no       | Force JSON output          |
+
+Allowed commands: `tasks`, `search`, `sprint`, `assigned`, `overdue`, `inbox`, `summary`, `views`, `lists`, `spaces`, `folders`, `members`, `tags`, `goals`, `key-results`, `task-types`, `templates`, `list-templates`, `folder-templates`, `docs`, `time list`.
+
+### `cup filter run <name>`
+
+Execute a saved shortcut. Equivalent to running the full command directly.
+
+```bash
+cup filter run sprint-tasks
+cup filter run my-overdue
+```
+
+### `cup filter list`
+
+List all saved shortcuts for the active profile.
+
+```bash
+cup filter list
+cup filter list --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup filter delete <name>`
+
+Remove a saved shortcut.
+
+```bash
+cup filter delete sprint-tasks
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup filter show <name>`
+
+Show details of a single saved shortcut.
+
+```bash
+cup filter show sprint-tasks
+cup filter show standup --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
 
 ---
 

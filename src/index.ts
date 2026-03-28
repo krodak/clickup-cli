@@ -161,6 +161,7 @@ import {
   formatFiltersMarkdown,
   formatFilterDetail,
 } from './commands/filter.js'
+import { copyStatusesFrom } from './commands/list-create.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -1753,20 +1754,39 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('list-create <spaceId> <name>')
     .description('Create a new list in a space')
     .option('--folder <folderId>', 'Create the list inside a folder')
+    .option('--copy-statuses-from <id>', 'Copy status set from this list or space ID')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (spaceId: string, name: string, opts: { folder?: string; json?: boolean }) => {
+        async (
+          spaceId: string,
+          name: string,
+          opts: { folder?: string; copyStatusesFrom?: string; json?: boolean },
+        ) => {
           if (!name.trim()) throw new Error('List name cannot be empty')
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
+
+          let statuses: Array<{ status: string; color: string; type: string }> | undefined
+          if (opts.copyStatusesFrom) {
+            statuses = await copyStatusesFrom(client, opts.copyStatusesFrom)
+          }
+
           const list = opts.folder
             ? await client.createFolderList(opts.folder, name)
             : await client.createList(spaceId, name)
+
+          if (statuses) {
+            await client.updateList(list.id, { statuses })
+          }
+
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(list, null, 2))
           } else {
             console.log(`Created list "${list.name}" (${list.id})`)
+            if (statuses) {
+              console.log(`  Copied ${statuses.length} statuses from ${opts.copyStatusesFrom}`)
+            }
           }
         },
       ),

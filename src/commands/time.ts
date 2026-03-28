@@ -55,19 +55,33 @@ export async function logTime(
 
 export async function listTimeEntries(
   config: Config,
-  opts?: { days?: number; taskId?: string; spaceId?: string; listId?: string; assigneeId?: string },
+  opts?: {
+    days?: number
+    taskId?: string
+    spaceId?: string
+    listId?: string
+    assigneeId?: string
+    all?: boolean
+  },
 ): Promise<TimeEntry[]> {
   const client = new ClickUpClient(config)
   const days = opts?.days ?? 7
   const endDate = Date.now()
   const startDate = endDate - days * 24 * 60 * 60 * 1000
+
+  let assigneeId = opts?.assigneeId
+  if (!opts?.all && !assigneeId) {
+    const me = await client.getMe()
+    assigneeId = String(me.id)
+  }
+
   return client.getTimeEntries(config.teamId, {
     startDate,
     endDate,
     taskId: opts?.taskId,
     spaceId: opts?.spaceId,
     listId: opts?.listId,
-    assigneeId: opts?.assigneeId,
+    assigneeId,
   })
 }
 
