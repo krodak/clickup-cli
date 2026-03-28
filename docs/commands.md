@@ -26,6 +26,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | Command                                 | Description                                       |
 | --------------------------------------- | ------------------------------------------------- |
 | `cup init`                              | First-time setup wizard                           |
+| `cup filter save <name> [args...]`      | Save a command shortcut                           |
 | **Read**                                |                                                   |
 | `cup auth`                              | Check authentication status                       |
 | `cup tasks`                             | List tasks assigned to me (--all for all)         |
@@ -59,6 +60,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup folder-templates`                  | List folder templates                             |
 | `cup views <id>`                        | List views on a list, space, folder, or workspace |
 | `cup view <viewId>`                     | Get view details                                  |
+| `cup filter list`                       | List saved shortcuts                              |
+| `cup filter run <name>`                 | Run a saved shortcut                              |
 | **Write**                               |                                                   |
 | `cup update <taskId>`                   | Update a task                                     |
 | `cup create`                            | Create a new task                                 |
@@ -83,7 +86,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup time stop`                         | Stop the running timer                            |
 | `cup time status`                       | Show the currently running timer                  |
 | `cup time log <taskId> <duration>`      | Log a manual time entry                           |
-| `cup time list`                         | List recent time entries                          |
+| `cup time list`                         | List my recent time entries (--all for team)      |
 | `cup time update <timeEntryId>`         | Update a time entry                               |
 | `cup time delete <timeEntryId>`         | Delete a time entry                               |
 | `cup doc-create <title>`                | Create a new doc                                  |
@@ -418,6 +421,8 @@ cup update abc123 --due-date none         # clear due date
 cup update abc123 --start-date 2025-03-01
 cup update abc123 --assignee me
 cup update abc123 --assignee 12345
+cup update abc123 --remove-assignee me
+cup update abc123 --assignee 99 --remove-assignee 12345
 cup update abc123 -n "New name" -s "done" --priority urgent
 cup update abc123 --time-estimate 2h
 cup update abc123 --parent parentTaskId   # make it a subtask
@@ -437,6 +442,7 @@ cup update abc123 -s "in progress" --json
 | `--start-date <date>`        | Start date (`YYYY-MM-DD`)                                                   |
 | `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
 | `--assignee <userId>`        | Add assignee by user ID or `"me"`                                           |
+| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                        |
 | `--parent <taskId>`          | Set parent task (makes this a subtask)                                      |
 | `--detach`                   | Remove parent task (promote subtask to top-level)                           |
 | `--archive`                  | Archive the task                                                            |
