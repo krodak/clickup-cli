@@ -55,7 +55,7 @@ export async function logTime(
 
 export async function listTimeEntries(
   config: Config,
-  opts?: { days?: number; taskId?: string },
+  opts?: { days?: number; taskId?: string; spaceId?: string; listId?: string; assigneeId?: string },
 ): Promise<TimeEntry[]> {
   const client = new ClickUpClient(config)
   const days = opts?.days ?? 7
@@ -65,6 +65,9 @@ export async function listTimeEntries(
     startDate,
     endDate,
     taskId: opts?.taskId,
+    spaceId: opts?.spaceId,
+    listId: opts?.listId,
+    assigneeId: opts?.assigneeId,
   })
 }
 

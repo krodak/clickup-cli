@@ -11,6 +11,7 @@ export interface CreateOptions {
   status?: string
   priority?: string
   dueDate?: string
+  startDate?: string
   assignee?: string
   tags?: string
   customItemId?: string
@@ -53,6 +54,10 @@ export async function createTask(
   if (options.dueDate !== undefined) {
     payload.due_date = parseDueDate(options.dueDate)
     payload.due_date_time = false
+  }
+  if (options.startDate !== undefined) {
+    payload.start_date = parseDueDate(options.startDate)
+    payload.start_date_time = false
   }
   if (options.assignee !== undefined) {
     payload.assignees = [parseAssigneeId(options.assignee)]

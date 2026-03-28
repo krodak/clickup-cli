@@ -100,4 +100,22 @@ describe('updateSpaceTag', () => {
       tag_bg: '#000',
     })
   })
+
+  it('uses existing tag name when --name not provided (color-only update)', async () => {
+    mockUpdateSpaceTag.mockResolvedValue(undefined)
+    const { updateSpaceTag } = await import('../../../src/commands/tags.js')
+    await updateSpaceTag(mockConfig, 's1', 'bug', { fg: '#fff', bg: '#f00' })
+    expect(mockUpdateSpaceTag).toHaveBeenCalledWith('s1', 'bug', {
+      name: 'bug',
+      tag_fg: '#fff',
+      tag_bg: '#f00',
+    })
+  })
+
+  it('throws when no updates provided', async () => {
+    const { updateSpaceTag } = await import('../../../src/commands/tags.js')
+    await expect(updateSpaceTag(mockConfig, 's1', 'tag', {})).rejects.toThrow(
+      'Provide at least one of',
+    )
+  })
 })

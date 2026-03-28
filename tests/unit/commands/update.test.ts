@@ -110,6 +110,28 @@ describe('updateTask', () => {
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { archived: false })
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { archived: false })
   })
+
+  it('calls API with start_date', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    const ms = new Date(2025, 5, 1).getTime()
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
+      start_date: ms,
+      start_date_time: false,
+    })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { start_date: ms, start_date_time: false })
+  })
+
+  it('calls API with due_date: null to clear due date', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { due_date: null })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { due_date: null })
+  })
+
+  it('calls API with parent: null to detach', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: null })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: null })
+  })
 })
 
 describe('parsePriority', () => {
@@ -300,6 +322,39 @@ describe('buildUpdatePayload', () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     expect(() => buildUpdatePayload({ archive: true, unarchive: true })).toThrow(
       'Cannot use --archive and --unarchive together',
+    )
+  })
+
+  it('builds payload with start_date', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ startDate: '2025-06-01' })
+    expect(payload.start_date).toBe(new Date(2025, 5, 1).getTime())
+    expect(payload.start_date_time).toBe(false)
+  })
+
+  it('clears due_date when --due-date is "none"', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ dueDate: 'none' })
+    expect(payload.due_date).toBeNull()
+    expect(payload.due_date_time).toBeUndefined()
+  })
+
+  it('clears due_date when --due-date is "clear"', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ dueDate: 'clear' })
+    expect(payload.due_date).toBeNull()
+  })
+
+  it('builds payload with parent: null for --detach', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ detach: true })
+    expect(payload.parent).toBeNull()
+  })
+
+  it('throws when both --parent and --detach are set', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    expect(() => buildUpdatePayload({ parent: 'p1', detach: true })).toThrow(
+      'Cannot use --parent and --detach together',
     )
   })
 })

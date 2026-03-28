@@ -273,10 +273,12 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-d, --description <text>', 'New description (markdown supported)')
     .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
-    .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
+    .option('--due-date <date>', 'Due date (YYYY-MM-DD, or "none"/"clear" to remove)')
+    .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
+    .option('--detach', 'Remove parent task (promote subtask to top-level)')
     .option('--archive', 'Archive the task')
     .option('--unarchive', 'Unarchive the task')
     .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value')
@@ -335,6 +337,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-s, --status <status>', 'Initial status')
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
     .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
+    .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
     .option('--assignee <userId>', 'Assignee user ID or "me"')
     .option('--tags <tags>', 'Comma-separated tag names')
     .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
@@ -1089,23 +1092,41 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('List recent time entries (default: last 7 days)')
     .option('--days <n>', 'Number of days to look back', '7')
     .option('--task <taskId>', 'Filter by task ID')
+    .option('--space <spaceId>', 'Filter by space ID')
+    .option('--list <listId>', 'Filter by list ID')
+    .option('--assignee <userId>', 'Filter by assignee user ID')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (opts: { days?: string; task?: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const days = opts.days ? Number(opts.days) : 7
-        if (!Number.isFinite(days) || days <= 0) {
-          throw new Error('--days must be a positive number')
-        }
-        const entries = await listTimeEntries(config, { days, taskId: opts.task })
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(entries, null, 2))
-        } else if (isTTY()) {
-          console.log(formatTimeEntries(entries))
-        } else {
-          console.log(formatTimeEntriesMarkdown(entries))
-        }
-      }),
+      wrapAction(
+        async (opts: {
+          days?: string
+          task?: string
+          space?: string
+          list?: string
+          assignee?: string
+          json?: boolean
+        }) => {
+          const config = loadConfig(getProfileName())
+          const days = opts.days ? Number(opts.days) : 7
+          if (!Number.isFinite(days) || days <= 0) {
+            throw new Error('--days must be a positive number')
+          }
+          const entries = await listTimeEntries(config, {
+            days,
+            taskId: opts.task,
+            spaceId: opts.space,
+            listId: opts.list,
+            assigneeId: opts.assignee,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(entries, null, 2))
+          } else if (isTTY()) {
+            console.log(formatTimeEntries(entries))
+          } else {
+            console.log(formatTimeEntriesMarkdown(entries))
+          }
+        },
+      ),
     )
 
   timeCmd
@@ -1377,14 +1398,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Create a goal')
     .option('-d, --description <text>', 'Goal description')
     .option('--color <hex>', 'Goal color (hex)')
+    .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (name: string, opts: { description?: string; color?: string; json?: boolean }) => {
+        async (
+          name: string,
+          opts: { description?: string; color?: string; dueDate?: string; json?: boolean },
+        ) => {
           const config = loadConfig(getProfileName())
           const goal = await createGoal(config, name, {
             description: opts.description,
             color: opts.color,
+            dueDate: opts.dueDate,
           })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(goal, null, 2))
@@ -1773,7 +1799,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('tag-update <spaceId> <tagName>')
     .description('Update a tag in a space')
-    .requiredOption('--name <newName>', 'New tag name')
+    .option('--name <newName>', 'New tag name')
     .option('--fg <color>', 'New foreground color (hex)')
     .option('--bg <color>', 'New background color (hex)')
     .option('--json', 'Force JSON output even in terminal')
@@ -1782,7 +1808,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         async (
           spaceId: string,
           tagName: string,
-          opts: { name: string; fg?: string; bg?: string; json?: boolean },
+          opts: { name?: string; fg?: string; bg?: string; json?: boolean },
         ) => {
           const config = loadConfig(getProfileName())
           await updateSpaceTag(config, spaceId, tagName, {
@@ -1790,16 +1816,15 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             fg: opts.fg,
             bg: opts.bg,
           })
+          const newName = opts.name ?? tagName
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(
-              JSON.stringify(
-                { success: true, spaceId, oldName: tagName, newName: opts.name },
-                null,
-                2,
-              ),
+              JSON.stringify({ success: true, spaceId, oldName: tagName, newName }, null, 2),
             )
-          } else {
+          } else if (opts.name && opts.name !== tagName) {
             console.log(`Renamed tag "${tagName}" to "${opts.name}" in space ${spaceId}`)
+          } else {
+            console.log(`Updated tag "${tagName}" in space ${spaceId}`)
           }
         },
       ),
@@ -1902,21 +1927,36 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
-    .command('views <listId>')
-    .description('List views on a list')
+    .command('views <id>')
+    .description('List views on a list, space, folder, or workspace')
+    .option('--space', 'Treat <id> as a space ID')
+    .option('--folder', 'Treat <id> as a folder ID')
+    .option('--workspace', 'List workspace-level views (ignores <id>)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (listId: string, opts: { json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const views = await listViews(config, listId)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(views, null, 2))
-        } else if (isTTY()) {
-          console.log(formatViews(views))
-        } else {
-          console.log(formatViewsMarkdown(views))
-        }
-      }),
+      wrapAction(
+        async (
+          id: string,
+          opts: { space?: boolean; folder?: boolean; workspace?: boolean; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const container = opts.workspace
+            ? 'workspace'
+            : opts.space
+              ? 'space'
+              : opts.folder
+                ? 'folder'
+                : 'list'
+          const views = await listViews(config, id, container)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(views, null, 2))
+          } else if (isTTY()) {
+            console.log(formatViews(views))
+          } else {
+            console.log(formatViewsMarkdown(views))
+          }
+        },
+      ),
     )
 
   program

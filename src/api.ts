@@ -58,11 +58,13 @@ export interface UpdateTaskOptions {
   markdown_content?: string
   status?: string
   priority?: Priority | null
-  due_date?: number
+  due_date?: number | null
   due_date_time?: boolean
+  start_date?: number | null
+  start_date_time?: boolean
   time_estimate?: number
   assignees?: { add?: number[]; rem?: number[] }
-  parent?: string
+  parent?: string | null
   archived?: boolean
 }
 
@@ -75,6 +77,8 @@ export interface CreateTaskOptions {
   priority?: Priority | null
   due_date?: number
   due_date_time?: boolean
+  start_date?: number
+  start_date_time?: boolean
   time_estimate?: number
   assignees?: number[]
   tags?: string[]
@@ -617,6 +621,21 @@ export class ClickUpClient {
     }>(`/list/${listId}/view`)
   }
 
+  async getSpaceViews(spaceId: string): Promise<ViewSummary[]> {
+    const data = await this.request<{ views: ViewSummary[] }>(`/space/${spaceId}/view`)
+    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+  }
+
+  async getFolderViews(folderId: string): Promise<ViewSummary[]> {
+    const data = await this.request<{ views: ViewSummary[] }>(`/folder/${folderId}/view`)
+    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+  }
+
+  async getWorkspaceViews(teamId: string): Promise<ViewSummary[]> {
+    const data = await this.request<{ views: ViewSummary[] }>(`/team/${teamId}/view`)
+    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+  }
+
   async getViewTasks(viewId: string): Promise<Task[]> {
     return this.paginate(page => `/view/${viewId}/task?page=${page}`)
   }
@@ -900,11 +919,21 @@ export class ClickUpClient {
 
   async getTimeEntries(
     teamId: string,
-    opts?: { startDate?: number; endDate?: number; taskId?: string },
+    opts?: {
+      startDate?: number
+      endDate?: number
+      taskId?: string
+      spaceId?: string
+      listId?: string
+      assigneeId?: string
+    },
   ): Promise<TimeEntry[]> {
     const params = new URLSearchParams()
     if (opts?.startDate != null) params.set('start_date', String(opts.startDate))
     if (opts?.endDate != null) params.set('end_date', String(opts.endDate))
+    if (opts?.spaceId) params.set('space_id', opts.spaceId)
+    if (opts?.listId) params.set('list_id', opts.listId)
+    if (opts?.assigneeId) params.set('assignee', opts.assigneeId)
     const query = params.toString()
     const url = `/team/${teamId}/time_entries${query ? `?${query}` : ''}`
     const data = await this.request<{ data: TimeEntry[] }>(url)

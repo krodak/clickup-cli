@@ -3,9 +3,18 @@ import { ClickUpClient } from '../api.js'
 import type { ViewSummary } from '../api.js'
 import type { Config } from '../config.js'
 
-export async function listViews(config: Config, listId: string): Promise<ViewSummary[]> {
+export type ViewContainer = 'list' | 'space' | 'folder' | 'workspace'
+
+export async function listViews(
+  config: Config,
+  id: string,
+  container: ViewContainer = 'list',
+): Promise<ViewSummary[]> {
   const client = new ClickUpClient(config)
-  const data = await client.getListViews(listId)
+  if (container === 'space') return client.getSpaceViews(id)
+  if (container === 'folder') return client.getFolderViews(id)
+  if (container === 'workspace') return client.getWorkspaceViews(config.teamId)
+  const data = await client.getListViews(id)
   return data.views
 }
 

@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetListViews = vi.fn()
+const mockGetSpaceViews = vi.fn()
+const mockGetFolderViews = vi.fn()
+const mockGetWorkspaceViews = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
       getListViews: mockGetListViews,
+      getSpaceViews: mockGetSpaceViews,
+      getFolderViews: mockGetFolderViews,
+      getWorkspaceViews: mockGetWorkspaceViews,
     }
   }),
 }))
@@ -22,12 +28,36 @@ describe('listViews', () => {
     vi.clearAllMocks()
   })
 
-  it('returns views from API', async () => {
+  it('returns list views from API by default', async () => {
     mockGetListViews.mockResolvedValue({ views: sampleViews, required_views: {} })
     const { listViews } = await import('../../../src/commands/views.js')
     const result = await listViews(mockConfig, 'list1')
     expect(result).toEqual(sampleViews)
     expect(mockGetListViews).toHaveBeenCalledWith('list1')
+  })
+
+  it('returns space views when container is "space"', async () => {
+    mockGetSpaceViews.mockResolvedValue(sampleViews)
+    const { listViews } = await import('../../../src/commands/views.js')
+    const result = await listViews(mockConfig, 's1', 'space')
+    expect(result).toEqual(sampleViews)
+    expect(mockGetSpaceViews).toHaveBeenCalledWith('s1')
+  })
+
+  it('returns folder views when container is "folder"', async () => {
+    mockGetFolderViews.mockResolvedValue(sampleViews)
+    const { listViews } = await import('../../../src/commands/views.js')
+    const result = await listViews(mockConfig, 'f1', 'folder')
+    expect(result).toEqual(sampleViews)
+    expect(mockGetFolderViews).toHaveBeenCalledWith('f1')
+  })
+
+  it('returns workspace views when container is "workspace"', async () => {
+    mockGetWorkspaceViews.mockResolvedValue(sampleViews)
+    const { listViews } = await import('../../../src/commands/views.js')
+    const result = await listViews(mockConfig, 'ignored', 'workspace')
+    expect(result).toEqual(sampleViews)
+    expect(mockGetWorkspaceViews).toHaveBeenCalledWith('team1')
   })
 })
 
