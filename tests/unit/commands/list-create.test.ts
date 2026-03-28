@@ -18,7 +18,7 @@ vi.mock('../../../src/api.js', () => ({
   }),
 }))
 
-import { copyStatusesFrom } from '../../../src/commands/list-create.js'
+import { copyStatusesFrom, createListWithOptions } from '../../../src/commands/list-create.js'
 import { ClickUpClient } from '../../../src/api.js'
 
 const config = { apiToken: 'pk_test', teamId: 'team1' }
@@ -112,5 +112,43 @@ describe('copyStatusesFrom', () => {
     const client = new ClickUpClient(config)
     const result = await copyStatusesFrom(client, 'space1')
     expect(result[0]).toEqual({ status: 'todo', color: '#aaa', type: 'custom' })
+  })
+})
+
+describe('createListWithOptions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('creates list without updateList when no --copy-statuses-from', async () => {
+    mockCreateList.mockResolvedValue({ id: 'l1', name: 'New List' })
+    const result = await createListWithOptions(config, 's1', 'New List', {})
+    expect(mockCreateList).toHaveBeenCalledWith('s1', 'New List')
+    expect(mockUpdateList).not.toHaveBeenCalled()
+    expect(result.id).toBe('l1')
+  })
+
+  it('creates list and copies statuses when --copy-statuses-from given', async () => {
+    mockCreateList.mockResolvedValue({ id: 'l2', name: 'My List' })
+    mockGetListWithStatuses.mockResolvedValue({
+      id: 'src1',
+      name: 'Source',
+      statuses: sampleStatuses,
+    })
+    const result = await createListWithOptions(config, 's1', 'My List', {
+      copyStatusesFrom: 'src1',
+    })
+    expect(mockCreateList).toHaveBeenCalledWith('s1', 'My List')
+    expect(mockUpdateList).toHaveBeenCalledWith('l2', {
+      statuses: expect.arrayContaining([expect.objectContaining({ status: 'open' })]),
+    })
+    expect(result.statusesCopied).toBe(3)
+  })
+
+  it('creates list inside folder when --folder given', async () => {
+    mockCreateFolderList.mockResolvedValue({ id: 'l3', name: 'Folder List' })
+    await createListWithOptions(config, 's1', 'Folder List', { folder: 'f1' })
+    expect(mockCreateFolderList).toHaveBeenCalledWith('f1', 'Folder List')
+    expect(mockCreateList).not.toHaveBeenCalled()
   })
 })
