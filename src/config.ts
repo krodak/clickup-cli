@@ -2,10 +2,18 @@ import fs from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
+export interface FilterEntry {
+  command: string[]
+  description?: string
+}
+
+export type FiltersMap = Record<string, FilterEntry>
+
 export interface Config {
   apiToken: string
   teamId: string
   sprintFolderId?: string
+  filters?: FiltersMap
 }
 
 export interface MultiProfileConfig {
@@ -141,6 +149,7 @@ function migrateToMultiProfile(
         if (typeof value.teamId === 'string' && value.teamId.trim()) p.teamId = value.teamId.trim()
         if (typeof value.sprintFolderId === 'string' && value.sprintFolderId.trim())
           p.sprintFolderId = value.sprintFolderId.trim()
+        if (isRecord(value.filters)) p.filters = value.filters as FiltersMap
         profiles[name] = p
       }
     }
@@ -354,6 +363,36 @@ export function loadRawConfig(profileName?: string): Partial<Config> {
 export function getConfigPath(): string {
   migrateFromLegacy()
   return configPath()
+}
+
+export function getFilters(profileName?: string): FiltersMap {
+  const multi = loadMultiProfileConfig()
+  const name = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile
+  const profile = name ? (multi.profiles[name] ?? {}) : {}
+  return profile.filters ?? {}
+}
+
+export function saveFilter(name: string, entry: FilterEntry, profileName?: string): void {
+  const multi = loadMultiProfileConfig()
+  const pName = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile ?? 'default'
+  const profile = multi.profiles[pName] ?? {}
+  const filters: FiltersMap = { ...(profile.filters ?? {}), [name]: entry }
+  multi.profiles[pName] = { ...profile, filters }
+  if (!multi.defaultProfile) multi.defaultProfile = pName
+  saveMultiProfileConfig(multi)
+}
+
+export function deleteFilter(name: string, profileName?: string): void {
+  const multi = loadMultiProfileConfig()
+  const pName = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile ?? 'default'
+  const profile = multi.profiles[pName] ?? {}
+  const filters: FiltersMap = { ...(profile.filters ?? {}) }
+  if (!(name in filters)) {
+    throw new Error(`Filter "${name}" not found.`)
+  }
+  delete filters[name]
+  multi.profiles[pName] = { ...profile, filters }
+  saveMultiProfileConfig(multi)
 }
 
 export function writeConfig(config: Partial<Config>, profileName?: string): void {
