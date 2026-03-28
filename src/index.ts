@@ -157,6 +157,7 @@ import { deleteViewCommand } from './commands/view-delete.js'
 import {
   runFilter,
   isAllowedFilterCommand,
+  ALLOWED_FILTER_COMMANDS,
   formatFiltersTable,
   formatFiltersMarkdown,
   formatFilterDetail,
@@ -1450,18 +1451,12 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   bulkCmd
     .command('tag <tagName> <taskIds...>')
-    .description('Bulk add or remove a tag on tasks')
-    .option('--add', 'Add tag (default)')
+    .description('Bulk add or remove a tag on tasks (default: add)')
     .option('--remove', 'Remove tag instead of adding')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (
-          tagName: string,
-          taskIds: string[],
-          opts: { add?: boolean; remove?: boolean; json?: boolean },
-        ) => {
-          if (opts.add && opts.remove) throw new Error('Cannot use --add and --remove together')
+        async (tagName: string, taskIds: string[], opts: { remove?: boolean; json?: boolean }) => {
           const action = opts.remove ? 'remove' : 'add'
           const config = loadConfig(getProfileName())
           const result = await bulkTag(config, tagName, taskIds, action)
@@ -2174,8 +2169,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             )
           }
           if (!isAllowedFilterCommand(args)) {
+            const allowed = [...ALLOWED_FILTER_COMMANDS, 'time list'].join(', ')
             throw new Error(
-              `Command "${args[0]}" is not allowed in saved filters. Allowed: tasks, search, sprint, assigned, overdue, inbox, summary, views, lists, spaces, folders, members, tags, goals, key-results, task-types, templates, list-templates, folder-templates, docs, time list`,
+              `Command "${args[0]}" is not allowed in saved filters. Allowed: ${allowed}`,
             )
           }
           const entry: FilterEntry = { command: args }
