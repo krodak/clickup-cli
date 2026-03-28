@@ -34,7 +34,7 @@ export function formatFolders(folders: FolderWithLists[]): string {
     .map(f => {
       const header = `${chalk.bold(f.name)} ${chalk.dim(f.id)}`
       if (f.lists.length === 0) return header
-      const listLines = f.lists.map(l => `  ${l.name} ${chalk.dim(l.id)}`)
+      const listLines = f.lists.map(l => `  ${chalk.dim('>')} ${l.name} ${chalk.dim(l.id)}`)
       return [header, ...listLines].join('\n')
     })
     .join('\n\n')

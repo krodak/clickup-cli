@@ -2,6 +2,44 @@ import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import type { Goal, KeyResult } from '../api.js'
+import { formatTable } from '../output.js'
+import type { Column } from '../output.js'
+
+interface GoalRow {
+  name: string
+  id: string
+  progress: string
+  owner: string
+}
+
+interface KeyResultRow {
+  name: string
+  id: string
+  progress: string
+  current: string
+}
+
+export function colorProgress(value: string): string {
+  const num = parseInt(value, 10)
+  if (isNaN(num)) return value
+  if (num >= 75) return chalk.green(value)
+  if (num >= 25) return chalk.yellow(value)
+  return chalk.red(value)
+}
+
+const GOAL_COLUMNS: Column<GoalRow>[] = [
+  { key: 'id', label: 'ID', maxWidth: 15 },
+  { key: 'name', label: 'Name', maxWidth: 40 },
+  { key: 'progress', label: 'Progress', maxWidth: 10, format: v => colorProgress(v) },
+  { key: 'owner', label: 'Owner', maxWidth: 20 },
+]
+
+const KEY_RESULT_COLUMNS: Column<KeyResultRow>[] = [
+  { key: 'id', label: 'ID', maxWidth: 15 },
+  { key: 'name', label: 'Name', maxWidth: 40 },
+  { key: 'progress', label: 'Progress', maxWidth: 10, format: v => colorProgress(v) },
+  { key: 'current', label: 'Current/Target', maxWidth: 15 },
+]
 
 export async function listGoals(config: Config): Promise<Goal[]> {
   const client = new ClickUpClient(config)
@@ -66,13 +104,13 @@ export async function updateKeyResult(
 
 export function formatGoals(goals: Goal[]): string {
   if (goals.length === 0) return 'No goals found'
-  return goals
-    .map(g => {
-      const pct = Math.round(g.percent_completed * 100)
-      const owner = g.owner ? ` ${chalk.dim(`@${g.owner.username}`)}` : ''
-      return `${chalk.bold(g.name)} ${chalk.dim(`(${g.id})`)} ${chalk.cyan(`${pct}%`)}${owner}`
-    })
-    .join('\n')
+  const rows: GoalRow[] = goals.map(g => ({
+    name: g.name,
+    id: g.id,
+    progress: `${Math.round(g.percent_completed * 100)}%`,
+    owner: g.owner ? `@${g.owner.username}` : '',
+  }))
+  return formatTable(rows, GOAL_COLUMNS)
 }
 
 export function formatGoalsMarkdown(goals: Goal[]): string {
@@ -88,12 +126,13 @@ export function formatGoalsMarkdown(goals: Goal[]): string {
 
 export function formatKeyResults(keyResults: KeyResult[]): string {
   if (keyResults.length === 0) return 'No key results found'
-  return keyResults
-    .map(kr => {
-      const pct = Math.round(kr.percent_completed * 100)
-      return `${chalk.bold(kr.name)} ${chalk.dim(`(${kr.id})`)} ${chalk.cyan(`${kr.steps_current}/${kr.steps_end}`)} ${chalk.dim(`${pct}%`)}`
-    })
-    .join('\n')
+  const rows: KeyResultRow[] = keyResults.map(kr => ({
+    name: kr.name,
+    id: kr.id,
+    progress: `${Math.round(kr.percent_completed * 100)}%`,
+    current: `${kr.steps_current}/${kr.steps_end}`,
+  }))
+  return formatTable(rows, KEY_RESULT_COLUMNS)
 }
 
 export function formatKeyResultsMarkdown(keyResults: KeyResult[]): string {

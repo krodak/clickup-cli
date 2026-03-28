@@ -4,6 +4,24 @@ import type { Config } from '../config.js'
 import type { TimeEntry } from '../api.js'
 import { parseTimeEstimate } from './update.js'
 import { formatDuration, formatTimestamp } from '../date.js'
+import { formatTable } from '../output.js'
+import type { Column } from '../output.js'
+
+interface TimeRow {
+  task: string
+  duration: string
+  date: string
+  description: string
+  status: string
+}
+
+const TIME_COLUMNS: Column<TimeRow>[] = [
+  { key: 'task', label: 'Task', maxWidth: 35 },
+  { key: 'duration', label: 'Duration', maxWidth: 10 },
+  { key: 'date', label: 'Date', maxWidth: 20 },
+  { key: 'description', label: 'Description', maxWidth: 30 },
+  { key: 'status', label: '', maxWidth: 10, format: v => (v === 'RUNNING' ? chalk.green(v) : '') },
+]
 
 export async function startTimer(
   config: Config,
@@ -71,24 +89,34 @@ export async function deleteTimeEntry(config: Config, timeEntryId: string): Prom
 }
 
 export function formatTimeEntry(entry: TimeEntry): string {
-  const lines: string[] = []
   const taskName = entry.task?.name ?? 'No task'
-  const taskId = entry.task?.id ?? ''
   const isRunning = entry.duration < 0
   const elapsed = isRunning ? Date.now() - Number(entry.start) : entry.duration
-  const durationStr = formatDuration(elapsed)
-  const status = isRunning ? chalk.green('RUNNING') : ''
-
-  lines.push(`${chalk.bold(taskName)} ${chalk.dim(taskId)} ${status}`)
-  lines.push(
-    `  ${durationStr} - ${formatTimestamp(entry.start)}${entry.description ? ` - ${entry.description}` : ''}`,
-  )
-  return lines.join('\n')
+  const row: TimeRow = {
+    task: taskName,
+    duration: formatDuration(elapsed),
+    date: formatTimestamp(entry.start),
+    description: entry.description ?? '',
+    status: isRunning ? 'RUNNING' : '',
+  }
+  return formatTable([row], TIME_COLUMNS)
 }
 
 export function formatTimeEntries(entries: TimeEntry[]): string {
   if (entries.length === 0) return 'No time entries'
-  return entries.map(formatTimeEntry).join('\n')
+  const rows: TimeRow[] = entries.map(entry => {
+    const taskName = entry.task?.name ?? 'No task'
+    const isRunning = entry.duration < 0
+    const elapsed = isRunning ? Date.now() - Number(entry.start) : entry.duration
+    return {
+      task: taskName,
+      duration: formatDuration(elapsed),
+      date: formatTimestamp(entry.start),
+      description: entry.description ?? '',
+      status: isRunning ? 'RUNNING' : '',
+    }
+  })
+  return formatTable(rows, TIME_COLUMNS)
 }
 
 export function formatTimeEntryMarkdown(entry: TimeEntry): string {

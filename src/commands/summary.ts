@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { Task } from '../api.js'
 import type { Config } from '../config.js'
@@ -62,8 +63,16 @@ export function categorizeTasks(
   return { completed, inProgress, overdue }
 }
 
+function colorSectionLabel(label: string): string {
+  const lower = label.toLowerCase()
+  if (lower.includes('completed')) return chalk.green(label)
+  if (lower.includes('progress')) return chalk.yellow(label)
+  if (lower.includes('overdue')) return chalk.red(label)
+  return label
+}
+
 function printSection(label: string, tasks: TaskSummary[]): void {
-  console.log(`\n${label} (${tasks.length})`)
+  console.log(`\n${colorSectionLabel(label)} (${tasks.length})`)
   if (tasks.length === 0) {
     console.log('  None')
   } else {
