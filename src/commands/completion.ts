@@ -450,6 +450,10 @@ ${renderZshTopLevelCommands(name)}
                   _arguments \\
                     '--days[Number of days to look back]:days:' \\
                     '--task[Filter by task ID]:task_id:' \\
+                    '--space[Filter by space ID]:space_id:' \\
+                    '--list[Filter by list ID]:list_id:' \\
+                    '--assignee[Filter by assignee user ID]:user_id:' \\
+                    '--all[Show all team entries]' \\
                     '--json[Force JSON output]'
                   ;;
                 update)
@@ -911,6 +915,10 @@ complete -c ${name} -n '__fish_seen_subcommand_from start; and __fish_seen_subco
 complete -c ${name} -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from time' -s d -l description -d 'Description'
 complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l days -d 'Number of days to look back'
 complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l task -d 'Filter by task ID'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l space -d 'Filter by space ID'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l list -d 'Filter by list ID'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l assignee -d 'Filter by assignee user ID'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from time' -l all -d 'Show all team entries'
 complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -s d -l description -d 'New description'
 complete -c ${name} -n '__fish_seen_subcommand_from update; and __fish_seen_subcommand_from time' -l duration -d 'New duration'
 

@@ -47,8 +47,8 @@ describe('copyStatusesFrom', () => {
     expect(result).toHaveLength(3)
   })
 
-  it('falls back to space statuses when list fetch fails', async () => {
-    mockGetListWithStatuses.mockRejectedValue(new Error('not found'))
+  it('falls back to space statuses when list fetch returns 404', async () => {
+    mockGetListWithStatuses.mockRejectedValue(new Error('ClickUp API error 404: not found'))
     mockGetSpaceWithStatuses.mockResolvedValue({
       id: 'space1',
       name: 'Space',
@@ -64,13 +64,20 @@ describe('copyStatusesFrom', () => {
     expect(result).toHaveLength(2)
   })
 
-  it('throws informative error when both list and space fetch fail', async () => {
-    mockGetListWithStatuses.mockRejectedValue(new Error('list not found'))
-    mockGetSpaceWithStatuses.mockRejectedValue(new Error('space not found'))
+  it('throws informative error when both list and space fetch return 404', async () => {
+    mockGetListWithStatuses.mockRejectedValue(new Error('ClickUp API error 404: list not found'))
+    mockGetSpaceWithStatuses.mockRejectedValue(new Error('ClickUp API error 404: space not found'))
     const client = new ClickUpClient(config)
     await expect(copyStatusesFrom(client, 'bad-id')).rejects.toThrow(
       'Could not find a list or space with ID "bad-id". Check the ID and try again.',
     )
+  })
+
+  it('rethrows non-404 errors from list fetch without trying space', async () => {
+    mockGetListWithStatuses.mockRejectedValue(new Error('ClickUp API error 429: rate limited'))
+    const client = new ClickUpClient(config)
+    await expect(copyStatusesFrom(client, 'src1')).rejects.toThrow('429: rate limited')
+    expect(mockGetSpaceWithStatuses).not.toHaveBeenCalled()
   })
 
   it('strips orderindex from returned statuses', async () => {
@@ -103,7 +110,7 @@ describe('copyStatusesFrom', () => {
   })
 
   it('uses custom as default type when type is missing from space statuses', async () => {
-    mockGetListWithStatuses.mockRejectedValue(new Error('not found'))
+    mockGetListWithStatuses.mockRejectedValue(new Error('ClickUp API error 404: not found'))
     mockGetSpaceWithStatuses.mockResolvedValue({
       id: 'space1',
       name: 'Space',
@@ -150,5 +157,18 @@ describe('createListWithOptions', () => {
     await createListWithOptions(config, 's1', 'Folder List', { folder: 'f1' })
     expect(mockCreateFolderList).toHaveBeenCalledWith('f1', 'Folder List')
     expect(mockCreateList).not.toHaveBeenCalled()
+  })
+
+  it('includes created list ID in error when updateList fails', async () => {
+    mockCreateList.mockResolvedValue({ id: 'l4', name: 'Bad List' })
+    mockGetListWithStatuses.mockResolvedValue({
+      id: 'src1',
+      name: 'Source',
+      statuses: sampleStatuses,
+    })
+    mockUpdateList.mockRejectedValue(new Error('ClickUp API error 500: server error'))
+    await expect(
+      createListWithOptions(config, 's1', 'Bad List', { copyStatusesFrom: 'src1' }),
+    ).rejects.toThrow('"Bad List" (l4) was created but status copy failed')
   })
 })

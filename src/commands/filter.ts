@@ -32,7 +32,7 @@ export function isAllowedFilterCommand(tokens: string[]): boolean {
   return ALLOWED_FILTER_COMMANDS.has(tokens[0]!)
 }
 
-export function runFilter(name: string, entry: FilterEntry): void {
+export function runFilter(_name: string, entry: FilterEntry): void {
   const result = spawnSync(process.execPath, [process.argv[1]!, ...entry.command], {
     stdio: 'inherit',
   })
