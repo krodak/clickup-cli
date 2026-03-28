@@ -161,7 +161,7 @@ import {
   formatFiltersMarkdown,
   formatFilterDetail,
 } from './commands/filter.js'
-import { copyStatusesFrom } from './commands/list-create.js'
+import { createListWithOptions } from './commands/list-create.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -1765,27 +1765,18 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         ) => {
           if (!name.trim()) throw new Error('List name cannot be empty')
           const config = loadConfig(getProfileName())
-          const client = new ClickUpClient(config)
-
-          let statuses: Array<{ status: string; color: string; type: string }> | undefined
-          if (opts.copyStatusesFrom) {
-            statuses = await copyStatusesFrom(client, opts.copyStatusesFrom)
-          }
-
-          const list = opts.folder
-            ? await client.createFolderList(opts.folder, name)
-            : await client.createList(spaceId, name)
-
-          if (statuses) {
-            await client.updateList(list.id, { statuses })
-          }
-
+          const result = await createListWithOptions(config, spaceId, name, {
+            folder: opts.folder,
+            copyStatusesFrom: opts.copyStatusesFrom,
+          })
           if (shouldOutputJson(opts.json ?? false)) {
-            console.log(JSON.stringify(list, null, 2))
+            console.log(JSON.stringify(result, null, 2))
           } else {
-            console.log(`Created list "${list.name}" (${list.id})`)
-            if (statuses) {
-              console.log(`  Copied ${statuses.length} statuses from ${opts.copyStatusesFrom}`)
+            console.log(`Created list "${result.name}" (${result.id})`)
+            if (result.statusesCopied) {
+              console.log(
+                `  Copied ${result.statusesCopied} statuses from ${opts.copyStatusesFrom}`,
+              )
             }
           }
         },
