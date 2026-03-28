@@ -98,6 +98,18 @@ describe('updateTask', () => {
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { markdown_content: '' })
     expect(result.id).toBe('t1')
   })
+
+  it('calls API with archived: true', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { archived: true })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { archived: true })
+  })
+
+  it('calls API with archived: false to unarchive', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { archived: false })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { archived: false })
+  })
 })
 
 describe('parsePriority', () => {
@@ -270,6 +282,25 @@ describe('buildUpdatePayload', () => {
   it('throws on whitespace-only name', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     expect(() => buildUpdatePayload({ name: '   ' })).toThrow('Task name cannot be empty')
+  })
+
+  it('builds payload with archived: true for --archive', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ archive: true })
+    expect(payload).toEqual({ archived: true })
+  })
+
+  it('builds payload with archived: false for --unarchive', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ unarchive: true })
+    expect(payload).toEqual({ archived: false })
+  })
+
+  it('throws when both --archive and --unarchive are set', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    expect(() => buildUpdatePayload({ archive: true, unarchive: true })).toThrow(
+      'Cannot use --archive and --unarchive together',
+    )
   })
 })
 

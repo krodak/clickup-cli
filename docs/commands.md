@@ -404,6 +404,8 @@ cup update abc123 --assignee 12345
 cup update abc123 -n "New name" -s "done" --priority urgent
 cup update abc123 --time-estimate 2h
 cup update abc123 --parent parentTaskId   # make it a subtask
+cup update abc123 --archive               # archive a task
+cup update abc123 --unarchive             # unarchive a task
 cup update abc123 -s "in progress" --json
 ```
 
@@ -417,6 +419,8 @@ cup update abc123 -s "in progress" --json
 | `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
 | `--assignee <userId>`        | Add assignee by user ID or `"me"`                                           |
 | `--parent <taskId>`          | Set parent task (makes this a subtask)                                      |
+| `--archive`                  | Archive the task                                                            |
+| `--unarchive`                | Unarchive the task                                                          |
 | `--json`                     | Force JSON output even in terminal                                          |
 
 ### `cup create`

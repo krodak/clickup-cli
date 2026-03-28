@@ -67,9 +67,14 @@ export interface UpdateCommandOptions {
   assignee?: string
   timeEstimate?: string
   parent?: string
+  archive?: boolean
+  unarchive?: boolean
 }
 
 export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOptions {
+  if (opts.archive && opts.unarchive) {
+    throw new Error('Cannot use --archive and --unarchive together')
+  }
   const payload: UpdateTaskOptions = {}
   if (opts.name !== undefined) {
     if (!opts.name.trim()) throw new Error('Task name cannot be empty')
@@ -89,6 +94,8 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
   }
   if (opts.parent !== undefined) payload.parent = opts.parent
+  if (opts.archive) payload.archived = true
+  if (opts.unarchive) payload.archived = false
   return payload
 }
 
@@ -102,7 +109,8 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.due_date !== undefined ||
     options.time_estimate !== undefined ||
     options.assignees !== undefined ||
-    options.parent !== undefined
+    options.parent !== undefined ||
+    options.archived !== undefined
   )
 }
 
@@ -134,7 +142,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options))
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent, --archive, --unarchive',
     )
 
   const client = new ClickUpClient(config)
