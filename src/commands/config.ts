@@ -1,7 +1,12 @@
 import { loadRawConfig, writeConfig, getConfigPath } from '../config.js'
-import type { Config } from '../config.js'
 
-const VALID_KEYS: ReadonlySet<string> = new Set(['apiToken', 'teamId', 'sprintFolderId'])
+type StringConfigKey = 'apiToken' | 'teamId' | 'sprintFolderId'
+
+const VALID_KEYS: ReadonlySet<string> = new Set<StringConfigKey>([
+  'apiToken',
+  'teamId',
+  'sprintFolderId',
+])
 
 function readStoredString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined
@@ -9,7 +14,7 @@ function readStoredString(value: unknown): string | undefined {
   return trimmed || undefined
 }
 
-function assertValidKey(key: string): asserts key is keyof Config {
+function assertValidKey(key: string): asserts key is StringConfigKey {
   if (!VALID_KEYS.has(key)) {
     throw new Error(`Unknown config key: ${key}. Valid keys: ${[...VALID_KEYS].join(', ')}`)
   }
@@ -34,7 +39,7 @@ export function setConfigValue(key: string, value: string, profileName?: string)
 
   const raw = loadRawConfig(profileName)
   const sprintFolderId = readStoredString(raw.sprintFolderId)
-  const merged: Partial<Config> = {
+  const merged: Partial<Record<StringConfigKey, string>> = {
     ...(readStoredString(raw.apiToken) ? { apiToken: readStoredString(raw.apiToken) } : {}),
     ...(readStoredString(raw.teamId) ? { teamId: readStoredString(raw.teamId) } : {}),
     ...(sprintFolderId ? { sprintFolderId } : {}),
