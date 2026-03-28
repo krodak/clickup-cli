@@ -4,7 +4,17 @@ import { Command } from 'commander'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
 import { ClickUpClient } from './api.js'
-import { loadConfig, addProfile, removeProfile, setDefaultProfile, listProfiles } from './config.js'
+import {
+  loadConfig,
+  addProfile,
+  removeProfile,
+  setDefaultProfile,
+  listProfiles,
+  getFilters,
+  saveFilter,
+  deleteFilter,
+} from './config.js'
+import type { FilterEntry } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
 import { updateTask, buildUpdatePayload, resolveAssigneeId } from './commands/update.js'
 import type { UpdateCommandOptions } from './commands/update.js'
@@ -108,7 +118,8 @@ import {
 import { listMembers, formatMembers, formatMembersMarkdown } from './commands/members.js'
 import { listFields, formatFields, formatFieldsMarkdown } from './commands/fields.js'
 import { duplicateTask } from './commands/duplicate.js'
-import { bulkUpdateStatus } from './commands/bulk.js'
+import { bulkUpdateStatus, bulkAssign, bulkDueDate, bulkTag } from './commands/bulk.js'
+import type { BulkResult } from './commands/bulk.js'
 import {
   listGoals,
   createGoal,
@@ -143,6 +154,13 @@ import { getView as getViewDetail, formatView, formatViewMarkdown } from './comm
 import { createView } from './commands/view-create.js'
 import { updateView as updateViewCommand } from './commands/view-update.js'
 import { deleteViewCommand } from './commands/view-delete.js'
+import {
+  runFilter,
+  isAllowedFilterCommand,
+  formatFiltersTable,
+  formatFiltersMarkdown,
+  formatFilterDetail,
+} from './commands/filter.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -277,6 +295,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
+    .option('--remove-assignee <userId>', 'Remove assignee by user ID or "me"')
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
     .option('--detach', 'Remove parent task (promote subtask to top-level)')
     .option('--archive', 'Archive the task')
@@ -294,11 +313,15 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             const client = new ClickUpClient(config)
             opts.assignee = String(await resolveAssigneeId(client, 'me'))
           }
+          if (opts.removeAssignee === 'me') {
+            const client = new ClickUpClient(config)
+            opts.removeAssignee = String(await resolveAssigneeId(client, 'me'))
+          }
           const payload = buildUpdatePayload(opts)
           const hasFields = (opts.field?.length ?? 0) > 0
           if (!hasFields && Object.keys(payload).length === 0) {
             throw new Error(
-              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --parent, --archive, --unarchive, --field',
+              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --remove-assignee, --parent, --archive, --unarchive, --field',
             )
           }
           let result: { id: string; name: string } | undefined
@@ -1089,12 +1112,13 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   timeCmd
     .command('list')
-    .description('List recent time entries (default: last 7 days)')
+    .description('List my recent time entries (use --all for team entries)')
     .option('--days <n>', 'Number of days to look back', '7')
     .option('--task <taskId>', 'Filter by task ID')
     .option('--space <spaceId>', 'Filter by space ID')
     .option('--list <listId>', 'Filter by list ID')
     .option('--assignee <userId>', 'Filter by assignee user ID')
+    .option('--all', 'Show all team entries (default: only mine)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1104,6 +1128,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           space?: string
           list?: string
           assignee?: string
+          all?: boolean
           json?: boolean
         }) => {
           const config = loadConfig(getProfileName())
@@ -1117,6 +1142,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             spaceId: opts.space,
             listId: opts.list,
             assigneeId: opts.assignee,
+            all: opts.all,
           })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(entries, null, 2))
@@ -1352,6 +1378,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       }),
     )
 
+  function outputBulkResult(result: BulkResult, forceJson: boolean, operation: string): void {
+    if (shouldOutputJson(forceJson)) {
+      console.log(JSON.stringify(result, null, 2))
+    } else {
+      console.log(
+        `${operation}: ${result.updated} updated${result.failed.length > 0 ? `, ${result.failed.length} failed` : ''}`,
+      )
+      for (const f of result.failed) {
+        console.error(`  ${f.id}: ${f.reason}`)
+      }
+    }
+  }
+
   const bulkCmd = program.command('bulk').description('Bulk task operations')
 
   bulkCmd
@@ -1373,6 +1412,61 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           }
         }
       }),
+    )
+
+  bulkCmd
+    .command('assign <taskIds...>')
+    .description('Bulk assign or unassign a user from tasks')
+    .option('--to <userId>', 'Add this user (user ID or "me")')
+    .option('--remove <userId>', 'Remove this user (user ID or "me")')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (taskIds: string[], opts: { to?: string; remove?: string; json?: boolean }) => {
+          if (!opts.to && !opts.remove)
+            throw new Error('Provide --to <userId> or --remove <userId>')
+          if (opts.to && opts.remove) throw new Error('Cannot use --to and --remove together')
+          const config = loadConfig(getProfileName())
+          const userId = opts.to ?? opts.remove!
+          const action = opts.remove ? 'remove' : 'add'
+          const result = await bulkAssign(config, userId, taskIds, action)
+          outputBulkResult(result, opts.json ?? false, `assign ${action}`)
+        },
+      ),
+    )
+
+  bulkCmd
+    .command('due-date <date> <taskIds...>')
+    .description('Bulk set due date on tasks (use "none" to clear)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (date: string, taskIds: string[], opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await bulkDueDate(config, date, taskIds)
+        outputBulkResult(result, opts.json ?? false, 'due-date')
+      }),
+    )
+
+  bulkCmd
+    .command('tag <tagName> <taskIds...>')
+    .description('Bulk add or remove a tag on tasks')
+    .option('--add', 'Add tag (default)')
+    .option('--remove', 'Remove tag instead of adding')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          tagName: string,
+          taskIds: string[],
+          opts: { add?: boolean; remove?: boolean; json?: boolean },
+        ) => {
+          if (opts.add && opts.remove) throw new Error('Cannot use --add and --remove together')
+          const action = opts.remove ? 'remove' : 'add'
+          const config = loadConfig(getProfileName())
+          const result = await bulkTag(config, tagName, taskIds, action)
+          outputBulkResult(result, opts.json ?? false, `tag ${action}`)
+        },
+      ),
     )
 
   program
@@ -2049,6 +2143,103 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify(result, null, 2))
         } else {
           console.log(`Deleted view ${result.viewId}`)
+        }
+      }),
+    )
+
+  const filterCmd = program.command('filter').description('Manage saved command shortcuts')
+
+  filterCmd
+    .command('save <name> [args...]')
+    .description('Save a command shortcut')
+    .option('-d, --description <text>', 'Description for this filter')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (name: string, args: string[], opts: { description?: string; json?: boolean }) => {
+          if (args.length === 0) {
+            throw new Error(
+              'Provide a command to save, e.g.: cup filter save my-sprint tasks --status "in progress"',
+            )
+          }
+          if (!isAllowedFilterCommand(args)) {
+            throw new Error(
+              `Command "${args[0]}" is not allowed in saved filters. Allowed: tasks, search, sprint, assigned, overdue, inbox, summary, views, lists, spaces, folders, members, tags, goals, key-results, task-types, templates, list-templates, folder-templates, docs, time list`,
+            )
+          }
+          const entry: FilterEntry = { command: args }
+          if (opts.description) entry.description = opts.description
+          saveFilter(name, entry, getProfileName())
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify({ name, ...entry }, null, 2))
+          } else {
+            console.log(`Saved filter "${name}": ${args.join(' ')}`)
+          }
+        },
+      ),
+    )
+
+  filterCmd
+    .command('run <name>')
+    .description('Run a saved command shortcut')
+    .action(
+      wrapAction(async (name: string) => {
+        const filters = getFilters(getProfileName())
+        const entry = filters[name]
+        if (!entry) {
+          throw new Error(`Filter "${name}" not found. Use: cup filter list`)
+        }
+        runFilter(name, entry)
+      }),
+    )
+
+  filterCmd
+    .command('list')
+    .description('List all saved command shortcuts')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const filters = getFilters(getProfileName())
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(filters, null, 2))
+        } else if (isTTY()) {
+          console.log(formatFiltersTable(filters))
+        } else {
+          console.log(formatFiltersMarkdown(filters))
+        }
+      }),
+    )
+
+  filterCmd
+    .command('delete <name>')
+    .description('Delete a saved command shortcut')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (name: string, opts: { json?: boolean }) => {
+        deleteFilter(name, getProfileName())
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, name }, null, 2))
+        } else {
+          console.log(`Deleted filter "${name}"`)
+        }
+      }),
+    )
+
+  filterCmd
+    .command('show <name>')
+    .description('Show details of a saved command shortcut')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (name: string, opts: { json?: boolean }) => {
+        const filters = getFilters(getProfileName())
+        const entry = filters[name]
+        if (!entry) {
+          throw new Error(`Filter "${name}" not found. Use: cup filter list`)
+        }
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ name, ...entry }, null, 2))
+        } else {
+          console.log(formatFilterDetail(name, entry))
         }
       }),
     )

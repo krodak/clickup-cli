@@ -5,6 +5,7 @@ const bashSpecialCaseCommands = new Set([
   'checklist',
   'time',
   'bulk',
+  'filter',
   'config',
   'profile',
   'completion',
@@ -202,6 +203,7 @@ ${renderZshTopLevelCommands(name)}
             '--start-date[Start date]:date:' \\
             '--time-estimate[Time estimate]:duration:' \\
             '--assignee[Add assignee]:user_id:' \\
+            '--remove-assignee[Remove assignee]:user_id:' \\
             '--parent[Set parent task]:task_id:' \\
             '--detach[Remove parent task]' \\
             '--archive[Archive the task]' \\
@@ -751,6 +753,50 @@ ${renderZshTopLevelCommands(name)}
             '--name[New page name]:text:' \\
             '(-c --content)'{-c,--content}'[New page content]:text:' \\
             '--json[Force JSON output]'
+          ;;
+        filter)
+          local -a filter_cmds
+          filter_cmds=(
+            'save:Save a command shortcut'
+            'run:Run a saved shortcut'
+            'list:List saved shortcuts'
+            'delete:Delete a saved shortcut'
+            'show:Show details of a saved shortcut'
+          )
+          _arguments -C \\
+            '1:filter command:->filter_cmd' \\
+            '*::filter_arg:->filter_args'
+          case $state in
+            filter_cmd)
+              _describe 'filter command' filter_cmds
+              ;;
+            filter_args)
+              case $words[1] in
+                save)
+                  _arguments \\
+                    '1:name:' \\
+                    '*:command:' \\
+                    '(-d --description)'{-d,--description}'[Filter description]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                run)
+                  _arguments '1:name:'
+                  ;;
+                list)
+                  _arguments '--json[Force JSON output]'
+                  ;;
+                delete)
+                  _arguments '1:name:' '--json[Force JSON output]'
+                  ;;
+                show)
+                  _arguments '1:name:' '--json[Force JSON output]'
+                  ;;
+                *)
+                  _arguments '1:subcommand:(save run list delete show)'
+                  ;;
+              esac
+              ;;
+          esac
           ;;
         profile)
           local -a profile_cmds
