@@ -605,7 +605,7 @@ export const commandMetadata = [
       },
       {
         section: 'write',
-        usage: 'bulk tag <tag> <taskIds...>',
+        usage: 'bulk tag <tagName> <taskIds...>',
         description: 'Bulk add/remove tag',
       },
     ],
@@ -781,7 +781,6 @@ export const commandMetadata = [
   {
     name: 'filter',
     description: 'Manage saved command shortcuts',
-    flags: ['--json'],
     quickReference: [
       {
         section: 'setup',
