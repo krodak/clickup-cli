@@ -36,6 +36,7 @@ vi.mock('../../../src/api.js', () => ({
       updateTask: mockUpdateTask,
       getTask: mockGetTask,
       getListWithStatuses: mockGetListWithStatuses,
+      getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
 }))
@@ -113,7 +114,7 @@ describe('updateTask', () => {
 
   it('calls API with start_date', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
-    const ms = new Date(2025, 5, 1).getTime()
+    const ms = Date.UTC(2025, 5, 1)
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
       start_date: ms,
       start_date_time: false,
@@ -169,10 +170,17 @@ describe('parsePriority', () => {
 })
 
 describe('parseDueDate', () => {
-  it('parses YYYY-MM-DD format', async () => {
+  it('parses YYYY-MM-DD format to UTC midnight', async () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
     const result = parseDueDate('2025-03-15')
-    expect(result).toBe(new Date(2025, 2, 15).getTime())
+    expect(result).toBe(Date.UTC(2025, 2, 15))
+  })
+
+  it('parses YYYY-MM-DD with timezone to midnight in that timezone', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-06-01', 'America/New_York')
+    // June 1 midnight ET = June 1 04:00 UTC (EDT = UTC-4)
+    expect(result).toBe(Date.UTC(2025, 5, 1, 4, 0, 0))
   })
 
   it('throws on invalid date format', async () => {
@@ -259,7 +267,7 @@ describe('buildUpdatePayload', () => {
   it('builds payload with due date', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ dueDate: '2025-06-01' })
-    expect(payload.due_date).toBe(new Date(2025, 5, 1).getTime())
+    expect(payload.due_date).toBe(Date.UTC(2025, 5, 1))
     expect(payload.due_date_time).toBe(false)
   })
 
@@ -293,7 +301,7 @@ describe('buildUpdatePayload', () => {
     expect(payload.name).toBe('New name')
     expect(payload.status).toBe('done')
     expect(payload.priority).toBe(1)
-    expect(payload.due_date).toBe(new Date(2025, 0, 1).getTime())
+    expect(payload.due_date).toBe(Date.UTC(2025, 0, 1))
     expect(payload.assignees).toEqual({ add: [99] })
   })
 
@@ -346,7 +354,7 @@ describe('buildUpdatePayload', () => {
   it('builds payload with start_date', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ startDate: '2025-06-01' })
-    expect(payload.start_date).toBe(new Date(2025, 5, 1).getTime())
+    expect(payload.start_date).toBe(Date.UTC(2025, 5, 1))
     expect(payload.start_date_time).toBe(false)
   })
 

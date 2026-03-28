@@ -12,6 +12,7 @@ vi.mock('../../../src/api.js', () => ({
       createTask: mockCreateTask,
       getTask: mockGetTask,
       createTaskFromTemplate: mockCreateTaskFromTemplate,
+      getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
 }))
@@ -121,7 +122,7 @@ describe('createTask', () => {
       'l1',
       expect.objectContaining({
         name: 'Task',
-        due_date: new Date(2025, 5, 15).getTime(),
+        due_date: Date.UTC(2025, 5, 15),
         due_date_time: false,
       }),
     )
@@ -137,7 +138,7 @@ describe('createTask', () => {
       'l1',
       expect.objectContaining({
         name: 'Task',
-        start_date: new Date(2025, 5, 1).getTime(),
+        start_date: Date.UTC(2025, 5, 1),
         start_date_time: false,
       }),
     )

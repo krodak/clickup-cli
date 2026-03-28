@@ -50,10 +50,11 @@ export async function bulkDueDate(
   taskIds: string[],
 ): Promise<BulkResult> {
   const client = new ClickUpClient(config)
+  const timezone = await client.getUserTimezone()
   const payload =
     date === 'none' || date === 'clear'
       ? { due_date: null }
-      : { due_date: parseDueDate(date), due_date_time: false }
+      : { due_date: parseDueDate(date, timezone), due_date_time: false }
   const failed: Array<{ id: string; reason: string }> = []
   for (const id of taskIds) {
     try {

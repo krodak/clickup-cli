@@ -311,15 +311,21 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           opts: UpdateCommandOptions & { field?: string[]; json?: boolean },
         ) => {
           const config = loadConfig(getProfileName())
-          if (opts.assignee === 'me') {
-            const client = new ClickUpClient(config)
-            opts.assignee = String(await resolveAssigneeId(client, 'me'))
-          }
-          if (opts.removeAssignee === 'me') {
-            const client = new ClickUpClient(config)
-            opts.removeAssignee = String(await resolveAssigneeId(client, 'me'))
-          }
-          const payload = buildUpdatePayload(opts)
+          const client = new ClickUpClient(config)
+          const [timezone] = await Promise.all([
+            client.getUserTimezone(),
+            opts.assignee === 'me'
+              ? resolveAssigneeId(client, 'me').then(id => {
+                  opts.assignee = String(id)
+                })
+              : Promise.resolve(),
+            opts.removeAssignee === 'me'
+              ? resolveAssigneeId(client, 'me').then(id => {
+                  opts.removeAssignee = String(id)
+                })
+              : Promise.resolve(),
+          ])
+          const payload = buildUpdatePayload(opts, timezone)
           const hasFields = (opts.field?.length ?? 0) > 0
           if (!hasFields && Object.keys(payload).length === 0) {
             throw new Error(

@@ -65,14 +65,18 @@ export function formatFiltersTable(filters: FiltersMap): string {
   return formatTable(rows, FILTER_COLUMNS)
 }
 
+function escapeMarkdownCell(value: string): string {
+  return value.replace(/\|/g, '\\|')
+}
+
 export function formatFiltersMarkdown(filters: FiltersMap): string {
   const entries = Object.entries(filters)
   if (entries.length === 0) return 'No filters saved'
   const lines = ['| Name | Command | Description |', '| --- | --- | --- |']
   for (const [name, entry] of entries) {
-    const command = entry.command.join(' ')
-    const description = entry.description ?? ''
-    lines.push(`| ${name} | ${command} | ${description} |`)
+    const command = escapeMarkdownCell(entry.command.join(' '))
+    const description = escapeMarkdownCell(entry.description ?? '')
+    lines.push(`| ${escapeMarkdownCell(name)} | ${command} | ${description} |`)
   }
   return lines.join('\n')
 }
