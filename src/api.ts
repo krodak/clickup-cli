@@ -98,6 +98,7 @@ export interface Space {
 interface SpaceStatus {
   status: string
   color: string
+  type?: string
 }
 
 export interface SpaceWithStatuses extends Space {
@@ -585,6 +586,16 @@ export class ClickUpClient {
     return this.request<{ id: string; name: string }>(`/folder/${folderId}/list`, {
       method: 'POST',
       body: JSON.stringify({ name }),
+    })
+  }
+
+  async updateList(
+    listId: string,
+    payload: { statuses?: Array<{ status: string; color: string; type: string }> },
+  ): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/list/${listId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     })
   }
 
