@@ -71,6 +71,8 @@ export const commandMetadata = [
       '--time-estimate',
       '--assignee',
       '--parent',
+      '--archive',
+      '--unarchive',
       '--field',
       '--json',
     ],

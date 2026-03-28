@@ -202,6 +202,9 @@ ${renderZshTopLevelCommands(name)}
             '--time-estimate[Time estimate]:duration:' \\
             '--assignee[Add assignee]:user_id:' \\
             '--parent[Set parent task]:task_id:' \\
+            '--archive[Archive the task]' \\
+            '--unarchive[Unarchive the task]' \\
+            '--field[Set custom field]:field_name_and_value:' \\
             '--json[Force JSON output]'
           ;;
         create)

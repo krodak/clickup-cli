@@ -277,6 +277,8 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
+    .option('--archive', 'Archive the task')
+    .option('--unarchive', 'Unarchive the task')
     .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value')
     .option('--json', 'Force JSON output even in terminal')
     .action(
