@@ -71,6 +71,7 @@ export const commandMetadata = [
       '--start-date',
       '--time-estimate',
       '--assignee',
+      '--remove-assignee',
       '--parent',
       '--detach',
       '--archive',
@@ -407,6 +408,7 @@ export const commandMetadata = [
   {
     name: 'time',
     description: 'Track time on tasks',
+    flags: ['--all', '--days', '--task', '--space', '--list', '--assignee', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -420,7 +422,11 @@ export const commandMetadata = [
         usage: 'time log <taskId> <duration>',
         description: 'Log a manual time entry',
       },
-      { section: 'write', usage: 'time list', description: 'List recent time entries' },
+      {
+        section: 'write',
+        usage: 'time list',
+        description: 'List my recent time entries (--all for team)',
+      },
       { section: 'write', usage: 'time update <timeEntryId>', description: 'Update a time entry' },
       { section: 'write', usage: 'time delete <timeEntryId>', description: 'Delete a time entry' },
     ],
@@ -756,6 +762,20 @@ export const commandMetadata = [
     flags: ['--confirm', '--json'],
     quickReference: [
       { section: 'write', usage: 'view-delete <viewId>', description: 'Delete a view' },
+    ],
+  },
+  {
+    name: 'filter',
+    description: 'Manage saved command shortcuts',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'setup',
+        usage: 'filter save <name> [args...]',
+        description: 'Save a command shortcut',
+      },
+      { section: 'read', usage: 'filter list', description: 'List saved shortcuts' },
+      { section: 'read', usage: 'filter run <name>', description: 'Run a saved shortcut' },
     ],
   },
   {

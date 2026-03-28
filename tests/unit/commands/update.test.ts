@@ -132,6 +132,12 @@ describe('updateTask', () => {
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: null })
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: null })
   })
+
+  it('calls API with assignees.rem to remove assignee', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { assignees: { rem: [99] } })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { assignees: { rem: [99] } })
+  })
 })
 
 describe('parsePriority', () => {
@@ -261,6 +267,18 @@ describe('buildUpdatePayload', () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ assignee: '12345' })
     expect(payload.assignees).toEqual({ add: [12345] })
+  })
+
+  it('builds payload with assignees.rem for --remove-assignee', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ removeAssignee: '99' })
+    expect(payload.assignees).toEqual({ rem: [99] })
+  })
+
+  it('builds payload with both add and rem when both flags given', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ assignee: '12', removeAssignee: '99' })
+    expect(payload.assignees).toEqual({ add: [12], rem: [99] })
   })
 
   it('builds payload with all fields', async () => {

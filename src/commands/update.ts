@@ -66,6 +66,7 @@ export interface UpdateCommandOptions {
   dueDate?: string
   startDate?: string
   assignee?: string
+  removeAssignee?: string
   timeEstimate?: string
   parent?: string
   detach?: boolean
@@ -100,8 +101,14 @@ export function buildUpdatePayload(opts: UpdateCommandOptions): UpdateTaskOption
     payload.start_date = parseDueDate(opts.startDate)
     payload.start_date_time = false
   }
-  if (opts.assignee !== undefined) {
-    payload.assignees = { add: [parseAssigneeId(opts.assignee)] }
+  if (opts.assignee !== undefined || opts.removeAssignee !== undefined) {
+    payload.assignees = {}
+    if (opts.assignee !== undefined) {
+      payload.assignees.add = [parseAssigneeId(opts.assignee)]
+    }
+    if (opts.removeAssignee !== undefined) {
+      payload.assignees.rem = [parseAssigneeId(opts.removeAssignee)]
+    }
   }
   if (opts.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
@@ -160,7 +167,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options))
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --parent, --detach, --archive, --unarchive',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --parent, --detach, --archive, --unarchive',
     )
 
   const client = new ClickUpClient(config)
