@@ -1,4 +1,32 @@
-import type { ClickUpClient } from '../api.js'
+import { ClickUpClient } from '../api.js'
+import type { Config } from '../config.js'
+
+export async function createListWithOptions(
+  config: Config,
+  spaceId: string,
+  name: string,
+  opts: { folder?: string; copyStatusesFrom?: string },
+): Promise<{ id: string; name: string; statusesCopied?: number }> {
+  const client = new ClickUpClient(config)
+
+  let statuses: Array<{ status: string; color: string; type: string }> | undefined
+  if (opts.copyStatusesFrom) {
+    statuses = await copyStatusesFrom(client, opts.copyStatusesFrom)
+  }
+
+  const list = opts.folder
+    ? await client.createFolderList(opts.folder, name)
+    : await client.createList(spaceId, name)
+
+  if (statuses) {
+    await client.updateList(list.id, { statuses })
+  }
+
+  return {
+    ...list,
+    ...(statuses ? { statusesCopied: statuses.length } : {}),
+  }
+}
 
 export async function copyStatusesFrom(
   client: ClickUpClient,
