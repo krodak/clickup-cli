@@ -65,8 +65,9 @@ export function formatChecklists(checklists: Checklist[]): string {
     lines.push(chalk.dim(`  ID: ${cl.id}`))
     for (const item of cl.items) {
       const check = item.resolved ? chalk.green('[x]') : chalk.dim('[ ]')
+      const name = item.resolved ? chalk.dim(item.name) : item.name
       const assignee = item.assignee ? chalk.dim(` @${item.assignee.username}`) : ''
-      lines.push(`  ${check} ${item.name}${assignee}`)
+      lines.push(`  ${check} ${name}${assignee}`)
       lines.push(chalk.dim(`      item-id: ${item.id}`))
     }
   }
