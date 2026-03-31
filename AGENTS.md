@@ -4,9 +4,18 @@
 
 `@krodak/clickup-cli` (`cup`) - a ClickUp CLI for AI agents and humans. TypeScript, ESM-only, Node 22+. Three output modes: interactive tables with task picker in TTY, Markdown when piped (optimized for AI context windows), JSON with `--json`. The binary is `cup` - the previous `cu` name was retired to avoid conflict with the Unix `cu(1)` utility.
 
-## Skills
+## Project Skills
 
-Use the following skills when working on this project:
+This repo includes project-level agent skills in `.agents/skills/`:
+
+| Skill                     | When to use                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **releasing-clickup-cli** | Releasing a new version (npm, Homebrew, GitHub Release, skill sync). Follow this skill exactly - it prevents version/docs/metadata mistakes. |
+| **testing-clickup-cli**   | Running tests, adding test coverage, debugging failures. Documents unit test patterns, e2e workspace fixtures, and the metadata sync test.   |
+
+Use these skills for releasing and testing instead of the sections below - they have full step-by-step instructions.
+
+## External Skills
 
 - **typescript-pro** - for all TypeScript work. The project uses strict mode, `verbatimModuleSyntax`, `noUncheckedIndexedAccess`, and `typescript-eslint` recommendedTypeChecked rules.
 - **cli-developer** - for CLI design, argument parsing, interactive prompts, and shell completions. The project uses Commander for CLI framework, @inquirer/prompts for interactive UI, and chalk for colors.
@@ -41,8 +50,13 @@ tests/
   e2e/              # Integration tests, *.e2e.ts (requires .env.test)
 docs/
   commands.md       # Full command reference with examples and flags
+  api-coverage.md   # API coverage matrix with status indicators
 skills/
-  clickup-cli/      # Agent skill file (SKILL.md with YAML frontmatter)
+  clickup-cli/      # Agent skill file shipped with npm package
+.agents/skills/
+  using-clickup-cli/ # Agent skill (canonical location for npx skills add)
+  releasing-clickup-cli/ # Internal: release process (metadata.internal: true)
+  testing-clickup-cli/   # Internal: test guide (metadata.internal: true)
 .claude-plugin/
   plugin.json       # Claude Code plugin manifest
 ```
@@ -76,27 +90,30 @@ npm run format:check # Prettier check
 
 1. Create `src/commands/<name>.ts` with the command logic
 2. Register the command in `src/index.ts` using Commander
-3. Create `tests/unit/commands/<name>.test.ts` with unit tests
-4. Update `README.md` with the new command's documentation
-5. Update `skills/clickup-cli/SKILL.md` with the new command
-6. Update `docs/commands.md` with full reference (examples, flag tables)
-7. Add to shell completions in `src/commands/completion.ts` (all 3 shells: bash, zsh, fish)
+3. Add to `src/commands/metadata.ts` (completion test will fail otherwise)
+4. Create `tests/unit/commands/<name>.test.ts` with unit tests
+5. Update `README.md` with the new command's documentation
+6. Update `skills/clickup-cli/SKILL.md` AND `.agents/skills/using-clickup-cli/SKILL.md` with the new command
+7. Update `docs/commands.md` with full reference (examples, flag tables)
+8. Sync docs quick reference: `node --import tsx scripts/sync-command-docs.ts`
+9. Add to shell completions in `src/commands/completion.ts` (all 3 shells: bash, zsh, fish)
 
 ## Modifying Commands
 
 When adding or changing flags, output formats, or behavior on any command:
 
 1. Update `README.md` to reflect the change
-2. Update `skills/clickup-cli/SKILL.md` to reflect the change
+2. Update both SKILL.md files (skills/ and .agents/skills/) to reflect the change
 3. Update `docs/commands.md` with the change
-4. Update the command count in `README.md` if commands were added/removed
+4. Add new flags to `src/commands/metadata.ts`
+5. Sync docs: `node --import tsx scripts/sync-command-docs.ts`
 
 ## ClickUp API
 
 - The API client is in `src/api.ts` (`ClickUpClient` class)
+- v2 endpoints use `request()`, v3 (Docs) uses `requestV3()`, both via shared `_fetch()`
 - The ClickUp API returns inconsistent types across endpoints (numbers vs strings for IDs). Always use `Number()` coercion when comparing IDs client-side.
-- The View Tasks API (`GET /view/{id}/task`) returns all tasks visible in a view, including multi-list tasks. The List Tasks API (`GET /list/{id}/task`) only returns tasks whose primary list matches. Prefer the View API when you need complete task coverage.
-- Pagination uses `{ tasks: Task[], last_page: boolean }` response format
+- Pagination uses `paginate()` with `MAX_PAGES=100` safety limit
 
 ## Pre-Commit Checklist
 
@@ -110,62 +127,32 @@ Before committing, verify all of these pass:
 
 ## README Format
 
-The README API Coverage section uses a status table with GitHub emoji indicators:
+The README "What it covers" section is a compact feature summary. Full API coverage details are in `docs/api-coverage.md` with GitHub emoji indicators (`:white_check_mark:`, `:construction:`, `:no_entry_sign:`).
 
-- `:white_check_mark:` - implemented
-- `:construction:` - planned
-- `:no_entry_sign:` - won't add
-
-Commands are grouped by purpose (Tasks, Comments, Checklists, etc.), not by read/write. When implementing a planned feature, change its status from `:construction:` to `:white_check_mark:` and add the command.
-
-The "Won't add" section explains why each feature was excluded. Keep reasons short and direct.
-
-The Setup section uses foldable `<details>` blocks with badge icons for each tool (Claude Code, Codex, OpenCode, Homebrew, npm).
+The Setup section uses foldable `<details>` blocks with badge icons. `cup skill` is the primary install method.
 
 ## Release Process
 
-Releases are automated via GitHub Actions using npm Trusted Publishers (OIDC).
+See the **releasing-clickup-cli** project skill for full step-by-step instructions. Key points:
 
-1. Bump version: `npm version <0.X.0> --no-git-tag-version` (use explicit version, not patch/minor/major - those auto-increment from current, which may not be what you want)
-2. Update `.claude-plugin/plugin.json` version to match
-3. Commit the version bump: `git commit -m "bump v0.X.0"`
-4. Tag: `git tag v0.X.0`
-5. Push commit and tag: `git push origin main --tags`
-6. CI handles: typecheck, test, build, `npm publish --provenance`, and GitHub Release creation (empty auto-generated notes)
-7. Update the GitHub Release with hand-written release notes via `gh release edit v0.X.0 --notes "..."` - the CI-generated notes are just a changelog link, not useful
-8. After npm publish succeeds, update the Homebrew tap (see below)
-
-Do NOT publish manually. Do NOT use `NODE_AUTH_TOKEN` - the release pipeline uses OIDC trusted publishers for authentication.
-
-### Release Notes Style
-
-Release notes are written after CI publishes, via `gh release edit`. The format:
-
-- H2 heading per new command or feature group
-- Code block with 2-3 usage examples
-- Brief description of what the command does (1-2 sentences)
-- "Other Changes" section at the bottom for non-command changes
-- End with test count ("492 tests across 43 files")
-- No emojis, no marketing language, no "we're excited" preamble
-
-### npm Trusted Publishers Requirements
-
-The release workflow uses OIDC trusted publishing, which requires npm CLI 11.5.1+ (ships with Node 24+). The `release.yml` workflow MUST use `node-version: '24'` or higher. Node 22 ships with npm 10.x which does not support trusted publishers and will fail with `E404` / expired token errors.
-
-The trusted publisher must be configured on npmjs.com under the package settings (Trusted Publisher - GitHub Actions) with: workflow filename = `release.yml` (case-sensitive, exact match).
-
-The release workflow uses `--ignore-scripts` to skip the `prepublishOnly` hook during publish (the CI steps already ran typecheck/test/build). This avoids redundant work and keeps the OIDC token fresh.
+- Bump 3 files: `package.json`, `package-lock.json`, `.claude-plugin/plugin.json`
+- Sync `docs/commands.md` before committing
+- Tag triggers CI which publishes to npm via OIDC
+- Update Homebrew tap manually after npm publish
+- Release workflow MUST use Node 24+ for OIDC trusted publishers
 
 ## CI Pipelines
 
 - **CI** (`ci.yml`) - runs on push to main and PRs: typecheck, lint, format:check, test, build
-- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance, and GitHub Release creation. **Must use Node 24** for OIDC.
+- **Release** (`release.yml`) - runs on `v*` tags: typecheck, test, build, npm publish with provenance, and GitHub Release creation
 - **Dependabot** - weekly updates for npm and GitHub Actions dependencies
 
-## Testing Guidelines
+## Testing
 
-- Unit tests mock the ClickUp API client (`vi.mock` with factory returning mock constructor)
-- Use `vi.mock` for module-level mocks (output, config)
-- E2E tests hit the real ClickUp API and need `CLICKUP_API_TOKEN` in `.env.test`
-- Never commit `.env.test` - copy from `.env.test.example`
-- The unit test global setup runs `npm run build` before the test suite
+See the **testing-clickup-cli** project skill for full guide including e2e workspace fixtures and test patterns.
+
+Key facts:
+
+- Unit tests use `vi.mock` with factory returning mock constructor (Vitest 4 requires `function`, not arrow)
+- E2E tests run against personal ClickUp workspace (E2E Tests space)
+- The completion test in `tests/unit/commands/completion.test.ts` verifies metadata.ts stays in sync with Commander and docs/commands.md
