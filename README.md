@@ -14,6 +14,16 @@
 npm install -g @krodak/clickup-cli && cup init
 ```
 
+## For AI Agents
+
+Paste this into any AI agent to get started immediately:
+
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/krodak/clickup-cli/main/skills/clickup-cli/SKILL.md
+```
+
+Or install the skill permanently with `cup skill` (see [Set up your agent](#set-up-your-agent) below).
+
 ## Talk to your agent
 
 Install the CLI, add the skill file to your agent, and it works with ClickUp. No API knowledge needed.
@@ -214,6 +224,20 @@ Environment variables override config file values:
 | `CU_OUTPUT`    | Set to `json` to force JSON output when piped (default: markdown) |
 
 When both `CU_API_TOKEN` and `CU_TEAM_ID` are set, the config file is not required. Useful for CI/CD and containerized agents.
+
+## Troubleshooting
+
+**"No config file found"** - Run `cup init` to set up your API token and workspace.
+
+**"Config missing apiToken"** - Set `CU_API_TOKEN` environment variable or run `cup init`.
+
+**No output from `cup`** - Make sure you're on v1.5.2+. Older versions had a symlink bug. Update: `npm install -g @krodak/clickup-cli`
+
+**Sprint not detected** - Your sprint folder needs "sprint", "iteration", "cycle", or "scrum" in the name. Or pin it: `cup config set sprintFolderId <id>`
+
+**Custom field filter fails** - `--field` requires `--list` to resolve field names to IDs: `cup tasks --list <id> --field "Sprint" "Week 1"`
+
+**Wrong workspace** - Switch profile: `cup profile use <name>` or use `-p <name>` for one command.
 
 ## Development
 
