@@ -73,13 +73,13 @@ cup init
 
 ## Set up your agent
 
-The package includes a [skill file](https://agentskills.io) that teaches agents all available commands. Install it with:
+After installing `cup`, run:
 
 ```bash
 cup skill
 ```
 
-This detects which agents you have (Claude Code, Codex, OpenCode) and installs the skill to the right locations. Run it again after updating `cup` to refresh the skill.
+This detects which agents you have (Claude Code, Codex, OpenCode) and installs the [skill file](https://agentskills.io) to the right locations. Run it again after updating `cup` to refresh the skill.
 
 <details>
 <summary>Manual install options</summary>
@@ -126,13 +126,19 @@ cup skill --path ~/.config/opencode/skills/clickup/SKILL.md
 </details>
 
 <details>
-<summary>&nbsp;<strong>Other agents</strong></summary>
+<summary>&nbsp;<strong>Other agents / npx</strong></summary>
+
+Without installing globally, you can use `npx`:
 
 ```bash
-cup skill --print > SKILL.md   # output skill content to a file
+npx @krodak/clickup-cli skill --print > SKILL.md
 ```
 
-Or copy `skills/clickup-cli/SKILL.md` into your agent's skill directory or `AGENTS.md`.
+Or install the skill directly from GitHub via the [skills CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add https://github.com/krodak/clickup-cli
+```
 
 </details>
 
