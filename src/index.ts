@@ -51,6 +51,7 @@ import {
 import { assignTask } from './commands/assign.js'
 import { fetchActivity, printActivity } from './commands/activity.js'
 import { generateCompletion } from './commands/completion.js'
+import { printSkill, installSkillInteractive, installSkillTo } from './commands/skill.js'
 import { checkAuth } from './commands/auth.js'
 import { searchTasks } from './commands/search.js'
 import { manageDependency } from './commands/depend.js'
@@ -2513,6 +2514,30 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(async (shell: string) => {
         const script = generateCompletion(shell, programName)
         process.stdout.write(script)
+      }),
+    )
+
+  program
+    .command('skill')
+    .description('Install the agent skill file for your coding agents')
+    .option('--print', 'Print the skill file content instead of installing')
+    .option('--path <path>', 'Install to a specific path')
+    .action(
+      wrapAction(async (opts: { print?: boolean; path?: string }) => {
+        if (opts.print) {
+          process.stdout.write(printSkill())
+          return
+        }
+        if (opts.path) {
+          const dest = installSkillTo(opts.path)
+          console.log(`Installed to ${dest}`)
+          return
+        }
+        const installed = await installSkillInteractive()
+        console.log('')
+        for (const entry of installed) {
+          console.log(`  Installed: ${entry}`)
+        }
       }),
     )
 

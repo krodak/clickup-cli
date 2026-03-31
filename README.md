@@ -73,9 +73,18 @@ cup init
 
 ## Set up your agent
 
-The package includes a [skill file](https://agentskills.io) that teaches agents all available commands and when to use them. All three major coding agents support skills natively:
+The package includes a [skill file](https://agentskills.io) that teaches agents all available commands. Install it with:
 
-<details open>
+```bash
+cup skill
+```
+
+This detects which agents you have (Claude Code, Codex, OpenCode) and installs the skill to the right locations. Run it again after updating `cup` to refresh the skill.
+
+<details>
+<summary>Manual install options</summary>
+
+<details>
 <summary>&nbsp;<img src="https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white" height="18" align="center">&nbsp;<strong>Claude Code</strong></summary>
 
 **Install as a [plugin](https://docs.anthropic.com/en/docs/claude-code/plugins)** (recommended):
@@ -84,14 +93,10 @@ The package includes a [skill file](https://agentskills.io) that teaches agents 
 claude plugin add $(npm root -g)/@krodak/clickup-cli
 ```
 
-This registers the skill under the `clickup-cli:` namespace. Claude loads it automatically when you work with ClickUp tasks.
-
-**Or install as a personal skill** (no namespace prefix):
+**Or as a personal skill:**
 
 ```bash
-SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
-mkdir -p ~/.claude/skills/clickup
-cp "$SKILL/SKILL.md" ~/.claude/skills/clickup/SKILL.md
+cup skill --path ~/.claude/skills/clickup/SKILL.md
 ```
 
 </details>
@@ -99,25 +104,15 @@ cp "$SKILL/SKILL.md" ~/.claude/skills/clickup/SKILL.md
 <details>
 <summary>&nbsp;<img src="https://img.shields.io/badge/Codex-412991?logo=openai&logoColor=white" height="18" align="center">&nbsp;<strong>Codex</strong></summary>
 
-Codex supports [agent skills](https://developers.openai.com/codex/skills) across CLI, IDE extension, and web. Skills use the same `SKILL.md` format with YAML frontmatter.
-
-**Install as a user skill** (available across all your projects):
-
 ```bash
-SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
-mkdir -p ~/.agents/skills/clickup
-cp "$SKILL/SKILL.md" ~/.agents/skills/clickup/SKILL.md
+cup skill --path ~/.agents/skills/clickup/SKILL.md
 ```
 
-**Or install as a project skill** (checked into your repo):
+Or for a project-level skill:
 
 ```bash
-SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
-mkdir -p .agents/skills/clickup
-cp "$SKILL/SKILL.md" .agents/skills/clickup/SKILL.md
+cup skill --path .agents/skills/clickup/SKILL.md
 ```
-
-You can also use the built-in installer: `$skill-installer clickup`
 
 </details>
 
@@ -125,9 +120,7 @@ You can also use the built-in installer: `$skill-installer clickup`
 <summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
 
 ```bash
-SKILL=$(npm root -g)/@krodak/clickup-cli/skills/clickup-cli
-mkdir -p ~/.config/opencode/skills/clickup
-cp "$SKILL/SKILL.md" ~/.config/opencode/skills/clickup/SKILL.md
+cup skill --path ~/.config/opencode/skills/clickup/SKILL.md
 ```
 
 </details>
@@ -135,7 +128,13 @@ cp "$SKILL/SKILL.md" ~/.config/opencode/skills/clickup/SKILL.md
 <details>
 <summary>&nbsp;<strong>Other agents</strong></summary>
 
-The skill file follows the [Agent Skills](https://agentskills.io) open standard. Copy `skills/clickup-cli/SKILL.md` into your agent's skill directory, system prompt, or `AGENTS.md`.
+```bash
+cup skill --print > SKILL.md   # output skill content to a file
+```
+
+Or copy `skills/clickup-cli/SKILL.md` into your agent's skill directory or `AGENTS.md`.
+
+</details>
 
 </details>
 
