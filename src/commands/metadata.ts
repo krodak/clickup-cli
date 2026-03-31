@@ -540,6 +540,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'skill',
+    description: 'Install the agent skill file for your coding agents',
+    flags: ['--print', '--path'],
+    quickReference: [
+      {
+        section: 'setup',
+        usage: 'skill',
+        description: 'Install skill for your agents',
+      },
+    ],
+  },
+  {
     name: 'space-create',
     description: 'Create a new space in your workspace',
     flags: ['--json'],
