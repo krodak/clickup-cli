@@ -1,6 +1,8 @@
 ---
 name: testing-clickup-cli
 description: Run and manage tests for clickup-cli. Covers unit tests, e2e tests against a real ClickUp workspace, and the test data setup. Use when running tests, adding test coverage, debugging test failures, or setting up test fixtures.
+metadata:
+  internal: true
 ---
 
 ## Test Suite Overview
