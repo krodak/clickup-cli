@@ -1,13 +1,17 @@
-import { readFileSync, mkdirSync, copyFileSync, existsSync } from 'fs'
+import { readFileSync, realpathSync, mkdirSync, copyFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
 import { homedir } from 'os'
 import chalk from 'chalk'
 import { isTTY } from '../output.js'
 
 function skillPath(): string {
-  const thisFile = fileURLToPath(import.meta.url)
-  return join(dirname(thisFile), '..', '..', 'skills', 'clickup-cli', 'SKILL.md')
+  const entryPoint = realpathSync(process.argv[1] ?? '')
+  const packageRoot = dirname(dirname(entryPoint))
+  const candidate = join(packageRoot, 'skills', 'clickup-cli', 'SKILL.md')
+  if (existsSync(candidate)) return candidate
+  const altCandidate = join(dirname(entryPoint), '..', 'skills', 'clickup-cli', 'SKILL.md')
+  if (existsSync(altCandidate)) return altCandidate
+  throw new Error('SKILL.md not found. Reinstall with: npm install -g @krodak/clickup-cli')
 }
 
 export function printSkill(): string {
