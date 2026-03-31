@@ -93,7 +93,7 @@ npm run format:check # Prettier check
 3. Add to `src/commands/metadata.ts` (completion test will fail otherwise)
 4. Create `tests/unit/commands/<name>.test.ts` with unit tests
 5. Update `README.md` with the new command's documentation
-6. Update `skills/clickup-cli/SKILL.md` AND `.agents/skills/using-clickup-cli/SKILL.md` with the new command
+6. Update `skills/clickup-cli/SKILL.md` with the new command (`.agents/skills/using-clickup-cli/SKILL.md` is a symlink to it)
 7. Update `docs/commands.md` with full reference (examples, flag tables)
 8. Sync docs quick reference: `node --import tsx scripts/sync-command-docs.ts`
 9. Add to shell completions in `src/commands/completion.ts` (all 3 shells: bash, zsh, fish)
@@ -103,7 +103,7 @@ npm run format:check # Prettier check
 When adding or changing flags, output formats, or behavior on any command:
 
 1. Update `README.md` to reflect the change
-2. Update both SKILL.md files (skills/ and .agents/skills/) to reflect the change
+2. Update `skills/clickup-cli/SKILL.md` to reflect the change
 3. Update `docs/commands.md` with the change
 4. Add new flags to `src/commands/metadata.ts`
 5. Sync docs: `node --import tsx scripts/sync-command-docs.ts`
