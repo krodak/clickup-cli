@@ -26,6 +26,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | Command                                 | Description                                       |
 | --------------------------------------- | ------------------------------------------------- |
 | `cup init`                              | First-time setup wizard                           |
+| `cup skill`                             | Install skill for your agents                     |
 | `cup filter save <name> [args...]`      | Save a command shortcut                           |
 | **Read**                                |                                                   |
 | `cup auth`                              | Check authentication status                       |
