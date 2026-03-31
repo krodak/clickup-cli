@@ -184,7 +184,15 @@ ${renderZshTopLevelCommands(name)}
             '--space[Filter by space ID]:space_id:' \\
             '--name[Filter by name]:query:' \\
             '--type[Filter by task type]:type:' \\
+            '--all[Include all tasks, not just mine]' \\
             '--include-closed[Include done/closed tasks]' \\
+            '--assignee[Filter by assignee]:user_id:' \\
+            '--tag[Filter by tag name]:tag:' \\
+            '--due-before[Tasks due before date]:date:' \\
+            '--due-after[Tasks due after date]:date:' \\
+            '--created-after[Tasks created after date]:date:' \\
+            '--created-before[Tasks created before date]:date:' \\
+            '--field[Filter by custom field]:field_name_and_value:' \\
             '--json[Force JSON output]'
           ;;
         task)
@@ -298,8 +306,17 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '1:query:' \\
             '--status[Filter by status]:status:(open "in progress" "in review" done closed)' \\
-            '--include-closed[Include done/closed tasks in search]' \\
+            '--list[Filter by list ID]:list_id:' \\
+            '--space[Filter by space ID]:space_id:' \\
             '--all[Search all workspace tasks, not just mine]' \\
+            '--include-closed[Include done/closed tasks in search]' \\
+            '--assignee[Filter by assignee]:user_id:' \\
+            '--tag[Filter by tag name]:tag:' \\
+            '--due-before[Tasks due before date]:date:' \\
+            '--due-after[Tasks due after date]:date:' \\
+            '--created-after[Tasks created after date]:date:' \\
+            '--created-before[Tasks created before date]:date:' \\
+            '--field[Filter by custom field]:field_name_and_value:' \\
             '--json[Force JSON output]'
           ;;
         summary)

@@ -4,10 +4,19 @@ import { matchStatus } from '../status.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize, buildTypeMap } from './tasks.js'
 
-interface SearchOptions {
+export interface SearchOptions {
   status?: string
   all?: boolean
   includeClosed?: boolean
+  listIds?: string[]
+  spaceIds?: string[]
+  assignees?: number[]
+  tags?: string[]
+  dueDateGt?: number
+  dueDateLt?: number
+  dateCreatedGt?: number
+  dateCreatedLt?: number
+  customFields?: Array<{ field_id: string; operator: string; value?: unknown }>
 }
 
 export async function searchTasks(
@@ -22,7 +31,19 @@ export async function searchTasks(
 
   const client = new ClickUpClient(config)
   const [allTasks, customTypes] = await Promise.all([
-    client.getMyTasks(config.teamId, { all: opts.all, includeClosed: opts.includeClosed }),
+    client.getMyTasks(config.teamId, {
+      all: opts.all,
+      includeClosed: opts.includeClosed,
+      listIds: opts.listIds,
+      spaceIds: opts.spaceIds,
+      assignees: opts.assignees,
+      tags: opts.tags,
+      dueDateGt: opts.dueDateGt,
+      dueDateLt: opts.dueDateLt,
+      dateCreatedGt: opts.dateCreatedGt,
+      dateCreatedLt: opts.dateCreatedLt,
+      customFields: opts.customFields,
+    }),
     client.getCustomTaskTypes(config.teamId),
   ])
   const typeMap = buildTypeMap(customTypes)

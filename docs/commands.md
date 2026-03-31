@@ -146,8 +146,31 @@ cup tasks --type "Bug"                 # custom task type by name
 cup tasks --list <listId>
 cup tasks --space <spaceId>
 cup tasks --include-closed
+cup tasks --assignee me
+cup tasks --tag "bug" --status "to do"
+cup tasks --due-before 2026-04-01
+cup tasks --created-after 2026-03-01
+cup tasks --list 123 --field "Sprint" "Week 1"
 cup tasks --json
 ```
+
+| Flag                      | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| `--status <status>`       | Filter by status (e.g. "in progress")                           |
+| `--list <listId>`         | Filter by list ID                                               |
+| `--space <spaceId>`       | Filter by space ID                                              |
+| `--name <partial>`        | Filter by name (case-insensitive contains)                      |
+| `--type <type>`           | Filter by task type (e.g. "task", "initiative", custom name/ID) |
+| `--all`                   | Include all tasks, not just mine                                |
+| `--include-closed`        | Include done/closed tasks                                       |
+| `--assignee <userId>`     | Filter by assignee (user ID or "me")                            |
+| `--tag <tag>`             | Filter by tag name                                              |
+| `--due-before <date>`     | Tasks due before date (YYYY-MM-DD)                              |
+| `--due-after <date>`      | Tasks due after date (YYYY-MM-DD)                               |
+| `--created-after <date>`  | Tasks created after date (YYYY-MM-DD)                           |
+| `--created-before <date>` | Tasks created before date (YYYY-MM-DD)                          |
+| `--field <name> <value>`  | Filter by custom field (requires `--list`)                      |
+| `--json`                  | Force JSON output                                               |
 
 ### `cup sprint`
 
@@ -299,14 +322,26 @@ cup search "payment flow" --json
 cup search auth --status "prog"     # fuzzy matches "in progress"
 cup search "old task" --include-closed
 cup search "payment" --all          # search all workspace tasks
+cup search "auth" --list 123 --space 456
+cup search "bug" --tag "frontend" --due-before 2026-04-01
+cup search "sprint" --list 123 --field "Sprint" "Week 1"
 ```
 
-| Flag               | Description                               |
-| ------------------ | ----------------------------------------- |
-| `--status <s>`     | Filter by status, supports fuzzy matching |
-| `--include-closed` | Include done/closed tasks                 |
-| `--all`            | Search all workspace tasks, not just mine |
-| `--json`           | Force JSON output                         |
+| Flag                      | Description                                |
+| ------------------------- | ------------------------------------------ |
+| `--status <s>`            | Filter by status, supports fuzzy matching  |
+| `--list <listId>`         | Filter by list ID                          |
+| `--space <spaceId>`       | Filter by space ID                         |
+| `--all`                   | Search all workspace tasks, not just mine  |
+| `--include-closed`        | Include done/closed tasks                  |
+| `--assignee <userId>`     | Filter by assignee (user ID or "me")       |
+| `--tag <tag>`             | Filter by tag name                         |
+| `--due-before <date>`     | Tasks due before date (YYYY-MM-DD)         |
+| `--due-after <date>`      | Tasks due after date (YYYY-MM-DD)          |
+| `--created-after <date>`  | Tasks created after date (YYYY-MM-DD)      |
+| `--created-before <date>` | Tasks created before date (YYYY-MM-DD)     |
+| `--field <name> <value>`  | Filter by custom field (requires `--list`) |
+| `--json`                  | Force JSON output                          |
 
 ### `cup summary`
 

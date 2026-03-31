@@ -48,6 +48,15 @@ export interface TaskFilters {
   subtasks?: boolean
   includeClosed?: boolean
   all?: boolean
+  assignees?: number[]
+  tags?: string[]
+  dueDateGt?: number
+  dueDateLt?: number
+  dateCreatedGt?: number
+  dateCreatedLt?: number
+  dateUpdatedGt?: number
+  dateUpdatedLt?: number
+  customFields?: Array<{ field_id: string; operator: string; value?: unknown }>
 }
 
 export type Priority = 1 | 2 | 3 | 4
@@ -484,9 +493,22 @@ export class ClickUpClient {
       const me = await this.getMe()
       baseParams.append('assignees[]', String(me.id))
     }
+    if (filters.assignees) {
+      for (const id of filters.assignees) baseParams.append('assignees[]', String(id))
+    }
     for (const s of filters.statuses ?? []) baseParams.append('statuses[]', s)
     for (const id of filters.listIds ?? []) baseParams.append('list_ids[]', id)
     for (const id of filters.spaceIds ?? []) baseParams.append('space_ids[]', id)
+    for (const tag of filters.tags ?? []) baseParams.append('tags[]', tag)
+    if (filters.dueDateGt) baseParams.set('due_date_gt', String(filters.dueDateGt))
+    if (filters.dueDateLt) baseParams.set('due_date_lt', String(filters.dueDateLt))
+    if (filters.dateCreatedGt) baseParams.set('date_created_gt', String(filters.dateCreatedGt))
+    if (filters.dateCreatedLt) baseParams.set('date_created_lt', String(filters.dateCreatedLt))
+    if (filters.dateUpdatedGt) baseParams.set('date_updated_gt', String(filters.dateUpdatedGt))
+    if (filters.dateUpdatedLt) baseParams.set('date_updated_lt', String(filters.dateUpdatedLt))
+    if (filters.customFields?.length) {
+      baseParams.set('custom_fields', JSON.stringify(filters.customFields))
+    }
 
     return this.paginate(page => {
       const params = new URLSearchParams(baseParams)
