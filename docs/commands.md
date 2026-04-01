@@ -1532,6 +1532,63 @@ cup filter show standup --json
 
 ---
 
+## Favorites
+
+Local favorites for quick access to frequently used entities. Stored per-profile in `~/.config/cup/config.json` (not synced to ClickUp - there is no public favorites API).
+
+Supported types: `sprint-folder`, `space`, `list`, `folder`, `view`, `task`.
+
+### `cup favorite add <type> <id> [alias]`
+
+Add a favorite. If alias is omitted, one is generated from the entity name (fetched from the API and slugified).
+
+```bash
+cup favorite add sprint-folder 12345
+cup favorite add sprint-folder 12345 my-sprint
+cup favorite add sprint-folder 12345 --name "Team Sprint"
+cup favorite add space 67890 eng --name "Engineering"
+cup favorite add list 11111 backlog
+cup favorite add sprint-folder 12345 --json
+```
+
+| Flag                | Required | Description       |
+| ------------------- | -------- | ----------------- |
+| `-n, --name <name>` | no       | Display name      |
+| `--json`            | no       | Force JSON output |
+
+### `cup favorite remove <alias>`
+
+Remove a favorite by its alias.
+
+```bash
+cup favorite remove my-sprint
+cup favorite remove eng
+cup favorite remove backlog --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup favorite list`
+
+List all favorites for the active profile.
+
+```bash
+cup favorite list
+cup favorite list --type sprint-folder
+cup favorite list --json
+```
+
+| Flag            | Required | Description                         |
+| --------------- | -------- | ----------------------------------- |
+| `--type <type>` | no       | Filter by type (e.g. sprint-folder) |
+| `--json`        | no       | Force JSON output                   |
+
+**Sprint integration:** Favorited `sprint-folder` entries are automatically used by `cup sprint` and `cup sprints` as additional discovery sources. Priority order: `--folder` flag > `sprintFolderId` config > favorites > auto-detection.
+
+---
+
 ## Configuration Commands
 
 ### `cup profile`
