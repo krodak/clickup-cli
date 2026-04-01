@@ -8,6 +8,13 @@ import {
   SPRINT_KEYWORDS,
 } from '../../../src/commands/sprint.js'
 import { ClickUpClient } from '../../../src/api.js'
+import { getFavorites } from '../../../src/config.js'
+
+vi.mock('../../../src/config.js', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../../src/config.js')>('../../../src/config.js')
+  return { ...actual, getFavorites: vi.fn(() => ({})) }
+})
 
 describe('SPRINT_KEYWORDS', () => {
   it('contains expected keywords', () => {
@@ -440,5 +447,80 @@ describe('runSprintCommand space handling', () => {
     await runSprintCommand(config, { folder: 'cli-folder' })
 
     expect(mockGetFolderLists).toHaveBeenCalledWith('cli-folder')
+  })
+})
+
+describe('favorites integration', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(ClickUpClient.prototype, 'getCustomTaskTypes').mockResolvedValue([])
+  })
+
+  it('uses favorited sprint-folder when no config or flag', async () => {
+    vi.mocked(getFavorites).mockReturnValue({
+      'my-sprint': { type: 'sprint-folder', id: 'fav-folder-1', name: 'Fav Sprint' },
+    })
+
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4 (3/1 - 3/14)' }])
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([])
+    const mockGetSpaces = vi.spyOn(ClickUpClient.prototype, 'getSpaces')
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, {})
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('fav-folder-1')
+    expect(mockGetSpaces).not.toHaveBeenCalled()
+  })
+
+  it('--folder flag takes precedence over favorites', async () => {
+    vi.mocked(getFavorites).mockReturnValue({
+      'my-sprint': { type: 'sprint-folder', id: 'fav-folder-1', name: 'Fav Sprint' },
+    })
+
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4 (3/1 - 3/14)' }])
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await runSprintCommand(config, { folder: 'cli-folder' })
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('cli-folder')
+  })
+
+  it('sprintFolderId config takes precedence over favorites', async () => {
+    vi.mocked(getFavorites).mockReturnValue({
+      'my-sprint': { type: 'sprint-folder', id: 'fav-folder-1', name: 'Fav Sprint' },
+    })
+
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4 (3/1 - 3/14)' }])
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    vi.spyOn(ClickUpClient.prototype, 'getMe').mockResolvedValue({ id: 1, username: 'user' })
+    vi.spyOn(ClickUpClient.prototype, 'getListViews').mockResolvedValue({
+      views: [],
+      required_views: { list: { id: 'v1', name: 'List', type: 'list' } },
+    })
+    vi.spyOn(ClickUpClient.prototype, 'getViewTasks').mockResolvedValue([])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1', sprintFolderId: 'config-folder' }
+    await runSprintCommand(config, {})
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('config-folder')
   })
 })

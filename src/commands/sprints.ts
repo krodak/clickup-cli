@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { ClickUpClient } from '../api.js'
 import type { List, Space } from '../api.js'
+import { getFavorites } from '../config.js'
 import type { Config } from '../config.js'
 import { parseSprintDates, findRelatedSpaces, SPRINT_KEYWORDS } from './sprint.js'
 import { formatTable, isTTY, shouldOutputJson } from '../output.js'
@@ -82,11 +83,19 @@ export async function listSprints(
     spaces = findRelatedSpaces(mySpaceIds, allSpaces)
   }
 
+  const favorites = getFavorites()
+  const favoriteFolderIds = Object.values(favorites)
+    .filter(f => f.type === 'sprint-folder')
+    .map(f => f.id)
+
   const foldersBySpace = await Promise.all(spaces.map(space => client.getFolders(space.id)))
   const sprintFolders = foldersBySpace.flat().filter(f => {
     const lower = f.name.toLowerCase()
     return SPRINT_KEYWORDS.some(kw => lower.includes(kw))
   })
+
+  const detectedFolderIds = new Set(sprintFolders.map(f => f.id))
+  const extraFavoriteIds = favoriteFolderIds.filter(id => !detectedFolderIds.has(id))
 
   const today = new Date()
   const allSprints: SprintInfo[] = []
@@ -98,6 +107,18 @@ export async function listSprints(
     const folder = sprintFolders[i]!
     const lists = listsByFolder[i]!
     allSprints.push(...buildSprintInfos(lists, folder.name, today))
+  }
+
+  const extraListsByFolder = await Promise.all(
+    extraFavoriteIds.map(id => client.getFolderLists(id)),
+  )
+  for (let i = 0; i < extraFavoriteIds.length; i++) {
+    const lists = extraListsByFolder[i]!
+    const alias =
+      Object.entries(favorites).find(
+        ([_, f]) => f.type === 'sprint-folder' && f.id === extraFavoriteIds[i],
+      )?.[1]?.name ?? `Folder ${extraFavoriteIds[i]}`
+    allSprints.push(...buildSprintInfos(lists, alias, today))
   }
 
   if (shouldOutputJson(opts.json ?? false)) {
