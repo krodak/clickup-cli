@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import type { MultiProfileConfig } from '../../src/config.js'
+import type { MultiProfileConfig, FavoriteEntry } from '../../src/config.js'
 
 vi.mock('fs')
 
@@ -747,5 +747,100 @@ describe('migrateFromLegacy', () => {
     const { loadRawConfig } = await import('../../src/config.js')
     loadRawConfig()
     expect(vi.mocked(fs.copyFileSync)).not.toHaveBeenCalled()
+  })
+})
+
+describe('favorites', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('getFavorites returns empty map when no favorites', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123' } }, 'default'),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual({})
+  })
+
+  it('getFavorites returns favorites from profile', async () => {
+    const favorites = {
+      'my-sprint': { type: 'sprint-folder', id: '456', name: 'Sprint Folder' },
+    }
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123', favorites } }, 'default'),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual(favorites)
+  })
+
+  it('saveFavorite adds a favorite entry', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123' } }, 'default'),
+    )
+    const { saveFavorite } = await import('../../src/config.js')
+    const entry: FavoriteEntry = { type: 'sprint-folder', id: '456', name: 'Sprint Folder' }
+    saveFavorite('my-sprint', entry)
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default?.favorites).toEqual({ 'my-sprint': entry })
+  })
+
+  it('saveFavorite overwrites existing favorite with same alias', async () => {
+    const existing = {
+      'my-sprint': { type: 'sprint-folder', id: '456', name: 'Old Sprint' },
+    }
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        { default: { apiToken: 'pk_test', teamId: '123', favorites: existing } },
+        'default',
+      ),
+    )
+    const { saveFavorite } = await import('../../src/config.js')
+    const entry: FavoriteEntry = { type: 'sprint-folder', id: '789', name: 'New Sprint' }
+    saveFavorite('my-sprint', entry)
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default?.favorites).toEqual({ 'my-sprint': entry })
+  })
+
+  it('deleteFavorite removes a favorite', async () => {
+    const favorites = {
+      'my-sprint': { type: 'sprint-folder', id: '456', name: 'Sprint Folder' },
+      'my-list': { type: 'list', id: '789', name: 'My List' },
+    }
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123', favorites } }, 'default'),
+    )
+    const { deleteFavorite } = await import('../../src/config.js')
+    deleteFavorite('my-sprint')
+    const call = vi.mocked(fs.writeFileSync).mock.calls[0]!
+    const parsed = parseWrittenConfig(call)
+    expect(parsed.profiles.default?.favorites).toEqual({
+      'my-list': { type: 'list', id: '789', name: 'My List' },
+    })
+  })
+
+  it('deleteFavorite throws when alias not found', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123' } }, 'default'),
+    )
+    const { deleteFavorite } = await import('../../src/config.js')
+    expect(() => deleteFavorite('nonexistent')).toThrow('not found')
   })
 })

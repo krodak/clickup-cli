@@ -9,11 +9,22 @@ export interface FilterEntry {
 
 export type FiltersMap = Record<string, FilterEntry>
 
+export type FavoriteType = 'sprint-folder' | 'space' | 'list' | 'folder' | 'view' | 'task'
+
+export interface FavoriteEntry {
+  type: FavoriteType
+  id: string
+  name?: string
+}
+
+export type FavoritesMap = Record<string, FavoriteEntry>
+
 export interface Config {
   apiToken: string
   teamId: string
   sprintFolderId?: string
   filters?: FiltersMap
+  favorites?: FavoritesMap
 }
 
 export interface MultiProfileConfig {
@@ -150,6 +161,7 @@ function migrateToMultiProfile(
         if (typeof value.sprintFolderId === 'string' && value.sprintFolderId.trim())
           p.sprintFolderId = value.sprintFolderId.trim()
         if (isRecord(value.filters)) p.filters = value.filters as FiltersMap
+        if (isRecord(value.favorites)) p.favorites = value.favorites as FavoritesMap
         profiles[name] = p
       }
     }
@@ -392,6 +404,36 @@ export function deleteFilter(name: string, profileName?: string): void {
   }
   delete filters[name]
   multi.profiles[pName] = { ...profile, filters }
+  saveMultiProfileConfig(multi)
+}
+
+export function getFavorites(profileName?: string): FavoritesMap {
+  const multi = loadMultiProfileConfig()
+  const name = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile
+  const profile = name ? (multi.profiles[name] ?? {}) : {}
+  return profile.favorites ?? {}
+}
+
+export function saveFavorite(alias: string, entry: FavoriteEntry, profileName?: string): void {
+  const multi = loadMultiProfileConfig()
+  const pName = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile ?? 'default'
+  const profile = multi.profiles[pName] ?? {}
+  const favorites: FavoritesMap = { ...(profile.favorites ?? {}), [alias]: entry }
+  multi.profiles[pName] = { ...profile, favorites }
+  if (!multi.defaultProfile) multi.defaultProfile = pName
+  saveMultiProfileConfig(multi)
+}
+
+export function deleteFavorite(alias: string, profileName?: string): void {
+  const multi = loadMultiProfileConfig()
+  const pName = profileName ?? process.env.CU_PROFILE?.trim() ?? multi.defaultProfile ?? 'default'
+  const profile = multi.profiles[pName] ?? {}
+  const favorites: FavoritesMap = { ...(profile.favorites ?? {}) }
+  if (!(alias in favorites)) {
+    throw new Error(`Favorite "${alias}" not found.`)
+  }
+  delete favorites[alias]
+  multi.profiles[pName] = { ...profile, favorites }
   saveMultiProfileConfig(multi)
 }
 
