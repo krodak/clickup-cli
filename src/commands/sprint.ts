@@ -1,6 +1,7 @@
 import { select } from '@inquirer/prompts'
 import { ClickUpClient } from '../api.js'
 import type { Task, List, Space } from '../api.js'
+import { getFavorites } from '../config.js'
 import type { Config } from '../config.js'
 import { isTTY } from '../output.js'
 import { printTasks, summarize, isDoneStatus, buildTypeMap } from './tasks.js'
@@ -126,7 +127,17 @@ export async function runSprintCommand(
 
   process.stderr.write('Detecting active sprint...\n')
 
-  const folderId = opts.folder ?? config.sprintFolderId
+  let folderId = opts.folder ?? config.sprintFolderId
+
+  if (!folderId) {
+    const favorites = getFavorites()
+    const favoriteFolderIds = Object.values(favorites)
+      .filter(f => f.type === 'sprint-folder')
+      .map(f => f.id)
+    if (favoriteFolderIds.length > 0) {
+      folderId = favoriteFolderIds[0]
+    }
+  }
 
   const [myTasks, allSpaces, customTypes] = await Promise.all([
     client.getMyTasks(config.teamId),

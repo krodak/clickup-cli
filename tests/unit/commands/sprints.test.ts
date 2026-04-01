@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { listSprints } from '../../../src/commands/sprints.js'
 import { ClickUpClient } from '../../../src/api.js'
+import { getFavorites } from '../../../src/config.js'
+
+vi.mock('../../../src/config.js', async () => {
+  const actual =
+    await vi.importActual<typeof import('../../../src/config.js')>('../../../src/config.js')
+  return { ...actual, getFavorites: vi.fn(() => ({})) }
+})
 
 vi.mock('../../../src/output.js', async () => {
   const actual =
@@ -145,5 +152,25 @@ describe('listSprints', () => {
     await listSprints(baseConfig, { space: 'Acme' })
 
     expect(console.log).toHaveBeenCalledWith('No sprints found.')
+  })
+
+  it('includes favorited sprint-folder in listing', async () => {
+    vi.mocked(getFavorites).mockReturnValue({
+      'my-sprint': { type: 'sprint-folder', id: 'fav-folder-1', name: 'Fav Sprint Folder' },
+    })
+
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([])
+    mockSpaces([{ id: 's1', name: 'Acme' }])
+    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([])
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 1 (1/1 - 1/14)' }])
+
+    await listSprints(baseConfig, { space: 'Acme' })
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('fav-folder-1')
+    const output = (console.log as ReturnType<typeof vi.fn>).mock.calls[0]?.[0] as string
+    expect(output).toContain('Sprint 1')
+    expect(output).toContain('l1')
   })
 })
