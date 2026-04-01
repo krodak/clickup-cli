@@ -453,6 +453,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
         const config = loadConfig(getProfileName())
+        if (opts.list === 'sprint:current') {
+          const { resolveActiveSprintListId } = await import('./commands/sprint.js')
+          opts.list = await resolveActiveSprintListId(config)
+        }
         if (opts.assignee === 'me') {
           const client = new ClickUpClient(config)
           opts.assignee = String(await resolveAssigneeId(client, 'me'))
@@ -969,6 +973,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(async (taskId: string, opts: MoveOptions & { json?: boolean }) => {
         const config = loadConfig(getProfileName())
+        if (opts.to === 'sprint:current') {
+          const { resolveActiveSprintListId } = await import('./commands/sprint.js')
+          opts.to = await resolveActiveSprintListId(config)
+        }
         const message = await moveTask(config, taskId, opts)
         if (shouldOutputJson(opts.json ?? false)) {
           console.log(

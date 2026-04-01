@@ -113,6 +113,71 @@ export function findRelatedSpaces(mySpaceIds: Set<string>, allSpaces: Space[]): 
   )
 }
 
+export async function resolveActiveSprintListId(
+  config: Config,
+  opts?: { space?: string; folder?: string },
+): Promise<string> {
+  const client = new ClickUpClient(config)
+
+  let folderId = opts?.folder ?? config.sprintFolderId
+
+  if (!folderId) {
+    const favorites = getFavorites()
+    const favoriteFolderIds = Object.values(favorites)
+      .filter(f => f.type === 'sprint-folder')
+      .map(f => f.id)
+    if (favoriteFolderIds.length > 0) {
+      folderId = favoriteFolderIds[0]
+    }
+  }
+
+  let sprintLists: List[]
+
+  if (folderId) {
+    sprintLists = await client.getFolderLists(folderId)
+  } else {
+    const [myTasks, allSpaces] = await Promise.all([
+      client.getMyTasks(config.teamId),
+      client.getSpaces(config.teamId),
+    ])
+
+    let spaces: Space[]
+    if (opts?.space) {
+      spaces = allSpaces.filter(
+        s => s.name.toLowerCase().includes(opts.space!.toLowerCase()) || s.id === opts.space,
+      )
+      if (spaces.length === 0) {
+        throw new Error(`No space matching "${opts.space}" found.`)
+      }
+    } else {
+      const mySpaceIds = new Set(
+        myTasks.map(t => t.space?.id).filter((id): id is string => Boolean(id)),
+      )
+      spaces = findRelatedSpaces(mySpaceIds, allSpaces)
+    }
+
+    const foldersBySpace = await Promise.all(spaces.map(space => client.getFolders(space.id)))
+    const sprintFolders = foldersBySpace.flat().filter(f => {
+      const lower = f.name.toLowerCase()
+      return SPRINT_KEYWORDS.some(kw => lower.includes(kw))
+    })
+
+    const listsByFolder = await Promise.all(
+      sprintFolders.map(folder => client.getFolderLists(folder.id)),
+    )
+    sprintLists = listsByFolder.flat()
+  }
+
+  const activeList = findActiveSprintList(sprintLists)
+  if (!activeList) {
+    throw new Error(
+      'No active sprint list found. Ensure sprint folders contain "sprint", "iteration", "cycle", or "scrum" in their name.',
+    )
+  }
+
+  return activeList.id
+}
+
 export async function runSprintCommand(
   config: Config,
   opts: {
