@@ -161,7 +161,7 @@ export const commandMetadata = [
   {
     name: 'comment-delete',
     description: 'Delete a comment',
-    flags: ['--json'],
+    flags: ['--mine', '--match', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -822,6 +822,23 @@ export const commandMetadata = [
       },
       { section: 'read', usage: 'filter list', description: 'List saved shortcuts' },
       { section: 'read', usage: 'filter run <name>', description: 'Run a saved shortcut' },
+    ],
+  },
+  {
+    name: 'favorite',
+    description: 'Manage local favorites (sprint folders, spaces, lists, etc.)',
+    quickReference: [
+      {
+        section: 'configuration',
+        usage: 'favorite add <type> <id> [alias]',
+        description: 'Add a favorite',
+      },
+      {
+        section: 'configuration',
+        usage: 'favorite remove <alias>',
+        description: 'Remove a favorite',
+      },
+      { section: 'read', usage: 'favorite list', description: 'List saved favorites' },
     ],
   },
   {
