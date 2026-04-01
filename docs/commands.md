@@ -504,13 +504,16 @@ cup create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
 cup create -n "Initiative" -l <listId> --custom-item-id 1
 cup create -n "Task" -l <listId> --time-estimate 2h
 cup create -n "From Template" -l <listId> --template <templateId>
+cup create -n "Bug fix" -l sprint:current         # create in active sprint
 cup create -n "Fix bug" -l <listId> --json
 ```
+
+`sprint:current` is a pseudo-ID that auto-resolves to the active sprint list using the same detection chain as `cup sprint` (`--folder` flag > `sprintFolderId` config > favorited sprint-folders > auto-detection).
 
 | Flag                         | Required         | Description                                                   |
 | ---------------------------- | ---------------- | ------------------------------------------------------------- |
 | `-n, --name <name>`          | yes              | Task name                                                     |
-| `-l, --list <listId>`        | if no `--parent` | Target list ID                                                |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)           |
 | `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                              |
 | `-d, --description <text>`   | no               | Description (markdown)                                        |
 | `-s, --status <status>`      | no               | Initial status                                                |
@@ -757,14 +760,18 @@ Add or remove a task from a list. Tasks can belong to multiple lists in ClickUp.
 cup move abc123 --to <listId>                    # add task to a list
 cup move abc123 --remove <listId>                # remove task from a list
 cup move abc123 --to <newListId> --remove <oldListId>  # move between lists
+cup move abc123 --to sprint:current              # move to active sprint
+cup move abc123 --to sprint:current --remove <oldListId>
 cup move abc123 --to <listId> --json
 ```
 
-| Flag                | Description                |
-| ------------------- | -------------------------- |
-| `--to <listId>`     | Add task to this list      |
-| `--remove <listId>` | Remove task from this list |
-| `--json`            | Force JSON output          |
+`sprint:current` is a pseudo-ID that auto-resolves to the active sprint list using the same detection chain as `cup sprint` (`--folder` flag > `sprintFolderId` config > favorited sprint-folders > auto-detection).
+
+| Flag                | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `--to <listId>`     | Add task to this list (accepts `sprint:current` pseudo-ID) |
+| `--remove <listId>` | Remove task from this list                                 |
+| `--json`            | Force JSON output                                          |
 
 ### `cup tag <id>`
 
