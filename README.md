@@ -161,14 +161,15 @@ Full CRUD for the core ClickUp workflow:
 | Area                 | Capabilities                                                                                                            |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | ✅ **Tasks**         | Create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk status updates |
-| 💬 **Comments**      | Post, edit, delete, threaded replies, notify all                                                                        |
+| 💬 **Comments**      | Post, edit, delete by ID or by task scope for your own comments, threaded replies, notify all                           |
 | 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                               |
 | ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                               |
 | ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                             |
 | 🔧 **Custom Fields** | List, create, set, remove values (dropdown, date, checkbox, text, etc.)                                                 |
 | 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                   |
 | 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                            |
-| 🏃 **Sprints**       | Auto-detect active sprint, flexible date parsing, config override                                                       |
+| 🏃 **Sprints**       | Auto-detect active sprint, flexible date parsing, config override, favorite sprint folders                              |
+| ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                |
 | 👁️ **Views**         | List, get, create, update, delete views on lists                                                                        |
 | 🏢 **Workspace**     | Spaces, folders, lists (read + create + from template), members, task types, templates                                  |
 | 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                            |
@@ -233,7 +234,7 @@ When both `CU_API_TOKEN` and `CU_TEAM_ID` are set, the config file is not requir
 
 **No output from `cup`** - Make sure you're on v1.5.2+. Older versions had a symlink bug. Update: `npm install -g @krodak/clickup-cli`
 
-**Sprint not detected** - Your sprint folder needs "sprint", "iteration", "cycle", or "scrum" in the name. Or pin it: `cup config set sprintFolderId <id>`
+**Sprint not detected** - Your sprint folder needs "sprint", "iteration", "cycle", or "scrum" in the name. Or pin it: `cup config set sprintFolderId <id>`. You can also favorite a sprint folder: `cup favorite add sprint-folder <id>`
 
 **Custom field filter fails** - `--field` requires `--list` to resolve field names to IDs: `cup tasks --list <id> --field "Sprint" "Week 1"`
 
