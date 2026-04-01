@@ -3,6 +3,7 @@ import {
   parseSprintDates,
   findActiveSprintList,
   runSprintCommand,
+  resolveActiveSprintListId,
   extractSpaceKeywords,
   findRelatedSpaces,
   SPRINT_KEYWORDS,
@@ -522,5 +523,99 @@ describe('favorites integration', () => {
     await runSprintCommand(config, {})
 
     expect(mockGetFolderLists).toHaveBeenCalledWith('config-folder')
+  })
+})
+
+describe('resolveActiveSprintListId', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('returns active sprint list ID from folder', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Sprint 4 (3/1 - 3/14)' },
+      { id: 'l2', name: 'Sprint 5 (3/15 - 3/28)' },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1', sprintFolderId: 'folder123' }
+    const result = await resolveActiveSprintListId(config)
+    expect(result).toBe('l2')
+  })
+
+  it('uses config sprintFolderId', async () => {
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4' }])
+    const mockGetSpaces = vi.spyOn(ClickUpClient.prototype, 'getSpaces')
+
+    const config = { apiToken: 'pk_test', teamId: 'team1', sprintFolderId: 'config-folder' }
+    await resolveActiveSprintListId(config)
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('config-folder')
+    expect(mockGetSpaces).not.toHaveBeenCalled()
+  })
+
+  it('uses favorites when no config sprintFolderId', async () => {
+    vi.mocked(getFavorites).mockReturnValue({
+      'my-sprint': { type: 'sprint-folder', id: 'fav-folder-1', name: 'Fav Sprint' },
+    })
+
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4' }])
+    const mockGetSpaces = vi.spyOn(ClickUpClient.prototype, 'getSpaces')
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    await resolveActiveSprintListId(config)
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('fav-folder-1')
+    expect(mockGetSpaces).not.toHaveBeenCalled()
+  })
+
+  it('throws when no sprint list found', async () => {
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1', sprintFolderId: 'folder123' }
+    await expect(resolveActiveSprintListId(config)).rejects.toThrow('No active sprint list found')
+  })
+
+  it('opts.folder overrides config sprintFolderId', async () => {
+    const mockGetFolderLists = vi
+      .spyOn(ClickUpClient.prototype, 'getFolderLists')
+      .mockResolvedValue([{ id: 'l1', name: 'Sprint 4' }])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1', sprintFolderId: 'config-folder' }
+    await resolveActiveSprintListId(config, { folder: 'override-folder' })
+
+    expect(mockGetFolderLists).toHaveBeenCalledWith('override-folder')
+  })
+
+  it('falls back to auto-detection when no folder config or favorites', async () => {
+    vi.mocked(getFavorites).mockReturnValue({})
+
+    vi.spyOn(ClickUpClient.prototype, 'getMyTasks').mockResolvedValue([
+      {
+        id: 't1',
+        name: 'Task',
+        status: { status: 'open', color: '#fff' },
+        assignees: [],
+        url: '',
+        list: { id: 'l1', name: 'List' },
+        space: { id: 's1' },
+      },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getSpaces').mockResolvedValue([
+      { id: 's1', name: 'Product - Acme' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolders').mockResolvedValue([
+      { id: 'f1', name: 'Acme Sprint' },
+    ])
+    vi.spyOn(ClickUpClient.prototype, 'getFolderLists').mockResolvedValue([
+      { id: 'l1', name: 'Sprint 4 (3/1 - 3/14)' },
+    ])
+
+    const config = { apiToken: 'pk_test', teamId: 'team1' }
+    const result = await resolveActiveSprintListId(config)
+    expect(result).toBe('l1')
   })
 })
