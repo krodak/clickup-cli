@@ -63,6 +63,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup view <viewId>`                     | Get view details                                  |
 | `cup filter list`                       | List saved shortcuts                              |
 | `cup filter run <name>`                 | Run a saved shortcut                              |
+| `cup favorite list`                     | List saved favorites                              |
 | **Write**                               |                                                   |
 | `cup update <taskId>`                   | Update a task                                     |
 | `cup create`                            | Create a new task                                 |
@@ -115,6 +116,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup view-update <viewId>`              | Update a view                                     |
 | `cup view-delete <viewId>`              | Delete a view                                     |
 | **Configuration**                       |                                                   |
+| `cup favorite add <type> <id> [alias]`  | Add a favorite                                    |
+| `cup favorite remove <alias>`           | Remove a favorite                                 |
 | `cup profile`                           | Manage profiles                                   |
 | `cup config`                            | Manage CLI configuration                          |
 | `cup completion <shell>`                | Output shell completion script                    |
@@ -619,12 +622,19 @@ cup comment-edit <commentId> -m "Updated" --json
 
 ### `cup comment-delete <commentId>`
 
-Delete a comment.
+Delete a comment by ID, or delete one of your comments from a task by passing the task ID with `--mine`.
 
 ```bash
 cup comment-delete 12345
 cup comment-delete 12345 --json
+cup comment-delete abc123 --mine --match "report uploaded"
 ```
+
+| Flag             | Required | Description                                                     |
+| ---------------- | -------- | --------------------------------------------------------------- |
+| `--mine`         | no       | Treat the argument as a task ID and only consider your comments |
+| `--match <text>` | no       | Narrow task-scoped deletion to comments containing text         |
+| `--json`         | no       | Force JSON output                                               |
 
 ### `cup replies <commentId>`
 
@@ -736,6 +746,8 @@ cup attach abc123 /path/to/report.pdf --json
 JSON output includes the attachment ID, title, and URL.
 
 Attachments are also shown inline when viewing task details with `cup task <id>`.
+
+Deleting task attachments is not currently supported because the public ClickUp API exposes upload endpoints, but not an attachment delete endpoint.
 
 ### `cup move <id>`
 

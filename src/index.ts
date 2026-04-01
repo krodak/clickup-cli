@@ -13,8 +13,11 @@ import {
   getFilters,
   saveFilter,
   deleteFilter,
+  getFavorites,
+  saveFavorite,
+  deleteFavorite,
 } from './config.js'
-import type { FilterEntry } from './config.js'
+import type { FilterEntry, FavoriteEntry } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
 import { updateTask, buildUpdatePayload, resolveAssigneeId } from './commands/update.js'
 import type { UpdateCommandOptions } from './commands/update.js'
@@ -73,7 +76,7 @@ import {
   formatChecklistsMarkdown,
 } from './commands/checklist.js'
 import { editComment } from './commands/comment-edit.js'
-import { deleteComment } from './commands/comment-delete.js'
+import { deleteComment, deleteCommentByTaskSelection } from './commands/comment-delete.js'
 import {
   getReplies,
   createReply,
@@ -164,6 +167,12 @@ import {
   formatFilterDetail,
 } from './commands/filter.js'
 import { createListWithOptions } from './commands/list-create.js'
+import {
+  validateFavoriteType,
+  slugify,
+  formatFavoritesTable,
+  formatFavoritesMarkdown,
+} from './commands/favorite.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -582,17 +591,32 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('comment-delete <commentId>')
     .description('Delete a comment')
+    .option('--mine', 'Delete one of my comments from the specified task instead of by comment ID')
+    .option('--match <text>', 'Only match my task comments containing this text')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (commentId: string, opts: { json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        await deleteComment(config, commentId)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify({ success: true, commentId }, null, 2))
-        } else {
-          console.log(`Deleted comment ${commentId}`)
-        }
-      }),
+      wrapAction(
+        async (commentId: string, opts: { mine?: boolean; match?: string; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const result: { commentId: string; taskId?: string } =
+            opts.mine || opts.match
+              ? await deleteCommentByTaskSelection(config, commentId, {
+                  mine: opts.mine,
+                  match: opts.match,
+                })
+              : (await deleteComment(config, commentId), { commentId })
+
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify({ success: true, ...result }, null, 2))
+          } else {
+            console.log(
+              result.taskId
+                ? `Deleted comment ${result.commentId} from task ${result.taskId}`
+                : `Deleted comment ${result.commentId}`,
+            )
+          }
+        },
+      ),
     )
 
   program
@@ -2397,6 +2421,74 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify({ name, ...entry }, null, 2))
         } else {
           console.log(formatFilterDetail(name, entry))
+        }
+      }),
+    )
+
+  const favoriteCmd = program
+    .command('favorite')
+    .description('Manage local favorites (sprint folders, spaces, lists, etc.)')
+
+  favoriteCmd
+    .command('add <type> <id> [alias]')
+    .description('Add a favorite (types: sprint-folder, space, list, folder, view, task)')
+    .option('-n, --name <name>', 'Display name for the favorite')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          type: string,
+          id: string,
+          alias: string | undefined,
+          opts: { name?: string; json?: boolean },
+        ) => {
+          validateFavoriteType(type)
+          const resolvedAlias = alias ?? slugify(opts.name ?? id)
+          const entry: FavoriteEntry = { type, id, ...(opts.name ? { name: opts.name } : {}) }
+          saveFavorite(resolvedAlias, entry, getProfileName())
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify({ alias: resolvedAlias, ...entry }, null, 2))
+          } else {
+            console.log(`Added favorite "${resolvedAlias}" (${type} ${id})`)
+          }
+        },
+      ),
+    )
+
+  favoriteCmd
+    .command('remove <alias>')
+    .description('Remove a favorite by alias')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (alias: string, opts: { json?: boolean }) => {
+        deleteFavorite(alias, getProfileName())
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, alias }, null, 2))
+        } else {
+          console.log(`Removed favorite "${alias}"`)
+        }
+      }),
+    )
+
+  favoriteCmd
+    .command('list')
+    .description('List saved favorites')
+    .option('--type <type>', 'Filter by entity type')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { type?: string; json?: boolean }) => {
+        let favorites = getFavorites(getProfileName())
+        if (opts.type) {
+          favorites = Object.fromEntries(
+            Object.entries(favorites).filter(([, entry]) => entry.type === opts.type),
+          )
+        }
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(favorites, null, 2))
+        } else if (isTTY()) {
+          console.log(formatFavoritesTable(favorites))
+        } else {
+          console.log(formatFavoritesMarkdown(favorites))
         }
       }),
     )
