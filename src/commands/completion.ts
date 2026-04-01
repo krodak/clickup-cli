@@ -6,6 +6,7 @@ const bashSpecialCaseCommands = new Set([
   'time',
   'bulk',
   'filter',
+  'favorite',
   'config',
   'profile',
   'completion',
@@ -128,6 +129,18 @@ ${renderBashCommandCases()}
     bulk)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "status assign due-date tag" -- "$cur"))
+      fi
+      ;;
+    favorite)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "add remove list" -- "$cur"))
+      elif [[ $cword -eq 3 ]]; then
+        local subcmd="\${words[2]}"
+        case "$subcmd" in
+          add)
+            COMPREPLY=($(compgen -W "sprint-folder space list folder view task" -- "$cur"))
+            ;;
+        esac
       fi
       ;;
     profile)
@@ -500,6 +513,8 @@ ${renderZshTopLevelCommands(name)}
         comment-delete)
           _arguments \\
             '1:comment_id:' \\
+            '--mine[Delete one of my comments from the specified task]' \\
+            '--match[Only match comments containing this text]:text:' \\
             '--json[Force JSON output]'
           ;;
         replies)
@@ -788,6 +803,40 @@ ${renderZshTopLevelCommands(name)}
             '(-c --content)'{-c,--content}'[New page content]:text:' \\
             '--json[Force JSON output]'
           ;;
+        favorite)
+          local -a favorite_cmds
+          favorite_cmds=(
+            'add:Add a favorite (types: sprint-folder, space, list, folder, view, task)'
+            'remove:Remove a favorite by alias'
+            'list:List saved favorites'
+          )
+          _arguments -C \\
+            '1:favorite command:->favorite_cmd' \\
+            '*::favorite_arg:->favorite_args'
+          case $state in
+            favorite_cmd)
+              _describe 'favorite command' favorite_cmds
+              ;;
+            favorite_args)
+              case $words[1] in
+                add)
+                  _arguments \\
+                    '1:type:(sprint-folder space list folder view task)' \\
+                    '2:id:' \\
+                    '3:alias:' \\
+                    '(-n --name)'{-n,--name}'[Display name]:name:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                remove)
+                  _arguments '1:alias:' '--json[Force JSON output]'
+                  ;;
+                list)
+                  _arguments '--type[Filter by entity type]:type:(sprint-folder space list folder view task)' '--json[Force JSON output]'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
         filter)
           local -a filter_cmds
           filter_cmds=(
@@ -971,6 +1020,14 @@ complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_
 complete -c ${name} -n '__fish_seen_subcommand_from filter; and not __fish_seen_subcommand_from save run list delete show' -a show -d 'Show details of a saved shortcut'
 complete -c ${name} -n '__fish_seen_subcommand_from save run list delete show; and __fish_seen_subcommand_from filter' -l json -d 'Force JSON output'
 complete -c ${name} -n '__fish_seen_subcommand_from save; and __fish_seen_subcommand_from filter' -s d -l description -d 'Filter description'
+
+complete -c ${name} -n '__fish_seen_subcommand_from favorite; and not __fish_seen_subcommand_from add remove list' -a add -d 'Add a favorite'
+complete -c ${name} -n '__fish_seen_subcommand_from favorite; and not __fish_seen_subcommand_from add remove list' -a remove -d 'Remove a favorite'
+complete -c ${name} -n '__fish_seen_subcommand_from favorite; and not __fish_seen_subcommand_from add remove list' -a list -d 'List saved favorites'
+complete -c ${name} -n '__fish_seen_subcommand_from add; and __fish_seen_subcommand_from favorite' -a 'sprint-folder space list folder view task' -d 'Entity type'
+complete -c ${name} -n '__fish_seen_subcommand_from add remove list; and __fish_seen_subcommand_from favorite' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from add; and __fish_seen_subcommand_from favorite' -s n -l name -d 'Display name'
+complete -c ${name} -n '__fish_seen_subcommand_from list; and __fish_seen_subcommand_from favorite' -l type -d 'Filter by entity type'
 `
 }
 
