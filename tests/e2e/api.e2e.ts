@@ -164,4 +164,104 @@ describe.skipIf(!TOKEN)('ClickUpClient e2e', () => {
     const fields = await client.getListCustomFields(backlog!.id)
     expect(Array.isArray(fields)).toBe(true)
   })
+
+  it('getSpaceViews returns views for E2E Tests space', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const views = await client.getSpaceViews(testSpace!.id)
+    expect(Array.isArray(views)).toBe(true)
+  })
+
+  it('getFolderViews returns views for a folder', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const folders = await client.getFolders(testSpace!.id)
+    if (folders.length === 0) return
+    const views = await client.getFolderViews(folders[0]!.id)
+    expect(Array.isArray(views)).toBe(true)
+  })
+
+  it('getWorkspaceViews returns views for the workspace', async () => {
+    const views = await client.getWorkspaceViews(teamId)
+    expect(Array.isArray(views)).toBe(true)
+  })
+
+  it('getSpaceWithStatuses returns space with statuses array', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const space = await client.getSpaceWithStatuses(testSpace!.id)
+    expect(space.id).toBe(testSpace!.id)
+    expect(Array.isArray(space.statuses)).toBe(true)
+  })
+
+  it('getListWithStatuses returns list with statuses array', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const list = await client.getListWithStatuses(backlog!.id)
+    expect(list.id).toBe(backlog!.id)
+    expect(Array.isArray(list.statuses)).toBe(true)
+  })
+
+  it('getTaskTemplates returns array', async () => {
+    try {
+      const templates = await client.getTaskTemplates(teamId)
+      expect(Array.isArray(templates)).toBe(true)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      expect(msg).toMatch(/500/)
+    }
+  })
+
+  it('getListTemplates returns array', async () => {
+    const templates = await client.getListTemplates(teamId)
+    expect(Array.isArray(templates)).toBe(true)
+  })
+
+  it('getFolderTemplates returns array', async () => {
+    const templates = await client.getFolderTemplates(teamId)
+    expect(Array.isArray(templates)).toBe(true)
+  })
+
+  it('getUserTimezone returns string or undefined', async () => {
+    const tz = await client.getUserTimezone()
+    if (tz !== undefined) {
+      expect(tz).toBeTypeOf('string')
+    }
+  })
+
+  it('getTimeInStatus returns status history', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const tasks = await client.getTasksFromList(backlog!.id)
+    if (tasks.length === 0) return
+    try {
+      const result = await client.getTimeInStatus(tasks[0]!.id)
+      expect(result).toBeDefined()
+      expect(result.current_status).toBeDefined()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      expect(msg).toMatch(/time.in.status/i)
+    }
+  })
+
+  it('getViewTasks returns tasks from a view', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const viewData = await client.getListViews(backlog!.id)
+    if (!viewData.views || viewData.views.length === 0) return
+    const tasks = await client.getViewTasks(viewData.views[0]!.id)
+    expect(Array.isArray(tasks)).toBe(true)
+  })
 })
