@@ -450,6 +450,37 @@ export class ClickUpClient {
     return this._fetch(BASE_URL_V3, path, options)
   }
 
+  private async requestV3Array<T>(path: string): Promise<T[]> {
+    const res = await fetch(`${BASE_URL_V3}${path}`, {
+      signal: AbortSignal.timeout(30_000),
+      headers: { Authorization: this.apiToken },
+    })
+    if (res.status === 204 || res.headers.get('content-length') === '0') {
+      if (!res.ok) {
+        throw new Error(`ClickUp API error ${res.status}: ${res.statusText}`)
+      }
+      return []
+    }
+    let parsed: unknown
+    try {
+      parsed = await res.json()
+    } catch {
+      throw new Error(`ClickUp API error ${res.status}: response was not valid JSON`)
+    }
+    if (!res.ok) {
+      let errMsg = res.statusText
+      if (isRecord(parsed)) {
+        const raw = parsed.err ?? parsed.error ?? parsed.ECODE
+        if (typeof raw === 'string') errMsg = raw
+      }
+      throw new Error(`ClickUp API error ${res.status}: ${errMsg}`)
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error('Unexpected API response: expected JSON array')
+    }
+    return parsed as T[]
+  }
+
   async getMe(): Promise<{ id: number; username: string; timezone?: string }> {
     if (this.meCache) return this.meCache
     const data = await this.request<{ user: { id: number; username: string; timezone?: string } }>(
@@ -1155,21 +1186,13 @@ export class ClickUpClient {
   }
 
   async getDocPageListing(workspaceId: string, docId: string): Promise<DocPage[]> {
-    const data = await this.requestV3<{ pages: DocPage[] }>(
-      `/workspaces/${workspaceId}/docs/${docId}/pages`,
-    )
-    return readCollectionField<DocPage>(
-      data as Record<string, unknown>,
-      'pages',
-      'doc page listing',
-    )
+    return this.requestV3Array<DocPage>(`/workspaces/${workspaceId}/docs/${docId}/pages`)
   }
 
   async getDocPages(workspaceId: string, docId: string): Promise<DocPage[]> {
-    const data = await this.requestV3<{ pages: DocPage[] }>(
+    return this.requestV3Array<DocPage>(
       `/workspaces/${workspaceId}/docs/${docId}/pages?content_format=text/md`,
     )
-    return readCollectionField<DocPage>(data as Record<string, unknown>, 'pages', 'doc pages')
   }
 
   async getGoals(teamId: string): Promise<Goal[]> {
