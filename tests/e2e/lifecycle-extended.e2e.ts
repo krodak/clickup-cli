@@ -249,3 +249,164 @@ describe.skipIf(!TOKEN)('Space tag lifecycle e2e', () => {
     await expect(client.deleteSpaceTag(spaceId, updatedTagName)).resolves.not.toThrow()
   })
 })
+
+describe.skipIf(!TOKEN)('Folder and List CRUD e2e', () => {
+  let client: ClickUpClient
+  let spaceId: string
+  let folderId: string
+  let listId: string
+  let folderListId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    spaceId = testSpace.id
+  })
+
+  it('creates a folder in the test space', async () => {
+    const folder = await client.createFolder(spaceId, 'E2E Test Folder')
+    folderId = folder.id
+    expect(folder.id).toBeTypeOf('string')
+    expect(folder.name).toBe('E2E Test Folder')
+  })
+
+  it('creates a folderless list in the space', async () => {
+    const list = await client.createList(spaceId, 'E2E Folderless List')
+    listId = list.id
+    expect(list.id).toBeTypeOf('string')
+    expect(list.name).toBe('E2E Folderless List')
+  })
+
+  it('creates a list inside the folder', async () => {
+    const list = await client.createFolderList(folderId, 'E2E Folder List')
+    folderListId = list.id
+    expect(list.id).toBeTypeOf('string')
+    expect(list.name).toBe('E2E Folder List')
+  })
+
+  it('updates the list name', async () => {
+    const updated = await client.updateList(folderListId, {})
+    expect(updated.id).toBe(folderListId)
+  })
+})
+
+describe.skipIf(!TOKEN)('Checklist item edit/delete e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let taskId: string
+  let checklistId: string
+  let itemId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Checklist Edit Task' })
+    taskId = task.id
+    const checklist = await client.createChecklist(taskId, 'E2E Edit Checklist')
+    checklistId = checklist.id
+    const updated = await client.createChecklistItem(checklistId, 'E2E Edit Item')
+    const item = updated.items.find(i => i.name === 'E2E Edit Item')
+    if (!item) throw new Error('Checklist item not found after create')
+    itemId = item.id
+  })
+
+  afterAll(async () => {
+    await client.deleteChecklist(checklistId).catch(() => {})
+    await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('edits a checklist item', async () => {
+    const checklist = await client.editChecklistItem(checklistId, itemId, {
+      name: 'E2E Edit Item UPDATED',
+      resolved: true,
+    })
+    const item = checklist.items.find(i => i.id === itemId)
+    expect(item).toBeDefined()
+    expect(item!.name).toBe('E2E Edit Item UPDATED')
+  })
+
+  it('deletes a checklist item', async () => {
+    await expect(client.deleteChecklistItem(checklistId, itemId)).resolves.not.toThrow()
+  })
+})
+
+describe.skipIf(!TOKEN)('Time entry update/delete e2e', () => {
+  let client: ClickUpClient
+  let teamId: string
+  let listId: string
+  let taskId: string
+  let timeEntryId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Time Edit Task' })
+    taskId = task.id
+    const entry = await client.createTimeEntry(teamId, taskId, 120000, {
+      description: 'E2E entry to edit',
+    })
+    timeEntryId = entry.id
+  })
+
+  afterAll(async () => {
+    if (timeEntryId) await client.deleteTimeEntry(teamId, timeEntryId).catch(() => {})
+    await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('updates a time entry', async () => {
+    const updated = await client.updateTimeEntry(teamId, timeEntryId, {
+      description: 'E2E entry UPDATED',
+    })
+    expect(updated).toBeDefined()
+  })
+
+  it('deletes a time entry', async () => {
+    await expect(client.deleteTimeEntry(teamId, timeEntryId)).resolves.not.toThrow()
+    timeEntryId = ''
+  })
+})
+
+describe.skipIf(!TOKEN)('Space create e2e', () => {
+  let client: ClickUpClient
+  let teamId: string
+  let spaceId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    teamId = teams[0]!.id
+  })
+
+  it('creates a space', async () => {
+    const space = await client.createSpace(teamId, 'E2E Test Space')
+    spaceId = space.id
+    expect(space.id).toBeTypeOf('string')
+    expect(space.name).toBe('E2E Test Space')
+  })
+
+  it('verifies space exists', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const found = spaces.find(s => s.id === spaceId)
+    expect(found).toBeDefined()
+  })
+})
