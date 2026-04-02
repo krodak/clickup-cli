@@ -70,7 +70,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup create`                            | Create a new task                                 |
 | `cup comment <taskId>`                  | Post a comment on a task                          |
 | `cup comment-edit <commentId>`          | Edit an existing comment                          |
-| `cup comment-delete <commentId>`        | Delete a comment                                  |
+| `cup comment-delete [commentId]`        | Delete a comment                                  |
 | `cup reply <commentId>`                 | Reply to a comment                                |
 | `cup archive <taskId>`                  | Archive or unarchive a task                       |
 | `cup assign <taskId>`                   | Assign or unassign users                          |
@@ -624,21 +624,23 @@ cup comment-edit <commentId> -m "Updated" --json
 | `--unresolved`  | no       | Mark comment as unresolved |
 | `--json`        | no       | Force JSON output          |
 
-### `cup comment-delete <commentId>`
+### `cup comment-delete [commentId]`
 
-Delete a comment by ID, or delete one of your comments from a task by passing the task ID with `--mine`.
+Delete a comment by ID, or use `--task` with `--mine` to find and delete your comment from a task.
 
 ```bash
 cup comment-delete 12345
 cup comment-delete 12345 --json
-cup comment-delete abc123 --mine --match "report uploaded"
+cup comment-delete --task abc123 --mine
+cup comment-delete --task abc123 --mine --match "report uploaded"
 ```
 
-| Flag             | Required | Description                                                     |
-| ---------------- | -------- | --------------------------------------------------------------- |
-| `--mine`         | no       | Treat the argument as a task ID and only consider your comments |
-| `--match <text>` | no       | Narrow task-scoped deletion to comments containing text         |
-| `--json`         | no       | Force JSON output                                               |
+| Flag              | Required | Description                                                  |
+| ----------------- | -------- | ------------------------------------------------------------ |
+| `--task <taskId>` | no       | Task to search for your comment (requires `--mine`)          |
+| `--mine`          | no       | Delete one of my comments from the specified task            |
+| `--match <text>`  | no       | Only match comments containing this text (requires `--mine`) |
+| `--json`          | no       | Force JSON output                                            |
 
 ### `cup replies <commentId>`
 

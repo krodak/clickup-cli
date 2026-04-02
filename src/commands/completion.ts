@@ -513,8 +513,9 @@ ${renderZshTopLevelCommands(name)}
         comment-delete)
           _arguments \\
             '1:comment_id:' \\
+            '--task[Task to search for your comment (requires --mine)]:task_id:' \\
             '--mine[Delete one of my comments from the specified task]' \\
-            '--match[Only match comments containing this text]:text:' \\
+            '--match[Only match comments containing this text (requires --mine)]:text:' \\
             '--json[Force JSON output]'
           ;;
         replies)
