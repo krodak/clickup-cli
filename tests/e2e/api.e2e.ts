@@ -84,4 +84,84 @@ describe.skipIf(!TOKEN)('ClickUpClient e2e', () => {
       expect(t.list.id).toBe(listId)
     }
   })
+
+  it('getFolders returns folders for E2E Tests space', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const folders = await client.getFolders(testSpace!.id)
+    expect(Array.isArray(folders)).toBe(true)
+    expect(folders.length).toBeGreaterThan(0)
+    expect(folders[0]!.id).toBeTypeOf('string')
+  })
+
+  it('getLists returns lists for E2E Tests space', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const lists = await client.getLists(testSpace!.id)
+    expect(Array.isArray(lists)).toBe(true)
+    expect(lists.length).toBeGreaterThan(0)
+    expect(lists[0]!.id).toBeTypeOf('string')
+    expect(lists[0]!.name).toBeTypeOf('string')
+  })
+
+  it('getListViews returns views for a list', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const data = await client.getListViews(backlog!.id)
+    expect(data).toBeDefined()
+  })
+
+  it('getWorkspaceMembers returns members', async () => {
+    const members = await client.getWorkspaceMembers(teamId)
+    expect(Array.isArray(members)).toBe(true)
+    expect(members.length).toBeGreaterThan(0)
+  })
+
+  it('getSpaceTags returns tags for E2E Tests space', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    expect(testSpace).toBeDefined()
+    const tags = await client.getSpaceTags(testSpace!.id)
+    expect(Array.isArray(tags)).toBe(true)
+  })
+
+  it('getCustomTaskTypes returns array', async () => {
+    const types = await client.getCustomTaskTypes(teamId)
+    expect(Array.isArray(types)).toBe(true)
+  })
+
+  it('getGoals returns array', async () => {
+    const goals = await client.getGoals(teamId)
+    expect(Array.isArray(goals)).toBe(true)
+  })
+
+  it('getDocs returns array', async () => {
+    const docs = await client.getDocs(teamId)
+    expect(Array.isArray(docs)).toBe(true)
+  })
+
+  it('getTasksFromList returns tasks', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const tasks = await client.getTasksFromList(backlog!.id)
+    expect(Array.isArray(tasks)).toBe(true)
+  })
+
+  it('getListCustomFields returns array', async () => {
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    const lists = await client.getLists(testSpace!.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    expect(backlog).toBeDefined()
+    const fields = await client.getListCustomFields(backlog!.id)
+    expect(Array.isArray(fields)).toBe(true)
+  })
 })
