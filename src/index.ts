@@ -53,6 +53,7 @@ import {
 } from './commands/config.js'
 import { assignTask } from './commands/assign.js'
 import { fetchActivity, printActivity } from './commands/activity.js'
+import { fetchTimeInStatus, printTimeInStatus } from './commands/time-in-status.js'
 import { generateCompletion } from './commands/completion.js'
 import { printSkill, installSkillInteractive, installSkillTo } from './commands/skill.js'
 import { checkAuth } from './commands/auth.js'
@@ -673,6 +674,18 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         const config = loadConfig(getProfileName())
         const result = await fetchActivity(config, taskId)
         printActivity(result, opts.json ?? false)
+      }),
+    )
+
+  program
+    .command('time-in-status <taskId>')
+    .description('Show how long a task has been in each status')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await fetchTimeInStatus(config, taskId)
+        printTimeInStatus(result, opts.json ?? false)
       }),
     )
 
