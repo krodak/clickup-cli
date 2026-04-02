@@ -430,3 +430,62 @@ describe.skipIf(!TOKEN)('Goal lifecycle e2e', () => {
     goalId = ''
   })
 })
+
+describe.skipIf(!TOKEN)('Move task lifecycle e2e', () => {
+  let client: ClickUpClient
+  let teamId: string
+  let listId: string
+  let taskId: string
+  let sprintListId: string
+  let supportsMultiList = true
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Move Test Task' })
+    taskId = task.id
+  })
+
+  afterAll(async () => {
+    if (taskId) await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('resolves active sprint list', async () => {
+    const { resolveActiveSprintListId } = await import('../../src/commands/sprint.js')
+    sprintListId = await resolveActiveSprintListId({ apiToken: TOKEN!, teamId })
+    expect(sprintListId).toBeTypeOf('string')
+    expect(sprintListId.length).toBeGreaterThan(0)
+  })
+
+  it('adds task to sprint list', async () => {
+    try {
+      await client.addTaskToList(taskId, sprintListId)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('403')) {
+        supportsMultiList = false
+        return
+      }
+      throw err
+    }
+  })
+
+  it('verifies task is in sprint list', async () => {
+    if (!supportsMultiList) return
+    const task = await client.getTask(taskId)
+    const listIds = [task.list.id, ...(task.locations?.map(l => l.id) ?? [])]
+    expect(listIds).toContain(sprintListId)
+  })
+
+  it('removes task from sprint list', async () => {
+    if (!supportsMultiList) return
+    await expect(client.removeTaskFromList(taskId, sprintListId)).resolves.not.toThrow()
+  })
+})
