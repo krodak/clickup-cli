@@ -9,13 +9,70 @@ Reference for AI agents using the `cup` CLI tool. Covers task management, sprint
 
 > **Version check:** Run `cup --version`. If your installed version is older than 1.18.0, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
 
+## Install & Configure
+
+### Prerequisites
+
+Node.js 22+ required.
+
+### Install
+
+```bash
+npm install -g @krodak/clickup-cli
+```
+
+Or via Homebrew:
+
+```bash
+brew tap krodak/tap && brew install clickup-cli
+```
+
+### Get an API token
+
+The user needs a personal API token from ClickUp:
+
+1. Open https://app.clickup.com/settings/apps
+2. Under "API Token", click "Generate" (or copy existing)
+3. The token starts with `pk_`
+
+### Configure
+
+**Non-interactive (recommended for agents):**
+
+```bash
+cup init --token pk_USER_TOKEN --team TEAM_ID
+```
+
+To find the team/workspace ID, the user can check their ClickUp URL: `https://app.clickup.com/TEAM_ID/...`
+
+**Interactive (for humans in a terminal):**
+
+```bash
+cup init
+```
+
+**Environment variables (no config file needed):**
+
+```bash
+export CU_API_TOKEN="pk_..."
+export CU_TEAM_ID="12345678"
+```
+
+### Verify
+
+```bash
+cup auth
+```
+
+This prints the authenticated username and workspace. If it fails, the token or config is invalid.
+
 ## Setup
 
-Config at `~/.config/cup/config.json` with named profiles. Each profile has `apiToken` and `teamId`. Optional: `sprintFolderId` to pin sprint detection to a specific folder. Run `cup init` to set up interactively.
+Config stored at `~/.config/cup/config.json` with named profiles. Each profile has `apiToken` and `teamId`. Optional: `sprintFolderId` to pin sprint detection to a specific folder.
 
 Multiple profiles supported - use `cup profile add <name>` to create, `cup profile use <name>` to switch, or `-p <name>` flag for one-off overrides.
 
-Environment variables `CU_API_TOKEN` and `CU_TEAM_ID` override config file when both are set. `CU_PROFILE` selects a profile (overridden by `-p` flag).
+`CU_PROFILE` environment variable selects a profile (overridden by `-p` flag).
 
 ## Saved Filters (Quick Shortcuts)
 
