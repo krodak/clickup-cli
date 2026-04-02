@@ -113,23 +113,23 @@ export function findRelatedSpaces(mySpaceIds: Set<string>, allSpaces: Space[]): 
   )
 }
 
+function resolveSprintFolderId(config: Config, opts?: { folder?: string }): string | undefined {
+  const folderId = opts?.folder ?? config.sprintFolderId
+  if (folderId) return folderId
+
+  const favorites = getFavorites()
+  const favoriteFolderIds = Object.values(favorites)
+    .filter(f => f.type === 'sprint-folder')
+    .map(f => f.id)
+  return favoriteFolderIds[0]
+}
+
 export async function resolveActiveSprintListId(
   config: Config,
   opts?: { space?: string; folder?: string },
 ): Promise<string> {
   const client = new ClickUpClient(config)
-
-  let folderId = opts?.folder ?? config.sprintFolderId
-
-  if (!folderId) {
-    const favorites = getFavorites()
-    const favoriteFolderIds = Object.values(favorites)
-      .filter(f => f.type === 'sprint-folder')
-      .map(f => f.id)
-    if (favoriteFolderIds.length > 0) {
-      folderId = favoriteFolderIds[0]
-    }
-  }
+  const folderId = resolveSprintFolderId(config, opts)
 
   let sprintLists: List[]
 
@@ -192,17 +192,7 @@ export async function runSprintCommand(
 
   process.stderr.write('Detecting active sprint...\n')
 
-  let folderId = opts.folder ?? config.sprintFolderId
-
-  if (!folderId) {
-    const favorites = getFavorites()
-    const favoriteFolderIds = Object.values(favorites)
-      .filter(f => f.type === 'sprint-folder')
-      .map(f => f.id)
-    if (favoriteFolderIds.length > 0) {
-      folderId = favoriteFolderIds[0]
-    }
-  }
+  const folderId = resolveSprintFolderId(config, opts)
 
   const [myTasks, allSpaces, customTypes] = await Promise.all([
     client.getMyTasks(config.teamId),
