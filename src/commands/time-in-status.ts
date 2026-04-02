@@ -59,7 +59,18 @@ export async function fetchTimeInStatus(
   taskId: string,
 ): Promise<TimeInStatusResult> {
   const client = new ClickUpClient(config)
-  const data = await client.getTimeInStatus(taskId)
+  let data: TimeInStatusResponse
+  try {
+    data = await client.getTimeInStatus(taskId)
+  } catch (err) {
+    if (err instanceof Error && /No data for TIS/i.test(err.message)) {
+      throw new Error(
+        'The "Time in Status" ClickApp is not enabled for this workspace.\n' +
+          'Enable it in ClickUp: Space Settings → ClickApps → Time in Status',
+      )
+    }
+    throw err
+  }
   return transformResponse(taskId, data)
 }
 

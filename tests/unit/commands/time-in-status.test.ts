@@ -73,6 +73,15 @@ describe('fetchTimeInStatus', () => {
     expect(result.statuses[0]!.status).toBe('open')
     expect(result.statuses[0]!.current).toBe(true)
   })
+
+  it('throws a helpful error when the ClickApp is not enabled', async () => {
+    mockGetTimeInStatus.mockRejectedValue(new Error('ClickUp API error 401: No data for TIS'))
+
+    const { fetchTimeInStatus } = await import('../../../src/commands/time-in-status.js')
+    await expect(fetchTimeInStatus({ apiToken: 'pk_t', teamId: 'team1' }, 't1')).rejects.toThrow(
+      'Time in Status" ClickApp is not enabled',
+    )
+  })
 })
 
 describe('printTimeInStatus', () => {
