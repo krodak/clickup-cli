@@ -256,8 +256,10 @@ describe.skipIf(!TOKEN)('Folder and List CRUD e2e', () => {
   let folderId: string
   let listId: string
   let folderListId: string
+  let suffix: string
 
   beforeAll(async () => {
+    suffix = Date.now().toString(36)
     client = new ClickUpClient({ apiToken: TOKEN! })
     const teams = await client.getTeams()
     const teamId = teams[0]!.id
@@ -268,24 +270,27 @@ describe.skipIf(!TOKEN)('Folder and List CRUD e2e', () => {
   })
 
   it('creates a folder in the test space', async () => {
-    const folder = await client.createFolder(spaceId, 'E2E Test Folder')
+    const folderName = `E2E Test Folder ${suffix}`
+    const folder = await client.createFolder(spaceId, folderName)
     folderId = folder.id
     expect(folder.id).toBeTypeOf('string')
-    expect(folder.name).toBe('E2E Test Folder')
+    expect(folder.name).toBe(folderName)
   })
 
   it('creates a folderless list in the space', async () => {
-    const list = await client.createList(spaceId, 'E2E Folderless List')
+    const listName = `E2E Folderless List ${suffix}`
+    const list = await client.createList(spaceId, listName)
     listId = list.id
     expect(list.id).toBeTypeOf('string')
-    expect(list.name).toBe('E2E Folderless List')
+    expect(list.name).toBe(listName)
   })
 
   it('creates a list inside the folder', async () => {
-    const list = await client.createFolderList(folderId, 'E2E Folder List')
+    const listName = `E2E Folder List ${suffix}`
+    const list = await client.createFolderList(folderId, listName)
     folderListId = list.id
     expect(list.id).toBeTypeOf('string')
-    expect(list.name).toBe('E2E Folder List')
+    expect(list.name).toBe(listName)
   })
 
   it('updates the list name', async () => {
@@ -390,18 +395,21 @@ describe.skipIf(!TOKEN)('Space create e2e', () => {
   let client: ClickUpClient
   let teamId: string
   let spaceId: string
+  let suffix: string
 
   beforeAll(async () => {
+    suffix = Date.now().toString(36)
     client = new ClickUpClient({ apiToken: TOKEN! })
     const teams = await client.getTeams()
     teamId = teams[0]!.id
   })
 
   it('creates a space', async () => {
-    const space = await client.createSpace(teamId, 'E2E Test Space')
+    const spaceName = `E2E Test Space ${suffix}`
+    const space = await client.createSpace(teamId, spaceName)
     spaceId = space.id
     expect(space.id).toBeTypeOf('string')
-    expect(space.name).toBe('E2E Test Space')
+    expect(space.name).toBe(spaceName)
   })
 
   it('verifies space exists', async () => {
