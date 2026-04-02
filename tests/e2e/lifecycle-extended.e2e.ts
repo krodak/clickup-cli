@@ -254,7 +254,7 @@ describe.skipIf(!TOKEN)('Folder and List CRUD e2e', () => {
   let client: ClickUpClient
   let spaceId: string
   let folderId: string
-  let listId: string
+  let _listId: string
   let folderListId: string
   let suffix: string
 
@@ -280,7 +280,7 @@ describe.skipIf(!TOKEN)('Folder and List CRUD e2e', () => {
   it('creates a folderless list in the space', async () => {
     const listName = `E2E Folderless List ${suffix}`
     const list = await client.createList(spaceId, listName)
-    listId = list.id
+    _listId = list.id
     expect(list.id).toBeTypeOf('string')
     expect(list.name).toBe(listName)
   })
