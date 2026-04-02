@@ -98,4 +98,47 @@ describe('runInitCommand', () => {
     const { runInitCommand } = await import('../../../src/commands/init.js')
     await expect(runInitCommand()).rejects.toThrow('No workspaces')
   })
+
+  describe('non-interactive mode', () => {
+    it('writes config with --token and --team without prompts', async () => {
+      const { runInitCommand } = await import('../../../src/commands/init.js')
+      await runInitCommand({ token: 'pk_testtoken', team: 'team123' })
+      expect(mockWriteConfig).toHaveBeenCalledWith({
+        apiToken: 'pk_testtoken',
+        teamId: 'team123',
+      })
+      expect(mockPassword).not.toHaveBeenCalled()
+      expect(mockConfirm).not.toHaveBeenCalled()
+      expect(mockSelect).not.toHaveBeenCalled()
+    })
+
+    it('throws when only --token is provided', async () => {
+      const { runInitCommand } = await import('../../../src/commands/init.js')
+      await expect(runInitCommand({ token: 'pk_testtoken' })).rejects.toThrow(
+        'Both --token and --team are required for non-interactive setup',
+      )
+    })
+
+    it('throws when only --team is provided', async () => {
+      const { runInitCommand } = await import('../../../src/commands/init.js')
+      await expect(runInitCommand({ team: 'team123' })).rejects.toThrow(
+        'Both --token and --team are required for non-interactive setup',
+      )
+    })
+
+    it('validates token starts with pk_ in non-interactive mode', async () => {
+      const { runInitCommand } = await import('../../../src/commands/init.js')
+      await expect(runInitCommand({ token: 'invalid_token', team: 'team123' })).rejects.toThrow(
+        'pk_',
+      )
+    })
+
+    it('verifies token against API in non-interactive mode', async () => {
+      mockGetMe.mockRejectedValue(new Error('Unauthorized'))
+      const { runInitCommand } = await import('../../../src/commands/init.js')
+      await expect(runInitCommand({ token: 'pk_badtoken', team: 'team123' })).rejects.toThrow(
+        'Invalid token',
+      )
+    })
+  })
 })
