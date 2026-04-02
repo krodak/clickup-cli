@@ -367,11 +367,17 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Update a task')
     .option('-n, --name <text>', 'New task name')
     .option('-d, --description <text>', 'New description (markdown supported)')
-    .option('-s, --status <status>', 'New status (e.g. "in progress", "done")')
+    .option(
+      '-s, --status <status>',
+      'New status (fuzzy matched, e.g. "prog" matches "in progress")',
+    )
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
     .option('--due-date <date>', 'Due date (YYYY-MM-DD, or "none"/"clear" to remove)')
     .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
-    .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
+    .option(
+      '--time-estimate <duration>',
+      'Time estimate (e.g. "2h", "30m", "1h30m", "0" or "none" to clear)',
+    )
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
     .option('--remove-assignee <userId>', 'Remove assignee by user ID or "me"')
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
@@ -437,7 +443,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('create')
     .description('Create a new task')
-    .option('-l, --list <listId>', 'Target list ID (auto-detected from --parent if omitted)')
+    .option('-l, --list <listId>', 'Target list ID or "sprint:current" for active sprint')
     .requiredOption('-n, --name <name>', 'Task name')
     .option('-d, --description <text>', 'Task description (markdown supported)')
     .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
@@ -449,7 +455,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--tags <tags>', 'Comma-separated tag names')
     .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
-    .option('--template <id>', 'Create from a task template')
+    .option('--template <id>', 'Create from a task template (find IDs with cup templates)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
@@ -980,7 +986,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('move <taskId>')
     .description('Add or remove a task from a list')
-    .option('--to <listId>', 'Add task to this list')
+    .option('--to <listId>', 'Add task to this list (or "sprint:current" for active sprint)')
     .option('--remove <listId>', 'Remove task from this list')
     .option('--json', 'Force JSON output even in terminal')
     .action(
