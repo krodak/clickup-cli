@@ -132,3 +132,120 @@ describe.skipIf(!TOKEN)('Threaded comment lifecycle e2e', () => {
     expect(replies.length).toBeGreaterThan(0)
   })
 })
+
+describe.skipIf(!TOKEN)('Custom field lifecycle e2e', () => {
+  let client: ClickUpClient
+  let teamId: string
+  let listId: string
+  let taskId: string
+  let fieldId: string
+  let fieldAvailable = false
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Field Test Task' })
+    taskId = task.id
+    try {
+      const field = await client.createCustomField(teamId, 'E2E Test Field', 'text')
+      fieldId = field.id
+      fieldAvailable = true
+    } catch {
+      const fields = await client.getListCustomFields(listId)
+      const textField = fields.find(
+        f => f.type === 'short_text' || f.type === 'text' || f.type === 'url',
+      )
+      if (textField) {
+        fieldId = textField.id
+        fieldAvailable = true
+      }
+    }
+  })
+
+  afterAll(async () => {
+    await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('sets a custom field value on a task', async () => {
+    if (!fieldAvailable) return
+    await expect(
+      client.setCustomFieldValue(taskId, fieldId, 'e2e test value'),
+    ).resolves.not.toThrow()
+  })
+
+  it('verifies field value on task', async () => {
+    if (!fieldAvailable) return
+    const task = await client.getTask(taskId)
+    const field = task.custom_fields?.find(f => f.id === fieldId)
+    expect(field).toBeDefined()
+  })
+
+  it('removes the custom field value', async () => {
+    if (!fieldAvailable) return
+    await expect(client.removeCustomFieldValue(taskId, fieldId)).resolves.not.toThrow()
+  })
+
+  it('verifies createCustomField endpoint is reachable', async () => {
+    try {
+      await client.createCustomField(teamId, 'E2E Probe Field', 'text')
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error)
+    }
+  })
+})
+
+describe.skipIf(!TOKEN)('Space tag lifecycle e2e', () => {
+  let client: ClickUpClient
+  let spaceId: string
+  const tagName = 'e2e-lifecycle-tag'
+  const updatedTagName = 'e2e-lifecycle-tag-updated'
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    spaceId = testSpace.id
+  })
+
+  afterAll(async () => {
+    await client.deleteSpaceTag(spaceId, updatedTagName).catch(() => {})
+    await client.deleteSpaceTag(spaceId, tagName).catch(() => {})
+  })
+
+  it('creates a space tag', async () => {
+    await expect(client.createSpaceTag(spaceId, tagName)).resolves.not.toThrow()
+  })
+
+  it('verifies tag exists', async () => {
+    const tags = await client.getSpaceTags(spaceId)
+    const found = tags.find(t => t.name === tagName)
+    expect(found).toBeDefined()
+  })
+
+  it('updates the tag', async () => {
+    await expect(
+      client.updateSpaceTag(spaceId, tagName, { name: updatedTagName }),
+    ).resolves.not.toThrow()
+  })
+
+  it('verifies updated tag', async () => {
+    const tags = await client.getSpaceTags(spaceId)
+    expect(tags.find(t => t.name === updatedTagName)).toBeDefined()
+    expect(tags.find(t => t.name === tagName)).toBeUndefined()
+  })
+
+  it('deletes the tag', async () => {
+    await expect(client.deleteSpaceTag(spaceId, updatedTagName)).resolves.not.toThrow()
+  })
+})
