@@ -66,6 +66,7 @@ You need Node 22+ and a ClickUp personal API token (`pk_...` from [ClickUp Setti
 ```bash
 npm install -g @krodak/clickup-cli
 cup init
+cup auth  # verify setup
 ```
 
 </details>
@@ -77,6 +78,7 @@ cup init
 brew tap krodak/tap
 brew install clickup-cli
 cup init
+cup auth  # verify setup
 ```
 
 </details>
@@ -225,6 +227,23 @@ Environment variables override config file values:
 | `CU_OUTPUT`    | Set to `json` to force JSON output when piped (default: markdown) |
 
 When both `CU_API_TOKEN` and `CU_TEAM_ID` are set, the config file is not required. Useful for CI/CD and containerized agents.
+
+```bash
+cup auth  # verify setup
+```
+
+### Non-interactive setup
+
+For CI, scripts, and AI agents, you can skip the interactive prompts:
+
+```bash
+# Write config directly
+cup init --token pk_YOUR_TOKEN --team YOUR_TEAM_ID
+
+# Or use environment variables (no config file needed)
+export CU_API_TOKEN=pk_YOUR_TOKEN
+export CU_TEAM_ID=YOUR_TEAM_ID
+```
 
 ## Troubleshooting
 

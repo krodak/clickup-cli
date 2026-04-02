@@ -131,11 +131,20 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 
 ### `cup init`
 
-First-time setup. Prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cup/config.json`. Automatically migrates config from `~/.config/cu/` if present.
+First-time setup. In interactive mode, prompts for your API token, verifies it, auto-detects your workspace, and writes `~/.config/cup/config.json`. In non-interactive mode, pass `--token` and `--team` to skip prompts. Automatically migrates config from `~/.config/cu/` if present.
 
 ```bash
+# Interactive (prompts for token and workspace)
 cup init
+
+# Non-interactive (for CI, scripts, AI agents)
+cup init --token pk_abc123 --team 12345678
 ```
+
+| Flag              | Description                                   |
+| ----------------- | --------------------------------------------- |
+| `--token <token>` | API token (pk\_...) for non-interactive setup |
+| `--team <teamId>` | Workspace/team ID for non-interactive setup   |
 
 ### `cup tasks`
 
