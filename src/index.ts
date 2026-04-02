@@ -25,7 +25,7 @@ import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
 import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
-import { runSprintCommand } from './commands/sprint.js'
+import { runSprintCommand, resolveActiveSprintListId } from './commands/sprint.js'
 import { listSprints } from './commands/sprints.js'
 import { fetchSubtasks } from './commands/subtasks.js'
 import { postComment } from './commands/comment.js'
@@ -461,7 +461,6 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
         const config = loadConfig(getProfileName())
         if (opts.list === 'sprint:current') {
-          const { resolveActiveSprintListId } = await import('./commands/sprint.js')
           opts.list = await resolveActiveSprintListId(config)
         }
         if (opts.assignee === 'me') {
@@ -993,7 +992,6 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(async (taskId: string, opts: MoveOptions & { json?: boolean }) => {
         const config = loadConfig(getProfileName())
         if (opts.to === 'sprint:current') {
-          const { resolveActiveSprintListId } = await import('./commands/sprint.js')
           opts.to = await resolveActiveSprintListId(config)
         }
         const message = await moveTask(config, taskId, opts)
