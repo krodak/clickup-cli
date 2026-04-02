@@ -154,10 +154,11 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Attachments
 
-| Feature          | Command                    | Status             |
-| ---------------- | -------------------------- | ------------------ |
-| Upload file      | `cup attach <id> <file>`   | :white_check_mark: |
-| List attachments | shown inline in `cup task` | :white_check_mark: |
+| Feature           | Command                    | Status                          |
+| ----------------- | -------------------------- | ------------------------------- |
+| Upload file       | `cup attach <id> <file>`   | :white_check_mark:              |
+| List attachments  | shown inline in `cup task` | :white_check_mark:              |
+| Delete attachment |                            | :no_entry_sign: No API endpoint |
 
 ## Setup
 
