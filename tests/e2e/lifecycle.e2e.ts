@@ -363,3 +363,70 @@ describe.skipIf(!TOKEN)('View lifecycle e2e', () => {
     viewId = ''
   })
 })
+
+describe.skipIf(!TOKEN)('Goal lifecycle e2e', () => {
+  let client: ClickUpClient
+  let teamId: string
+  let goalId: string
+  let keyResultId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    teamId = teams[0]!.id
+  })
+
+  afterAll(async () => {
+    if (keyResultId) await client.deleteKeyResult(keyResultId).catch(() => {})
+    if (goalId) await client.deleteGoal(goalId).catch(() => {})
+  })
+
+  it('creates a goal', async () => {
+    const goal = await client.createGoal(teamId, 'E2E Test Goal', {
+      description: 'Created by e2e test suite',
+    })
+    goalId = goal.id
+    expect(goal.id).toBeTypeOf('string')
+    expect(goal.name).toBe('E2E Test Goal')
+  })
+
+  it('lists goals and finds the created one', async () => {
+    const goals = await client.getGoals(teamId)
+    const found = goals.find(g => g.id === goalId)
+    expect(found).toBeDefined()
+  })
+
+  it('updates the goal', async () => {
+    await expect(
+      client.updateGoal(goalId, { name: 'E2E Test Goal UPDATED' }),
+    ).resolves.not.toThrow()
+  })
+
+  it('creates a key result', async () => {
+    const kr = await client.createKeyResult(goalId, 'E2E Key Result', 'number', 100)
+    keyResultId = kr.id
+    expect(kr.id).toBeTypeOf('string')
+  })
+
+  it('lists key results', async () => {
+    const keyResults = await client.getKeyResults(goalId)
+    const found = keyResults.find(kr => kr.id === keyResultId)
+    expect(found).toBeDefined()
+  })
+
+  it('updates key result progress', async () => {
+    await expect(
+      client.updateKeyResult(keyResultId, { steps_current: 50, note: 'E2E progress' }),
+    ).resolves.not.toThrow()
+  })
+
+  it('deletes the key result', async () => {
+    await expect(client.deleteKeyResult(keyResultId)).resolves.not.toThrow()
+    keyResultId = ''
+  })
+
+  it('deletes the goal', async () => {
+    await expect(client.deleteGoal(goalId)).resolves.not.toThrow()
+    goalId = ''
+  })
+})
