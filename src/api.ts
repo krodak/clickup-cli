@@ -222,6 +222,18 @@ export interface TimeEntry {
   at: number
 }
 
+export interface TimeInStatusEntry {
+  status: string
+  color: string
+  total_time: { by_minute: number; since: string }
+  orderindex: number
+}
+
+export interface TimeInStatusResponse {
+  current_status: TimeInStatusEntry
+  status_history: TimeInStatusEntry[]
+}
+
 export interface Attachment {
   id: string
   version: string
@@ -561,6 +573,10 @@ export class ClickUpClient {
 
   async getTask(taskId: string): Promise<Task> {
     return this.request<Task>(this.taskPath(taskId, '?include_markdown_description=true'))
+  }
+
+  async getTimeInStatus(taskId: string): Promise<TimeInStatusResponse> {
+    return this.request<TimeInStatusResponse>(this.taskPath(taskId, '/time_in_status'))
   }
 
   async createTask(listId: string, options: CreateTaskOptions): Promise<Task> {

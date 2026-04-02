@@ -452,6 +452,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'time-in-status',
+    description: 'Show how long a task has been in each status',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'time-in-status <taskId>',
+        description: 'Show how long a task has been in each status',
+      },
+    ],
+  },
+  {
     name: 'docs',
     description: 'List workspace docs (optionally filter by name)',
     flags: ['--json'],
