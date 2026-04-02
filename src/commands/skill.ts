@@ -47,8 +47,6 @@ export async function installSkillInteractive(): Promise<string[]> {
 
   if (isTTY()) {
     const { checkbox } = await import('@inquirer/prompts')
-    const preselected = targets.filter(t => t.detected).map(t => t.name)
-
     const selected = await checkbox<string>({
       message: 'Install skill for which agents?',
       choices: targets.map(t => ({

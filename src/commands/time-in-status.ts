@@ -67,6 +67,7 @@ export async function fetchTimeInStatus(
       throw new Error(
         'The "Time in Status" ClickApp is not enabled for this workspace.\n' +
           'Enable it in ClickUp: Space Settings → ClickApps → Time in Status',
+        { cause: err },
       )
     }
     throw err
