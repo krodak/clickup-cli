@@ -23,13 +23,19 @@ export interface Config {
   apiToken: string
   teamId: string
   sprintFolderId?: string
+}
+
+export interface ProfileData {
+  apiToken?: string
+  teamId?: string
+  sprintFolderId?: string
   filters?: FiltersMap
   favorites?: FavoritesMap
 }
 
 export interface MultiProfileConfig {
   defaultProfile: string
-  profiles: Record<string, Partial<Config>>
+  profiles: Record<string, ProfileData>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -59,7 +65,7 @@ function parseConfigFile(
   path: string,
   strictFields: boolean,
   strictRoot = strictFields,
-): Partial<Config> {
+): ProfileData {
   let parsed: unknown
   try {
     parsed = JSON.parse(raw)
@@ -127,7 +133,7 @@ function migrateToMultiProfile(
   filePath: string,
 ): MultiProfileConfig {
   if (typeof parsed.apiToken === 'string' && !parsed.profiles) {
-    const profile: Partial<Config> = {}
+    const profile: ProfileData = {}
     const token = trimConfigValue(parsed.apiToken)
     if (token) profile.apiToken = token
     const team = typeof parsed.teamId === 'string' ? trimConfigValue(parsed.teamId) : undefined
@@ -151,10 +157,10 @@ function migrateToMultiProfile(
   }
 
   if (isRecord(parsed.profiles)) {
-    const profiles: Record<string, Partial<Config>> = {}
+    const profiles: Record<string, ProfileData> = {}
     for (const [name, value] of Object.entries(parsed.profiles)) {
       if (isRecord(value)) {
-        const p: Partial<Config> = {}
+        const p: ProfileData = {}
         if (typeof value.apiToken === 'string' && value.apiToken.trim())
           p.apiToken = value.apiToken.trim()
         if (typeof value.teamId === 'string' && value.teamId.trim()) p.teamId = value.teamId.trim()
@@ -305,7 +311,7 @@ export function saveMultiProfileConfig(config: MultiProfileConfig): void {
   })
 }
 
-export function addProfile(name: string, profile: Partial<Config>): void {
+export function addProfile(name: string, profile: ProfileData): void {
   const multi = loadMultiProfileConfig()
   multi.profiles[name] = profile
   if (!multi.defaultProfile) multi.defaultProfile = name
@@ -347,7 +353,7 @@ export function listProfiles(): Array<{ name: string; isDefault: boolean; teamId
   }))
 }
 
-export function loadRawConfig(profileName?: string): Partial<Config> {
+export function loadRawConfig(profileName?: string): ProfileData {
   migrateFromLegacy()
   const path = configPath()
   if (!fs.existsSync(path)) return {}
@@ -437,14 +443,14 @@ export function deleteFavorite(alias: string, profileName?: string): void {
   saveMultiProfileConfig(multi)
 }
 
-export function writeConfig(config: Partial<Config>, profileName?: string): void {
+export function writeConfig(config: ProfileData, profileName?: string): void {
   const multi = loadMultiProfileConfig()
   const name = profileName || multi.defaultProfile || 'default'
 
   const apiToken = trimConfigValue(config.apiToken) ?? undefined
   const teamId = trimConfigValue(config.teamId) ?? undefined
   const sprintFolderId = trimConfigValue(config.sprintFolderId)
-  const normalizedConfig: Partial<Config> = {
+  const normalizedConfig: ProfileData = {
     ...(apiToken ? { apiToken } : {}),
     ...(teamId ? { teamId } : {}),
     ...(sprintFolderId ? { sprintFolderId } : {}),
