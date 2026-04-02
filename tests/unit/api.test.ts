@@ -1116,13 +1116,13 @@ describe('Docs API v3 methods', () => {
     expect(url).toBe('https://api.clickup.com/api/v3/workspaces/w1/docs/d1')
   })
 
-  it('getDocPageListing sends GET to v3 /workspaces/{id}/docs/{docId}/pagelisting', async () => {
+  it('getDocPageListing sends GET to v3 /workspaces/{id}/docs/{docId}/pages', async () => {
     const pages = [{ id: 'p1', doc_id: 'd1', name: 'Page 1' }]
     mockFetch.mockReturnValue(mockResponse({ pages }))
     const result = await client.getDocPageListing('w1', 'd1')
     expect(result).toEqual(pages)
     const url = String(mockFetch.mock.calls[0]![0])
-    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pagelisting')
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/w1/docs/d1/pages')
   })
 
   it('getDocPageListing returns empty array when pages missing', async () => {

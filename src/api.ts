@@ -1156,7 +1156,7 @@ export class ClickUpClient {
 
   async getDocPageListing(workspaceId: string, docId: string): Promise<DocPage[]> {
     const data = await this.requestV3<{ pages: DocPage[] }>(
-      `/workspaces/${workspaceId}/docs/${docId}/pagelisting`,
+      `/workspaces/${workspaceId}/docs/${docId}/pages`,
     )
     return readCollectionField<DocPage>(
       data as Record<string, unknown>,
