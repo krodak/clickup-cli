@@ -24,6 +24,19 @@ export function formatDuration(ms: number): string {
   return `${minutes}m`
 }
 
+export function formatLongDuration(ms: number): string {
+  const totalMinutes = Math.round(Math.abs(ms) / 60000)
+  if (totalMinutes === 0) return '< 1m'
+  const days = Math.floor(totalMinutes / 1440)
+  const hours = Math.floor((totalMinutes % 1440) / 60)
+  const minutes = totalMinutes % 60
+  const parts: string[] = []
+  if (days > 0) parts.push(`${days}d`)
+  if (hours > 0) parts.push(`${hours}h`)
+  if (minutes > 0) parts.push(`${minutes}m`)
+  return parts.join(' ')
+}
+
 export function formatDateISO(ms: string | number): string {
   const d = new Date(Number(ms))
   const year = d.getUTCFullYear()
