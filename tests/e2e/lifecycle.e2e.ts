@@ -150,6 +150,112 @@ describe.skipIf(!TOKEN)('Tag lifecycle e2e', () => {
   })
 })
 
+describe.skipIf(!TOKEN)('Comment lifecycle e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let taskId: string
+  let commentId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Comment Lifecycle Task' })
+    taskId = task.id
+  })
+
+  afterAll(async () => {
+    await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('posts a comment', async () => {
+    const result = await client.postComment(taskId, 'Initial report findings')
+    commentId = String(result.id)
+    expect(commentId.length).toBeGreaterThan(0)
+  })
+
+  it('edits the comment', async () => {
+    await client.updateComment(commentId, 'Updated report findings v2')
+    const comments = await client.getTaskComments(taskId)
+    const found = comments.find((c: { id: string }) => String(c.id) === commentId)
+    expect(found).toBeDefined()
+  })
+
+  it('deletes the comment', async () => {
+    await expect(client.deleteComment(commentId)).resolves.not.toThrow()
+  })
+
+  it('verifies comment is gone', async () => {
+    const comments = await client.getTaskComments(taskId)
+    const found = comments.find((c: { id: string }) => String(c.id) === commentId)
+    expect(found).toBeUndefined()
+  })
+})
+
+describe.skipIf(!TOKEN)('Attachment lifecycle e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let taskId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Attachment Lifecycle Task' })
+    taskId = task.id
+  })
+
+  afterAll(async () => {
+    await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('uploads a file attachment', async () => {
+    const { writeFileSync, unlinkSync } = await import('fs')
+    const { join } = await import('path')
+    const { tmpdir } = await import('os')
+    const testFile = join(tmpdir(), 'e2e-test-report.md')
+    writeFileSync(testFile, '# Test Report\n\nInitial findings.')
+
+    const result = await client.createTaskAttachment(taskId, testFile)
+    expect(result).toBeDefined()
+
+    unlinkSync(testFile)
+  })
+
+  it('uploads an updated version', async () => {
+    const { writeFileSync, unlinkSync } = await import('fs')
+    const { join } = await import('path')
+    const { tmpdir } = await import('os')
+    const testFile = join(tmpdir(), 'e2e-test-report-v2.md')
+    writeFileSync(testFile, '# Test Report v2\n\nUpdated findings with more data.')
+
+    const result = await client.createTaskAttachment(taskId, testFile)
+    expect(result).toBeDefined()
+
+    unlinkSync(testFile)
+  })
+
+  it('task shows attachments in detail', async () => {
+    const task = await client.getTask(taskId)
+    expect(task.attachments).toBeDefined()
+    expect(task.attachments!.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
 describe.skipIf(!TOKEN)('Time tracking lifecycle e2e', () => {
   let client: ClickUpClient
   let teamId: string
