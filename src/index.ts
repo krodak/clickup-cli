@@ -232,9 +232,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('init')
     .description(`Set up ${programName} for the first time`)
+    .option('--token <token>', 'API token (pk_...) for non-interactive setup')
+    .option('--team <teamId>', 'Workspace/team ID for non-interactive setup')
     .action(
-      wrapAction(async () => {
-        await runInitCommand()
+      wrapAction(async (opts: { token?: string; team?: string }) => {
+        await runInitCommand(opts)
       }),
     )
 

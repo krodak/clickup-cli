@@ -3,7 +3,37 @@ import { ClickUpClient } from '../api.js'
 import { getConfigPath, writeConfig } from '../config.js'
 import fs from 'fs'
 
-export async function runInitCommand(): Promise<void> {
+export interface InitOptions {
+  token?: string
+  team?: string
+}
+
+export async function runInitCommand(opts?: InitOptions): Promise<void> {
+  if (opts?.token && opts?.team) {
+    const apiToken = opts.token.trim()
+    if (!apiToken.startsWith('pk_')) throw new Error('Token must start with pk_')
+
+    const client = new ClickUpClient({ apiToken })
+    let username: string
+    try {
+      const me = await client.getMe()
+      username = me.username
+    } catch (err) {
+      throw new Error(`Invalid token: ${err instanceof Error ? err.message : String(err)}`, {
+        cause: err,
+      })
+    }
+
+    process.stdout.write(`Authenticated as @${username}\n`)
+    writeConfig({ apiToken, teamId: opts.team })
+    process.stdout.write(`Config written to ${getConfigPath()}\n`)
+    return
+  }
+
+  if (opts?.token || opts?.team) {
+    throw new Error('Both --token and --team are required for non-interactive setup')
+  }
+
   const configPath = getConfigPath()
 
   if (fs.existsSync(configPath)) {

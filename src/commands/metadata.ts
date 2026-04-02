@@ -23,6 +23,7 @@ export const commandMetadata = [
   {
     name: 'init',
     description: 'Set up cup for the first time',
+    flags: ['--token', '--team'],
     quickReference: [{ section: 'setup', usage: 'init', description: 'First-time setup wizard' }],
   },
   {
