@@ -599,22 +599,42 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
-    .command('comment-delete <commentId>')
-    .description('Delete a comment')
-    .option('--mine', 'Delete one of my comments from the specified task instead of by comment ID')
-    .option('--match <text>', 'Only match my task comments containing this text')
+    .command('comment-delete [commentId]')
+    .description(
+      'Delete a comment by ID, or use --task with --mine to find and delete your comment',
+    )
+    .option('--task <taskId>', 'Task to search for your comment (requires --mine)')
+    .option('--mine', 'Delete one of my comments from the specified task')
+    .option('--match <text>', 'Only match comments containing this text (requires --mine)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (commentId: string, opts: { mine?: boolean; match?: string; json?: boolean }) => {
+        async (
+          commentId: string | undefined,
+          opts: { task?: string; mine?: boolean; match?: string; json?: boolean },
+        ) => {
+          if (opts.mine && !opts.task) {
+            throw new Error('--mine requires --task <taskId>')
+          }
+          if (opts.match && !opts.mine) {
+            throw new Error('--match requires --mine')
+          }
           const config = loadConfig(getProfileName())
-          const result: { commentId: string; taskId?: string } =
-            opts.mine || opts.match
-              ? await deleteCommentByTaskSelection(config, commentId, {
-                  mine: opts.mine,
-                  match: opts.match,
-                })
-              : (await deleteComment(config, commentId), { commentId })
+          let result: { commentId: string; taskId?: string }
+          if (opts.task) {
+            if (!opts.mine) {
+              throw new Error('--task requires --mine')
+            }
+            result = await deleteCommentByTaskSelection(config, opts.task, {
+              mine: opts.mine,
+              match: opts.match,
+            })
+          } else if (commentId) {
+            await deleteComment(config, commentId)
+            result = { commentId }
+          } else {
+            throw new Error('Provide a comment ID or use --task <taskId> --mine')
+          }
 
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, ...result }, null, 2))

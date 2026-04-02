@@ -160,12 +160,13 @@ export const commandMetadata = [
   },
   {
     name: 'comment-delete',
-    description: 'Delete a comment',
-    flags: ['--mine', '--match', '--json'],
+    description:
+      'Delete a comment by ID, or use --task with --mine to find and delete your comment',
+    flags: ['--task', '--mine', '--match', '--json'],
     quickReference: [
       {
         section: 'write',
-        usage: 'comment-delete <commentId>',
+        usage: 'comment-delete [commentId]',
         description: 'Delete a comment',
       },
     ],
