@@ -311,3 +311,55 @@ describe.skipIf(!TOKEN)('Time tracking lifecycle e2e', () => {
     expect(entries.length).toBeGreaterThan(0)
   })
 })
+
+describe.skipIf(!TOKEN)('View lifecycle e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let viewId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+  })
+
+  afterAll(async () => {
+    if (viewId) await client.deleteView(viewId).catch(() => {})
+  })
+
+  it('creates a list view', async () => {
+    const view = await client.createListView(listId, { name: 'E2E Test View', type: 'list' })
+    viewId = view.id
+    expect(view.id).toBeTypeOf('string')
+    expect(view.name).toBe('E2E Test View')
+  })
+
+  it('lists views on the list', async () => {
+    const data = await client.getListViews(listId)
+    expect(data.views).toBeDefined()
+    expect(Array.isArray(data.views)).toBe(true)
+  })
+
+  it('gets the view', async () => {
+    const view = await client.getView(viewId)
+    expect(view.id).toBe(viewId)
+  })
+
+  it('updates the view', async () => {
+    await expect(
+      client.updateView(viewId, { name: 'E2E Test View UPDATED', type: 'list' }),
+    ).resolves.not.toThrow()
+  })
+
+  it('deletes the view', async () => {
+    await expect(client.deleteView(viewId)).resolves.not.toThrow()
+    viewId = ''
+  })
+})
