@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockAddTaskToList = vi.fn().mockResolvedValue(undefined)
 const mockRemoveTaskFromList = vi.fn().mockResolvedValue(undefined)
+const mockMoveTaskToList = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
       addTaskToList: mockAddTaskToList,
       removeTaskFromList: mockRemoveTaskFromList,
+      moveTaskToList: mockMoveTaskToList,
     }
   }),
 }))
@@ -16,6 +18,7 @@ describe('moveTask', () => {
   beforeEach(() => {
     mockAddTaskToList.mockClear()
     mockRemoveTaskFromList.mockClear()
+    mockMoveTaskToList.mockClear()
   })
 
   it('adds a task to a list', async () => {
@@ -34,33 +37,18 @@ describe('moveTask', () => {
     expect(msg).toContain('list3')
   })
 
-  it('supports both --to and --remove in one call', async () => {
+  it('uses v3 move endpoint when both --to and --remove are provided', async () => {
     const { moveTask } = await import('../../../src/commands/move.js')
     const msg = await moveTask({ apiToken: 'pk_t', teamId: 'tm' }, 'task1', {
       to: 'list2',
       remove: 'list1',
     })
-    expect(mockAddTaskToList).toHaveBeenCalledWith('task1', 'list2')
-    expect(mockRemoveTaskFromList).toHaveBeenCalledWith('task1', 'list1')
-    expect(msg).toContain('Added')
-    expect(msg).toContain('Removed')
-  })
-
-  it('reports partial success when add succeeds but remove fails', async () => {
-    mockRemoveTaskFromList.mockRejectedValueOnce(new Error('list not found'))
-    const { moveTask } = await import('../../../src/commands/move.js')
-    await expect(
-      moveTask({ apiToken: 'pk_t', teamId: 'tm' }, 'task1', { to: 'list2', remove: 'list3' }),
-    ).rejects.toThrow(/Added task1 to list list2.*failed to remove.*list not found/)
-    expect(mockAddTaskToList).toHaveBeenCalledWith('task1', 'list2')
-  })
-
-  it('throws original error when remove fails without prior add', async () => {
-    mockRemoveTaskFromList.mockRejectedValueOnce(new Error('list not found'))
-    const { moveTask } = await import('../../../src/commands/move.js')
-    await expect(
-      moveTask({ apiToken: 'pk_t', teamId: 'tm' }, 'task1', { remove: 'list3' }),
-    ).rejects.toThrow('list not found')
+    expect(mockMoveTaskToList).toHaveBeenCalledWith('task1', 'list2')
+    expect(mockAddTaskToList).not.toHaveBeenCalled()
+    expect(mockRemoveTaskFromList).not.toHaveBeenCalled()
+    expect(msg).toContain('Moved')
+    expect(msg).toContain('list1')
+    expect(msg).toContain('list2')
   })
 
   it('throws when neither --to nor --remove is provided', async () => {
