@@ -14,6 +14,12 @@ export async function moveTask(config: Config, taskId: string, opts: MoveOptions
   const client = new ClickUpClient(config)
   const messages: string[] = []
 
+  if (opts.to && opts.remove) {
+    await client.moveTaskToList(taskId, opts.to)
+    messages.push(`Moved ${taskId} from list ${opts.remove} to list ${opts.to}`)
+    return messages.join('; ')
+  }
+
   if (opts.to) {
     await client.addTaskToList(taskId, opts.to)
     messages.push(`Added ${taskId} to list ${opts.to}`)

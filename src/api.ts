@@ -797,6 +797,33 @@ export class ClickUpClient {
     await this.request(`/list/${listId}/task/${taskId}`, { method: 'DELETE' })
   }
 
+  async moveTaskToList(taskId: string, listId: string): Promise<void> {
+    if (!this.teamId) {
+      throw new Error('teamId is required to move a task to a new home list')
+    }
+    const [task, destList] = await Promise.all([
+      this.getTask(taskId),
+      this.getListWithStatuses(listId),
+    ])
+    const taskStatus = task.status.status.toLowerCase()
+    const destStatuses = destList.statuses.map(s => s.status.toLowerCase())
+    const statusMappings: Array<{ source_status: string; destination_status: string }> = []
+    if (!destStatuses.includes(taskStatus)) {
+      const destStatus = destList.statuses.find(s => s.type === 'open') ?? destList.statuses[0]
+      if (!destStatus) {
+        throw new Error(`Destination list ${listId} has no statuses`)
+      }
+      statusMappings.push({
+        source_status: task.status.status,
+        destination_status: destStatus.status,
+      })
+    }
+    await this.requestV3(`/workspaces/${this.teamId}/tasks/${taskId}/home_list/${listId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status_mappings: statusMappings }),
+    })
+  }
+
   async setCustomFieldValue(taskId: string, fieldId: string, value: unknown): Promise<void> {
     await this.request(this.taskPath(taskId, `/field/${fieldId}`), {
       method: 'POST',
