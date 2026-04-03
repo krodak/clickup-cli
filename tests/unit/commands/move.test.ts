@@ -51,6 +51,14 @@ describe('moveTask', () => {
     expect(msg).toContain('list2')
   })
 
+  it('throws when remove fails', async () => {
+    mockRemoveTaskFromList.mockRejectedValueOnce(new Error('list not found'))
+    const { moveTask } = await import('../../../src/commands/move.js')
+    await expect(
+      moveTask({ apiToken: 'pk_t', teamId: 'tm' }, 'task1', { remove: 'list3' }),
+    ).rejects.toThrow('list not found')
+  })
+
   it('throws when neither --to nor --remove is provided', async () => {
     const { moveTask } = await import('../../../src/commands/move.js')
     await expect(moveTask({ apiToken: 'pk_t', teamId: 'tm' }, 'task1', {})).rejects.toThrow('--to')
