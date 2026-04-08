@@ -42,6 +42,19 @@ const taskWithFields = {
     { id: 'uuid-date', name: 'Target Date', type: 'date', value: null, type_config: {} },
     { id: 'uuid-url', name: 'Link', type: 'url', value: null, type_config: {} },
     { id: 'uuid-email', name: 'Contact', type: 'email', value: null, type_config: {} },
+    {
+      id: 'uuid-labels',
+      name: 'Priority Labels',
+      type: 'labels',
+      value: null,
+      type_config: {
+        options: [
+          { id: 'opt-1', name: 'High', orderindex: 0 },
+          { id: 'opt-2', name: 'Medium', orderindex: 1 },
+          { id: 'opt-3', name: 'Low', orderindex: 2 },
+        ],
+      },
+    },
   ],
 }
 
@@ -192,12 +205,62 @@ describe('setCustomField', () => {
     mockGetTask.mockResolvedValue({
       ...taskWithFields,
       custom_fields: [
-        { id: 'uuid-labels', name: 'Labels', type: 'labels', value: null, type_config: {} },
+        {
+          id: 'uuid-progress',
+          name: 'Progress',
+          type: 'automatic_progress',
+          value: null,
+          type_config: {},
+        },
       ],
     })
     const { setCustomField } = await import('../../../src/commands/field.js')
-    await expect(setCustomField(config, 'task1', { set: ['Labels', 'foo'] })).rejects.toThrow(
+    await expect(setCustomField(config, 'task1', { set: ['Progress', 'foo'] })).rejects.toThrow(
       'not supported',
+    )
+  })
+
+  it('sets labels field with single label', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', {
+      set: ['Priority Labels', 'High'],
+    })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-labels', ['opt-1'])
+    expect(results[0]!.value).toEqual(['opt-1'])
+  })
+
+  it('sets labels field with multiple comma-separated labels', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', {
+      set: ['Priority Labels', 'High, Low'],
+    })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-labels', ['opt-1', 'opt-3'])
+    expect(results[0]!.value).toEqual(['opt-1', 'opt-3'])
+  })
+
+  it('throws when label name not found', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await expect(
+      setCustomField(config, 'task1', { set: ['Priority Labels', 'Critical'] }),
+    ).rejects.toThrow('Available: High, Medium, Low')
+  })
+
+  it('throws when labels field has no options', async () => {
+    mockGetTask.mockResolvedValue({
+      ...taskWithFields,
+      custom_fields: [
+        {
+          id: 'uuid-labels-empty',
+          name: 'Empty Labels',
+          type: 'labels',
+          value: null,
+          type_config: {},
+        },
+      ],
+    })
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await expect(setCustomField(config, 'task1', { set: ['Empty Labels', 'foo'] })).rejects.toThrow(
+      'Labels field has no configured options',
     )
   })
 })

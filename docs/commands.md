@@ -566,16 +566,17 @@ cup field abc123 --set "Category" "Bug Fix"
 cup field abc123 --set "Due" 2025-06-01
 cup field abc123 --set "Website" "https://example.com"
 cup field abc123 --set "Contact" "user@example.com"
+cup field abc123 --set "Priority Labels" "High, Medium"
 cup field abc123 --remove "Priority Level"
 cup field abc123 --set "Points" 3 --remove "Old Field"
 cup field abc123 --set "Points" 3 --json
 ```
 
-| Flag                       | Description                                                                                                                      |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `--set "Field Name" <val>` | Set a custom field by name. Supports: text, number, checkbox (true/false), dropdown (option name), date (YYYY-MM-DD), url, email |
-| `--remove "Field Name"`    | Remove a custom field value                                                                                                      |
-| `--json`                   | Force JSON output                                                                                                                |
+| Flag                       | Description                                                                                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--set "Field Name" <val>` | Set a custom field by name. Supports: text, number, checkbox (true/false), dropdown (option name), labels (comma-separated names), date (YYYY-MM-DD), url, email |
+| `--remove "Field Name"`    | Remove a custom field value                                                                                                                                      |
+| `--json`                   | Force JSON output                                                                                                                                                |
 
 Both `--set` and `--remove` can be used together in one invocation.
 
