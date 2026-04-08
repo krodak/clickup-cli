@@ -25,6 +25,7 @@ const SUPPORTED_TYPES = new Set([
   'currency',
   'phone',
   'drop_down',
+  'labels',
   'checkbox',
   'date',
   'url',
@@ -72,6 +73,26 @@ function parseFieldValue(field: CustomField, rawValue: string): unknown {
         throw new Error(`Dropdown option "${option.name}" has no orderindex`)
       }
       return option.orderindex
+    }
+    case 'labels': {
+      const options = field.type_config?.options
+      if (!options?.length) throw new Error('Labels field has no configured options')
+      const names = rawValue
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+      if (names.length === 0) throw new Error('Provide at least one label name (comma-separated)')
+      const ids: string[] = []
+      for (const name of names) {
+        const lower = name.toLowerCase()
+        const option = options.find(o => o.name.toLowerCase() === lower)
+        if (!option) {
+          const available = options.map(o => o.name).join(', ')
+          throw new Error(`Label "${name}" not found. Available: ${available}`)
+        }
+        ids.push(String(option.id))
+      }
+      return ids
     }
     case 'date': {
       const ms = new Date(rawValue).getTime()
