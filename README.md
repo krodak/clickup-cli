@@ -171,21 +171,21 @@ npx skills add https://github.com/krodak/clickup-cli
 
 Full CRUD for the core ClickUp workflow:
 
-| Area                 | Capabilities                                                                                                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| ✅ **Tasks**         | Create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk status updates                |
-| 💬 **Comments**      | Post, edit, delete by ID or by task scope for your own comments, threaded replies, notify all                                          |
-| 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                                              |
-| ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                                              |
-| ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                                            |
-| 🔧 **Custom Fields** | List, create, set, remove values (dropdown, labels, date, checkbox, text, etc.)                                                        |
-| 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                                  |
-| 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                                           |
-| 🏃 **Sprints**       | Auto-detect active sprint, `sprint:current` pseudo-ID for move/create, flexible date parsing, config override, favorite sprint folders |
-| ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                               |
-| 👁️ **Views**         | List, get, create, update, delete views on lists                                                                                       |
-| 🏢 **Workspace**     | Spaces, folders, lists (read + create + rename + from template), members, task types, templates                                        |
-| 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                                           |
+| Area                 | Capabilities                                                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅ **Tasks**         | Create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk operations (status, assign, due-date, tag, priority, field, move) |
+| 💬 **Comments**      | Post, edit, delete by ID or by task scope for your own comments, threaded replies, notify all                                                                              |
+| 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                                                                                  |
+| ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                                                                                  |
+| ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                                                                                |
+| 🔧 **Custom Fields** | List, create, set, remove values (text, number, dropdown, labels, date, checkbox, url, email, rating, progress, relationship, people)                                      |
+| 🏷️ **Tags**          | Add/remove on tasks, space-level create/update/delete                                                                                                                      |
+| 🎯 **Goals & OKRs**  | Goals CRUD, key results CRUD                                                                                                                                               |
+| 🏃 **Sprints**       | Auto-detect active sprint, `sprint:current` pseudo-ID for move/create, flexible date parsing, config override, favorite sprint folders                                     |
+| ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                                                                   |
+| 👁️ **Views**         | List, get, create, update, delete views on lists                                                                                                                           |
+| 🏢 **Workspace**     | Spaces, folders, lists (read + create + rename + from template), members, task types, templates                                                                            |
+| 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                                                                               |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
 

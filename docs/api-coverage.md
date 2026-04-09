@@ -4,20 +4,20 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Tasks
 
-| Feature              | Command                 | Status             |
-| -------------------- | ----------------------- | ------------------ |
-| List my tasks        | `cup tasks`             | :white_check_mark: |
-| Get task details     | `cup task <id>`         | :white_check_mark: |
-| Create task          | `cup create`            | :white_check_mark: |
-| Update task          | `cup update <id>`       | :white_check_mark: |
-| Delete task          | `cup delete <id>`       | :white_check_mark: |
-| Search tasks         | `cup search <query>`    | :white_check_mark: |
-| Open in browser      | `cup open <query>`      | :white_check_mark: |
-| List subtasks        | `cup subtasks <id>`     | :white_check_mark: |
-| Assign / unassign    | `cup assign <id>`       | :white_check_mark: |
-| Duplicate task       | `cup duplicate <id>`    | :white_check_mark: |
-| Create from template | `cup create --template` | :white_check_mark: |
-| Bulk operations      | `cup bulk status`       | :white_check_mark: |
+| Feature              | Command                                                           | Status             |
+| -------------------- | ----------------------------------------------------------------- | ------------------ |
+| List my tasks        | `cup tasks`                                                       | :white_check_mark: |
+| Get task details     | `cup task <id>`                                                   | :white_check_mark: |
+| Create task          | `cup create`                                                      | :white_check_mark: |
+| Update task          | `cup update <id>`                                                 | :white_check_mark: |
+| Delete task          | `cup delete <id>`                                                 | :white_check_mark: |
+| Search tasks         | `cup search <query>`                                              | :white_check_mark: |
+| Open in browser      | `cup open <query>`                                                | :white_check_mark: |
+| List subtasks        | `cup subtasks <id>`                                               | :white_check_mark: |
+| Assign / unassign    | `cup assign <id>`                                                 | :white_check_mark: |
+| Duplicate task       | `cup duplicate <id>`                                              | :white_check_mark: |
+| Create from template | `cup create --template`                                           | :white_check_mark: |
+| Bulk operations      | `cup bulk <status\|assign\|due-date\|tag\|priority\|field\|move>` | :white_check_mark: |
 
 ## Dependencies & Relations
 
@@ -29,10 +29,11 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Multi-list
 
-| Feature          | Command                  | Status             |
-| ---------------- | ------------------------ | ------------------ |
-| Add task to list | `cup move <id> --to`     | :white_check_mark: |
-| Remove from list | `cup move <id> --remove` | :white_check_mark: |
+| Feature           | Command                          | Status             |
+| ----------------- | -------------------------------- | ------------------ |
+| Add task to list  | `cup move <id> --to`             | :white_check_mark: |
+| Remove from list  | `cup move <id> --remove`         | :white_check_mark: |
+| Move to home list | `cup move --to ... --remove ...` | :white_check_mark: |
 
 ## Sprints & Planning
 

@@ -152,6 +152,21 @@ cup init --token pk_abc123 --team 12345678
 | `--token <token>` | API token (pk\_...) for non-interactive setup |
 | `--team <teamId>` | Workspace/team ID for non-interactive setup   |
 
+### `cup skill`
+
+Install the agent skill file for your coding agents. Auto-detects installed agents (Claude Code, Codex, OpenCode) and writes the skill to each detected location. Run it again after updating `cup` to refresh the skill content.
+
+```bash
+cup skill                                            # install to detected agents
+cup skill --print                                    # preview the skill content
+cup skill --path ~/.claude/skills/clickup/SKILL.md   # install to a specific path
+```
+
+| Flag            | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| `--print`       | Print the skill content to stdout instead of installing       |
+| `--path <path>` | Install to a specific path instead of auto-detected locations |
+
 ### `cup tasks`
 
 List tasks assigned to me. By default shows all task types. Use `--type` to filter by task type.
@@ -297,10 +312,11 @@ cup lists <spaceId> --name "sprint"
 cup lists <spaceId> --json
 ```
 
-| Flag               | Description                        |
-| ------------------ | ---------------------------------- |
-| `--name <partial>` | Filter lists by partial name match |
-| `--json`           | Force JSON output                  |
+| Flag               | Description                                         |
+| ------------------ | --------------------------------------------------- |
+| `--name <partial>` | Filter lists by partial name match                  |
+| `--archived`       | Include only archived items (default: active items) |
+| `--json`           | Force JSON output                                   |
 
 ### `cup spaces`
 
@@ -313,11 +329,12 @@ cup spaces --my
 cup spaces --json
 ```
 
-| Flag               | Description                                  |
-| ------------------ | -------------------------------------------- |
-| `--name <partial>` | Filter spaces by partial name match          |
-| `--my`             | Show only spaces where I have assigned tasks |
-| `--json`           | Force JSON output                            |
+| Flag               | Description                                         |
+| ------------------ | --------------------------------------------------- |
+| `--name <partial>` | Filter spaces by partial name match                 |
+| `--my`             | Show only spaces where I have assigned tasks        |
+| `--archived`       | Include only archived items (default: active items) |
+| `--json`           | Force JSON output                                   |
 
 ### `cup open <query>`
 
@@ -395,6 +412,19 @@ cup overdue --json
 | `--all`            | Check all workspace tasks, not just mine |
 | `--json`           | Force JSON output                        |
 
+### `cup time-in-status <taskId>`
+
+Show how long a task has been in each status. Useful for tracking cycle time or spotting tasks stuck in review.
+
+```bash
+cup time-in-status abc123
+cup time-in-status abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
 ### `cup auth`
 
 Check authentication status. Validates your API token and shows your user info.
@@ -456,10 +486,11 @@ cup folders <spaceId> --name "sprint"
 cup folders <spaceId> --json
 ```
 
-| Flag               | Description                          |
-| ------------------ | ------------------------------------ |
-| `--name <partial>` | Filter folders by partial name match |
-| `--json`           | Force JSON output                    |
+| Flag               | Description                                         |
+| ------------------ | --------------------------------------------------- |
+| `--name <partial>` | Filter folders by partial name match                |
+| `--archived`       | Include only archived items (default: active items) |
+| `--json`           | Force JSON output                                   |
 
 ---
 
@@ -467,7 +498,7 @@ cup folders <spaceId> --json
 
 ### `cup update <id>`
 
-Update a task. Provide at least one option.
+Update a task. Provide at least one of: `--name`, `--description`, `--status`, `--priority`, `--due-date`, `--start-date`, `--time-estimate`, `--assignee`, `--remove-assignee`, `--parent`, `--detach`, `--archive`, `--unarchive`, `--type`, `--field`.
 
 ```bash
 cup update abc123 -s "in progress"
@@ -487,25 +518,33 @@ cup update abc123 --parent parentTaskId   # make it a subtask
 cup update abc123 --detach                # remove parent (promote to top-level)
 cup update abc123 --archive               # archive a task
 cup update abc123 --unarchive             # unarchive a task
+cup update abc123 --type Initiative       # change task type by name
+cup update abc123 --type 1                # change task type by custom_item_id
+cup update abc123 --field "Story Points" 5
+cup update abc123 --field "Priority" "High" --field "Tags" "bug"
 cup update abc123 -s "in progress" --json
 ```
 
-| Flag                         | Description                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `-n, --name <text>`          | New task name                                                               |
-| `-d, --description <text>`   | New description (markdown supported)                                        |
-| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`) |
-| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                        |
-| `--due-date <date>`          | Due date (`YYYY-MM-DD`), or `"none"`/`"clear"` to remove                    |
-| `--start-date <date>`        | Start date (`YYYY-MM-DD`)                                                   |
-| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                             |
-| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                           |
-| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                        |
-| `--parent <taskId>`          | Set parent task (makes this a subtask)                                      |
-| `--detach`                   | Remove parent task (promote subtask to top-level)                           |
-| `--archive`                  | Archive the task                                                            |
-| `--unarchive`                | Unarchive the task                                                          |
-| `--json`                     | Force JSON output even in terminal                                          |
+`--field "Name" value` updates a custom field inline as part of the update. Field names are resolved via the task's list using the same parser as `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.). Repeat the flag to set multiple fields.
+
+| Flag                         | Description                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| `-n, --name <text>`          | New task name                                                                  |
+| `-d, --description <text>`   | New description (markdown supported)                                           |
+| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)    |
+| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                           |
+| `--due-date <date>`          | Due date (`YYYY-MM-DD`), or `"none"`/`"clear"` to remove                       |
+| `--start-date <date>`        | Start date (`YYYY-MM-DD`)                                                      |
+| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                |
+| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                              |
+| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                           |
+| `--parent <taskId>`          | Set parent task (makes this a subtask)                                         |
+| `--detach`                   | Remove parent task (promote subtask to top-level)                              |
+| `--archive`                  | Archive the task                                                               |
+| `--unarchive`                | Unarchive the task                                                             |
+| `--type <type>`              | Change task type (name or custom_item_id)                                      |
+| `--field <name> <value>`     | Set custom field inline (repeatable; resolves field names via the task's list) |
+| `--json`                     | Force JSON output even in terminal                                             |
 
 ### `cup create`
 
@@ -1239,12 +1278,11 @@ Bulk add or remove a tag from multiple tasks. Defaults to adding; use `--remove`
 ```bash
 cup bulk tag bug t1 t2 t3
 cup bulk tag bug t1 t2 --remove
-cup bulk tag frontend t1 t2 --add --json
+cup bulk tag frontend t1 t2 --json
 ```
 
 | Flag       | Required | Description                  |
 | ---------- | -------- | ---------------------------- |
-| `--add`    | no       | Add tag (default behavior)   |
 | `--remove` | no       | Remove tag instead of adding |
 | `--json`   | no       | Force JSON output            |
 
@@ -1280,7 +1318,7 @@ cup bulk field t1 t2 t3 --set "Notes" "batch update" --json
 
 ### `cup bulk move <taskIds...>`
 
-Move multiple tasks to a single destination list in parallel (up to 5 at a time). Wraps the same v3 `home_list` endpoint as `cup move --to`, so each task's home list is updated and statuses are mapped to the destination list when they don't match. Failed moves are reported but don't stop the operation.
+Move multiple tasks to a single destination list in parallel (up to 5 at a time). Wraps the same v3 `home_list` endpoint as `cup move --to <new> --remove <old>`, so each task's home list is updated and statuses are mapped to the destination list when they don't match. Failed moves are reported but don't stop the operation.
 
 ```bash
 cup bulk move t1 t2 t3 --to <listId>

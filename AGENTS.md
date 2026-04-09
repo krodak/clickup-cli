@@ -96,7 +96,7 @@ npm run format:check # Prettier check
 6. Update `skills/clickup-cli/SKILL.md` with the new command (`.agents/skills/using-clickup-cli/SKILL.md` is a symlink to it)
 7. Update `docs/commands.md` with full reference (examples, flag tables)
 8. Sync docs quick reference: `node --import tsx scripts/sync-command-docs.ts`
-9. Add to shell completions in `src/commands/completion.ts` (all 3 shells: bash, zsh, fish)
+9. If you added a new subcommand group with bespoke completions, update `src/commands/completion.ts`. Top-level flags are picked up automatically from metadata.
 
 ## Modifying Commands
 
