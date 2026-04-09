@@ -62,7 +62,7 @@ import { manageDependency } from './commands/depend.js'
 import type { DependOptions } from './commands/depend.js'
 import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
-import { setCustomField } from './commands/field.js'
+import { setCustomField, findFieldByName, parseFieldValue } from './commands/field.js'
 import { deleteTaskCommand } from './commands/delete.js'
 import { archiveTaskCommand } from './commands/archive.js'
 import { manageTags } from './commands/tag.js'
@@ -130,6 +130,7 @@ import {
   bulkTag,
   bulkPriority,
   bulkField,
+  bulkMove,
 } from './commands/bulk.js'
 import type { BulkResult } from './commands/bulk.js'
 import {
@@ -472,9 +473,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
     .option('--template <id>', 'Create from a task template (find IDs with cup templates)')
+    .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value (can repeat)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (opts: CreateOptions & { json?: boolean }) => {
+      wrapAction(async (opts: CreateOptions & { field?: string[]; json?: boolean }) => {
         const config = loadConfig(getProfileName())
         if (opts.list === 'sprint:current') {
           opts.list = await resolveActiveSprintListId(config)
@@ -482,6 +484,34 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         if (opts.assignee === 'me') {
           const client = new ClickUpClient(config)
           opts.assignee = String(await resolveAssigneeId(client, 'me'))
+        }
+        if (opts.field?.length) {
+          if (opts.field.length % 2 !== 0) {
+            throw new Error('--field requires pairs: --field "Name" value')
+          }
+          let listId = opts.list
+          if (!listId && opts.parent) {
+            const client = new ClickUpClient(config)
+            const parentTask = await client.getTask(opts.parent)
+            listId = parentTask.list.id
+            opts.list = listId
+          }
+          if (!listId) {
+            throw new Error(
+              '--field requires --list or --parent to resolve custom field names',
+            )
+          }
+          const client = new ClickUpClient(config)
+          const fields = await client.getListCustomFields(listId)
+          const customFields: Array<{ id: string; value: unknown }> = []
+          for (let i = 0; i < opts.field.length; i += 2) {
+            const fieldName = opts.field[i]!
+            const rawValue = opts.field[i + 1]!
+            const field = findFieldByName(fields, fieldName)
+            const value = parseFieldValue(field, rawValue)
+            customFields.push({ id: field.id, value })
+          }
+          opts.customFields = customFields
         }
         const result = await createTask(config, opts)
         if (shouldOutputJson(opts.json ?? false)) {
@@ -1735,6 +1765,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         const config = loadConfig(getProfileName())
         const result = await bulkField(config, opts.set[0]!, opts.set[1]!, taskIds)
         outputBulkResult(result, opts.json ?? false, `field "${opts.set[0]}"`)
+      }),
+    )
+
+  bulkCmd
+    .command('move <taskIds...>')
+    .description('Move multiple tasks to a single destination list')
+    .requiredOption('--to <listId>', 'Destination list ID')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskIds: string[], opts: { to: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await bulkMove(config, opts.to, taskIds)
+        outputBulkResult(result, opts.json ?? false, `move to list ${opts.to}`)
       }),
     )
 

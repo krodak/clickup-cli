@@ -6,6 +6,7 @@ const mockAddTagToTask = vi.fn().mockResolvedValue(undefined)
 const mockRemoveTagFromTask = vi.fn().mockResolvedValue(undefined)
 const mockGetTask = vi.fn()
 const mockSetCustomFieldValue = vi.fn().mockResolvedValue(undefined)
+const mockMoveTaskToList = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -16,6 +17,7 @@ vi.mock('../../../src/api.js', () => ({
       removeTagFromTask: mockRemoveTagFromTask,
       getTask: mockGetTask,
       setCustomFieldValue: mockSetCustomFieldValue,
+      moveTaskToList: mockMoveTaskToList,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -358,6 +360,53 @@ describe('bulkField', () => {
     expect(result).toEqual({
       updated: 2,
       failed: [{ id: 't2', reason: 'Field write failed' }],
+    })
+  })
+})
+
+describe('bulkMove', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockMoveTaskToList.mockResolvedValue(undefined)
+  })
+
+  it('calls moveTaskToList for each task with the destination listId', async () => {
+    const { bulkMove } = await import('../../../src/commands/bulk.js')
+    const result = await bulkMove(mockConfig, 'l99', ['t1', 't2', 't3'])
+
+    expect(mockMoveTaskToList).toHaveBeenCalledTimes(3)
+    expect(mockMoveTaskToList).toHaveBeenCalledWith('t1', 'l99')
+    expect(mockMoveTaskToList).toHaveBeenCalledWith('t2', 'l99')
+    expect(mockMoveTaskToList).toHaveBeenCalledWith('t3', 'l99')
+    expect(result).toEqual({ updated: 3, failed: [] })
+  })
+
+  it('throws when listId is empty', async () => {
+    const { bulkMove } = await import('../../../src/commands/bulk.js')
+    await expect(bulkMove(mockConfig, '', ['t1', 't2'])).rejects.toThrow(
+      /--to <listId> is required/,
+    )
+    expect(mockMoveTaskToList).not.toHaveBeenCalled()
+  })
+
+  it('throws when no task IDs are provided', async () => {
+    const { bulkMove } = await import('../../../src/commands/bulk.js')
+    await expect(bulkMove(mockConfig, 'l99', [])).rejects.toThrow(/at least one task ID/)
+    expect(mockMoveTaskToList).not.toHaveBeenCalled()
+  })
+
+  it('collects partial failures and continues', async () => {
+    mockMoveTaskToList
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('Destination list not found'))
+      .mockResolvedValueOnce(undefined)
+
+    const { bulkMove } = await import('../../../src/commands/bulk.js')
+    const result = await bulkMove(mockConfig, 'l99', ['t1', 't2', 't3'])
+
+    expect(result).toEqual({
+      updated: 2,
+      failed: [{ id: 't2', reason: 'Destination list not found' }],
     })
   })
 })

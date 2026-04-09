@@ -111,6 +111,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup bulk tag <tagName> <taskIds...>`    | Bulk add/remove tag                                              |
 | `cup bulk priority <taskIds...>`         | Bulk set priority on tasks                                       |
 | `cup bulk field <taskIds...>`            | Bulk set a custom field value on tasks                           |
+| `cup bulk move <taskIds...>`             | Move multiple tasks to a destination list                        |
 | `cup goal-create <name>`                 | Create a goal                                                    |
 | `cup goal-update <goalId>`               | Update a goal                                                    |
 | `cup goal-delete <goalId>`               | Delete a goal                                                    |
@@ -518,12 +519,15 @@ cup create -n "Task" -l <listId> --priority high --due-date 2025-06-01
 cup create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
 cup create -n "Initiative" -l <listId> --custom-item-id 1
 cup create -n "Task" -l <listId> --time-estimate 2h
+cup create -n "Bug fix" -l <listId> --field "Story Points" 5 --field "Stage" "In Review"
 cup create -n "From Template" -l <listId> --template <templateId>
 cup create -n "Bug fix" -l sprint:current         # create in active sprint
 cup create -n "Fix bug" -l <listId> --json
 ```
 
 `sprint:current` is a pseudo-ID that auto-resolves to the active sprint list using the same detection chain as `cup sprint` (`--folder` flag > `sprintFolderId` config > favorited sprint-folders > auto-detection).
+
+`--field "Name" value` sets custom fields inline as part of task creation. Field names are resolved once against the target list via `GET /list/{id}/field`, so the values land in the initial create payload instead of requiring a follow-up `cup field --set` call. Repeat the flag to set multiple fields. Value parsing matches `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.).
 
 | Flag                         | Required         | Description                                                   |
 | ---------------------------- | ---------------- | ------------------------------------------------------------- |
@@ -540,6 +544,7 @@ cup create -n "Fix bug" -l <listId> --json
 | `--tags <tags>`              | no               | Comma-separated tag names                                     |
 | `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)           |
 | `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs) |
+| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                          |
 | `--json`                     | no               | Force JSON output even in terminal                            |
 
 ### `cup delete <id>`
@@ -1272,6 +1277,20 @@ cup bulk field t1 t2 t3 --set "Notes" "batch update" --json
 | ---------------------- | -------- | --------------------------- |
 | `--set <name> <value>` | yes      | Field name and value to set |
 | `--json`               | no       | Force JSON output           |
+
+### `cup bulk move <taskIds...>`
+
+Move multiple tasks to a single destination list in parallel (up to 5 at a time). Wraps the same v3 `home_list` endpoint as `cup move --to`, so each task's home list is updated and statuses are mapped to the destination list when they don't match. Failed moves are reported but don't stop the operation.
+
+```bash
+cup bulk move t1 t2 t3 --to <listId>
+cup bulk move t1 t2 --to <listId> --json
+```
+
+| Flag            | Required | Description         |
+| --------------- | -------- | ------------------- |
+| `--to <listId>` | yes      | Destination list ID |
+| `--json`        | no       | Force JSON output   |
 
 ### `cup goals`
 

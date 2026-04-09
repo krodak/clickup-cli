@@ -17,6 +17,7 @@ export interface CreateOptions {
   customItemId?: string
   timeEstimate?: string
   template?: string
+  customFields?: Array<{ id: string; value: unknown }>
 }
 
 export async function createTask(
@@ -75,6 +76,9 @@ export async function createTask(
   }
   if (options.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(options.timeEstimate)
+  }
+  if (options.customFields !== undefined && options.customFields.length > 0) {
+    payload.custom_fields = options.customFields
   }
 
   const task = await client.createTask(listId, payload)

@@ -93,6 +93,7 @@ export interface CreateTaskOptions {
   assignees?: number[]
   tags?: string[]
   custom_item_id?: number
+  custom_fields?: Array<{ id: string; value: unknown }>
 }
 
 interface Team {
