@@ -30,6 +30,10 @@ const SUPPORTED_TYPES = new Set([
   'date',
   'url',
   'email',
+  'emoji',
+  'manual_progress',
+  'tasks',
+  'users',
 ])
 
 function findFieldByName(fields: CustomField[], name: string): CustomField {
@@ -99,6 +103,36 @@ function parseFieldValue(field: CustomField, rawValue: string): unknown {
       if (!Number.isFinite(ms))
         throw new Error(`Value "${rawValue}" is not a valid date (use YYYY-MM-DD)`)
       return ms
+    }
+    case 'emoji': {
+      const n = Number(rawValue)
+      if (!Number.isFinite(n) || n < 0 || n > 5) {
+        throw new Error('Rating value must be a number between 0 and 5')
+      }
+      return n
+    }
+    case 'manual_progress': {
+      const n = Number(rawValue)
+      if (!Number.isFinite(n) || n < 0 || n > 100) {
+        throw new Error('Progress value must be a number between 0 and 100')
+      }
+      return { current: n }
+    }
+    case 'tasks': {
+      const ids = rawValue
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+      if (ids.length === 0) throw new Error('Provide at least one task ID (comma-separated)')
+      return { add: ids }
+    }
+    case 'users': {
+      const ids = rawValue
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+      if (ids.length === 0) throw new Error('Provide at least one user ID (comma-separated)')
+      return { add: ids.map(Number) }
     }
     default:
       return rawValue
