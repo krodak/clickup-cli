@@ -1675,16 +1675,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(async (status: string, taskIds: string[], opts: { json?: boolean }) => {
         const config = loadConfig(getProfileName())
         const result = await bulkUpdateStatus(config, taskIds, status)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(`Updated ${result.updated} tasks to "${status}"`)
-          if (result.failed.length > 0) {
-            for (const f of result.failed) {
-              console.log(`  Failed ${f.id}: ${f.reason}`)
-            }
-          }
-        }
+        outputBulkResult(result, opts.json ?? false, `status ${status}`)
       }),
     )
 

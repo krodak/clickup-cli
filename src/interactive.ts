@@ -47,12 +47,12 @@ export function formatCustomFieldValue(field: CustomField): string | null {
   switch (field.type) {
     case 'drop_down': {
       if (!options) return stringifyFieldValue(field.value)
-      const match = options.find(o => o.id === Number(field.value))
+      const match = options.find(o => o.orderindex === Number(field.value))
       return match?.name ?? stringifyFieldValue(field.value)
     }
     case 'labels': {
       if (!Array.isArray(field.value) || !options) return stringifyFieldValue(field.value)
-      const names = (field.value as number[])
+      const names = (field.value as string[])
         .map(id => options.find(o => o.id === id)?.name)
         .filter((n): n is string => n !== undefined)
       return names.length > 0 ? names.join(', ') : null
