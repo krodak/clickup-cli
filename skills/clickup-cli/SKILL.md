@@ -152,7 +152,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup comment-delete <commentId>` or `cup comment-delete --task <taskId> --mine [--match text]`                                                                                                                                                    | Delete a comment by ID or delete one of your task comments   |
 | `cup replies <commentId>`                                                                                                                                                                                                                         | List threaded replies                                        |
 | `cup reply <commentId> -m text [--notify-all]`                                                                                                                                                                                                    | Reply to a comment                                           |
-| `cup assign <id> [--to userId\|me] [--remove userId\|me]`                                                                                                                                                                                         | Assign/unassign users                                        |
+| `cup assign <id> [--to ids\|me] [--remove ids\|me]`                                                                                                                                                                                               | Assign/unassign users (`--to`/`--remove` accept comma-separated IDs) |
 | `cup depend <id> [--on taskId] [--blocks taskId] [--remove]`                                                                                                                                                                                      | Add/remove dependencies                                      |
 | `cup move <id> [--to listId\|sprint:current] [--remove listId]`                                                                                                                                                                                   | Add/remove task from lists (`--to` accepts `sprint:current`) |
 | `cup field <id> [--set "Name" value] [--remove "Name"]`                                                                                                                                                                                           | Set/remove custom field values                               |
@@ -289,6 +289,7 @@ cup create -n "Bug fix" -l sprint:current         # create in active sprint
 cup create -n "Q3 Roadmap" -l <listId> --custom-item-id 1
 cup comment abc123def -m "Completed in PR #42"
 cup assign abc123def --to me
+cup assign abc123def --to 12345,67890        # assign multiple users at once
 cup depend task3 --on task2            # task3 waits for task2
 cup move task1 --to list2 --remove list1
 cup move task1 --to sprint:current               # move to active sprint
