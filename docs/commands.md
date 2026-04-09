@@ -106,6 +106,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup bulk assign <taskIds...>`          | Bulk assign user to tasks                         |
 | `cup bulk due-date <date> <taskIds...>` | Bulk set due date                                 |
 | `cup bulk tag <tagName> <taskIds...>`   | Bulk add/remove tag                               |
+| `cup bulk priority <taskIds...>`        | Bulk set priority on tasks                        |
+| `cup bulk field <taskIds...>`           | Bulk set a custom field value on tasks            |
 | `cup goal-create <name>`                | Create a goal                                     |
 | `cup goal-update <goalId>`              | Update a goal                                     |
 | `cup goal-delete <goalId>`              | Delete a goal                                     |
@@ -1196,6 +1198,36 @@ cup bulk tag frontend t1 t2 --add --json
 | `--add`    | no       | Add tag (default behavior)   |
 | `--remove` | no       | Remove tag instead of adding |
 | `--json`   | no       | Force JSON output            |
+
+### `cup bulk priority <taskIds...>`
+
+Bulk set the priority on multiple tasks. Accepts `urgent`, `high`, `normal`, `low`, or the numeric values `1`-`4`. Updates run in parallel (up to 5 at a time) and failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk priority t1 t2 t3 --to urgent
+cup bulk priority t1 t2 --to 2
+cup bulk priority t1 t2 t3 --to low --json
+```
+
+| Flag              | Required | Description                                 |
+| ----------------- | -------- | ------------------------------------------- |
+| `--to <priority>` | yes      | Priority: urgent, high, normal, low, or 1-4 |
+| `--json`          | no       | Force JSON output                           |
+
+### `cup bulk field <taskIds...>`
+
+Bulk set the same custom field value on multiple tasks. Resolves the field name against the first task in the list, then applies the parsed value to every task in parallel (up to 5 at a time). Uses the same value parsing as `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.). Failed updates are reported but don't stop the operation.
+
+```bash
+cup bulk field t1 t2 t3 --set "Story Points" 5
+cup bulk field t1 t2 --set "Stage" "In Review"
+cup bulk field t1 t2 t3 --set "Notes" "batch update" --json
+```
+
+| Flag                   | Required | Description                 |
+| ---------------------- | -------- | --------------------------- |
+| `--set <name> <value>` | yes      | Field name and value to set |
+| `--json`               | no       | Force JSON output           |
 
 ### `cup goals`
 

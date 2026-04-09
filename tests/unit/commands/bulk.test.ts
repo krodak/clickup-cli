@@ -4,6 +4,8 @@ const mockUpdateTask = vi.fn()
 const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
 const mockAddTagToTask = vi.fn().mockResolvedValue(undefined)
 const mockRemoveTagFromTask = vi.fn().mockResolvedValue(undefined)
+const mockGetTask = vi.fn()
+const mockSetCustomFieldValue = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -12,6 +14,8 @@ vi.mock('../../../src/api.js', () => ({
       getMe: mockGetMe,
       addTagToTask: mockAddTagToTask,
       removeTagFromTask: mockRemoveTagFromTask,
+      getTask: mockGetTask,
+      setCustomFieldValue: mockSetCustomFieldValue,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -213,5 +217,241 @@ describe('bulkTag', () => {
       updated: 1,
       failed: [{ id: 't2', reason: 'Tag error' }],
     })
+  })
+})
+
+describe('bulkPriority', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('sets numeric priority on all tasks', async () => {
+    mockUpdateTask.mockResolvedValue({})
+    const { bulkPriority } = await import('../../../src/commands/bulk.js')
+    const result = await bulkPriority(mockConfig, '1', ['t1', 't2'])
+
+    expect(mockUpdateTask).toHaveBeenCalledTimes(2)
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { priority: 1 })
+    expect(mockUpdateTask).toHaveBeenCalledWith('t2', { priority: 1 })
+    expect(result).toEqual({ updated: 2, failed: [] })
+  })
+
+  it('accepts named priority values', async () => {
+    mockUpdateTask.mockResolvedValue({})
+    const { bulkPriority } = await import('../../../src/commands/bulk.js')
+    await bulkPriority(mockConfig, 'urgent', ['t1'])
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { priority: 1 })
+
+    await bulkPriority(mockConfig, 'high', ['t1'])
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { priority: 2 })
+
+    await bulkPriority(mockConfig, 'normal', ['t1'])
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { priority: 3 })
+
+    await bulkPriority(mockConfig, 'low', ['t1'])
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { priority: 4 })
+  })
+
+  it('rejects invalid priority values before calling the API', async () => {
+    const { bulkPriority } = await import('../../../src/commands/bulk.js')
+    await expect(bulkPriority(mockConfig, 'bogus', ['t1', 't2'])).rejects.toThrow(
+      /urgent, high, normal, low, or 1-4/,
+    )
+    expect(mockUpdateTask).not.toHaveBeenCalled()
+  })
+
+  it('collects partial failures and continues', async () => {
+    mockUpdateTask
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('Priority error'))
+      .mockResolvedValueOnce({})
+
+    const { bulkPriority } = await import('../../../src/commands/bulk.js')
+    const result = await bulkPriority(mockConfig, 'high', ['t1', 't2', 't3'])
+
+    expect(result).toEqual({
+      updated: 2,
+      failed: [{ id: 't2', reason: 'Priority error' }],
+    })
+  })
+})
+
+describe('bulkField', () => {
+  const taskWithFields = {
+    id: 't1',
+    name: 'Task 1',
+    custom_fields: [
+      { id: 'f-notes', name: 'Notes', type: 'text', value: null, type_config: {} },
+      { id: 'f-score', name: 'Score', type: 'number', value: null, type_config: {} },
+      {
+        id: 'f-stage',
+        name: 'Stage',
+        type: 'drop_down',
+        value: null,
+        type_config: {
+          options: [
+            { id: 'o-a', name: 'Alpha', orderindex: 0 },
+            { id: 'o-b', name: 'Beta', orderindex: 1 },
+          ],
+        },
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetTask.mockResolvedValue(taskWithFields)
+    mockSetCustomFieldValue.mockResolvedValue(undefined)
+  })
+
+  it('fetches the first task to resolve the field ID', async () => {
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    await bulkField(mockConfig, 'Notes', 'hello', ['t1', 't2', 't3'])
+
+    expect(mockGetTask).toHaveBeenCalledTimes(1)
+    expect(mockGetTask).toHaveBeenCalledWith('t1')
+  })
+
+  it('sets the same text value on all tasks in parallel', async () => {
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    const result = await bulkField(mockConfig, 'Notes', 'hello world', ['t1', 't2', 't3'])
+
+    expect(mockSetCustomFieldValue).toHaveBeenCalledTimes(3)
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t1', 'f-notes', 'hello world')
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t2', 'f-notes', 'hello world')
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t3', 'f-notes', 'hello world')
+    expect(result).toEqual({ updated: 3, failed: [] })
+  })
+
+  it('parses numeric field values', async () => {
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    await bulkField(mockConfig, 'Score', '42', ['t1', 't2'])
+
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t1', 'f-score', 42)
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t2', 'f-score', 42)
+  })
+
+  it('resolves dropdown option names to orderindex', async () => {
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    await bulkField(mockConfig, 'Stage', 'Beta', ['t1'])
+
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t1', 'f-stage', 1)
+  })
+
+  it('throws when the field name is not found on the task', async () => {
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    await expect(bulkField(mockConfig, 'Missing', 'x', ['t1', 't2'])).rejects.toThrow(
+      /Field "Missing" not found/,
+    )
+    expect(mockSetCustomFieldValue).not.toHaveBeenCalled()
+  })
+
+  it('collects partial failures and continues', async () => {
+    mockSetCustomFieldValue
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('Field write failed'))
+      .mockResolvedValueOnce(undefined)
+
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    const result = await bulkField(mockConfig, 'Notes', 'hi', ['t1', 't2', 't3'])
+
+    expect(result).toEqual({
+      updated: 2,
+      failed: [{ id: 't2', reason: 'Field write failed' }],
+    })
+  })
+})
+
+describe('parallel execution', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('runs bulk status updates in parallel without waiting for prior calls', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>(resolve => {
+      release = resolve
+    })
+    mockUpdateTask.mockImplementation(async () => {
+      await gate
+      return {}
+    })
+
+    const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
+    const promise = bulkUpdateStatus(mockConfig, ['t1', 't2', 't3', 't4', 't5'], 'done')
+
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(mockUpdateTask).toHaveBeenCalledTimes(5)
+
+    release()
+    const result = await promise
+    expect(result).toEqual({ updated: 5, failed: [] })
+  })
+
+  it('caps concurrency at 5 and processes remaining items in the next batch', async () => {
+    const inFlight: string[] = []
+    let peak = 0
+    const resolvers: Array<() => void> = []
+
+    mockUpdateTask.mockImplementation(async (id: string) => {
+      inFlight.push(id)
+      peak = Math.max(peak, inFlight.length)
+      await new Promise<void>(resolve => {
+        resolvers.push(() => {
+          inFlight.splice(inFlight.indexOf(id), 1)
+          resolve()
+        })
+      })
+      return {}
+    })
+
+    const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
+    const ids = ['t1', 't2', 't3', 't4', 't5', 't6', 't7']
+    const promise = bulkUpdateStatus(mockConfig, ids, 'done')
+
+    while (resolvers.length < 5) {
+      await Promise.resolve()
+    }
+    expect(inFlight).toHaveLength(5)
+
+    for (const resolver of resolvers.splice(0, 5)) {
+      resolver()
+    }
+
+    while (resolvers.length < 2) {
+      await Promise.resolve()
+    }
+    for (const resolver of resolvers.splice(0, 2)) {
+      resolver()
+    }
+
+    const result = await promise
+    expect(result).toEqual({ updated: 7, failed: [] })
+    expect(peak).toBe(5)
+    expect(mockUpdateTask).toHaveBeenCalledTimes(7)
+  })
+
+  it('reports partial failures alongside successes across a parallel batch', async () => {
+    mockUpdateTask
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('Boom'))
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('Kaboom'))
+      .mockResolvedValueOnce({})
+
+    const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
+    const result = await bulkUpdateStatus(
+      mockConfig,
+      ['t1', 't2', 't3', 't4', 't5'],
+      'in progress',
+    )
+
+    expect(result.updated).toBe(3)
+    expect(result.failed).toEqual([
+      { id: 't2', reason: 'Boom' },
+      { id: 't4', reason: 'Kaboom' },
+    ])
   })
 })

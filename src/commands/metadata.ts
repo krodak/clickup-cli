@@ -656,6 +656,16 @@ export const commandMetadata = [
         usage: 'bulk tag <tagName> <taskIds...>',
         description: 'Bulk add/remove tag',
       },
+      {
+        section: 'write',
+        usage: 'bulk priority <taskIds...>',
+        description: 'Bulk set priority on tasks',
+      },
+      {
+        section: 'write',
+        usage: 'bulk field <taskIds...>',
+        description: 'Bulk set a custom field value on tasks',
+      },
     ],
   },
   {
