@@ -16,13 +16,24 @@ npm install -g @krodak/clickup-cli && cup init
 
 ## For AI Agents
 
-Paste this into any AI agent to get started immediately:
+Paste this into any AI agent (Claude Code, Codex, Cursor, OpenCode, etc.):
 
 ```
-Fetch and follow instructions from https://raw.githubusercontent.com/krodak/clickup-cli/main/skills/clickup-cli/SKILL.md
+Install and configure the ClickUp CLI for me. Fetch the setup guide from:
+https://raw.githubusercontent.com/krodak/clickup-cli/main/skills/clickup-cli/SKILL.md
+
+Then walk me through installing the CLI, getting a ClickUp API token,
+and running cup init. Finally, install the skill with `cup skill` so
+you have persistent access to the full command reference.
 ```
 
-Or install the skill permanently with `cup skill` (see [Set up your agent](#set-up-your-agent) below).
+The fetched SKILL.md contains everything the agent needs: install commands,
+where to get a ClickUp API token, non-interactive setup with `cup init --token --team`,
+and the complete command reference. After setup, the agent can run any `cup` command
+to manage your tasks, sprints, comments, time tracking, and more.
+
+**Already have the CLI installed?** Just run `cup skill` to install the agent skill to
+all detected locations (see [Set up your agent](#set-up-your-agent) below).
 
 ## Talk to your agent
 
