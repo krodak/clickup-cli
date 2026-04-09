@@ -14,6 +14,7 @@ const mockIsTTY = vi.fn<() => boolean>()
 const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
 const mockFormatTaskDetail = vi.fn()
 const mockFormatTaskDetailMarkdown = vi.fn()
+const mockBulkUpdateStatus = vi.fn()
 
 async function loadCli() {
   vi.resetModules()
@@ -71,6 +72,14 @@ async function loadCli() {
     }
   })
 
+  vi.doMock('../../src/commands/bulk.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/bulk.js')>()
+    return {
+      ...actual,
+      bulkUpdateStatus: mockBulkUpdateStatus,
+    }
+  })
+
   return import('../../src/index.js')
 }
 
@@ -86,6 +95,7 @@ describe('CLI entry point', () => {
     mockShouldOutputJson.mockReset().mockReturnValue(false)
     mockFormatTaskDetail.mockReset().mockReturnValue('TTY detail')
     mockFormatTaskDetailMarkdown.mockReset().mockReturnValue('# Markdown detail')
+    mockBulkUpdateStatus.mockReset()
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
@@ -185,6 +195,36 @@ describe('CLI entry point', () => {
     expect(mockEditChecklistItem).not.toHaveBeenCalled()
     expect(console.error).toHaveBeenCalledWith('--assignee must be a number or "null"')
     expect(process.exitCode).toBe(1)
+  })
+
+  it('bulk status routes failed rows to stderr, not stdout', async () => {
+    mockBulkUpdateStatus.mockResolvedValue({
+      updated: 2,
+      failed: [
+        { id: 't2', reason: 'Not found' },
+        { id: 't4', reason: 'Invalid status' },
+      ],
+    })
+
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['bulk', 'status', 'done', 't1', 't2', 't3', 't4'], { from: 'user' })
+
+    expect(mockBulkUpdateStatus).toHaveBeenCalledWith(config, ['t1', 't2', 't3', 't4'], 'done')
+
+    const stdoutCalls = vi.mocked(console.log).mock.calls.map(c => c.join(' '))
+    const stderrCalls = vi.mocked(console.error).mock.calls.map(c => c.join(' '))
+
+    expect(stdoutCalls.some(line => line.includes('t2'))).toBe(false)
+    expect(stdoutCalls.some(line => line.includes('t4'))).toBe(false)
+    expect(stdoutCalls.some(line => line.includes('Not found'))).toBe(false)
+    expect(stdoutCalls.some(line => line.includes('Invalid status'))).toBe(false)
+
+    expect(stderrCalls.some(line => line.includes('t2') && line.includes('Not found'))).toBe(true)
+    expect(stderrCalls.some(line => line.includes('t4') && line.includes('Invalid status'))).toBe(
+      true,
+    )
   })
 })
 

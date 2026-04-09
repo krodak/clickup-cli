@@ -7,7 +7,7 @@ export interface FieldDescriptor {
   type: string
   type_config?: {
     options?: ReadonlyArray<{
-      id: string | number
+      id: string
       name: string
       orderindex?: number
     }>
@@ -106,7 +106,7 @@ export function parseFieldValue(field: FieldDescriptor, rawValue: string): unkno
           const available = options.map(o => o.name).join(', ')
           throw new Error(`Label "${name}" not found. Available: ${available}`)
         }
-        ids.push(String(option.id))
+        ids.push(option.id)
       }
       return ids
     }

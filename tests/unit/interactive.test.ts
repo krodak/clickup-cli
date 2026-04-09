@@ -55,35 +55,35 @@ describe('formatCustomFieldValue', () => {
     expect(formatCustomFieldValue(field)).toBeNull()
   })
 
-  it('resolves drop_down option name by id', async () => {
+  it('renders drop_down field value by matching orderindex', async () => {
     const { formatCustomFieldValue } = await import('../../src/interactive.js')
     const field: CustomField = {
       id: 'f1',
       name: 'Sprint',
       type: 'drop_down',
-      value: 2,
+      value: 1,
       type_config: {
         options: [
-          { id: 1, name: 'Sprint 1' },
-          { id: 2, name: 'Sprint 2' },
+          { id: 'uuid-a', name: 'Sprint 1', orderindex: 0 },
+          { id: 'uuid-b', name: 'Sprint 2', orderindex: 1 },
         ],
       },
     }
     expect(formatCustomFieldValue(field)).toBe('Sprint 2')
   })
 
-  it('joins labels option names with comma', async () => {
+  it('renders labels field value by matching option IDs', async () => {
     const { formatCustomFieldValue } = await import('../../src/interactive.js')
     const field: CustomField = {
       id: 'f1',
       name: 'Tags',
       type: 'labels',
-      value: [1, 3],
+      value: ['uuid-bug', 'uuid-urgent'],
       type_config: {
         options: [
-          { id: 1, name: 'Bug' },
-          { id: 2, name: 'Feature' },
-          { id: 3, name: 'Urgent' },
+          { id: 'uuid-bug', name: 'Bug', orderindex: 0 },
+          { id: 'uuid-feature', name: 'Feature', orderindex: 1 },
+          { id: 'uuid-urgent', name: 'Urgent', orderindex: 2 },
         ],
       },
     }
@@ -141,8 +141,8 @@ describe('formatCustomFieldValue', () => {
       value: 999,
       type_config: {
         options: [
-          { id: 1, name: 'Sprint 1' },
-          { id: 2, name: 'Sprint 2' },
+          { id: 'uuid-a', name: 'Sprint 1', orderindex: 0 },
+          { id: 'uuid-b', name: 'Sprint 2', orderindex: 1 },
         ],
       },
     }
@@ -157,7 +157,7 @@ describe('formatCustomFieldValue', () => {
       type: 'labels',
       value: 'not-an-array',
       type_config: {
-        options: [{ id: 1, name: 'Bug' }],
+        options: [{ id: 'uuid-bug', name: 'Bug', orderindex: 0 }],
       },
     }
     expect(formatCustomFieldValue(field)).toBe('not-an-array')
@@ -169,9 +169,9 @@ describe('formatCustomFieldValue', () => {
       id: 'f1',
       name: 'Tags',
       type: 'labels',
-      value: [1, 2],
+      value: ['uuid-a', 'uuid-b'],
     }
-    expect(formatCustomFieldValue(field)).toBe('[1,2]')
+    expect(formatCustomFieldValue(field)).toBe('["uuid-a","uuid-b"]')
   })
 
   it('returns null for labels when no ids match any options', async () => {
@@ -180,11 +180,11 @@ describe('formatCustomFieldValue', () => {
       id: 'f1',
       name: 'Tags',
       type: 'labels',
-      value: [99, 100],
+      value: ['missing-1', 'missing-2'],
       type_config: {
         options: [
-          { id: 1, name: 'Bug' },
-          { id: 2, name: 'Feature' },
+          { id: 'uuid-bug', name: 'Bug', orderindex: 0 },
+          { id: 'uuid-feature', name: 'Feature', orderindex: 1 },
         ],
       },
     }

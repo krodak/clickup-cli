@@ -8,7 +8,7 @@ export interface CustomField {
   type: string
   value: unknown
   type_config?: {
-    options?: Array<{ id: number; name: string; orderindex?: number }>
+    options?: Array<{ id: string; name: string; orderindex?: number }>
   }
 }
 
