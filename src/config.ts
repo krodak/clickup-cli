@@ -11,6 +11,15 @@ export type FiltersMap = Record<string, FilterEntry>
 
 export type FavoriteType = 'sprint-folder' | 'space' | 'list' | 'folder' | 'view' | 'task'
 
+const VALID_FAVORITE_TYPES: ReadonlySet<FavoriteType> = new Set<FavoriteType>([
+  'sprint-folder',
+  'space',
+  'list',
+  'folder',
+  'view',
+  'task',
+])
+
 export interface FavoriteEntry {
   type: FavoriteType
   id: string
@@ -40,6 +49,41 @@ export interface MultiProfileConfig {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isFilterEntry(v: unknown): v is FilterEntry {
+  if (!isRecord(v)) return false
+  if (!Array.isArray(v.command)) return false
+  if (!v.command.every(c => typeof c === 'string')) return false
+  if (v.description !== undefined && typeof v.description !== 'string') return false
+  return true
+}
+
+function parseFiltersMap(raw: unknown): FiltersMap {
+  if (!isRecord(raw)) return {}
+  const out: FiltersMap = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (isFilterEntry(value)) out[key] = value
+  }
+  return out
+}
+
+function isFavoriteEntry(v: unknown): v is FavoriteEntry {
+  if (!isRecord(v)) return false
+  if (typeof v.type !== 'string') return false
+  if (!VALID_FAVORITE_TYPES.has(v.type as FavoriteType)) return false
+  if (typeof v.id !== 'string') return false
+  if (v.name !== undefined && typeof v.name !== 'string') return false
+  return true
+}
+
+function parseFavoritesMap(raw: unknown): FavoritesMap {
+  if (!isRecord(raw)) return {}
+  const out: FavoritesMap = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (isFavoriteEntry(value)) out[key] = value
+  }
+  return out
 }
 
 function readConfigString(
@@ -166,8 +210,8 @@ function migrateToMultiProfile(
         if (typeof value.teamId === 'string' && value.teamId.trim()) p.teamId = value.teamId.trim()
         if (typeof value.sprintFolderId === 'string' && value.sprintFolderId.trim())
           p.sprintFolderId = value.sprintFolderId.trim()
-        if (isRecord(value.filters)) p.filters = value.filters as FiltersMap
-        if (isRecord(value.favorites)) p.favorites = value.favorites as FavoritesMap
+        if (value.filters !== undefined) p.filters = parseFiltersMap(value.filters)
+        if (value.favorites !== undefined) p.favorites = parseFavoritesMap(value.favorites)
         profiles[name] = p
       }
     }
