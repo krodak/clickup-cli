@@ -135,8 +135,12 @@ The Setup section uses foldable `<details>` blocks with badge icons. `cup skill`
 
 See the **releasing-clickup-cli** project skill for full step-by-step instructions. Key points:
 
-- Bump 3 files: `package.json`, `package-lock.json`, `.claude-plugin/plugin.json`
-- Sync `docs/commands.md` before committing
+- `npm version <version> --no-git-tag-version` bumps `package.json` and `package-lock.json`
+- `node --import tsx scripts/sync-command-docs.ts` syncs:
+  - `docs/commands.md` quick reference table
+  - `skills/clickup-cli/SKILL.md` version header and version check line
+  - `.claude-plugin/plugin.json` version
+- The `version synchronization` test in `tests/unit/` catches drift in CI
 - Tag triggers CI which publishes to npm via OIDC
 - Update Homebrew tap manually after npm publish
 - Release workflow MUST use Node 24+ for OIDC trusted publishers
