@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
+import { isRecord } from './util/guards.js'
 
 export interface FilterEntry {
   command: string[]
@@ -45,10 +46,6 @@ export interface ProfileData {
 export interface MultiProfileConfig {
   defaultProfile: string
   profiles: Record<string, ProfileData>
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function isFilterEntry(v: unknown): v is FilterEntry {
