@@ -84,6 +84,7 @@ export const commandMetadata = [
       '--detach',
       '--archive',
       '--unarchive',
+      '--type',
       '--field',
       '--json',
     ],

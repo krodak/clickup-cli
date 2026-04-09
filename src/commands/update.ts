@@ -109,6 +109,7 @@ export interface UpdateCommandOptions {
   detach?: boolean
   archive?: boolean
   unarchive?: boolean
+  type?: string
 }
 
 export function buildUpdatePayload(
@@ -160,6 +161,12 @@ export function buildUpdatePayload(
   }
   if (opts.archive) payload.archived = true
   if (opts.unarchive) payload.archived = false
+  if (opts.type !== undefined) {
+    const num = Number(opts.type)
+    if (Number.isInteger(num) && num >= 0) {
+      payload.custom_item_id = num
+    }
+  }
   return payload
 }
 
@@ -175,7 +182,8 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.time_estimate !== undefined ||
     options.assignees !== undefined ||
     options.parent !== undefined ||
-    options.archived !== undefined
+    options.archived !== undefined ||
+    options.custom_item_id !== undefined
   )
 }
 
@@ -200,14 +208,30 @@ async function resolveStatus(
   return matched
 }
 
+export async function resolveTaskType(
+  client: ClickUpClient,
+  teamId: string,
+  typeInput: string,
+): Promise<number> {
+  const types = await client.getCustomTaskTypes(teamId)
+  const lower = typeInput.toLowerCase()
+  const match = types.find(t => t.name.toLowerCase() === lower)
+  if (!match) {
+    const available = types.map(t => `${t.name} (${String(t.id)})`).join(', ')
+    throw new Error(`No matching task type for "${typeInput}". Available: ${available}`)
+  }
+  return match.id
+}
+
 export async function updateTask(
   config: Config,
   taskId: string,
   options: UpdateTaskOptions,
+  typeInput?: string,
 ): Promise<{ id: string; name: string }> {
-  if (!hasUpdateFields(options))
+  if (!hasUpdateFields(options) && typeInput === undefined)
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --parent, --detach, --archive, --unarchive',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --parent, --detach, --archive, --unarchive, --type',
     )
 
   const client = new ClickUpClient(config)
@@ -215,6 +239,10 @@ export async function updateTask(
   const resolved: UpdateTaskOptions = { ...options }
   if (resolved.status !== undefined) {
     resolved.status = await resolveStatus(client, taskId, resolved.status)
+  }
+
+  if (resolved.custom_item_id === undefined && typeInput !== undefined) {
+    resolved.custom_item_id = await resolveTaskType(client, config.teamId, typeInput)
   }
 
   const task = await client.updateTask(taskId, resolved)

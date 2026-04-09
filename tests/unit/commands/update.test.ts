@@ -30,12 +30,19 @@ const mockGetListWithStatuses = vi.fn().mockResolvedValue({
   ],
 })
 
+const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([
+  { id: 1000, name: 'Task' },
+  { id: 1001, name: 'Initiative' },
+  { id: 1002, name: 'Bug' },
+])
+
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
       updateTask: mockUpdateTask,
       getTask: mockGetTask,
       getListWithStatuses: mockGetListWithStatuses,
+      getCustomTaskTypes: mockGetCustomTaskTypes,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -46,6 +53,7 @@ describe('updateTask', () => {
     mockUpdateTask.mockClear()
     mockGetTask.mockClear()
     mockGetListWithStatuses.mockClear()
+    mockGetCustomTaskTypes.mockClear()
   })
 
   it('calls API with task id and markdown_content', async () => {
@@ -411,5 +419,57 @@ describe('fuzzy status matching', () => {
     await expect(
       updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { status: 'nonexistent' }),
     ).rejects.toThrow('open, in progress, review, done')
+  })
+
+  it('sets custom_item_id when numeric --type is passed via buildUpdatePayload', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ type: '1001' })
+    expect(payload.custom_item_id).toBe(1001)
+  })
+
+  it('does not set custom_item_id in payload when --type is a name', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ type: 'Initiative' })
+    expect(payload.custom_item_id).toBeUndefined()
+  })
+
+  it('resolves --type by name via getCustomTaskTypes', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {}, 'Initiative')
+    expect(mockGetCustomTaskTypes).toHaveBeenCalledWith('team1')
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { custom_item_id: 1001 })
+  })
+
+  it('resolves --type by name case-insensitively', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {}, 'bug')
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { custom_item_id: 1002 })
+  })
+
+  it('passes numeric custom_item_id through without name resolution', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    mockGetCustomTaskTypes.mockClear()
+    await updateTask(
+      { apiToken: 'pk_t', teamId: 'team1' },
+      't1',
+      { custom_item_id: 1001 },
+      '1001',
+    )
+    expect(mockGetCustomTaskTypes).not.toHaveBeenCalled()
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { custom_item_id: 1001 })
+  })
+
+  it('throws when --type name does not match any task type', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await expect(
+      updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {}, 'NonExistent'),
+    ).rejects.toThrow('No matching task type')
+  })
+
+  it('allows --type alone as a valid update', async () => {
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await expect(
+      updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {}, 'Initiative'),
+    ).resolves.toBeDefined()
   })
 })

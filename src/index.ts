@@ -386,6 +386,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--detach', 'Remove parent task (promote subtask to top-level)')
     .option('--archive', 'Archive the task')
     .option('--unarchive', 'Unarchive the task')
+    .option('--type <type>', 'Change task type (name or custom_item_id)')
     .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value')
     .option('--json', 'Force JSON output even in terminal')
     .action(
@@ -411,14 +412,15 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           ])
           const payload = buildUpdatePayload(opts, timezone)
           const hasFields = (opts.field?.length ?? 0) > 0
-          if (!hasFields && Object.keys(payload).length === 0) {
+          const hasTypeName = opts.type !== undefined
+          if (!hasFields && !hasTypeName && Object.keys(payload).length === 0) {
             throw new Error(
-              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --remove-assignee, --parent, --archive, --unarchive, --field',
+              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --remove-assignee, --parent, --archive, --unarchive, --type, --field',
             )
           }
           let result: { id: string; name: string } | undefined
-          if (Object.keys(payload).length > 0) {
-            result = await updateTask(config, taskId, payload)
+          if (Object.keys(payload).length > 0 || hasTypeName) {
+            result = await updateTask(config, taskId, payload, opts.type)
           }
           if (hasFields) {
             if ((opts.field?.length ?? 0) % 2 !== 0) {

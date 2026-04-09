@@ -75,6 +75,7 @@ export interface UpdateTaskOptions {
   assignees?: { add?: number[]; rem?: number[] }
   parent?: string | null
   archived?: boolean
+  custom_item_id?: number
 }
 
 export interface CreateTaskOptions {
@@ -637,8 +638,10 @@ export class ClickUpClient {
     })
   }
 
-  async getSpaces(teamId: string): Promise<Space[]> {
-    const data = await this.request<{ spaces: Space[] }>(`/team/${teamId}/space?archived=false`)
+  async getSpaces(teamId: string, archived = false): Promise<Space[]> {
+    const data = await this.request<{ spaces: Space[] }>(
+      `/team/${teamId}/space?archived=${archived ? 'true' : 'false'}`,
+    )
     return readCollectionField<Space>(data as Record<string, unknown>, 'spaces', 'spaces')
   }
 
@@ -684,20 +687,24 @@ export class ClickUpClient {
     })
   }
 
-  async getLists(spaceId: string): Promise<List[]> {
-    const data = await this.request<{ lists: List[] }>(`/space/${spaceId}/list?archived=false`)
+  async getLists(spaceId: string, archived = false): Promise<List[]> {
+    const data = await this.request<{ lists: List[] }>(
+      `/space/${spaceId}/list?archived=${archived ? 'true' : 'false'}`,
+    )
     return readCollectionField<List>(data as Record<string, unknown>, 'lists', 'space lists')
   }
 
-  async getFolders(spaceId: string): Promise<Folder[]> {
+  async getFolders(spaceId: string, archived = false): Promise<Folder[]> {
     const data = await this.request<{ folders: Folder[] }>(
-      `/space/${spaceId}/folder?archived=false`,
+      `/space/${spaceId}/folder?archived=${archived ? 'true' : 'false'}`,
     )
     return readCollectionField<Folder>(data as Record<string, unknown>, 'folders', 'space folders')
   }
 
-  async getFolderLists(folderId: string): Promise<List[]> {
-    const data = await this.request<{ lists: List[] }>(`/folder/${folderId}/list?archived=false`)
+  async getFolderLists(folderId: string, archived = false): Promise<List[]> {
+    const data = await this.request<{ lists: List[] }>(
+      `/folder/${folderId}/list?archived=${archived ? 'true' : 'false'}`,
+    )
     return readCollectionField<List>(data as Record<string, unknown>, 'lists', 'folder lists')
   }
 
