@@ -335,11 +335,13 @@ describe('generateCompletion', () => {
 
       expect(getZshTopLevelCommands(zshResult)).toContainEqual({
         name: 'init',
-        description: 'Set up clickup for the first time',
+        description:
+          'Set up clickup (interactive). Use --token and --team for non-interactive/agent setup',
       })
       expect(getFishTopLevelCommands(fishResult, 'clickup')).toContainEqual({
         name: 'init',
-        description: 'Set up clickup for the first time',
+        description:
+          'Set up clickup (interactive). Use --token and --team for non-interactive/agent setup',
       })
     })
 

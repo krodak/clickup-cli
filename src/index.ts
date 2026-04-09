@@ -238,7 +238,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('init')
-    .description(`Set up ${programName} for the first time`)
+    .description(
+      `Set up ${programName} (interactive). Use --token and --team for non-interactive/agent setup`,
+    )
     .option('--token <token>', 'API token (pk_...) for non-interactive setup')
     .option('--team <teamId>', 'Workspace/team ID for non-interactive setup')
     .action(
