@@ -844,3 +844,225 @@ describe('favorites', () => {
     expect(() => deleteFavorite('nonexistent')).toThrow('not found')
   })
 })
+
+describe('filter validators', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('drops filter entries whose command field is not an array', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            filters: {
+              broken: { command: 'ls --all' },
+              ok: { command: ['ls', 'ls', '--all'] },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFilters } = await import('../../src/config.js')
+    const filters = getFilters()
+    expect(filters).toEqual({ ok: { command: ['ls', 'ls', '--all'] } })
+  })
+
+  it('drops filter entries with non-string items in command array', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            filters: {
+              mixed: { command: ['ls', 42, 'done'] },
+              good: { command: ['ls', '--all'], description: 'list all' },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFilters } = await import('../../src/config.js')
+    const filters = getFilters()
+    expect(filters).toEqual({ good: { command: ['ls', '--all'], description: 'list all' } })
+  })
+
+  it('drops filter entries with non-string description', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            filters: {
+              bad: { command: ['ls'], description: 7 },
+              good: { command: ['ls'] },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFilters } = await import('../../src/config.js')
+    const filters = getFilters()
+    expect(filters).toEqual({ good: { command: ['ls'] } })
+  })
+
+  it('preserves valid filter entries', async () => {
+    const filters = {
+      one: { command: ['ls'], description: 'list' },
+      two: { command: ['ls', '--all'] },
+    }
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123', filters } }, 'default'),
+    )
+    const { getFilters } = await import('../../src/config.js')
+    expect(getFilters()).toEqual(filters)
+  })
+
+  it('treats a non-object filters value as empty', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        { default: { apiToken: 'pk_test', teamId: '123', filters: 'oops' } },
+        'default',
+      ),
+    )
+    const { getFilters } = await import('../../src/config.js')
+    expect(getFilters()).toEqual({})
+  })
+})
+
+describe('favorite validators', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('drops favorite entries with invalid type', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            favorites: {
+              bad: { type: 'bogus', id: '1' },
+              good: { type: 'list', id: '2', name: 'My List' },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual({ good: { type: 'list', id: '2', name: 'My List' } })
+  })
+
+  it('drops favorite entries with missing id', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            favorites: {
+              bad: { type: 'list' },
+              good: { type: 'folder', id: '7' },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual({ good: { type: 'folder', id: '7' } })
+  })
+
+  it('drops favorite entries with non-string id', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            favorites: {
+              bad: { type: 'task', id: 42 },
+              good: { type: 'task', id: '42' },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual({ good: { type: 'task', id: '42' } })
+  })
+
+  it('drops favorite entries with non-string name', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        {
+          default: {
+            apiToken: 'pk_test',
+            teamId: '123',
+            favorites: {
+              bad: { type: 'list', id: '1', name: 99 },
+              good: { type: 'list', id: '2', name: 'ok' },
+            },
+          },
+        },
+        'default',
+      ),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual({ good: { type: 'list', id: '2', name: 'ok' } })
+  })
+
+  it('preserves valid favorite entries across all supported types', async () => {
+    const favorites = {
+      s: { type: 'sprint-folder', id: '1' },
+      p: { type: 'space', id: '2' },
+      l: { type: 'list', id: '3', name: 'My List' },
+      f: { type: 'folder', id: '4' },
+      v: { type: 'view', id: '5' },
+      t: { type: 'task', id: '6' },
+    }
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ default: { apiToken: 'pk_test', teamId: '123', favorites } }, 'default'),
+    )
+    const { getFavorites } = await import('../../src/config.js')
+    expect(getFavorites()).toEqual(favorites)
+  })
+})
