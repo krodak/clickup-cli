@@ -175,6 +175,9 @@ import {
   formatFilterDetail,
 } from './commands/filter.js'
 import { createListWithOptions } from './commands/list-create.js'
+import { renameList } from './commands/list-rename.js'
+import { renameFolder } from './commands/folder-rename.js'
+import { renameSpace } from './commands/space-rename.js'
 import {
   validateFavoriteType,
   slugify,
@@ -2065,6 +2068,57 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify(folder, null, 2))
         } else {
           console.log(`Created folder "${folder.name}" (${folder.id})`)
+        }
+      }),
+    )
+
+  program
+    .command('list-rename <listId> <newName>')
+    .description('Rename a list')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (listId: string, newName: string, opts: { json?: boolean }) => {
+        if (!newName.trim()) throw new Error('List name cannot be empty')
+        const config = loadConfig(getProfileName())
+        const result = await renameList(config, listId, newName)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Renamed list ${result.id} to "${result.name}"`)
+        }
+      }),
+    )
+
+  program
+    .command('folder-rename <folderId> <newName>')
+    .description('Rename a folder')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (folderId: string, newName: string, opts: { json?: boolean }) => {
+        if (!newName.trim()) throw new Error('Folder name cannot be empty')
+        const config = loadConfig(getProfileName())
+        const result = await renameFolder(config, folderId, newName)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Renamed folder ${result.id} to "${result.name}"`)
+        }
+      }),
+    )
+
+  program
+    .command('space-rename <spaceId> <newName>')
+    .description('Rename a space')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (spaceId: string, newName: string, opts: { json?: boolean }) => {
+        if (!newName.trim()) throw new Error('Space name cannot be empty')
+        const config = loadConfig(getProfileName())
+        const result = await renameSpace(config, spaceId, newName)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Renamed space ${result.id} to "${result.name}"`)
         }
       }),
     )

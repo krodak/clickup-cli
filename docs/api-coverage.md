@@ -104,10 +104,13 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | --------------- | ---------------------------------- | ------------------ |
 | List spaces     | `cup spaces`                       | :white_check_mark: |
 | Create space    | `cup space-create <name>`          | :white_check_mark: |
+| Rename space    | `cup space-rename <spaceId> <n>`   | :white_check_mark: |
 | List lists      | `cup lists <spaceId>`              | :white_check_mark: |
 | Create list     | `cup list-create <spaceId> <name>` | :white_check_mark: |
+| Rename list     | `cup list-rename <listId> <n>`     | :white_check_mark: |
 | List folders    | `cup folders <spaceId>`            | :white_check_mark: |
 | Create folder   | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
+| Rename folder   | `cup folder-rename <folderId> <n>` | :white_check_mark: |
 | Check auth      | `cup auth`                         | :white_check_mark: |
 | List members    | `cup members`                      | :white_check_mark: |
 | Task types      | `cup task-types`                   | :white_check_mark: |

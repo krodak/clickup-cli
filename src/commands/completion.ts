@@ -782,6 +782,24 @@ ${renderZshTopLevelCommands(name)}
             '2:name:' \\
             '--json[Force JSON output]'
           ;;
+        list-rename)
+          _arguments \\
+            '1:list_id:' \\
+            '2:new_name:' \\
+            '--json[Force JSON output]'
+          ;;
+        folder-rename)
+          _arguments \\
+            '1:folder_id:' \\
+            '2:new_name:' \\
+            '--json[Force JSON output]'
+          ;;
+        space-rename)
+          _arguments \\
+            '1:space_id:' \\
+            '2:new_name:' \\
+            '--json[Force JSON output]'
+          ;;
         doc-create)
           _arguments \\
             '1:title:' \\

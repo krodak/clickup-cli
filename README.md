@@ -184,7 +184,7 @@ Full CRUD for the core ClickUp workflow:
 | 🏃 **Sprints**       | Auto-detect active sprint, `sprint:current` pseudo-ID for move/create, flexible date parsing, config override, favorite sprint folders |
 | ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                               |
 | 👁️ **Views**         | List, get, create, update, delete views on lists                                                                                       |
-| 🏢 **Workspace**     | Spaces, folders, lists (read + create + from template), members, task types, templates                                                 |
+| 🏢 **Workspace**     | Spaces, folders, lists (read + create + rename + from template), members, task types, templates                                        |
 | 📎 **Attachments**   | Upload files to tasks, shown in detail views                                                                                           |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)

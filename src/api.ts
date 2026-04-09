@@ -638,6 +638,16 @@ export class ClickUpClient {
     })
   }
 
+  async updateSpace(
+    spaceId: string,
+    payload: { name: string },
+  ): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/space/${spaceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+  }
+
   async getSpaces(teamId: string, archived = false): Promise<Space[]> {
     const data = await this.request<{ spaces: Space[] }>(
       `/team/${teamId}/space?archived=${archived ? 'true' : 'false'}`,
@@ -672,7 +682,11 @@ export class ClickUpClient {
 
   async updateList(
     listId: string,
-    payload: { statuses?: Array<{ status: string; color: string; type: string }> },
+    payload: {
+      name?: string
+      content?: string
+      statuses?: Array<{ status: string; color: string; type: string }>
+    },
   ): Promise<{ id: string; name: string }> {
     return this.request<{ id: string; name: string }>(`/list/${listId}`, {
       method: 'PUT',
@@ -684,6 +698,16 @@ export class ClickUpClient {
     return this.request<{ id: string; name: string }>(`/space/${spaceId}/folder`, {
       method: 'POST',
       body: JSON.stringify({ name }),
+    })
+  }
+
+  async updateFolder(
+    folderId: string,
+    payload: { name: string },
+  ): Promise<{ id: string; name: string }> {
+    return this.request<{ id: string; name: string }>(`/folder/${folderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     })
   }
 
