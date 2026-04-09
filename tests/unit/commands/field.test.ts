@@ -55,6 +55,10 @@ const taskWithFields = {
         ],
       },
     },
+    { id: 'cf_emoji', name: 'Rating', type: 'emoji', value: null, type_config: {} },
+    { id: 'cf_progress', name: 'Progress', type: 'manual_progress', value: null, type_config: {} },
+    { id: 'cf_tasks', name: 'Related Tasks', type: 'tasks', value: null, type_config: {} },
+    { id: 'cf_users', name: 'Reviewers', type: 'users', value: null, type_config: {} },
   ],
 }
 
@@ -199,6 +203,56 @@ describe('setCustomField', () => {
     const { results } = await setCustomField(config, 'task1', { set: ['Budget', '5000'] })
     expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-currency', '5000')
     expect(results[0]!.value).toBe('5000')
+  })
+
+  it('sets emoji field with valid rating', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Rating', '3'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'cf_emoji', 3)
+    expect(results[0]!.value).toBe(3)
+  })
+
+  it('throws on invalid emoji rating', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await expect(setCustomField(config, 'task1', { set: ['Rating', '6'] })).rejects.toThrow(
+      'Rating value must be a number between 0 and 5',
+    )
+  })
+
+  it('sets manual_progress field', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Progress', '75'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'cf_progress', { current: 75 })
+    expect(results[0]!.value).toEqual({ current: 75 })
+  })
+
+  it('throws on invalid progress value', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await expect(setCustomField(config, 'task1', { set: ['Progress', '150'] })).rejects.toThrow(
+      'Progress value must be a number between 0 and 100',
+    )
+  })
+
+  it('sets tasks (relationship) field', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', {
+      set: ['Related Tasks', 'task1, task2'],
+    })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'cf_tasks', {
+      add: ['task1', 'task2'],
+    })
+    expect(results[0]!.value).toEqual({ add: ['task1', 'task2'] })
+  })
+
+  it('sets users (people) field', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', {
+      set: ['Reviewers', '123, 456'],
+    })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'cf_users', {
+      add: [123, 456],
+    })
+    expect(results[0]!.value).toEqual({ add: [123, 456] })
   })
 
   it('throws on unsupported field type', async () => {
