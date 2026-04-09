@@ -22,8 +22,7 @@ export interface CommandMetadata {
 export const commandMetadata = [
   {
     name: 'init',
-    description:
-      'Set up cup (interactive). Use --token and --team for non-interactive/agent setup',
+    description: 'Set up cup (interactive). Use --token and --team for non-interactive/agent setup',
     flags: ['--token', '--team'],
     quickReference: [
       {
@@ -602,6 +601,42 @@ export const commandMetadata = [
         section: 'write',
         usage: 'folder-create <spaceId> <name>',
         description: 'Create a folder in a space',
+      },
+    ],
+  },
+  {
+    name: 'list-rename',
+    description: 'Rename a list',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'list-rename <listId> <newName>',
+        description: 'Rename a list',
+      },
+    ],
+  },
+  {
+    name: 'folder-rename',
+    description: 'Rename a folder',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'folder-rename <folderId> <newName>',
+        description: 'Rename a folder',
+      },
+    ],
+  },
+  {
+    name: 'space-rename',
+    description: 'Rename a space',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'space-rename <spaceId> <newName>',
+        description: 'Rename a space',
       },
     ],
   },
