@@ -1,5 +1,6 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
+import { runInBatches, type BatchOutcome } from '../util/batch.js'
 import { resolveAssigneeId, parseDueDate, parsePriority } from './update.js'
 import { findFieldByName, parseFieldValue } from './field.js'
 
@@ -7,36 +8,10 @@ export type BulkResult = { updated: number; failed: Array<{ id: string; reason: 
 
 const BULK_CONCURRENCY = 5
 
-async function runInBatches<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>,
-): Promise<Array<{ item: T; result?: R; error?: Error }>> {
-  const results: Array<{ item: T; result?: R; error?: Error }> = []
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency)
-    const batchResults = await Promise.allSettled(batch.map(fn))
-    batchResults.forEach((res, idx) => {
-      const item = batch[idx]!
-      if (res.status === 'fulfilled') {
-        results.push({ item, result: res.value })
-      } else {
-        results.push({
-          item,
-          error: res.reason instanceof Error ? res.reason : new Error(String(res.reason)),
-        })
-      }
-    })
-  }
-  return results
-}
-
-function toBulkResult(
-  outcomes: Array<{ item: string; result?: unknown; error?: Error }>,
-): BulkResult {
+function toBulkResult(outcomes: BatchOutcome<string, unknown>[]): BulkResult {
   const failed: Array<{ id: string; reason: string }> = []
   for (const outcome of outcomes) {
-    if (outcome.error) {
+    if (!outcome.ok) {
       failed.push({ id: outcome.item, reason: outcome.error.message })
     }
   }
