@@ -449,12 +449,7 @@ describe('fuzzy status matching', () => {
   it('passes numeric custom_item_id through without name resolution', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     mockGetCustomTaskTypes.mockClear()
-    await updateTask(
-      { apiToken: 'pk_t', teamId: 'team1' },
-      't1',
-      { custom_item_id: 1001 },
-      '1001',
-    )
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { custom_item_id: 1001 }, '1001')
     expect(mockGetCustomTaskTypes).not.toHaveBeenCalled()
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { custom_item_id: 1001 })
   })

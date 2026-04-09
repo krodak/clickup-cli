@@ -37,9 +37,7 @@ Next steps:
 
 function validateTokenFormat(token: string): void {
   if (!token.startsWith('pk_')) {
-    throw new Error(
-      `Invalid token format. Personal API tokens start with "pk_".\n${TOKEN_HELP}`,
-    )
+    throw new Error(`Invalid token format. Personal API tokens start with "pk_".\n${TOKEN_HELP}`)
   }
 }
 

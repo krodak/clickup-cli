@@ -491,11 +491,7 @@ describe('parallel execution', () => {
       .mockResolvedValueOnce({})
 
     const { bulkUpdateStatus } = await import('../../../src/commands/bulk.js')
-    const result = await bulkUpdateStatus(
-      mockConfig,
-      ['t1', 't2', 't3', 't4', 't5'],
-      'in progress',
-    )
+    const result = await bulkUpdateStatus(mockConfig, ['t1', 't2', 't3', 't4', 't5'], 'in progress')
 
     expect(result.updated).toBe(3)
     expect(result.failed).toEqual([
