@@ -5,10 +5,10 @@ import { isTTY, shouldOutputJson, formatTable } from '../output.js'
 
 export async function listSpaces(
   config: Config,
-  opts: { name?: string; my?: boolean; json?: boolean },
+  opts: { name?: string; my?: boolean; archived?: boolean; json?: boolean },
 ): Promise<void> {
   const client = new ClickUpClient(config)
-  let spaces = await client.getSpaces(config.teamId)
+  let spaces = await client.getSpaces(config.teamId, opts.archived)
 
   if (opts.name) {
     const lower = opts.name.toLowerCase()

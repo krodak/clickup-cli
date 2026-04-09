@@ -722,13 +722,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('lists <spaceId>')
     .description('List all lists in a space (including lists inside folders)')
     .option('--name <partial>', 'Filter by name (case-insensitive contains)')
+    .option('--archived', 'Include only archived items (default: active items)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const lists = await fetchLists(config, spaceId, { name: opts.name })
-        printLists(lists, opts.json ?? false)
-      }),
+      wrapAction(
+        async (spaceId: string, opts: { name?: string; archived?: boolean; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const lists = await fetchLists(config, spaceId, {
+            name: opts.name,
+            archived: opts.archived,
+          })
+          printLists(lists, opts.json ?? false)
+        },
+      ),
     )
 
   program
@@ -736,12 +742,15 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('List spaces in your workspace')
     .option('--name <partial>', 'Filter spaces by name (case-insensitive contains)')
     .option('--my', 'Show only spaces where I have assigned tasks')
+    .option('--archived', 'Include only archived items (default: active items)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (opts: { name?: string; my?: boolean; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        await listSpaces(config, opts)
-      }),
+      wrapAction(
+        async (opts: { name?: string; my?: boolean; archived?: boolean; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          await listSpaces(config, opts)
+        },
+      ),
     )
 
   program
@@ -1935,19 +1944,22 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('folders <spaceId>')
     .description('List folders in a space (with their lists)')
     .option('--name <partial>', 'Filter folders by partial name match')
+    .option('--archived', 'Include only archived items (default: active items)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (spaceId: string, opts: { name?: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const folders = await listFolders(config, spaceId, opts.name)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(folders, null, 2))
-        } else if (isTTY()) {
-          console.log(formatFolders(folders))
-        } else {
-          console.log(formatFoldersMarkdown(folders))
-        }
-      }),
+      wrapAction(
+        async (spaceId: string, opts: { name?: string; archived?: boolean; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const folders = await listFolders(config, spaceId, opts.name, opts.archived)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(folders, null, 2))
+          } else if (isTTY()) {
+            console.log(formatFolders(folders))
+          } else {
+            console.log(formatFoldersMarkdown(folders))
+          }
+        },
+      ),
     )
 
   program

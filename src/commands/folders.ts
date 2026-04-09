@@ -12,9 +12,10 @@ export async function listFolders(
   config: Config,
   spaceId: string,
   nameFilter?: string,
+  archived?: boolean,
 ): Promise<FolderWithLists[]> {
   const client = new ClickUpClient(config)
-  const folders = await client.getFolders(spaceId)
+  const folders = await client.getFolders(spaceId, archived)
   let filtered = folders
   if (nameFilter) {
     const lower = nameFilter.toLowerCase()

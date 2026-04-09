@@ -216,7 +216,7 @@ export const commandMetadata = [
   {
     name: 'lists',
     description: 'List all lists in a space (including lists inside folders)',
-    flags: ['--name', '--json'],
+    flags: ['--name', '--archived', '--json'],
     quickReference: [
       { section: 'read', usage: 'lists <spaceId>', description: 'List all lists in a space' },
     ],
@@ -224,7 +224,7 @@ export const commandMetadata = [
   {
     name: 'spaces',
     description: 'List spaces in your workspace',
-    flags: ['--name', '--my', '--json'],
+    flags: ['--name', '--my', '--archived', '--json'],
     quickReference: [{ section: 'read', usage: 'spaces', description: 'List spaces in workspace' }],
   },
   {
@@ -549,7 +549,7 @@ export const commandMetadata = [
   {
     name: 'folders',
     description: 'List folders in a space (with their lists)',
-    flags: ['--name', '--json'],
+    flags: ['--name', '--archived', '--json'],
     quickReference: [
       { section: 'read', usage: 'folders <spaceId>', description: 'List folders in a space' },
     ],

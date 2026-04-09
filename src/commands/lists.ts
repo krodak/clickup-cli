@@ -12,18 +12,20 @@ export interface ListSummary {
 export async function fetchLists(
   config: Config,
   spaceId: string,
-  opts: { name?: string } = {},
+  opts: { name?: string; archived?: boolean } = {},
 ): Promise<ListSummary[]> {
   const client = new ClickUpClient(config)
   const results: ListSummary[] = []
 
-  const folderlessLists = await client.getLists(spaceId)
+  const folderlessLists = await client.getLists(spaceId, opts.archived)
   for (const list of folderlessLists) {
     results.push({ id: list.id, name: list.name, folder: '(none)' })
   }
 
-  const folders = await client.getFolders(spaceId)
-  const folderListArrays = await Promise.all(folders.map(f => client.getFolderLists(f.id)))
+  const folders = await client.getFolders(spaceId, opts.archived)
+  const folderListArrays = await Promise.all(
+    folders.map(f => client.getFolderLists(f.id, opts.archived)),
+  )
   for (let i = 0; i < folders.length; i++) {
     const folder = folders[i]!
     for (const list of folderListArrays[i]!) {
