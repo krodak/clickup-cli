@@ -47,10 +47,10 @@ describe('loadConfig', () => {
     restoreConfigEnv()
   })
 
-  it('throws with path hint when config file does not exist and no env vars', async () => {
+  it('throws with onboarding help when config file does not exist and no env vars', async () => {
     vi.mocked(fs.existsSync).mockReturnValue(false)
     const { loadConfig } = await import('../../src/config.js')
-    expect(() => loadConfig()).toThrow('apiToken')
+    expect(() => loadConfig()).toThrow('cup init')
   })
 
   it('throws on invalid JSON', async () => {

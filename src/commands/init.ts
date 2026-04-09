@@ -8,25 +8,63 @@ export interface InitOptions {
   team?: string
 }
 
+const TOKEN_URL = 'https://app.clickup.com/settings/apps'
+
+const TOKEN_HELP = `
+How to get a ClickUp API token:
+  1. Open ${TOKEN_URL}
+  2. Find the "API Token" section, click "Generate" (or copy the existing one)
+  3. The token starts with "pk_"
+`
+
+const NON_TTY_HELP = `cup init requires an interactive terminal.
+
+For scripts, CI, or AI agents, use flags:
+  cup init --token pk_YOUR_TOKEN --team YOUR_TEAM_ID
+
+Or set environment variables:
+  export CU_API_TOKEN=pk_YOUR_TOKEN
+  export CU_TEAM_ID=YOUR_TEAM_ID
+${TOKEN_HELP}`
+
+const NEXT_STEPS = `
+Next steps:
+  cup auth      # verify setup
+  cup tasks     # list your assigned tasks
+  cup sprint    # show current sprint
+  cup --help    # see all commands
+`
+
+function validateTokenFormat(token: string): void {
+  if (!token.startsWith('pk_')) {
+    throw new Error(
+      `Invalid token format. Personal API tokens start with "pk_".\n${TOKEN_HELP}`,
+    )
+  }
+}
+
+async function verifyToken(apiToken: string): Promise<string> {
+  const client = new ClickUpClient({ apiToken })
+  try {
+    const me = await client.getMe()
+    return me.username
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(
+      `Token verification failed: ${msg}\n\nCheck the token is correct and not expired.\n${TOKEN_HELP}`,
+      { cause: err },
+    )
+  }
+}
+
 export async function runInitCommand(opts?: InitOptions): Promise<void> {
   if (opts?.token && opts?.team) {
     const apiToken = opts.token.trim()
-    if (!apiToken.startsWith('pk_')) throw new Error('Token must start with pk_')
-
-    const client = new ClickUpClient({ apiToken })
-    let username: string
-    try {
-      const me = await client.getMe()
-      username = me.username
-    } catch (err) {
-      throw new Error(`Invalid token: ${err instanceof Error ? err.message : String(err)}`, {
-        cause: err,
-      })
-    }
-
+    validateTokenFormat(apiToken)
+    const username = await verifyToken(apiToken)
     process.stdout.write(`Authenticated as @${username}\n`)
     writeConfig({ apiToken, teamId: opts.team })
-    process.stdout.write(`Config written to ${getConfigPath()}\n`)
+    process.stdout.write(`Config written to ${getConfigPath()}\n${NEXT_STEPS}`)
     return
   }
 
@@ -34,7 +72,15 @@ export async function runInitCommand(opts?: InitOptions): Promise<void> {
     throw new Error('Both --token and --team are required for non-interactive setup')
   }
 
+  if (!process.stdin.isTTY) {
+    throw new Error(NON_TTY_HELP)
+  }
+
   const configPath = getConfigPath()
+
+  process.stdout.write('\nWelcome to ClickUp CLI!\n')
+  process.stdout.write(TOKEN_HELP)
+  process.stdout.write('\n')
 
   if (fs.existsSync(configPath)) {
     const overwrite = await confirm({
@@ -47,23 +93,17 @@ export async function runInitCommand(opts?: InitOptions): Promise<void> {
     }
   }
 
-  const apiToken = (await password({ message: 'ClickUp API token (pk_...):' })).trim()
-  if (!apiToken.startsWith('pk_')) throw new Error('Token must start with pk_')
-
-  const client = new ClickUpClient({ apiToken })
-
-  let username: string
-  try {
-    const me = await client.getMe()
-    username = me.username
-  } catch (err) {
-    throw new Error(`Invalid token: ${err instanceof Error ? err.message : String(err)}`, {
-      cause: err,
+  const apiToken = (
+    await password({
+      message: 'Paste your ClickUp API token (starts with pk_):',
     })
-  }
+  ).trim()
+  validateTokenFormat(apiToken)
 
+  const username = await verifyToken(apiToken)
   process.stdout.write(`Authenticated as @${username}\n`)
 
+  const client = new ClickUpClient({ apiToken })
   const teams = await client.getTeams()
   if (teams.length === 0) throw new Error('No workspaces found for this token.')
 
@@ -81,5 +121,5 @@ export async function runInitCommand(opts?: InitOptions): Promise<void> {
   }
 
   writeConfig({ apiToken, teamId })
-  process.stdout.write(`Config written to ${configPath}\n`)
+  process.stdout.write(`\nConfig written to ${configPath}\n${NEXT_STEPS}`)
 }

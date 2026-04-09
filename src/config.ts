@@ -217,7 +217,14 @@ export function loadConfig(profileName?: string): Config {
     if (envToken || envTeamId) {
       throw new Error('Both CU_API_TOKEN and CU_TEAM_ID must be set, or run: cup init')
     }
-    throw new Error('Config missing required field: apiToken.\nSet CU_API_TOKEN or run: cup init')
+    throw new Error(
+      'No ClickUp CLI configuration found.\n\n' +
+        'To get started:\n' +
+        '  cup init\n\n' +
+        'For scripts or AI agents:\n' +
+        '  cup init --token pk_YOUR_TOKEN --team YOUR_TEAM_ID\n\n' +
+        'Get your API token: https://app.clickup.com/settings/apps',
+    )
   }
 
   const { parsed } = parseRawConfig(path)
