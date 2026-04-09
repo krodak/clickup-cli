@@ -1,6 +1,18 @@
 import { ClickUpClient } from '../api.js'
-import type { CustomField } from '../api.js'
 import type { Config } from '../config.js'
+
+export interface FieldDescriptor {
+  id: string
+  name: string
+  type: string
+  type_config?: {
+    options?: ReadonlyArray<{
+      id: string | number
+      name: string
+      orderindex?: number
+    }>
+  }
+}
 
 interface FieldOptions {
   set?: [string, string]
@@ -36,7 +48,7 @@ const SUPPORTED_TYPES = new Set([
   'users',
 ])
 
-export function findFieldByName(fields: CustomField[], name: string): CustomField {
+export function findFieldByName<T extends FieldDescriptor>(fields: readonly T[], name: string): T {
   const lower = name.toLowerCase()
   const match = fields.find(f => f.name.toLowerCase() === lower)
   if (!match) {
@@ -46,7 +58,7 @@ export function findFieldByName(fields: CustomField[], name: string): CustomFiel
   return match
 }
 
-export function parseFieldValue(field: CustomField, rawValue: string): unknown {
+export function parseFieldValue(field: FieldDescriptor, rawValue: string): unknown {
   if (!SUPPORTED_TYPES.has(field.type)) {
     throw new Error(
       `Field type "${field.type}" is not supported. Supported types: ${[...SUPPORTED_TYPES].join(', ')}`,

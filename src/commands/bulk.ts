@@ -133,3 +133,18 @@ export async function bulkField(
   )
   return toBulkResult(outcomes)
 }
+
+export async function bulkMove(
+  config: Config,
+  listId: string,
+  taskIds: string[],
+): Promise<BulkResult> {
+  if (!listId) throw new Error('--to <listId> is required')
+  if (taskIds.length === 0) throw new Error('Provide at least one task ID')
+  const client = new ClickUpClient(config)
+  const outcomes = await runInBatches(taskIds, BULK_CONCURRENCY, async id => {
+    await client.moveTaskToList(id, listId)
+    return id
+  })
+  return toBulkResult(outcomes)
+}

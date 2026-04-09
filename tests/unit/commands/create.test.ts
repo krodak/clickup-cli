@@ -227,4 +227,39 @@ describe('createTask', () => {
     expect(mockCreateTask).not.toHaveBeenCalled()
     expect(result).toEqual({ id: 'tmpl_t', name: 'From Template', url: 'http://cu/tmpl_t' })
   })
+
+  it('passes custom_fields through to the API when provided', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      {
+        list: 'l1',
+        name: 'Task with fields',
+        customFields: [
+          { id: 'f1', value: 'hello' },
+          { id: 'f2', value: 42 },
+        ],
+      },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({
+        name: 'Task with fields',
+        custom_fields: [
+          { id: 'f1', value: 'hello' },
+          { id: 'f2', value: 42 },
+        ],
+      }),
+    )
+  })
+
+  it('omits custom_fields from the payload when not provided', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Plain task' },
+    )
+    const payload = mockCreateTask.mock.calls.at(-1)?.[1] as Record<string, unknown>
+    expect(payload).toEqual({ name: 'Plain task' })
+  })
 })
