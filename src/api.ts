@@ -1,3 +1,5 @@
+import { isRecord } from './util/guards.js'
+
 const BASE_URL = 'https://api.clickup.com/api/v2'
 const BASE_URL_V3 = 'https://api.clickup.com/api/v3'
 const MAX_PAGES = 100
@@ -310,10 +312,6 @@ export interface TaskTemplate {
 interface ClientConfig {
   apiToken: string
   teamId?: string
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function expectRecord(value: unknown, context: string): Record<string, unknown> {
