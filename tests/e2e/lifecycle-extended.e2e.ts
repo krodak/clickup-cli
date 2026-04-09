@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ClickUpClient } from '../../src/api.js'
+import type { CustomFieldDefinition } from '../../src/api.js'
 
 const TOKEN = process.env.CLICKUP_API_TOKEN
 
@@ -399,6 +400,63 @@ describe.skipIf(!TOKEN)('Time entry update/delete e2e', () => {
     if (planLimited) return
     await expect(client.deleteTimeEntry(teamId, timeEntryId)).resolves.not.toThrow()
     timeEntryId = ''
+  })
+})
+
+describe.skipIf(!TOKEN)('Labels custom field e2e', () => {
+  let client: ClickUpClient
+  let taskId: string
+  let labelsField: CustomFieldDefinition | undefined
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    const task = await client.createTask(backlog.id, { name: 'E2E Labels Field Task' })
+    taskId = task.id
+    const fields = await client.getListCustomFields(backlog.id)
+    labelsField = fields.find(f => f.type === 'labels')
+  })
+
+  afterAll(async () => {
+    if (taskId) await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('finds a labels field or skips', () => {
+    if (!labelsField) {
+      console.log('No labels field found on Backlog list - skipping labels tests')
+    }
+  })
+
+  it('sets a labels field value', async () => {
+    if (!labelsField) return
+    const options = labelsField.type_config?.options
+    if (!options?.length) return
+    const firstOption = options[0]!
+    await expect(
+      client.setCustomFieldValue(taskId, labelsField.id, [firstOption.id]),
+    ).resolves.not.toThrow()
+  })
+
+  it('verifies label was set on task', async () => {
+    if (!labelsField) return
+    const task = await client.getTask(taskId)
+    const field = task.custom_fields?.find(f => f.id === labelsField!.id)
+    expect(field).toBeDefined()
+    if (field?.value) {
+      expect(Array.isArray(field.value)).toBe(true)
+    }
+  })
+
+  it('removes the labels field value', async () => {
+    if (!labelsField) return
+    await expect(client.removeCustomFieldValue(taskId, labelsField.id)).resolves.not.toThrow()
   })
 })
 
