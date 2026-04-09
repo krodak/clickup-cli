@@ -22,9 +22,16 @@ export interface CommandMetadata {
 export const commandMetadata = [
   {
     name: 'init',
-    description: 'Set up cup for the first time',
+    description:
+      'Set up cup (interactive). Use --token and --team for non-interactive/agent setup',
     flags: ['--token', '--team'],
-    quickReference: [{ section: 'setup', usage: 'init', description: 'First-time setup wizard' }],
+    quickReference: [
+      {
+        section: 'setup',
+        usage: 'init',
+        description: 'First-time setup (interactive, or use --token --team for agents)',
+      },
+    ],
   },
   {
     name: 'auth',
@@ -918,7 +925,7 @@ export function parseCommandFlags(flags: readonly string[] = []): CommandFlagDef
 
 function commandDescription(command: CommandMetadata, programName = 'cup'): string {
   if (command.name === 'init') {
-    return `Set up ${programName} for the first time`
+    return `Set up ${programName} (interactive). Use --token and --team for non-interactive/agent setup`
   }
 
   return command.description
