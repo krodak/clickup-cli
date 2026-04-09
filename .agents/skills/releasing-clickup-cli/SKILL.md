@@ -17,10 +17,8 @@ metadata:
 
 - [ ] `npm run typecheck` passes
 - [ ] `npm run lint` passes
-- [ ] `npm test` passes
+- [ ] `npm test` passes (includes version sync test)
 - [ ] `npm run build` succeeds
-- [ ] SKILL.md version number updated in the header line
-- [ ] docs/commands.md quick reference synced: `node --import tsx scripts/sync-command-docs.ts`
 - [ ] New commands added to `src/commands/metadata.ts` (completion test will fail otherwise)
 
 ## Release steps
@@ -29,30 +27,31 @@ metadata:
 
 Do NOT mix feature commits with version bump commits.
 
-### 2. Bump version (3 files)
+### 2. Bump version
 
 ```bash
 npm version <version> --no-git-tag-version
 ```
 
-Then manually update `.claude-plugin/plugin.json` version to match:
-
-```bash
-# Edit .claude-plugin/plugin.json "version" field
-```
-
-### 3. Sync docs quick reference
+### 3. Sync all version-tracked files
 
 ```bash
 node --import tsx scripts/sync-command-docs.ts
 ```
 
-This regenerates the quick reference table in `docs/commands.md` from `src/commands/metadata.ts`. The completion test compares these - if they're out of sync, CI fails.
+This updates:
+
+- `docs/commands.md` quick reference table
+- `skills/clickup-cli/SKILL.md` version header (line 6)
+- `skills/clickup-cli/SKILL.md` version check hint (line 10)
+- `.claude-plugin/plugin.json` version field
+
+The `version synchronization` test in `tests/unit/` verifies these stay in sync.
 
 ### 4. Commit and tag
 
 ```bash
-git add package.json package-lock.json .claude-plugin/plugin.json docs/commands.md
+git add package.json package-lock.json .claude-plugin/plugin.json docs/commands.md skills/clickup-cli/SKILL.md
 git commit -m "bump v<version>"
 git tag v<version>
 git push origin main --tags
@@ -123,8 +122,7 @@ cp skills/clickup-cli/SKILL.md ~/.config/opencode/skills/clickup/SKILL.md
 
 ## Common mistakes to avoid
 
-- Forgetting to update `.claude-plugin/plugin.json` version
-- Not syncing `docs/commands.md` quick reference (causes completion test failure)
+- Running `git commit` before `node --import tsx scripts/sync-command-docs.ts` (use the script to sync everything)
 - Not adding new commands to `src/commands/metadata.ts`
 - Bumping version in the same commit as feature changes
 - Force-pushing tags without deleting old tag first
