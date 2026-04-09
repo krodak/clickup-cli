@@ -2,7 +2,7 @@ import type { FavoriteType, FavoritesMap } from '../config.js'
 import { formatTable } from '../output.js'
 import type { Column } from '../output.js'
 
-const VALID_TYPES: ReadonlySet<string> = new Set<FavoriteType>([
+const VALID_TYPES = new Set<FavoriteType>([
   'sprint-folder',
   'space',
   'list',
@@ -12,7 +12,7 @@ const VALID_TYPES: ReadonlySet<string> = new Set<FavoriteType>([
 ])
 
 export function validateFavoriteType(type: string): asserts type is FavoriteType {
-  if (!VALID_TYPES.has(type)) {
+  if (!VALID_TYPES.has(type as FavoriteType)) {
     throw new Error(`Invalid favorite type: "${type}". Valid types: ${[...VALID_TYPES].join(', ')}`)
   }
 }

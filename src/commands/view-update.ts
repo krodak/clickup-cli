@@ -2,14 +2,14 @@ import { ClickUpClient } from '../api.js'
 import type { View } from '../api.js'
 import type { Config } from '../config.js'
 
-const VALID_GROUP_BY_FIELDS = [
+const VALID_GROUP_BY_FIELDS = new Set<string>([
   'status',
   'assignee',
   'priority',
   'due_date',
   'tag',
   'sprint',
-] as const
+])
 
 interface ViewUpdateOptions {
   name?: string
@@ -31,9 +31,9 @@ export async function updateView(
   const payload: Record<string, unknown> = {}
   if (opts.name) payload.name = opts.name
   if (opts.groupBy) {
-    if (!VALID_GROUP_BY_FIELDS.includes(opts.groupBy as (typeof VALID_GROUP_BY_FIELDS)[number])) {
+    if (!VALID_GROUP_BY_FIELDS.has(opts.groupBy)) {
       throw new Error(
-        `Invalid group-by field "${opts.groupBy}". Valid fields: ${VALID_GROUP_BY_FIELDS.join(', ')}`,
+        `Invalid group-by field "${opts.groupBy}". Valid fields: ${[...VALID_GROUP_BY_FIELDS].join(', ')}`,
       )
     }
     payload.grouping = { field: opts.groupBy }
