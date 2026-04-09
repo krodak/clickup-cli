@@ -104,4 +104,37 @@ describe('assignTask', () => {
     expect(result.name).toBe('Test Task')
     expect(result.assignees).toEqual([{ id: 42, username: 'me' }])
   })
+
+  it('assigns multiple users via comma-separated --to', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { to: '10,20,30' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      assignees: { add: [10, 20, 30] },
+    })
+  })
+
+  it('removes multiple users via comma-separated --remove', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { remove: '11,22' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      assignees: { rem: [11, 22] },
+    })
+  })
+
+  it('supports "me" in a comma-separated list', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { to: 'me,99' })
+    expect(mockGetMe).toHaveBeenCalled()
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      assignees: { add: [42, 99] },
+    })
+  })
+
+  it('handles whitespace around commas', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { to: ' 10 , 20 ,30 ', remove: '1 , 2' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      assignees: { add: [10, 20, 30], rem: [1, 2] },
+    })
+  })
 })

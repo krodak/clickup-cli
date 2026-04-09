@@ -702,21 +702,23 @@ cup archive abc123 --json
 
 ### `cup assign <id>`
 
-Assign or unassign users from a task. Supports `me` as shorthand for your user ID.
+Assign or unassign users from a task. Supports `me` as shorthand for your user ID. Both `--to` and `--remove` accept a comma-separated list of user IDs to add or remove multiple assignees in a single call.
 
 ```bash
 cup assign abc123 --to 12345
 cup assign abc123 --to me
 cup assign abc123 --remove 12345
 cup assign abc123 --to me --remove 67890
-cup assign abc123 --to me --json
+cup assign abc123 --to user1,user2,user3
+cup assign abc123 --remove user1,user2
+cup assign abc123 --to "me,12345" --json
 ```
 
-| Flag                | Description                       |
-| ------------------- | --------------------------------- |
-| `--to <userId>`     | Add assignee (user ID or `me`)    |
-| `--remove <userId>` | Remove assignee (user ID or `me`) |
-| `--json`            | Force JSON output                 |
+| Flag                 | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `--to <userIds>`     | Add assignee(s) (comma-separated, or `me`)       |
+| `--remove <userIds>` | Remove assignee(s) (comma-separated, or `me`)    |
+| `--json`             | Force JSON output                                |
 
 ### `cup depend <id>`
 

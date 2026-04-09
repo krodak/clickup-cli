@@ -9,6 +9,13 @@ interface AssignOptions {
   json?: boolean
 }
 
+function parseIdList(value: string): string[] {
+  return value
+    .split(',')
+    .map(v => v.trim())
+    .filter(v => v.length > 0)
+}
+
 export async function assignTask(
   config: Config,
   taskId: string,
@@ -24,10 +31,14 @@ export async function assignTask(
   const rem: number[] = []
 
   if (opts.to) {
-    add.push(await resolveAssigneeId(client, opts.to))
+    for (const value of parseIdList(opts.to)) {
+      add.push(await resolveAssigneeId(client, value))
+    }
   }
   if (opts.remove) {
-    rem.push(await resolveAssigneeId(client, opts.remove))
+    for (const value of parseIdList(opts.remove)) {
+      rem.push(await resolveAssigneeId(client, value))
+    }
   }
 
   return client.updateTask(taskId, {
