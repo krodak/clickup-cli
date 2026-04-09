@@ -32,7 +32,7 @@ describe('listFolders', () => {
       { id: 'f1', name: 'Sprint Folder', lists: [{ id: 'l1', name: 'Sprint 1' }] },
       { id: 'f2', name: 'Backlog', lists: [{ id: 'l2', name: 'Backlog Items' }] },
     ])
-    expect(mockGetFolders).toHaveBeenCalledWith('s1')
+    expect(mockGetFolders).toHaveBeenCalledWith('s1', undefined)
     expect(mockGetFolderLists).toHaveBeenCalledTimes(2)
   })
 
@@ -53,6 +53,13 @@ describe('listFolders', () => {
     const { listFolders } = await import('../../../src/commands/folders.js')
     const result = await listFolders(mockConfig, 's1', 'nonexistent')
     expect(result).toEqual([])
+  })
+
+  it('passes archived flag through to getFolders', async () => {
+    mockGetFolders.mockResolvedValue([])
+    const { listFolders } = await import('../../../src/commands/folders.js')
+    await listFolders(mockConfig, 's1', undefined, true)
+    expect(mockGetFolders).toHaveBeenCalledWith('s1', true)
   })
 })
 

@@ -102,4 +102,14 @@ describe('listSpaces', () => {
     expect(parsed).toHaveLength(1)
     expect(parsed[0]!.name).toBe('Engineering')
   })
+
+  it('passes archived flag through to getSpaces', async () => {
+    mockShouldOutputJson.mockReturnValue(true)
+    mockIsTTY.mockReturnValue(false)
+
+    const { listSpaces } = await import('../../../src/commands/spaces.js')
+    await listSpaces(config, { archived: true, json: true })
+
+    expect(mockGetSpaces).toHaveBeenCalledWith('team1', true)
+  })
 })

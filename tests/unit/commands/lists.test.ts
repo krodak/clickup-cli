@@ -94,6 +94,19 @@ describe('fetchLists', () => {
     expect(result[1]!.folder).toBe('Folder B')
     expect(result[2]!.folder).toBe('Folder B')
   })
+
+  it('passes archived flag through to all list fetches', async () => {
+    mockGetLists.mockResolvedValue([])
+    mockGetFolders.mockResolvedValue([{ id: 'f1', name: 'Folder A' }])
+    mockGetFolderLists.mockResolvedValue([])
+
+    const { fetchLists } = await import('../../../src/commands/lists.js')
+    await fetchLists({ apiToken: 'pk_t', teamId: 'team1' }, 'space1', { archived: true })
+
+    expect(mockGetLists).toHaveBeenCalledWith('space1', true)
+    expect(mockGetFolders).toHaveBeenCalledWith('space1', true)
+    expect(mockGetFolderLists).toHaveBeenCalledWith('f1', true)
+  })
 })
 
 describe('printLists', () => {
