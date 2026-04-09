@@ -255,10 +255,7 @@ describe('createTask', () => {
 
   it('omits custom_fields from the payload when not provided', async () => {
     const { createTask } = await import('../../../src/commands/create.js')
-    await createTask(
-      { apiToken: 'pk_t', teamId: 'tm_1' },
-      { list: 'l1', name: 'Plain task' },
-    )
+    await createTask({ apiToken: 'pk_t', teamId: 'tm_1' }, { list: 'l1', name: 'Plain task' })
     const payload = mockCreateTask.mock.calls.at(-1)?.[1] as Record<string, unknown>
     expect(payload).toEqual({ name: 'Plain task' })
   })

@@ -64,9 +64,7 @@ export async function bulkAssign(
   const client = new ClickUpClient(config)
   const numericId = await resolveAssigneeId(client, userIdOrMe)
   const payload =
-    action === 'add'
-      ? { assignees: { add: [numericId] } }
-      : { assignees: { rem: [numericId] } }
+    action === 'add' ? { assignees: { add: [numericId] } } : { assignees: { rem: [numericId] } }
   const outcomes = await runInBatches(taskIds, BULK_CONCURRENCY, id =>
     client.updateTask(id, payload),
   )

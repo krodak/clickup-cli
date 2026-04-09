@@ -497,9 +497,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             opts.list = listId
           }
           if (!listId) {
-            throw new Error(
-              '--field requires --list or --parent to resolve custom field names',
-            )
+            throw new Error('--field requires --list or --parent to resolve custom field names')
           }
           const client = new ClickUpClient(config)
           const fields = await client.getListCustomFields(listId)
