@@ -123,7 +123,14 @@ import {
 import { listMembers, formatMembers, formatMembersMarkdown } from './commands/members.js'
 import { listFields, formatFields, formatFieldsMarkdown } from './commands/fields.js'
 import { duplicateTask } from './commands/duplicate.js'
-import { bulkUpdateStatus, bulkAssign, bulkDueDate, bulkTag } from './commands/bulk.js'
+import {
+  bulkUpdateStatus,
+  bulkAssign,
+  bulkDueDate,
+  bulkTag,
+  bulkPriority,
+  bulkField,
+} from './commands/bulk.js'
 import type { BulkResult } from './commands/bulk.js'
 import {
   listGoals,
@@ -1695,6 +1702,35 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           outputBulkResult(result, opts.json ?? false, `tag ${action}`)
         },
       ),
+    )
+
+  bulkCmd
+    .command('priority <taskIds...>')
+    .description('Bulk set priority on tasks (urgent/high/normal/low or 1-4)')
+    .requiredOption('--to <priority>', 'Priority to set (urgent, high, normal, low, or 1-4)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskIds: string[], opts: { to: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await bulkPriority(config, opts.to, taskIds)
+        outputBulkResult(result, opts.json ?? false, `priority ${opts.to}`)
+      }),
+    )
+
+  bulkCmd
+    .command('field <taskIds...>')
+    .description('Bulk set the same custom field value on tasks')
+    .requiredOption('--set <nameAndValue...>', 'Set field: --set "Field Name" value')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskIds: string[], opts: { set: string[]; json?: boolean }) => {
+        if (opts.set.length !== 2) {
+          throw new Error('--set requires exactly two arguments: field name and value')
+        }
+        const config = loadConfig(getProfileName())
+        const result = await bulkField(config, opts.set[0]!, opts.set[1]!, taskIds)
+        outputBulkResult(result, opts.json ?? false, `field "${opts.set[0]}"`)
+      }),
     )
 
   program

@@ -36,7 +36,7 @@ const SUPPORTED_TYPES = new Set([
   'users',
 ])
 
-function findFieldByName(fields: CustomField[], name: string): CustomField {
+export function findFieldByName(fields: CustomField[], name: string): CustomField {
   const lower = name.toLowerCase()
   const match = fields.find(f => f.name.toLowerCase() === lower)
   if (!match) {
@@ -46,7 +46,7 @@ function findFieldByName(fields: CustomField[], name: string): CustomField {
   return match
 }
 
-function parseFieldValue(field: CustomField, rawValue: string): unknown {
+export function parseFieldValue(field: CustomField, rawValue: string): unknown {
   if (!SUPPORTED_TYPES.has(field.type)) {
     throw new Error(
       `Field type "${field.type}" is not supported. Supported types: ${[...SUPPORTED_TYPES].join(', ')}`,
