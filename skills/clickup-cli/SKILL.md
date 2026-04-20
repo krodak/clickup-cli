@@ -173,8 +173,8 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup checklist view <id>`                                                                                                                                                                                                                                       | View checklists on a task                                                            |
 | `cup checklist create <id> <name>`                                                                                                                                                                                                                              | Create a checklist                                                                   |
 | `cup checklist delete <checklistId>`                                                                                                                                                                                                                            | Delete a checklist                                                                   |
-| `cup checklist add-item <checklistId> <name>`                                                                                                                                                                                                                   | Add item to checklist                                                                |
-| `cup checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id]`                                                                                                                                                         | Edit checklist item                                                                  |
+| `cup checklist add-item <checklistId> <name> [--parent itemId]`                                                                                                                                                                                                 | Add item to checklist (nest under parent via `--parent`)                             |
+| `cup checklist edit-item <checklistId> <itemId> [--name n] [--resolved] [--unresolved] [--assignee id] [--parent itemId\|null]`                                                                                                                                 | Edit checklist item (reparent with `--parent`, use `"null"` to unnest)               |
 | `cup checklist delete-item <checklistId> <itemId>`                                                                                                                                                                                                              | Delete checklist item                                                                |
 | `cup time start <taskId> [-d desc]`                                                                                                                                                                                                                             | Start timer                                                                          |
 | `cup time stop`                                                                                                                                                                                                                                                 | Stop running timer                                                                   |
@@ -305,7 +305,9 @@ cup field abc123def --set "Story Points" 5
 cup tag abc123def --add "bug,frontend"
 cup checklist create abc123def "QA Steps"
 cup checklist add-item <clId> "Run unit tests"
+cup checklist add-item <clId> "Sub step" --parent <itemId>           # nest under parent
 cup checklist edit-item <clId> <itemId> --resolved
+cup checklist edit-item <clId> <itemId> --parent <newParent>         # reparent (use "null" to unnest)
 cup link abc123 def456
 cup attach abc123def ./screenshot.png
 cup time start abc123def -d "Working on feature"

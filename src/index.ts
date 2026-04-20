@@ -1232,17 +1232,20 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   checklistCmd
     .command('add-item <checklistId> <name>')
     .description('Add an item to a checklist')
+    .option('--parent <itemId>', 'Nest under a parent checklist item ID')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (checklistId: string, name: string, opts: { json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const result = await addChecklistItem(config, checklistId, name)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(`Added item "${name}" to checklist ${checklistId}`)
-        }
-      }),
+      wrapAction(
+        async (checklistId: string, name: string, opts: { parent?: string; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const result = await addChecklistItem(config, checklistId, name, opts.parent)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Added item "${name}" to checklist ${checklistId}`)
+          }
+        },
+      ),
     )
 
   checklistCmd
@@ -1252,6 +1255,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--resolved', 'Mark item as resolved')
     .option('--unresolved', 'Mark item as unresolved')
     .option('--assignee <userId>', 'Assign user by ID (use "null" to unassign)')
+    .option(
+      '--parent <itemId>',
+      'Reparent item under another checklist item ID (use "null" to unnest)',
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1263,11 +1270,17 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             resolved?: boolean
             unresolved?: boolean
             assignee?: string
+            parent?: string
             json?: boolean
           },
         ) => {
           const config = loadConfig(getProfileName())
-          const updates: { name?: string; resolved?: boolean; assignee?: number | null } = {}
+          const updates: {
+            name?: string
+            resolved?: boolean
+            assignee?: number | null
+            parent?: string | null
+          } = {}
           if (opts.name) updates.name = opts.name
           if (opts.resolved) updates.resolved = true
           if (opts.unresolved) updates.resolved = false
@@ -1276,6 +1289,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
               opts.assignee === 'null'
                 ? null
                 : parseOptionalNumberOption(opts.assignee, '--assignee')
+          }
+          if (opts.parent !== undefined) {
+            updates.parent = opts.parent === 'null' ? null : opts.parent
           }
           const result = await editChecklistItem(config, checklistId, checklistItemId, updates)
           if (shouldOutputJson(opts.json ?? false)) {

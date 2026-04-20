@@ -108,8 +108,22 @@ describe('addChecklistItem', () => {
 
     const { addChecklistItem } = await import('../../../src/commands/checklist.js')
     const result = await addChecklistItem(config, 'cl1', 'Step 1')
-    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Step 1')
+    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Step 1', undefined)
     expect(result).toEqual(checklist)
+  })
+
+  it('forwards parent item ID when provided', async () => {
+    const checklist = {
+      id: 'cl1',
+      name: 'QA',
+      orderindex: 0,
+      items: [{ id: 'item1', name: 'Sub step', resolved: false, orderindex: 0 }],
+    }
+    mockCreateChecklistItem.mockResolvedValue(checklist)
+
+    const { addChecklistItem } = await import('../../../src/commands/checklist.js')
+    await addChecklistItem(config, 'cl1', 'Sub step', 'parent1')
+    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Sub step', 'parent1')
   })
 })
 
@@ -177,6 +191,38 @@ describe('formatChecklists', () => {
     expect(output).toContain('i1')
     expect(output).toContain('i2')
   })
+
+  it('renders nested children with deeper indentation and includes them in totals', async () => {
+    const { formatChecklists } = await import('../../../src/commands/checklist.js')
+    const checklists = [
+      {
+        id: 'cl1',
+        name: 'QA Checks',
+        orderindex: 0,
+        items: [
+          {
+            id: 'p1',
+            name: 'Parent',
+            resolved: false,
+            orderindex: 0,
+            children: [
+              { id: 'c1', name: 'Child A', resolved: true, orderindex: 0 },
+              { id: 'c2', name: 'Child B', resolved: false, orderindex: 1 },
+            ],
+          },
+        ],
+      },
+    ]
+    const output = formatChecklists(checklists)
+    expect(output).toContain('1/3')
+    expect(output).toContain('Parent')
+    expect(output).toContain('Child A')
+    expect(output).toContain('Child B')
+    const parentLine = output.split('\n').find(l => l.includes('Parent')) ?? ''
+    const childLine = output.split('\n').find(l => l.includes('Child A')) ?? ''
+    const leading = (s: string) => s.match(/^\s*/)?.[0].length ?? 0
+    expect(leading(childLine)).toBeGreaterThan(leading(parentLine))
+  })
 })
 
 describe('formatChecklistsMarkdown', () => {
@@ -224,5 +270,29 @@ describe('formatChecklistsMarkdown', () => {
     expect(output).toContain('### First (0/1)')
     expect(output).toContain('### Second (1/1)')
     expect(output).toContain('\n\n')
+  })
+
+  it('renders nested children as indented markdown list items', async () => {
+    const { formatChecklistsMarkdown } = await import('../../../src/commands/checklist.js')
+    const checklists = [
+      {
+        id: 'cl1',
+        name: 'QA Checks',
+        orderindex: 0,
+        items: [
+          {
+            id: 'p1',
+            name: 'Parent',
+            resolved: false,
+            orderindex: 0,
+            children: [{ id: 'c1', name: 'Child A', resolved: true, orderindex: 0 }],
+          },
+        ],
+      },
+    ]
+    const output = formatChecklistsMarkdown(checklists)
+    expect(output).toContain('### QA Checks (1/2)')
+    expect(output).toContain('- [ ] Parent')
+    expect(output).toContain('  - [x] Child A')
   })
 })
