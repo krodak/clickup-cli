@@ -187,6 +187,7 @@ export interface ChecklistItem {
   assignee?: { id: number; username: string } | null
   orderindex: number
   parent?: string | null
+  children?: ChecklistItem[]
 }
 
 export interface Checklist {
