@@ -746,6 +746,24 @@ describe('checklist API methods', () => {
     )
   })
 
+  it('createChecklistItem includes parent in body when provided', async () => {
+    const checklist = {
+      id: 'cl1',
+      name: 'QA',
+      orderindex: 0,
+      items: [{ id: 'i1', name: 'Sub', resolved: false, orderindex: 0 }],
+    }
+    mockFetch.mockReturnValue(mockResponse({ checklist }))
+    await client.createChecklistItem('cl1', 'Sub', 'parent1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/checklist/cl1/checklist_item'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ name: 'Sub', parent: 'parent1' }),
+      }),
+    )
+  })
+
   it('editChecklistItem sends PUT to checklist item endpoint', async () => {
     const checklist = {
       id: 'cl1',

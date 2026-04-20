@@ -868,7 +868,9 @@ cup checklist view abc123                           # view all checklists on a t
 cup checklist create abc123 "QA Checklist"           # add a checklist
 cup checklist delete <checklistId>                   # remove a checklist
 cup checklist add-item <checklistId> "Run tests"     # add an item
+cup checklist add-item <clId> "Sub step" --parent <itemId>   # nest under parent
 cup checklist edit-item <clId> <itemId> --resolved   # mark item done
+cup checklist edit-item <clId> <itemId> --parent <newParent> # reparent (use "null" to unnest)
 cup checklist delete-item <clId> <itemId>            # remove an item
 ```
 
@@ -877,11 +879,11 @@ cup checklist delete-item <clId> <itemId>            # remove an item
 | `view`        | `<taskId>`                       | Show all checklists   |
 | `create`      | `<taskId> <name>`                | Create a checklist    |
 | `delete`      | `<checklistId>`                  | Delete a checklist    |
-| `add-item`    | `<checklistId> <name>`           | Add checklist item    |
+| `add-item`    | `<checklistId> <name> [flags]`   | Add checklist item    |
 | `edit-item`   | `<checklistId> <itemId> [flags]` | Edit checklist item   |
 | `delete-item` | `<checklistId> <itemId>`         | Delete checklist item |
 
-`edit-item` flags: `--name <text>`, `--resolved`, `--unresolved`, `--assignee <userId>`. All subcommands support `--json`.
+`add-item` flags: `--parent <itemId>` to nest under a parent item. `edit-item` flags: `--name <text>`, `--resolved`, `--unresolved`, `--assignee <userId>`, `--parent <itemId>` (pass `"null"` to unnest). All subcommands support `--json`.
 
 Checklists are also shown inline in `cup task <id>` detail view.
 
