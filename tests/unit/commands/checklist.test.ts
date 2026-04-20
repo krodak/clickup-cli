@@ -108,8 +108,22 @@ describe('addChecklistItem', () => {
 
     const { addChecklistItem } = await import('../../../src/commands/checklist.js')
     const result = await addChecklistItem(config, 'cl1', 'Step 1')
-    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Step 1')
+    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Step 1', undefined)
     expect(result).toEqual(checklist)
+  })
+
+  it('forwards parent item ID when provided', async () => {
+    const checklist = {
+      id: 'cl1',
+      name: 'QA',
+      orderindex: 0,
+      items: [{ id: 'item1', name: 'Sub step', resolved: false, orderindex: 0 }],
+    }
+    mockCreateChecklistItem.mockResolvedValue(checklist)
+
+    const { addChecklistItem } = await import('../../../src/commands/checklist.js')
+    await addChecklistItem(config, 'cl1', 'Sub step', 'parent1')
+    expect(mockCreateChecklistItem).toHaveBeenCalledWith('cl1', 'Sub step', 'parent1')
   })
 })
 

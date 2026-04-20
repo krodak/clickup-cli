@@ -31,16 +31,22 @@ export async function addChecklistItem(
   config: Config,
   checklistId: string,
   name: string,
+  parent?: string | null,
 ): Promise<Checklist> {
   const client = new ClickUpClient(config)
-  return client.createChecklistItem(checklistId, name)
+  return client.createChecklistItem(checklistId, name, parent)
 }
 
 export async function editChecklistItem(
   config: Config,
   checklistId: string,
   checklistItemId: string,
-  updates: { name?: string; resolved?: boolean; assignee?: number | null },
+  updates: {
+    name?: string
+    resolved?: boolean
+    assignee?: number | null
+    parent?: string | null
+  },
 ): Promise<Checklist> {
   const client = new ClickUpClient(config)
   return client.editChecklistItem(checklistId, checklistItemId, updates)

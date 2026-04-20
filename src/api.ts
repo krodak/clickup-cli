@@ -974,10 +974,16 @@ export class ClickUpClient {
     await this.request<Record<string, never>>(`/checklist/${checklistId}`, { method: 'DELETE' })
   }
 
-  async createChecklistItem(checklistId: string, name: string): Promise<Checklist> {
+  async createChecklistItem(
+    checklistId: string,
+    name: string,
+    parent?: string | null,
+  ): Promise<Checklist> {
+    const body: Record<string, unknown> = { name }
+    if (parent !== undefined) body.parent = parent
     const data = await this.request<{ checklist: Checklist }>(
       `/checklist/${checklistId}/checklist_item`,
-      { method: 'POST', body: JSON.stringify({ name }) },
+      { method: 'POST', body: JSON.stringify(body) },
     )
     return expectRecordField(
       data as Record<string, unknown>,
@@ -989,7 +995,12 @@ export class ClickUpClient {
   async editChecklistItem(
     checklistId: string,
     checklistItemId: string,
-    updates: { name?: string; resolved?: boolean; assignee?: number | null },
+    updates: {
+      name?: string
+      resolved?: boolean
+      assignee?: number | null
+      parent?: string | null
+    },
   ): Promise<Checklist> {
     const data = await this.request<{ checklist: Checklist }>(
       `/checklist/${checklistId}/checklist_item/${checklistItemId}`,
