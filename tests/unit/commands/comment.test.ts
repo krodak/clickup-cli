@@ -18,7 +18,7 @@ describe('postComment', () => {
   it('posts comment and returns id', async () => {
     const { postComment } = await import('../../../src/commands/comment.js')
     const result = await postComment({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'hello world')
-    expect(mockPostComment).toHaveBeenCalledWith('t1', 'hello world', undefined)
+    expect(mockPostComment).toHaveBeenCalledWith('t1', 'hello world', undefined, expect.any(Array))
     expect(result.id).toBe('c1')
   })
 
@@ -39,6 +39,6 @@ describe('postComment', () => {
   it('passes notifyAll to the API client', async () => {
     const { postComment } = await import('../../../src/commands/comment.js')
     await postComment({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'ping everyone', true)
-    expect(mockPostComment).toHaveBeenCalledWith('t1', 'ping everyone', true)
+    expect(mockPostComment).toHaveBeenCalledWith('t1', 'ping everyone', true, expect.any(Array))
   })
 })

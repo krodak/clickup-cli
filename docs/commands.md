@@ -654,23 +654,24 @@ cup field-create "Contact Email" -t email --json
 
 ### `cup comment <id>`
 
-Post a comment on a task.
+Post a comment on a task. Markdown formatting in the message is automatically converted to ClickUp rich text (bold, italic, headers, lists, code blocks, links, etc.).
 
 ```bash
 cup comment abc123 -m "Addressed in PR #42"
+cup comment abc123 -m "## Results\n\n**Passed**: 15/15\n- Unit tests\n- Integration"
 cup comment abc123 -m "Done" --notify-all
 cup comment abc123 -m "Done" --json
 ```
 
-| Flag            | Required | Description               |
-| --------------- | -------- | ------------------------- |
-| `-m, --message` | yes      | Comment text              |
-| `--notify-all`  | no       | Notify all task assignees |
-| `--json`        | no       | Force JSON output         |
+| Flag            | Required | Description                            |
+| --------------- | -------- | -------------------------------------- |
+| `-m, --message` | yes      | Comment text (markdown auto-converted) |
+| `--notify-all`  | no       | Notify all task assignees              |
+| `--json`        | no       | Force JSON output                      |
 
 ### `cup comment-edit <commentId>`
 
-Edit an existing comment on a task. Provide `--message`, `--resolved`, or `--unresolved` (or any combination).
+Edit an existing comment on a task. Provide `--message`, `--resolved`, or `--unresolved` (or any combination). Markdown in the message is automatically converted to rich text.
 
 ```bash
 cup comment-edit <commentId> -m "Updated text"
@@ -716,18 +717,18 @@ cup replies 12345 --json
 
 ### `cup reply <commentId>`
 
-Reply to a comment.
+Reply to a comment. Markdown in the message is automatically converted to rich text.
 
 ```bash
 cup reply 12345 -m "Agreed, will fix"
 cup reply 12345 -m "Done" --json
 ```
 
-| Flag            | Required | Description               |
-| --------------- | -------- | ------------------------- |
-| `-m, --message` | yes      | Reply text                |
-| `--notify-all`  | no       | Notify all task assignees |
-| `--json`        | no       | Force JSON output         |
+| Flag            | Required | Description                          |
+| --------------- | -------- | ------------------------------------ |
+| `-m, --message` | yes      | Reply text (markdown auto-converted) |
+| `--notify-all`  | no       | Notify all task assignees            |
+| `--json`        | no       | Force JSON output                    |
 
 ### `cup archive <taskId>`
 

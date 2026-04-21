@@ -1,5 +1,6 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
+import { markdownToCommentBlocks } from './comment-format.js'
 
 export async function editComment(
   config: Config,
@@ -12,5 +13,6 @@ export async function editComment(
   }
   if (text !== undefined && !text.trim()) throw new Error('Comment text cannot be empty')
   const client = new ClickUpClient(config)
-  await client.updateComment(commentId, text ?? '', resolved)
+  const blocks = text !== undefined ? markdownToCommentBlocks(text) : undefined
+  await client.updateComment(commentId, text ?? '', resolved, blocks)
 }

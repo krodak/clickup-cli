@@ -3,6 +3,7 @@ import { ClickUpClient } from '../api.js'
 import type { Comment } from '../api.js'
 import type { Config } from '../config.js'
 import { formatTimestamp } from '../date.js'
+import { markdownToCommentBlocks } from './comment-format.js'
 
 export async function getReplies(config: Config, commentId: string): Promise<Comment[]> {
   const client = new ClickUpClient(config)
@@ -17,7 +18,8 @@ export async function createReply(
 ): Promise<void> {
   if (!text.trim()) throw new Error('Reply text cannot be empty')
   const client = new ClickUpClient(config)
-  await client.createThreadedComment(commentId, text, notifyAll)
+  const blocks = markdownToCommentBlocks(text)
+  await client.createThreadedComment(commentId, text, notifyAll, blocks)
 }
 
 export function formatReplies(replies: Comment[]): string {
