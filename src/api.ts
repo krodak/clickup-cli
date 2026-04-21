@@ -1,3 +1,4 @@
+import type { CommentBlock } from './commands/comment-format.js'
 import { isRecord } from './util/guards.js'
 
 const BASE_URL = 'https://api.clickup.com/api/v2'
@@ -572,8 +573,11 @@ export class ClickUpClient {
     taskId: string,
     commentText: string,
     notifyAll?: boolean,
+    richBlocks?: CommentBlock[],
   ): Promise<{ id: string }> {
-    const body: Record<string, unknown> = { comment_text: commentText }
+    const body: Record<string, unknown> = richBlocks
+      ? { comment: richBlocks }
+      : { comment_text: commentText }
     if (notifyAll) body.notify_all = true
     return this.request<{ id: string }>(this.taskPath(taskId, '/comment'), {
       method: 'POST',
@@ -907,8 +911,15 @@ export class ClickUpClient {
     })
   }
 
-  async updateComment(commentId: string, text: string, resolved?: boolean): Promise<void> {
-    const body: Record<string, unknown> = { comment_text: text }
+  async updateComment(
+    commentId: string,
+    text: string,
+    resolved?: boolean,
+    richBlocks?: CommentBlock[],
+  ): Promise<void> {
+    const body: Record<string, unknown> = richBlocks
+      ? { comment: richBlocks }
+      : { comment_text: text }
     if (resolved !== undefined) body.resolved = resolved
     await this.request<Record<string, never>>(`/comment/${commentId}`, {
       method: 'PUT',
@@ -929,8 +940,15 @@ export class ClickUpClient {
     )
   }
 
-  async createThreadedComment(commentId: string, text: string, notifyAll?: boolean): Promise<void> {
-    const body: Record<string, unknown> = { comment_text: text }
+  async createThreadedComment(
+    commentId: string,
+    text: string,
+    notifyAll?: boolean,
+    richBlocks?: CommentBlock[],
+  ): Promise<void> {
+    const body: Record<string, unknown> = richBlocks
+      ? { comment: richBlocks }
+      : { comment_text: text }
     if (notifyAll) body.notify_all = true
     await this.request<Record<string, never>>(`/comment/${commentId}/reply`, {
       method: 'POST',

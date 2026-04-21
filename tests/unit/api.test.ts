@@ -660,6 +660,78 @@ describe('updateComment', () => {
       }),
     )
   })
+
+  it('sends comment blocks when richBlocks provided', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const blocks = [{ text: 'bold', attributes: { bold: true } }, { text: '\n' }]
+    await client.updateComment('c1', 'bold', undefined, blocks)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/comment/c1'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ comment: blocks }),
+      }),
+    )
+  })
+})
+
+describe('postComment rich blocks', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends comment blocks when richBlocks provided', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c1' }))
+    const blocks = [{ text: 'Title' }, { text: '\n', attributes: { header: 2 } }]
+    await client.postComment('t1', '## Title', false, blocks)
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.comment).toEqual(blocks)
+    expect(body.comment_text).toBeUndefined()
+  })
+
+  it('sends comment_text when richBlocks not provided', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c1' }))
+    await client.postComment('t1', 'plain text')
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.comment_text).toBe('plain text')
+    expect(body.comment).toBeUndefined()
+  })
+})
+
+describe('createThreadedComment rich blocks', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends comment blocks when richBlocks provided', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const blocks = [{ text: 'reply', attributes: { bold: true } }, { text: '\n' }]
+    await client.createThreadedComment('c1', '**reply**', false, blocks)
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.comment).toEqual(blocks)
+    expect(body.comment_text).toBeUndefined()
+  })
 })
 
 describe('getListCustomFields', () => {
