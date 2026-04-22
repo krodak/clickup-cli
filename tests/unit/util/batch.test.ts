@@ -108,10 +108,10 @@ describe('runInBatches', () => {
   })
 
   it('wraps non-Error rejections in Error with cause', async () => {
-    const rejectWith = async <T>(reason: unknown): Promise<T> => {
-      return Promise.reject(reason as Error)
-    }
-    const outcomes = await runInBatches(['a'], 1, () => rejectWith<string>('plain string'))
+    const outcomes = await runInBatches(['a'], 1, () =>
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- intentionally testing non-Error rejection handling
+      Promise.reject('plain string'),
+    )
     expect(outcomes).toHaveLength(1)
     const outcome = outcomes[0]!
     expect(outcome.ok).toBe(false)

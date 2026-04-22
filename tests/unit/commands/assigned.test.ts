@@ -43,7 +43,7 @@ describe('groupByStatus', () => {
       makeTask('t2', 'to do'),
       makeTask('t3', 'in progress'),
     ]
-    const groups = groupByStatus(tasks as never[], false)
+    const groups = groupByStatus(tasks, false)
     expect(groups).toHaveLength(2)
     expect(groups[0]!.status).toBe('in progress')
     expect(groups[0]!.tasks).toHaveLength(2)
@@ -59,7 +59,7 @@ describe('groupByStatus', () => {
       makeTask('t3', 'closed'),
       makeTask('t4', 'complete'),
     ]
-    const groups = groupByStatus(tasks as never[], false)
+    const groups = groupByStatus(tasks, false)
     expect(groups).toHaveLength(1)
     expect(groups[0]!.status).toBe('in progress')
   })
@@ -67,7 +67,7 @@ describe('groupByStatus', () => {
   it('includes closed statuses when includeClosed is true', async () => {
     const { groupByStatus } = await import('../../../src/commands/assigned.js')
     const tasks = [makeTask('t1', 'in progress'), makeTask('t2', 'done'), makeTask('t3', 'closed')]
-    const groups = groupByStatus(tasks as never[], true)
+    const groups = groupByStatus(tasks, true)
     expect(groups).toHaveLength(3)
   })
 
@@ -79,7 +79,7 @@ describe('groupByStatus', () => {
       makeTask('t3', 'closed'),
       makeTask('t4', 'to do'),
     ]
-    const groups = groupByStatus(tasks as never[], true)
+    const groups = groupByStatus(tasks, true)
     const statuses = groups.map(g => g.status)
     expect(statuses.indexOf('in progress')).toBeLessThan(statuses.indexOf('done'))
     expect(statuses.indexOf('to do')).toBeLessThan(statuses.indexOf('closed'))
@@ -93,7 +93,7 @@ describe('groupByStatus', () => {
       makeTask('t3', 'to do'),
       makeTask('t4', 'code review'),
     ]
-    const groups = groupByStatus(tasks as never[], false)
+    const groups = groupByStatus(tasks, false)
     expect(groups.map(g => g.status)).toEqual([
       'code review',
       'in progress',
@@ -109,7 +109,7 @@ describe('groupByStatus', () => {
       makeTask('t2', 'in progress'),
       makeTask('t3', 'done'),
     ]
-    const groups = groupByStatus(tasks as never[], true)
+    const groups = groupByStatus(tasks, true)
     expect(groups.map(g => g.status)).toEqual(['in progress', 'custom status', 'done'])
   })
 

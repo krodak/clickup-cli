@@ -122,7 +122,7 @@ export async function printInbox(
   if (!isTTY()) {
     const mdGroups = TIME_PERIODS.filter(p => groups[p.key].length > 0).map(p => ({
       label: p.label,
-      tasks: groups[p.key] as TaskSummary[],
+      tasks: groups[p.key],
     }))
     console.log(formatGroupedTasksMarkdown(mdGroups))
     return

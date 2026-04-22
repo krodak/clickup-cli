@@ -31,7 +31,7 @@ const makeTask = (id: string, status: string, overrides: Partial<Task> = {}): Ta
     date_updated: String(now),
     date_created: String(now),
     ...overrides,
-  }) as Task
+  })
 
 describe('fetchOverdueTasks', () => {
   beforeEach(() => {
