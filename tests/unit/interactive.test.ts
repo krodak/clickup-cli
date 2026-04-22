@@ -108,17 +108,28 @@ describe('formatCustomFieldValue', () => {
     expect(formatCustomFieldValue(stringFalse)).toBe('No')
   })
 
-  it('formats date as locale string', async () => {
+  it('formats date as local date string', async () => {
     const { formatCustomFieldValue } = await import('../../src/interactive.js')
+
+    //Uses fixed Date instead of a Unix Epoch timestamp to prevent errors when running in UTC-X
+    //negative timezones
+    const localDate = new Date(2024, 0, 1) // local time: Jan 1, 2024
     const field: CustomField = {
       id: 'f1',
       name: 'Target',
       type: 'date',
-      value: 1704067200000,
+      value: localDate.getTime(),
     }
+
     const result = formatCustomFieldValue(field)
-    expect(result).toContain('2024')
-    expect(result).toContain('Jan')
+
+    const expected = new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(localDate)
+
+    expect(result).toBe(expected)
   })
 
   it('returns stringified value for drop_down without type_config options', async () => {
