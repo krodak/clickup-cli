@@ -111,7 +111,7 @@ describe('shouldOutputJson', () => {
   it('returns false when forceJson is false (regardless of TTY)', () => {
     const originalIsTTY = process.stdout.isTTY
     try {
-      process.stdout.isTTY = false as unknown as true
+      process.stdout.isTTY = false
       expect(shouldOutputJson(false)).toBe(false)
     } finally {
       process.stdout.isTTY = originalIsTTY
