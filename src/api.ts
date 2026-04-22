@@ -488,7 +488,7 @@ export class ClickUpClient {
     const data = await this.request<{ user: { id: number; username: string; timezone?: string } }>(
       '/user',
     )
-    const user = expectRecordField(data as Record<string, unknown>, 'user', 'user')
+    const user = expectRecordField(data, 'user', 'user')
     const timezone = typeof user.timezone === 'string' && user.timezone ? user.timezone : undefined
     this.meCache = {
       id: expectNumericField(user, 'id', 'user'),
@@ -510,11 +510,7 @@ export class ClickUpClient {
 
     while (!lastPage && page < MAX_PAGES) {
       const data = await this.request<{ tasks: Task[]; last_page: boolean }>(buildPath(page))
-      const taskPage = expectPaginatedCollectionField<Task>(
-        data as Record<string, unknown>,
-        'tasks',
-        'task page',
-      )
+      const taskPage = expectPaginatedCollectionField<Task>(data, 'tasks', 'task page')
       allTasks.push(...taskPage.items)
       lastPage = taskPage.lastPage
       page++
@@ -587,11 +583,7 @@ export class ClickUpClient {
 
   async getTaskComments(taskId: string): Promise<Comment[]> {
     const data = await this.request<{ comments: Comment[] }>(this.taskPath(taskId, '/comment'))
-    return readCollectionField<Comment>(
-      data as Record<string, unknown>,
-      'comments',
-      'task comments',
-    )
+    return readCollectionField<Comment>(data, 'comments', 'task comments')
   }
 
   async getTasksFromList(
@@ -624,7 +616,7 @@ export class ClickUpClient {
 
   async getTeams(): Promise<Team[]> {
     const data = await this.request<{ teams: Team[] }>('/team')
-    return readCollectionField<Team>(data as Record<string, unknown>, 'teams', 'teams')
+    return readCollectionField<Team>(data, 'teams', 'teams')
   }
 
   async getSpaceWithStatuses(spaceId: string): Promise<SpaceWithStatuses> {
@@ -656,18 +648,14 @@ export class ClickUpClient {
     const data = await this.request<{ spaces: Space[] }>(
       `/team/${teamId}/space?archived=${archived ? 'true' : 'false'}`,
     )
-    return readCollectionField<Space>(data as Record<string, unknown>, 'spaces', 'spaces')
+    return readCollectionField<Space>(data, 'spaces', 'spaces')
   }
 
   async getCustomTaskTypes(teamId: string): Promise<CustomTaskType[]> {
     const data = await this.request<{ custom_items: CustomTaskType[] }>(
       `/team/${teamId}/custom_item`,
     )
-    return readCollectionField<CustomTaskType>(
-      data as Record<string, unknown>,
-      'custom_items',
-      'custom task types',
-    )
+    return readCollectionField<CustomTaskType>(data, 'custom_items', 'custom task types')
   }
 
   async createList(spaceId: string, name: string): Promise<{ id: string; name: string }> {
@@ -719,21 +707,21 @@ export class ClickUpClient {
     const data = await this.request<{ lists: List[] }>(
       `/space/${spaceId}/list?archived=${archived ? 'true' : 'false'}`,
     )
-    return readCollectionField<List>(data as Record<string, unknown>, 'lists', 'space lists')
+    return readCollectionField<List>(data, 'lists', 'space lists')
   }
 
   async getFolders(spaceId: string, archived = false): Promise<Folder[]> {
     const data = await this.request<{ folders: Folder[] }>(
       `/space/${spaceId}/folder?archived=${archived ? 'true' : 'false'}`,
     )
-    return readCollectionField<Folder>(data as Record<string, unknown>, 'folders', 'space folders')
+    return readCollectionField<Folder>(data, 'folders', 'space folders')
   }
 
   async getFolderLists(folderId: string, archived = false): Promise<List[]> {
     const data = await this.request<{ lists: List[] }>(
       `/folder/${folderId}/list?archived=${archived ? 'true' : 'false'}`,
     )
-    return readCollectionField<List>(data as Record<string, unknown>, 'lists', 'folder lists')
+    return readCollectionField<List>(data, 'lists', 'folder lists')
   }
 
   async getListViews(
@@ -747,17 +735,17 @@ export class ClickUpClient {
 
   async getSpaceViews(spaceId: string): Promise<ViewSummary[]> {
     const data = await this.request<{ views: ViewSummary[] }>(`/space/${spaceId}/view`)
-    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+    return readCollectionField<ViewSummary>(data, 'views', 'views')
   }
 
   async getFolderViews(folderId: string): Promise<ViewSummary[]> {
     const data = await this.request<{ views: ViewSummary[] }>(`/folder/${folderId}/view`)
-    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+    return readCollectionField<ViewSummary>(data, 'views', 'views')
   }
 
   async getWorkspaceViews(teamId: string): Promise<ViewSummary[]> {
     const data = await this.request<{ views: ViewSummary[] }>(`/team/${teamId}/view`)
-    return readCollectionField<ViewSummary>(data as Record<string, unknown>, 'views', 'views')
+    return readCollectionField<ViewSummary>(data, 'views', 'views')
   }
 
   async getViewTasks(viewId: string): Promise<Task[]> {
@@ -766,7 +754,7 @@ export class ClickUpClient {
 
   async getView(viewId: string): Promise<View> {
     const data = await this.request<{ view: View }>(`/view/${viewId}`)
-    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
+    return expectRecordField(data, 'view', 'view') as unknown as View
   }
 
   async createListView(
@@ -777,7 +765,7 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify(payload),
     })
-    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
+    return expectRecordField(data, 'view', 'view') as unknown as View
   }
 
   async updateView(viewId: string, payload: Record<string, unknown>): Promise<View> {
@@ -785,7 +773,7 @@ export class ClickUpClient {
       method: 'PUT',
       body: JSON.stringify(payload),
     })
-    return expectRecordField(data as Record<string, unknown>, 'view', 'view') as unknown as View
+    return expectRecordField(data, 'view', 'view') as unknown as View
   }
 
   async deleteView(viewId: string): Promise<void> {
@@ -794,22 +782,14 @@ export class ClickUpClient {
 
   async getListTemplates(teamId: string): Promise<ListTemplate[]> {
     const data = await this.request<{ templates: ListTemplate[] }>(`/team/${teamId}/list_template`)
-    return readCollectionField<ListTemplate>(
-      data as Record<string, unknown>,
-      'templates',
-      'list templates',
-    )
+    return readCollectionField<ListTemplate>(data, 'templates', 'list templates')
   }
 
   async getFolderTemplates(teamId: string): Promise<FolderTemplate[]> {
     const data = await this.request<{ templates: FolderTemplate[] }>(
       `/team/${teamId}/folder_template`,
     )
-    return readCollectionField<FolderTemplate>(
-      data as Record<string, unknown>,
-      'templates',
-      'folder templates',
-    )
+    return readCollectionField<FolderTemplate>(data, 'templates', 'folder templates')
   }
 
   async createListFromTemplate(
@@ -933,11 +913,7 @@ export class ClickUpClient {
 
   async getThreadedComments(commentId: string): Promise<Comment[]> {
     const data = await this.request<{ comments: Comment[] }>(`/comment/${commentId}/reply`)
-    return readCollectionField<Comment>(
-      data as Record<string, unknown>,
-      'comments',
-      'threaded comments',
-    )
+    return readCollectionField<Comment>(data, 'comments', 'threaded comments')
   }
 
   async createThreadedComment(
@@ -970,11 +946,7 @@ export class ClickUpClient {
 
   async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {
     const data = await this.request<{ fields: CustomFieldDefinition[] }>(`/list/${listId}/field`)
-    return readCollectionField<CustomFieldDefinition>(
-      data as Record<string, unknown>,
-      'fields',
-      'list custom fields',
-    )
+    return readCollectionField<CustomFieldDefinition>(data, 'fields', 'list custom fields')
   }
 
   async createChecklist(taskId: string, name: string): Promise<Checklist> {
@@ -982,11 +954,7 @@ export class ClickUpClient {
       method: 'POST',
       body: JSON.stringify({ name }),
     })
-    return expectRecordField(
-      data as Record<string, unknown>,
-      'checklist',
-      'checklist',
-    ) as unknown as Checklist
+    return expectRecordField(data, 'checklist', 'checklist') as unknown as Checklist
   }
 
   async deleteChecklist(checklistId: string): Promise<void> {
@@ -1004,11 +972,7 @@ export class ClickUpClient {
       `/checklist/${checklistId}/checklist_item`,
       { method: 'POST', body: JSON.stringify(body) },
     )
-    return expectRecordField(
-      data as Record<string, unknown>,
-      'checklist',
-      'checklist',
-    ) as unknown as Checklist
+    return expectRecordField(data, 'checklist', 'checklist') as unknown as Checklist
   }
 
   async editChecklistItem(
@@ -1025,11 +989,7 @@ export class ClickUpClient {
       `/checklist/${checklistId}/checklist_item/${checklistItemId}`,
       { method: 'PUT', body: JSON.stringify(updates) },
     )
-    return expectRecordField(
-      data as Record<string, unknown>,
-      'checklist',
-      'checklist',
-    ) as unknown as Checklist
+    return expectRecordField(data, 'checklist', 'checklist') as unknown as Checklist
   }
 
   async deleteChecklistItem(checklistId: string, checklistItemId: string): Promise<void> {
@@ -1113,11 +1073,7 @@ export class ClickUpClient {
     const query = params.toString()
     const url = `/team/${teamId}/time_entries${query ? `?${query}` : ''}`
     const data = await this.request<{ data: TimeEntry[] }>(url)
-    const entries = readCollectionField<TimeEntry>(
-      data as Record<string, unknown>,
-      'data',
-      'time entries',
-    )
+    const entries = readCollectionField<TimeEntry>(data, 'data', 'time entries')
     if (opts?.taskId) {
       return entries.filter(e => e.task?.id === opts.taskId)
     }
@@ -1142,7 +1098,7 @@ export class ClickUpClient {
     const data = await this.request<{
       tags: Array<{ name: string; tag_fg: string; tag_bg: string }>
     }>(`/space/${spaceId}/tag`)
-    return readCollectionField(data as Record<string, unknown>, 'tags', 'space tags')
+    return readCollectionField(data, 'tags', 'space tags')
   }
 
   async createSpaceTag(spaceId: string, name: string, fg?: string, bg?: string): Promise<void> {
@@ -1166,7 +1122,7 @@ export class ClickUpClient {
       teams: Array<{ id: string; members: Array<{ user: Member }> }>
     }>('/team')
     const team = readCollectionField<{ id: string; members: Array<{ user: Member }> }>(
-      data as Record<string, unknown>,
+      data,
       'teams',
       'workspace members',
     ).find(t => t.id === teamId)
@@ -1213,7 +1169,7 @@ export class ClickUpClient {
 
   async getDocs(workspaceId: string): Promise<Doc[]> {
     const data = await this.requestV3<{ docs: Doc[] }>(`/workspaces/${workspaceId}/docs`)
-    return readCollectionField<Doc>(data as Record<string, unknown>, 'docs', 'docs')
+    return readCollectionField<Doc>(data, 'docs', 'docs')
   }
 
   async getDocPage(workspaceId: string, docId: string, pageId: string): Promise<DocPage> {
@@ -1284,7 +1240,7 @@ export class ClickUpClient {
 
   async getGoals(teamId: string): Promise<Goal[]> {
     const data = await this.request<{ goals: Goal[] }>(`/team/${teamId}/goal`)
-    return readCollectionField<Goal>(data as Record<string, unknown>, 'goals', 'goals')
+    return readCollectionField<Goal>(data, 'goals', 'goals')
   }
 
   async createGoal(
@@ -1394,11 +1350,7 @@ export class ClickUpClient {
     const data = await this.request<{ templates: TaskTemplate[] }>(
       `/team/${teamId}/taskTemplate?page=0`,
     )
-    return readCollectionField<TaskTemplate>(
-      data as Record<string, unknown>,
-      'templates',
-      'task templates',
-    )
+    return readCollectionField<TaskTemplate>(data, 'templates', 'task templates')
   }
 
   async createTaskFromTemplate(listId: string, templateId: string, name: string): Promise<Task> {
