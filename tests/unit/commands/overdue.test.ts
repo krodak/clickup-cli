@@ -17,21 +17,20 @@ vi.mock('../../../src/api.js', () => ({
 
 const now = Date.now()
 
-const makeTask = (id: string, status: string, overrides: Partial<Task> = {}): Task =>
-  ({
-    id,
-    name: `Task ${id}`,
-    custom_item_id: 0,
-    status: { status, color: '' },
-    url: `http://cu/${id}`,
-    list: { id: 'l1', name: 'L1' },
-    assignees: [],
-    priority: null,
-    due_date: null,
-    date_updated: String(now),
-    date_created: String(now),
-    ...overrides,
-  })
+const makeTask = (id: string, status: string, overrides: Partial<Task> = {}): Task => ({
+  id,
+  name: `Task ${id}`,
+  custom_item_id: 0,
+  status: { status, color: '' },
+  url: `http://cu/${id}`,
+  list: { id: 'l1', name: 'L1' },
+  assignees: [],
+  priority: null,
+  due_date: null,
+  date_updated: String(now),
+  date_created: String(now),
+  ...overrides,
+})
 
 describe('fetchOverdueTasks', () => {
   beforeEach(() => {
