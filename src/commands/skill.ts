@@ -54,6 +54,7 @@ export async function installSkillInteractive(): Promise<string[]> {
         value: t.name,
         checked: t.detected,
       })),
+      theme: { keybindings: ['vim'] as const },
     })
 
     if (selected.length === 0) {

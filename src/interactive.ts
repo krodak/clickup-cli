@@ -6,6 +6,8 @@ import type { TaskSummary } from './commands/tasks.js'
 import { formatDate, formatDuration } from './date.js'
 import { colorStatus, colorPriority, colorDueDate } from './output.js'
 
+export const vimTheme = { keybindings: ['vim'] as const }
+
 export function openUrl(url: string): void {
   switch (process.platform) {
     case 'darwin':
@@ -181,6 +183,7 @@ export async function interactiveTaskPicker(tasks: TaskSummary[]): Promise<TaskS
       value: t.id,
     })),
     pageSize: 20,
+    theme: vimTheme,
   })
 
   return tasks.filter(t => selected.includes(t.id))
@@ -206,6 +209,7 @@ export async function groupedTaskPicker(
     message: `${totalCount} task(s) found. Select to view details / open in browser:`,
     choices,
     pageSize: 20,
+    theme: vimTheme,
   })
 
   return allTasks.filter(t => selected.includes(t.id))
