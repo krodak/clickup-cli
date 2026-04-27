@@ -253,6 +253,19 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup delete`             | DESTRUCTIVE. Requires `--confirm` in non-interactive mode. Cannot be undone                                                                                                                                                                                                                                                                        |
 | Errors                   | stderr with exit code 1. Strict parsing - excess/unknown arguments rejected                                                                                                                                                                                                                                                                        |
 
+## Interactive Mode (TTY)
+
+When running in a terminal (not piped), task-listing commands (`cup tasks`, `cup search`, `cup sprint`, `cup overdue`, `cup assigned`, `cup inbox`, `cup summary`) present an interactive task picker:
+
+- **↑/↓** or **j/k** to navigate the list
+- **Space** to toggle task selection
+- **Enter** to confirm and view details of selected tasks
+- After viewing details, prompted to open tasks in browser
+
+Other interactive prompts: sprint selection (when multiple match), workspace selection (`cup init`), agent selection (`cup skill`), destructive action confirmations (`cup delete`, `cup archive`, `cup view-delete`).
+
+When piped or called with `--json`, all commands output non-interactive markdown or JSON. Agents should always use `--json` for structured data or pipe for markdown.
+
 ## Agent Workflow Examples
 
 ### Investigate a task

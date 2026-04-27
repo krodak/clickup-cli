@@ -2,6 +2,18 @@
 
 All commands support `--help` for full flag details. When piped (no TTY), commands output Markdown by default. Pass `--json` for JSON output.
 
+## Output Modes
+
+Commands behave differently based on how they're invoked:
+
+| Context            | Behavior                                                                                                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Terminal (TTY)** | Task listing commands show an interactive picker (navigate with ↑/↓ or j/k, Space to select, Enter to confirm). Selected tasks display full details and offer to open in browser. Color-coded output. |
+| **Piped**          | Clean markdown output, no colors, no prompts. Suitable for agents and scripts.                                                                                                                        |
+| **`--json` flag**  | Structured JSON output. No prompts. Overrides both TTY and piped modes.                                                                                                                               |
+
+Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup archive`, `cup view-delete`).
+
 ## Custom Task IDs
 
 ClickUp workspaces can configure custom task IDs with a prefix per space (e.g., `PROJ-123`, `DEV-42`). The CLI detects these automatically - any ID matching the `PREFIX-DIGITS` format (uppercase letters, hyphen, digits) is treated as a custom task ID.

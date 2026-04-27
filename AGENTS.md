@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`@krodak/clickup-cli` (`cup`) - a ClickUp CLI for AI agents and humans. TypeScript, ESM-only, Node 22+. Three output modes: interactive tables with task picker in TTY, Markdown when piped (optimized for AI context windows), JSON with `--json`. The binary is `cup` - the previous `cu` name was retired to avoid conflict with the Unix `cu(1)` utility.
+`@krodak/clickup-cli` (`cup`) - a ClickUp CLI for AI agents and humans. TypeScript, ESM-only, Node 22+. Dual-mode output: **TTY** runs interactive prompts via @inquirer/prompts (task picker with vim-style j/k navigation, select/confirm dialogs); **piped** outputs Markdown optimized for AI context windows; `--json` forces structured JSON in either mode. The binary is `cup` - the previous `cu` name was retired to avoid conflict with the Unix `cu(1)` utility.
 
 ## Project Skills
 
@@ -30,8 +30,8 @@ Use these skills for releasing and testing instead of the sections below - they 
 | ESLint 10         | Flat config with typescript-eslint recommendedTypeChecked      |
 | Prettier          | No semicolons, single quotes, trailing commas, 100 print width |
 | Commander         | CLI framework                                                  |
-| @inquirer/prompts | Interactive terminal UI                                        |
-| chalk             | Terminal colors                                                |
+| @inquirer/prompts | Interactive terminal UI (task picker, select/confirm prompts)  |
+| chalk             | Terminal colors (TTY only)                                     |
 
 ## Project Structure
 
@@ -41,7 +41,7 @@ src/
   api.ts            # ClickUp API client (ClickUpClient class + types)
   config.ts         # Config loading (~/.config/cup/config.json)
   output.ts         # TTY detection, table formatting, shouldOutputJson
-  interactive.ts    # Task pickers, TTY detail views (chalk)
+  interactive.ts    # Interactive TUI: task picker (checkbox navigation with j/k + arrows), detail views, browser-open prompts
   markdown.ts       # Markdown detail views (piped output)
   date.ts           # Date formatting helpers
   commands/         # One file per command
