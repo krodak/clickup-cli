@@ -2740,6 +2740,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           teamId = await select({
             message: 'Select workspace:',
             choices: teams.map(t => ({ name: t.name, value: t.id })),
+            theme: { keybindings: ['vim'] as const },
           })
         }
 

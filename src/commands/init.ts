@@ -115,6 +115,7 @@ export async function runInitCommand(opts?: InitOptions): Promise<void> {
     teamId = await select({
       message: 'Select workspace:',
       choices: teams.map(t => ({ name: t.name, value: t.id })),
+      theme: { keybindings: ['vim'] as const },
     })
   }
 

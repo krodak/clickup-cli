@@ -244,6 +244,7 @@ export async function runSprintCommand(
         name: `${l.name} (${l.id})`,
         value: l,
       })),
+      theme: { keybindings: ['vim'] as const },
     })
     activeList = choice
   }
