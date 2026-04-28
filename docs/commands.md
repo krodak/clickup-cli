@@ -42,7 +42,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup filter save <name> [args...]`       | Save a command shortcut                                          |
 | **Read**                                 |                                                                  |
 | `cup auth`                               | Check authentication status                                      |
-| `cup tasks`                              | List tasks assigned to me (--all for all)                        |
+| `cup tasks`                              | My tasks (--all for all assignees)                               |
 | `cup task <taskId>`                      | Get task details                                                 |
 | `cup sprint`                             | My tasks in the active sprint                                    |
 | `cup sprints`                            | List all sprints across folders                                  |
@@ -55,7 +55,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup inbox`                              | Recently updated tasks assigned to me                            |
 | `cup assigned`                           | My tasks grouped by pipeline stage                               |
 | `cup open <query>`                       | Open a task in the browser                                       |
-| `cup search <query>`                     | Search my tasks by name                                          |
+| `cup search <query>`                     | Search your tasks by name (--all for all assignees)              |
 | `cup summary`                            | Daily standup helper                                             |
 | `cup overdue`                            | Tasks past their due date                                        |
 | `cup tags <spaceId>`                     | List tags in a space                                             |
@@ -181,7 +181,7 @@ cup skill --path ~/.claude/skills/clickup/SKILL.md   # install to a specific pat
 
 ### `cup tasks`
 
-List tasks assigned to me. By default shows all task types. Use `--type` to filter by task type.
+List tasks assigned to you by default. Use `--all` to include all assignees. Shows all task types by default; use `--type` to filter by task type.
 
 ```bash
 cup tasks
@@ -362,7 +362,7 @@ If the query matches multiple tasks by name, all matches are listed and the firs
 
 ### `cup search <query>`
 
-Search my tasks by name. Supports multi-word queries with case-insensitive matching. Status filter supports fuzzy matching.
+Search tasks assigned to you by default. Use `--all` to search across all assignees. Supports multi-word queries with case-insensitive matching. Status filter supports fuzzy matching.
 
 ```bash
 cup search "login bug"
