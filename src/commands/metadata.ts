@@ -42,7 +42,7 @@ export const commandMetadata = [
   },
   {
     name: 'tasks',
-    description: 'List tasks assigned to me (use --all for all tasks)',
+    description: 'List tasks assigned to you by default. Use --all to search across all assignees.',
     flags: [
       '--status',
       '--list',
@@ -61,7 +61,7 @@ export const commandMetadata = [
       '--json',
     ],
     quickReference: [
-      { section: 'read', usage: 'tasks', description: 'List tasks assigned to me (--all for all)' },
+      { section: 'read', usage: 'tasks', description: 'My tasks (--all for all assignees)' },
     ],
   },
   {
@@ -264,7 +264,8 @@ export const commandMetadata = [
   },
   {
     name: 'search',
-    description: 'Search my tasks by name (use --all for all tasks)',
+    description:
+      'Search tasks assigned to you by default. Use --all to search across all assignees.',
     flags: [
       '--status',
       '--list',
@@ -281,7 +282,11 @@ export const commandMetadata = [
       '--json',
     ],
     quickReference: [
-      { section: 'read', usage: 'search <query>', description: 'Search my tasks by name' },
+      {
+        section: 'read',
+        usage: 'search <query>',
+        description: 'Search your tasks by name (--all for all assignees)',
+      },
     ],
   },
   {

@@ -273,7 +273,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('tasks')
-    .description('List tasks assigned to me (use --all for all tasks)')
+    .description('List tasks assigned to you by default. Use --all to search across all assignees.')
     .option('--status <status>', 'Filter by status (e.g. "in progress")')
     .option('--list <listId>', 'Filter by list ID')
     .option('--space <spaceId>', 'Filter by space ID')
@@ -837,7 +837,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('search <query>')
-    .description('Search my tasks by name (use --all for all tasks)')
+    .description(
+      'Search tasks assigned to you by default. Use --all to search across all assignees.',
+    )
     .option('--status <status>', 'Filter by status')
     .option('--list <listId>', 'Filter by list ID')
     .option('--space <spaceId>', 'Filter by space ID')
