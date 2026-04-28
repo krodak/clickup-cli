@@ -57,7 +57,7 @@ import { fetchTimeInStatus, printTimeInStatus } from './commands/time-in-status.
 import { generateCompletion } from './commands/completion.js'
 import { printSkill, installSkillInteractive, installSkillTo } from './commands/skill.js'
 import { checkAuth } from './commands/auth.js'
-import { searchTasks } from './commands/search.js'
+import { searchTasks, resolveSpaceNameToId } from './commands/search.js'
 import { manageDependency } from './commands/depend.js'
 import type { DependOptions } from './commands/depend.js'
 import { moveTask } from './commands/move.js'
@@ -276,7 +276,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('List tasks assigned to you by default. Use --all to search across all assignees.')
     .option('--status <status>', 'Filter by status (e.g. "in progress")')
     .option('--list <listId>', 'Filter by list ID')
-    .option('--space <spaceId>', 'Filter by space ID')
+    .option('--space <spaceId|name>', 'Filter by space ID or name (partial match)')
     .option('--name <partial>', 'Filter by name (case-insensitive contains)')
     .option(
       '--type <type>',
@@ -305,6 +305,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           } else {
             assigneeIds = [Number(opts.assignee)]
           }
+        }
+
+        let resolvedSpaceId: string | undefined
+        if (opts.space) {
+          resolvedSpaceId = await resolveSpaceNameToId(config, opts.space)
         }
 
         const parseDateFilter = (d: string): number => {
@@ -343,7 +348,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           typeFilter: opts.type,
           statuses: opts.status ? [opts.status] : undefined,
           listIds: opts.list ? [opts.list] : undefined,
-          spaceIds: opts.space ? [opts.space] : undefined,
+          spaceIds: resolvedSpaceId ? [resolvedSpaceId] : undefined,
           name: opts.name,
           all: opts.all,
           assignees: assigneeIds,
@@ -842,7 +847,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
     .option('--status <status>', 'Filter by status')
     .option('--list <listId>', 'Filter by list ID')
-    .option('--space <spaceId>', 'Filter by space ID')
+    .option('--space <spaceId|name>', 'Filter by space ID or name (partial match)')
     .option('--all', 'Search all tasks, not just mine')
     .option('--include-closed', 'Include done/closed tasks in search')
     .option('--assignee <userId>', 'Filter by assignee (user ID or "me")')
@@ -886,6 +891,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             }
           }
 
+          let resolvedSpaceId: string | undefined
+          if (opts.space) {
+            resolvedSpaceId = await resolveSpaceNameToId(config, opts.space)
+          }
+
           const parseDateFilter = (d: string): number => {
             const parts = d.split('-')
             return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).getTime()
@@ -925,7 +935,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             all: opts.all,
             includeClosed: opts.includeClosed,
             listIds: opts.list ? [opts.list] : undefined,
-            spaceIds: opts.space ? [opts.space] : undefined,
+            spaceIds: resolvedSpaceId ? [resolvedSpaceId] : undefined,
             assignees: assigneeIds,
             tags: opts.tag ? [opts.tag] : undefined,
             dueDateLt: opts.dueBefore ? parseDateFilter(opts.dueBefore) : undefined,

@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockGetMyTasks = vi.fn()
 const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([])
+const mockGetSpaces = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
       getMyTasks: mockGetMyTasks,
       getCustomTaskTypes: mockGetCustomTaskTypes,
+      getSpaces: mockGetSpaces,
     }
   }),
 }))
@@ -107,6 +109,52 @@ describe('searchTasks', () => {
         list: 'L1',
         url: 'http://cu/t1',
       }),
+    )
+  })
+})
+
+describe('resolveSpaceNameToId', () => {
+  beforeEach(() => {
+    mockGetSpaces.mockReset()
+  })
+
+  it('passes numeric space ID through unchanged', async () => {
+    const { resolveSpaceNameToId } = await import('../../../src/commands/search.js')
+    const result = await resolveSpaceNameToId(config, '12345')
+    expect(result).toBe('12345')
+    expect(mockGetSpaces).not.toHaveBeenCalled()
+  })
+
+  it('resolves space name to ID via fuzzy match', async () => {
+    mockGetSpaces.mockResolvedValue([
+      { id: 's1', name: 'Kayenta Team' },
+      { id: 's2', name: 'Platform' },
+    ])
+    const { resolveSpaceNameToId } = await import('../../../src/commands/search.js')
+    const result = await resolveSpaceNameToId(config, 'kayenta')
+    expect(result).toBe('s1')
+  })
+
+  it('throws helpful error when space name matches multiple spaces', async () => {
+    mockGetSpaces.mockResolvedValue([
+      { id: 's1', name: 'Engineering Alpha' },
+      { id: 's2', name: 'Engineering Beta' },
+      { id: 's3', name: 'Platform' },
+    ])
+    const { resolveSpaceNameToId } = await import('../../../src/commands/search.js')
+    await expect(resolveSpaceNameToId(config, 'engineering')).rejects.toThrow(
+      'Multiple spaces match "engineering"',
+    )
+  })
+
+  it('throws helpful error when space name matches no spaces', async () => {
+    mockGetSpaces.mockResolvedValue([
+      { id: 's1', name: 'Kayenta Team' },
+      { id: 's2', name: 'Platform' },
+    ])
+    const { resolveSpaceNameToId } = await import('../../../src/commands/search.js')
+    await expect(resolveSpaceNameToId(config, 'nonexistent')).rejects.toThrow(
+      'No space matching "nonexistent" found',
     )
   })
 })
