@@ -4,6 +4,30 @@ import { matchStatus } from '../status.js'
 import type { TaskSummary } from './tasks.js'
 import { summarize, buildTypeMap } from './tasks.js'
 
+export async function resolveSpaceNameToId(config: Config, value: string): Promise<string> {
+  if (/^\d+$/.test(value)) {
+    return value
+  }
+
+  const client = new ClickUpClient(config)
+  const spaces = await client.getSpaces(config.teamId)
+  const lower = value.toLowerCase()
+  const matches = spaces.filter(s => s.name.toLowerCase().includes(lower))
+
+  if (matches.length === 1) {
+    process.stderr.write(`Space matched: "${value}" -> "${matches[0]!.name}" (${matches[0]!.id})\n`)
+    return matches[0]!.id
+  }
+
+  if (matches.length > 1) {
+    const list = matches.map(s => `  - "${s.name}" (${s.id})`).join('\n')
+    throw new Error(`Multiple spaces match "${value}":\n${list}\nSpecify the space ID directly.`)
+  }
+
+  const available = spaces.map(s => `  - "${s.name}" (${s.id})`).join('\n')
+  throw new Error(`No space matching "${value}" found. Available spaces:\n${available}`)
+}
+
 export interface SearchOptions {
   status?: string
   all?: boolean

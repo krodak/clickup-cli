@@ -205,7 +205,7 @@ cup tasks --json
 | ------------------------- | --------------------------------------------------------------- |
 | `--status <status>`       | Filter by status (e.g. "in progress")                           |
 | `--list <listId>`         | Filter by list ID                                               |
-| `--space <spaceId>`       | Filter by space ID                                              |
+| `--space <spaceId\|name>` | Filter by space ID or name (partial match)                      |
 | `--name <partial>`        | Filter by name (case-insensitive contains)                      |
 | `--type <type>`           | Filter by task type (e.g. "task", "initiative", custom name/ID) |
 | `--all`                   | Include all tasks, not just mine                                |
@@ -380,7 +380,7 @@ cup search "sprint" --list 123 --field "Sprint" "Week 1"
 | ------------------------- | ------------------------------------------ |
 | `--status <s>`            | Filter by status, supports fuzzy matching  |
 | `--list <listId>`         | Filter by list ID                          |
-| `--space <spaceId>`       | Filter by space ID                         |
+| `--space <spaceId\|name>` | Filter by space ID or name (partial match) |
 | `--all`                   | Search all workspace tasks, not just mine  |
 | `--include-closed`        | Include done/closed tasks                  |
 | `--assignee <userId>`     | Filter by assignee (user ID or "me")       |
