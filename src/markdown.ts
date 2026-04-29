@@ -122,7 +122,7 @@ export function formatTaskDetailMarkdown(task: Task): string {
     }
   }
 
-  const descriptionContent = task.markdown_content ?? task.description
+  const descriptionContent = task.markdown_description ?? task.description
   if (descriptionContent) {
     lines.push('', '## Description', '', descriptionContent)
   }

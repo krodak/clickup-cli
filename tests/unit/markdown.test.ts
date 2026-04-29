@@ -276,11 +276,11 @@ describe('formatTaskDetailMarkdown', () => {
     expect(result.indexOf('## Description')).toBeGreaterThan(result.indexOf('**ID:**'))
   })
 
-  it('prefers markdown_content over description', () => {
+  it('prefers markdown_description over description', () => {
     const task: Task = {
       ...fullTask,
       description: 'plain text fallback',
-      markdown_content: '# Rich **markdown** content',
+      markdown_description: '# Rich **markdown** content',
     }
     const result = formatTaskDetailMarkdown(task)
     expect(result).toContain('# Rich **markdown** content')

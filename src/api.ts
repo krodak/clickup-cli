@@ -19,6 +19,7 @@ export interface Task {
   id: string
   name: string
   description?: string
+  markdown_description?: string
   markdown_content?: string
   text_content?: string
   status: { status: string; color: string }
