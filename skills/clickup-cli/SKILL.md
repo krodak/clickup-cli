@@ -3,11 +3,11 @@ name: clickup
 description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results, saved filters, favorites.'
 ---
 
-# ClickUp CLI (`cup`) - skill version 1.26.1
+# ClickUp CLI (`cup`) - skill version 1.26.2
 
 Reference for AI agents using the `cup` CLI tool. Covers task management, sprint tracking, comments, time tracking, custom fields, goals, docs, and project workflows.
 
-> **Version check:** Run `cup --version`. If your installed version is older than 1.26.1, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
+> **Version check:** Run `cup --version`. If your installed version is older than 1.26.2, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
 
 ## Install & Configure
 
