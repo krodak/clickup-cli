@@ -163,6 +163,12 @@ import {
 } from './commands/folder-templates.js'
 import { createListFromTemplate } from './commands/list-from-template.js'
 import { listViews, formatViews, formatViewsMarkdown } from './commands/views.js'
+import {
+  formatChannelsTable,
+  formatChannelsMarkdown,
+  formatChannelDetail,
+} from './commands/chat.js'
+import { formatMessages, formatMessagesMarkdown } from './commands/chat-message.js'
 import { getView as getViewDetail, formatView, formatViewMarkdown } from './commands/view.js'
 import { createView } from './commands/view-create.js'
 import { updateView as updateViewCommand } from './commands/view-update.js'
@@ -2810,6 +2816,104 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(async () => {
         console.log(getConfigFilePath())
+      }),
+    )
+
+  const chatCmd = program.command('chat').description('Chat channels and messaging')
+
+  chatCmd
+    .command('channels')
+    .description('List chat channels you follow')
+    .option('--all', 'List all channels, not just ones you follow')
+    .option('--type <type>', 'Filter by type (channel, dm, group_dm)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { all?: boolean; type?: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const channels = await client.getChatChannels({
+          isFollower: opts.all ? undefined : true,
+          channelTypes: opts.type,
+        })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(channels, null, 2))
+        } else if (isTTY()) {
+          console.log(formatChannelsTable(channels))
+        } else {
+          console.log(formatChannelsMarkdown(channels))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('channel <channelId>')
+    .description('Show channel details')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (channelId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const channel = await client.getChatChannel(channelId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(channel, null, 2))
+        } else {
+          console.log(formatChannelDetail(channel))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('send <channelId>')
+    .description('Send a message to a channel')
+    .requiredOption('-m, --message <text>', 'Message content (markdown supported)')
+    .option('--post', 'Send as a post instead of a message')
+    .option('--title <title>', 'Post title (requires --post)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          channelId: string,
+          opts: { message: string; post?: boolean; title?: string; json?: boolean },
+        ) => {
+          if (opts.title && !opts.post) {
+            throw new Error('--title requires --post')
+          }
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const result = await client.sendChatMessage(channelId, opts.message, {
+            type: opts.post ? 'post' : 'message',
+            postTitle: opts.title,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Sent ${result.type} ${result.id} to channel ${channelId}`)
+          }
+        },
+      ),
+    )
+
+  chatCmd
+    .command('messages <channelId>')
+    .description('List recent messages in a channel')
+    .option('--limit <n>', 'Max messages to show (default: 25)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (channelId: string, opts: { limit?: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const limit = opts.limit ? Number(opts.limit) : 25
+        if (!Number.isFinite(limit) || limit <= 0) {
+          throw new Error('--limit must be a positive number')
+        }
+        const messages = await client.getChatMessages(channelId, { limit })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(messages, null, 2))
+        } else if (isTTY()) {
+          console.log(formatMessages(messages))
+        } else {
+          console.log(formatMessagesMarkdown(messages))
+        }
       }),
     )
 

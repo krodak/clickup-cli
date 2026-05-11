@@ -920,6 +920,28 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'chat',
+    description: 'Chat channels and messaging',
+    quickReference: [
+      { section: 'read', usage: 'chat channels', description: 'List chat channels you follow' },
+      {
+        section: 'read',
+        usage: 'chat channel <channelId>',
+        description: 'Show channel details',
+      },
+      {
+        section: 'write',
+        usage: 'chat send <channelId>',
+        description: 'Send a message to a channel',
+      },
+      {
+        section: 'read',
+        usage: 'chat messages <channelId>',
+        description: 'List recent messages in a channel',
+      },
+    ],
+  },
+  {
     name: 'profile',
     description: 'Manage profiles',
     quickReference: [
