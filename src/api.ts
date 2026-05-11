@@ -252,6 +252,45 @@ export interface Attachment {
   url: string
 }
 
+export interface ChatChannel {
+  id: string
+  name: string
+  description?: string
+  topic?: string
+  type: 'CHANNEL' | 'DM' | 'GROUP_DM'
+  visibility: 'PUBLIC' | 'PRIVATE'
+  creator: string
+  created_at: string
+  workspace_id: string
+  archived: boolean
+  latest_comment_at?: string
+  is_canonical_channel?: boolean
+}
+
+export interface ChatMessage {
+  id: string
+  content: string
+  type: 'message' | 'post'
+  user_id: string
+  date: number
+  parent_channel: string
+  parent_message?: string
+  resolved: boolean
+  replies_count?: number
+  post_data?: { title?: string }
+}
+
+export interface ChatReaction {
+  reaction: string
+  user_id: string
+  date: number
+}
+
+export interface ChatMember {
+  user: { id: string; username?: string; name?: string; email: string }
+  type: string
+}
+
 export interface Doc {
   id: string
   name: string
@@ -1393,5 +1432,196 @@ export class ClickUpClient {
       { method: 'POST', body: JSON.stringify(body) },
     )
     return data.data
+  }
+
+  private chatChannelsPath(suffix = ''): string {
+    return `/workspaces/${this.teamId}/chat/channels${suffix}`
+  }
+
+  private chatMessagesPath(suffix = ''): string {
+    return `/workspaces/${this.teamId}/chat/messages${suffix}`
+  }
+
+  async getChatChannels(opts?: {
+    isFollower?: boolean
+    includeClosed?: boolean
+    channelTypes?: string
+    limit?: number
+  }): Promise<ChatChannel[]> {
+    const params = new URLSearchParams()
+    if (opts?.isFollower != null) params.set('is_follower', String(opts.isFollower))
+    if (opts?.includeClosed != null) params.set('include_closed', String(opts.includeClosed))
+    if (opts?.channelTypes) params.set('channel_types', opts.channelTypes)
+    if (opts?.limit != null) params.set('limit', String(opts.limit))
+    const query = params.toString()
+    const path = this.chatChannelsPath(query ? `?${query}` : '')
+    const data = await this.requestV3<{ data: ChatChannel[] }>(path)
+    return expectArrayField<ChatChannel>(data, 'data', 'chat channels')
+  }
+
+  async getChatChannel(channelId: string): Promise<ChatChannel> {
+    const data = await this.requestV3<{ data: ChatChannel }>(this.chatChannelsPath(`/${channelId}`))
+    return expectRecordField(data, 'data', 'chat channel') as unknown as ChatChannel
+  }
+
+  async createChatChannel(
+    name: string,
+    opts?: {
+      visibility?: 'PUBLIC' | 'PRIVATE'
+      topic?: string
+      userIds?: string[]
+    },
+  ): Promise<ChatChannel> {
+    const body: Record<string, unknown> = { name }
+    if (opts?.visibility) body.visibility = opts.visibility
+    if (opts?.topic) body.topic = opts.topic
+    if (opts?.userIds) body.user_ids = opts.userIds
+    return this.requestV3<ChatChannel>(this.chatChannelsPath(), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async createDirectMessage(userIds?: string[]): Promise<ChatChannel> {
+    const body: Record<string, unknown> = {}
+    if (userIds) body.user_ids = userIds
+    return this.requestV3<ChatChannel>(this.chatChannelsPath('/direct_message'), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async createLocationChannel(
+    location: { id: string; type: 'space' | 'folder' | 'list' },
+    opts?: { description?: string; topic?: string; visibility?: string; userIds?: string[] },
+  ): Promise<ChatChannel> {
+    const body: Record<string, unknown> = { location }
+    if (opts?.description) body.description = opts.description
+    if (opts?.topic) body.topic = opts.topic
+    if (opts?.visibility) body.visibility = opts.visibility
+    if (opts?.userIds) body.user_ids = opts.userIds
+    return this.requestV3<ChatChannel>(this.chatChannelsPath('/location'), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async updateChatChannel(
+    channelId: string,
+    opts: {
+      name?: string
+      description?: string
+      topic?: string
+      visibility?: 'PUBLIC' | 'PRIVATE'
+    },
+  ): Promise<ChatChannel> {
+    return this.requestV3<ChatChannel>(this.chatChannelsPath(`/${channelId}`), {
+      method: 'PATCH',
+      body: JSON.stringify(opts),
+    })
+  }
+
+  async deleteChatChannel(channelId: string): Promise<void> {
+    await this.requestV3<Record<string, never>>(this.chatChannelsPath(`/${channelId}`), {
+      method: 'DELETE',
+    })
+  }
+
+  async getChatChannelMembers(channelId: string, limit?: number): Promise<ChatMember[]> {
+    const params = new URLSearchParams()
+    if (limit != null) params.set('limit', String(limit))
+    const query = params.toString()
+    const path = this.chatChannelsPath(`/${channelId}/members${query ? `?${query}` : ''}`)
+    const data = await this.requestV3<{ data: ChatMember[] }>(path)
+    return expectArrayField<ChatMember>(data, 'data', 'chat channel members')
+  }
+
+  async getChatChannelFollowers(channelId: string, limit?: number): Promise<ChatMember[]> {
+    const params = new URLSearchParams()
+    if (limit != null) params.set('limit', String(limit))
+    const query = params.toString()
+    const path = this.chatChannelsPath(`/${channelId}/followers${query ? `?${query}` : ''}`)
+    const data = await this.requestV3<{ data: ChatMember[] }>(path)
+    return expectArrayField<ChatMember>(data, 'data', 'chat channel followers')
+  }
+
+  async getChatMessages(channelId: string, opts?: { limit?: number }): Promise<ChatMessage[]> {
+    const params = new URLSearchParams()
+    if (opts?.limit != null) params.set('limit', String(opts.limit))
+    const query = params.toString()
+    const path = this.chatChannelsPath(`/${channelId}/messages${query ? `?${query}` : ''}`)
+    const data = await this.requestV3<{ data: ChatMessage[] }>(path)
+    return expectArrayField<ChatMessage>(data, 'data', 'chat messages')
+  }
+
+  async sendChatMessage(
+    channelId: string,
+    content: string,
+    opts?: { type?: 'message' | 'post'; postTitle?: string },
+  ): Promise<ChatMessage> {
+    const msgType = opts?.type ?? 'message'
+    const body: Record<string, unknown> = {
+      type: msgType,
+      content,
+      content_format: 'text/md',
+    }
+    if (opts?.postTitle) body.post_data = { title: opts.postTitle }
+    return this.requestV3<ChatMessage>(this.chatChannelsPath(`/${channelId}/messages`), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async updateChatMessage(messageId: string, content: string): Promise<ChatMessage> {
+    return this.requestV3<ChatMessage>(this.chatMessagesPath(`/${messageId}`), {
+      method: 'PATCH',
+      body: JSON.stringify({ content, content_format: 'text/md' }),
+    })
+  }
+
+  async deleteChatMessage(messageId: string): Promise<void> {
+    await this.requestV3<Record<string, never>>(this.chatMessagesPath(`/${messageId}`), {
+      method: 'DELETE',
+    })
+  }
+
+  async getChatMessageReplies(
+    messageId: string,
+    opts?: { limit?: number },
+  ): Promise<ChatMessage[]> {
+    const params = new URLSearchParams()
+    if (opts?.limit != null) params.set('limit', String(opts.limit))
+    const query = params.toString()
+    const path = this.chatMessagesPath(`/${messageId}/replies${query ? `?${query}` : ''}`)
+    const data = await this.requestV3<{ data: ChatMessage[] }>(path)
+    return expectArrayField<ChatMessage>(data, 'data', 'chat message replies')
+  }
+
+  async createChatMessageReply(messageId: string, content: string): Promise<ChatMessage> {
+    return this.requestV3<ChatMessage>(this.chatMessagesPath(`/${messageId}/replies`), {
+      method: 'POST',
+      body: JSON.stringify({ type: 'message', content, content_format: 'text/md' }),
+    })
+  }
+
+  async getChatMessageReactions(messageId: string): Promise<ChatReaction[]> {
+    const data = await this.requestV3<{ data: ChatReaction[] }>(
+      this.chatMessagesPath(`/${messageId}/reactions`),
+    )
+    return expectArrayField<ChatReaction>(data, 'data', 'chat message reactions')
+  }
+
+  async createChatMessageReaction(messageId: string, emoji: string): Promise<ChatReaction> {
+    return this.requestV3<ChatReaction>(this.chatMessagesPath(`/${messageId}/reactions`), {
+      method: 'POST',
+      body: JSON.stringify({ reaction: emoji }),
+    })
+  }
+
+  async deleteChatMessageReaction(messageId: string, emoji: string): Promise<void> {
+    await this.requestV3<Record<string, never>>(
+      this.chatMessagesPath(`/${messageId}/reactions/${emoji}`),
+      { method: 'DELETE' },
+    )
   }
 }
