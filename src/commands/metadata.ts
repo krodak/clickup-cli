@@ -939,6 +939,32 @@ export const commandMetadata = [
         usage: 'chat messages <channelId>',
         description: 'List recent messages in a channel',
       },
+      {
+        section: 'write',
+        usage: 'chat channel-create <name>',
+        description: 'Create a new chat channel',
+      },
+      { section: 'write', usage: 'chat dm <userIds...>', description: 'Create or open a DM' },
+      {
+        section: 'write',
+        usage: 'chat channel-update <channelId>',
+        description: 'Update a channel',
+      },
+      {
+        section: 'write',
+        usage: 'chat channel-delete <channelId>',
+        description: 'Delete a channel',
+      },
+      {
+        section: 'read',
+        usage: 'chat members <channelId>',
+        description: 'List channel members',
+      },
+      {
+        section: 'read',
+        usage: 'chat followers <channelId>',
+        description: 'List channel followers',
+      },
     ],
   },
   {

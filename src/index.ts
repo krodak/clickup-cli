@@ -167,6 +167,8 @@ import {
   formatChannelsTable,
   formatChannelsMarkdown,
   formatChannelDetail,
+  formatChatMembers,
+  formatChatMembersMarkdown,
 } from './commands/chat.js'
 import { formatMessages, formatMessagesMarkdown } from './commands/chat-message.js'
 import { getView as getViewDetail, formatView, formatViewMarkdown } from './commands/view.js'
@@ -2913,6 +2915,179 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatMessages(messages))
         } else {
           console.log(formatMessagesMarkdown(messages))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('channel-create <name>')
+    .description('Create a new chat channel')
+    .option('--private', 'Create as private channel')
+    .option('--topic <topic>', 'Channel topic')
+    .option('--space <spaceId>', 'Create on a specific space')
+    .option('--folder <folderId>', 'Create on a specific folder')
+    .option('--list <listId>', 'Create on a specific list')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          name: string,
+          opts: {
+            private?: boolean
+            topic?: string
+            space?: string
+            folder?: string
+            list?: string
+            json?: boolean
+          },
+        ) => {
+          if (!name.trim()) throw new Error('Channel name cannot be empty')
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          let result
+          if (opts.space || opts.folder || opts.list) {
+            const location = opts.space
+              ? { id: opts.space, type: 'space' as const }
+              : opts.folder
+                ? { id: opts.folder, type: 'folder' as const }
+                : { id: opts.list!, type: 'list' as const }
+            result = await client.createLocationChannel(location, {
+              topic: opts.topic,
+              visibility: opts.private ? 'PRIVATE' : undefined,
+            })
+          } else {
+            result = await client.createChatChannel(name, {
+              visibility: opts.private ? 'PRIVATE' : undefined,
+              topic: opts.topic,
+            })
+          }
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Created channel "${result.name}" (${result.id})`)
+          }
+        },
+      ),
+    )
+
+  chatCmd
+    .command('dm <userIds...>')
+    .description('Create or open a direct message')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (userIds: string[], opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const result = await client.createDirectMessage(userIds)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`DM channel: ${result.id}`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('channel-update <channelId>')
+    .description('Update a channel')
+    .option('--name <name>', 'New name')
+    .option('--topic <topic>', 'New topic')
+    .option('--description <desc>', 'New description')
+    .option('--visibility <v>', 'PUBLIC or PRIVATE')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          channelId: string,
+          opts: {
+            name?: string
+            topic?: string
+            description?: string
+            visibility?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const result = await client.updateChatChannel(channelId, {
+            name: opts.name,
+            topic: opts.topic,
+            description: opts.description,
+            visibility: opts.visibility as 'PUBLIC' | 'PRIVATE' | undefined,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Updated channel "${result.name}" (${result.id})`)
+          }
+        },
+      ),
+    )
+
+  chatCmd
+    .command('channel-delete <channelId>')
+    .description('Delete a channel')
+    .option('--confirm', 'Skip confirmation prompt')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (channelId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        if (!opts.confirm) {
+          if (!isTTY()) {
+            throw new Error('Destructive operation requires --confirm flag in non-interactive mode')
+          }
+          const channel = await client.getChatChannel(channelId)
+          const { confirm } = await import('@inquirer/prompts')
+          const confirmed = await confirm({
+            message: `Delete channel "${channel.name}"?`,
+            default: false,
+          })
+          if (!confirmed) throw new Error('Cancelled')
+        }
+        await client.deleteChatChannel(channelId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, channelId }, null, 2))
+        } else {
+          console.log(`Deleted channel ${channelId}`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('members <channelId>')
+    .description('List channel members')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (channelId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const members = await client.getChatChannelMembers(channelId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(members, null, 2))
+        } else if (isTTY()) {
+          console.log(formatChatMembers(members))
+        } else {
+          console.log(formatChatMembersMarkdown(members))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('followers <channelId>')
+    .description('List channel followers')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (channelId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const followers = await client.getChatChannelFollowers(channelId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(followers, null, 2))
+        } else if (isTTY()) {
+          console.log(formatChatMembers(followers))
+        } else {
+          console.log(formatChatMembersMarkdown(followers))
         }
       }),
     )
