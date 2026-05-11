@@ -172,6 +172,29 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Get/set config    | `cup config`             | :white_check_mark: |
 | Shell completions | `cup completion <shell>` | :white_check_mark: |
 
+## Chat
+
+| Feature             | Command                                           | Status             |
+| ------------------- | ------------------------------------------------- | ------------------ |
+| List channels       | `cup chat channels`                               | :white_check_mark: |
+| Get channel         | `cup chat channel <id>`                           | :white_check_mark: |
+| Create channel      | `cup chat channel-create <name>`                  | :white_check_mark: |
+| Create DM           | `cup chat dm <userIds...>`                        | :white_check_mark: |
+| Create location ch. | `cup chat channel-create --space/--folder/--list` | :white_check_mark: |
+| Update channel      | `cup chat channel-update <id>`                    | :white_check_mark: |
+| Delete channel      | `cup chat channel-delete <id>`                    | :white_check_mark: |
+| List members        | `cup chat members <id>`                           | :white_check_mark: |
+| List followers      | `cup chat followers <id>`                         | :white_check_mark: |
+| List messages       | `cup chat messages <channelId>`                   | :white_check_mark: |
+| Send message        | `cup chat send <channelId>`                       | :white_check_mark: |
+| Update message      | `cup chat message-update <id>`                    | :white_check_mark: |
+| Delete message      | `cup chat message-delete <id>`                    | :white_check_mark: |
+| List replies        | `cup chat replies <messageId>`                    | :white_check_mark: |
+| Send reply          | `cup chat reply <messageId>`                      | :white_check_mark: |
+| List reactions      | `cup chat reactions <messageId>`                  | :white_check_mark: |
+| Add reaction        | `cup chat react <messageId>`                      | :white_check_mark: |
+| Remove reaction     | `cup chat unreact <messageId>`                    | :white_check_mark: |
+
 ## Won't add
 
 | Feature                 | Why                                                                         |
@@ -179,7 +202,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Webhooks                | Server-side. A CLI can't listen for events.                                 |
 | OAuth flow              | `cup init` already handles auth with API tokens.                            |
 | Guest/ACL               | Enterprise admin. Not what you reach for in a terminal.                     |
-| Chat/DM                 | Use the ClickUp app. Chat doesn't belong in a CLI.                          |
+| Chat tagged users       | Low value for CLI. Returns who was @mentioned in a message.                 |
 | Audit logs              | Enterprise admin.                                                           |
 | User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
 | List/Folder/Space U+D   | Update/delete structural items in the UI. Create is supported.              |

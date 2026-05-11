@@ -1670,6 +1670,279 @@ In TTY mode without `--confirm`: shows the view name and prompts for confirmatio
 
 ---
 
+## Chat Commands
+
+`cup chat` is a subcommand group for ClickUp's Chat v3 API. Manage channels, send and read messages, threaded replies, and reactions — all from the terminal. Chat messages use raw markdown (no rich text conversion needed).
+
+### Channel Commands
+
+#### `cup chat channels`
+
+List chat channels you follow. Use `--all` to list all channels in the workspace.
+
+```bash
+cup chat channels
+cup chat channels --all
+cup chat channels --type dm
+cup chat channels --json
+```
+
+| Flag            | Required | Description                            |
+| --------------- | -------- | -------------------------------------- |
+| `--all`         | no       | List all channels, not just followed   |
+| `--type <type>` | no       | Filter by type (channel, dm, group_dm) |
+| `--json`        | no       | Force JSON output                      |
+
+#### `cup chat channel <channelId>`
+
+Show channel details (name, type, topic, visibility, creation date).
+
+```bash
+cup chat channel ch_abc123
+cup chat channel ch_abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+#### `cup chat channel-create <name>`
+
+Create a new chat channel. Use `--space`, `--folder`, or `--list` to create a location-based channel.
+
+```bash
+cup chat channel-create "Engineering"
+cup chat channel-create "Private Team" --private --topic "Internal discussion"
+cup chat channel-create "Sprint Chat" --space <spaceId>
+cup chat channel-create "List Chat" --list <listId> --json
+```
+
+| Flag                  | Required | Description                 |
+| --------------------- | -------- | --------------------------- |
+| `--private`           | no       | Create as private channel   |
+| `--topic <topic>`     | no       | Channel topic               |
+| `--space <spaceId>`   | no       | Create on a specific space  |
+| `--folder <folderId>` | no       | Create on a specific folder |
+| `--list <listId>`     | no       | Create on a specific list   |
+| `--json`              | no       | Force JSON output           |
+
+#### `cup chat dm <userIds...>`
+
+Create or open a direct message with one or more users. Returns the existing DM channel if one already exists (idempotent).
+
+```bash
+cup chat dm 12345
+cup chat dm 12345 67890
+cup chat dm 12345 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+#### `cup chat channel-update <channelId>`
+
+Update a channel's name, topic, description, or visibility.
+
+```bash
+cup chat channel-update ch_abc123 --name "New Name"
+cup chat channel-update ch_abc123 --topic "Updated topic" --visibility PRIVATE
+cup chat channel-update ch_abc123 --description "Team channel" --json
+```
+
+| Flag                   | Required | Description       |
+| ---------------------- | -------- | ----------------- |
+| `--name <name>`        | no       | New name          |
+| `--topic <topic>`      | no       | New topic         |
+| `--description <desc>` | no       | New description   |
+| `--visibility <v>`     | no       | PUBLIC or PRIVATE |
+| `--json`               | no       | Force JSON output |
+
+#### `cup chat channel-delete <channelId>`
+
+Delete a channel. **DESTRUCTIVE — cannot be undone.**
+
+```bash
+cup chat channel-delete ch_abc123
+cup chat channel-delete ch_abc123 --confirm
+cup chat channel-delete ch_abc123 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the channel name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Required | Description                                                 |
+| ----------- | -------- | ----------------------------------------------------------- |
+| `--confirm` | no       | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | no       | Force JSON output                                           |
+
+#### `cup chat members <channelId>`
+
+List members of a channel.
+
+```bash
+cup chat members ch_abc123
+cup chat members ch_abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+#### `cup chat followers <channelId>`
+
+List followers of a channel.
+
+```bash
+cup chat followers ch_abc123
+cup chat followers ch_abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### Message Commands
+
+#### `cup chat send <channelId>`
+
+Send a message to a channel. Messages support markdown. Use `--post` with `--title` for long-form posts.
+
+```bash
+cup chat send ch_abc123 -m "Hello team!"
+cup chat send ch_abc123 -m "## Update\n\nDeployment complete."
+cup chat send ch_abc123 -m "Release notes" --post --title "v2.0 Released"
+cup chat send ch_abc123 -m "Done" --json
+```
+
+| Flag              | Required | Description                       |
+| ----------------- | -------- | --------------------------------- |
+| `-m, --message`   | yes      | Message content (markdown)        |
+| `--post`          | no       | Send as a post instead of message |
+| `--title <title>` | no       | Post title (requires `--post`)    |
+| `--json`          | no       | Force JSON output                 |
+
+#### `cup chat messages <channelId>`
+
+List recent messages in a channel.
+
+```bash
+cup chat messages ch_abc123
+cup chat messages ch_abc123 --limit 10
+cup chat messages ch_abc123 --json
+```
+
+| Flag          | Required | Description                        |
+| ------------- | -------- | ---------------------------------- |
+| `--limit <n>` | no       | Max messages to show (default: 25) |
+| `--json`      | no       | Force JSON output                  |
+
+#### `cup chat message-update <messageId>`
+
+Edit an existing message.
+
+```bash
+cup chat message-update msg123 -m "Corrected text"
+cup chat message-update msg123 -m "Fixed" --json
+```
+
+| Flag            | Required | Description       |
+| --------------- | -------- | ----------------- |
+| `-m, --message` | yes      | New message text  |
+| `--json`        | no       | Force JSON output |
+
+#### `cup chat message-delete <messageId>`
+
+Delete a message. **DESTRUCTIVE — cannot be undone.**
+
+```bash
+cup chat message-delete msg123
+cup chat message-delete msg123 --confirm
+cup chat message-delete msg123 --confirm --json
+```
+
+In TTY mode without `--confirm`: prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Required | Description                                                 |
+| ----------- | -------- | ----------------------------------------------------------- |
+| `--confirm` | no       | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | no       | Force JSON output                                           |
+
+### Reply Commands
+
+#### `cup chat reply <messageId>`
+
+Reply to a message. Markdown supported.
+
+```bash
+cup chat reply msg123 -m "Agreed, let's proceed"
+cup chat reply msg123 -m "Done" --json
+```
+
+| Flag            | Required | Description       |
+| --------------- | -------- | ----------------- |
+| `-m, --message` | yes      | Reply text        |
+| `--json`        | no       | Force JSON output |
+
+#### `cup chat replies <messageId>`
+
+List replies to a message.
+
+```bash
+cup chat replies msg123
+cup chat replies msg123 --limit 10
+cup chat replies msg123 --json
+```
+
+| Flag          | Required | Description               |
+| ------------- | -------- | ------------------------- |
+| `--limit <n>` | no       | Max replies (default: 50) |
+| `--json`      | no       | Force JSON output         |
+
+### Reaction Commands
+
+#### `cup chat react <messageId>`
+
+Add a reaction to a message.
+
+```bash
+cup chat react msg123 --emoji thumbsup
+cup chat react msg123 --emoji heart --json
+```
+
+| Flag             | Required | Description                           |
+| ---------------- | -------- | ------------------------------------- |
+| `--emoji <name>` | yes      | Emoji name (e.g. "thumbsup", "heart") |
+| `--json`         | no       | Force JSON output                     |
+
+#### `cup chat unreact <messageId>`
+
+Remove a reaction from a message.
+
+```bash
+cup chat unreact msg123 --emoji thumbsup
+cup chat unreact msg123 --emoji heart --json
+```
+
+| Flag             | Required | Description          |
+| ---------------- | -------- | -------------------- |
+| `--emoji <name>` | yes      | Emoji name to remove |
+| `--json`         | no       | Force JSON output    |
+
+#### `cup chat reactions <messageId>`
+
+List reactions on a message.
+
+```bash
+cup chat reactions msg123
+cup chat reactions msg123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+---
+
 ## Saved Filters
 
 Saved filters let you store frequently used `cup` commands under a short name and re-run them with `cup filter run <name>`. Filters are stored per-profile in `~/.config/cup/config.json`.
