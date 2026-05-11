@@ -97,6 +97,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup chat channels`                      | List chat channels you follow                                    |
 | `cup chat channel <channelId>`           | Show channel details                                             |
 | `cup chat messages <channelId>`          | List recent messages in a channel                                |
+| `cup chat members <channelId>`           | List channel members                                             |
+| `cup chat followers <channelId>`         | List channel followers                                           |
 | **Write**                                |                                                                  |
 | `cup update <taskId>`                    | Update a task                                                    |
 | `cup create`                             | Create a new task                                                |
@@ -155,6 +157,10 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup view-update <viewId>`               | Update a view                                                    |
 | `cup view-delete <viewId>`               | Delete a view                                                    |
 | `cup chat send <channelId>`              | Send a message to a channel                                      |
+| `cup chat channel-create <name>`         | Create a new chat channel                                        |
+| `cup chat dm <userIds...>`               | Create or open a DM                                              |
+| `cup chat channel-update <channelId>`    | Update a channel                                                 |
+| `cup chat channel-delete <channelId>`    | Delete a channel                                                 |
 | **Configuration**                        |                                                                  |
 | `cup favorite add <type> <id> [alias]`   | Add a favorite                                                   |
 | `cup favorite remove <alias>`            | Remove a favorite                                                |
