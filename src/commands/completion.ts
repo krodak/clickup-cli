@@ -10,6 +10,7 @@ const bashSpecialCaseCommands = new Set([
   'config',
   'profile',
   'completion',
+  'chat',
 ])
 
 function escapeSingleQuotes(value: string): string {
@@ -158,6 +159,11 @@ ${renderBashCommandCases()}
             COMPREPLY=($(compgen -W "apiToken teamId sprintFolderId" -- "$cur"))
             ;;
         esac
+      fi
+      ;;
+    chat)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete" -- "$cur"))
       fi
       ;;
     completion)
@@ -950,6 +956,133 @@ ${renderZshTopLevelCommands(name)}
               ;;
           esac
           ;;
+        chat)
+          local -a chat_cmds
+          chat_cmds=(
+            'channels:List chat channels'
+            'channel:Show channel details'
+            'send:Send a message to a channel'
+            'messages:List recent messages in a channel'
+            'reply:Reply to a message'
+            'replies:List replies to a message'
+            'react:Add a reaction to a message'
+            'unreact:Remove a reaction from a message'
+            'reactions:List reactions on a message'
+            'channel-create:Create a new chat channel'
+            'dm:Create or open a direct message'
+            'channel-update:Update a channel'
+            'channel-delete:Delete a channel'
+            'members:List channel members'
+            'followers:List channel followers'
+            'message-update:Edit a message'
+            'message-delete:Delete a message'
+          )
+          _arguments -C \\
+            '1:chat command:->chat_cmd' \\
+            '*::chat_arg:->chat_args'
+          case $state in
+            chat_cmd)
+              _describe 'chat command' chat_cmds
+              ;;
+            chat_args)
+              case $words[1] in
+                channels)
+                  _arguments \\
+                    '--all[List all channels, not just followed]' \\
+                    '--type[Filter by type]:type:(channel dm group_dm)' \\
+                    '--json[Force JSON output]'
+                  ;;
+                channel)
+                  _arguments '1:channel_id:' '--json[Force JSON output]'
+                  ;;
+                send)
+                  _arguments \\
+                    '1:channel_id:' \\
+                    '(-m --message)'{-m,--message}'[Message content]:text:' \\
+                    '--post[Send as a post]' \\
+                    '--title[Post title]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                messages)
+                  _arguments \\
+                    '1:channel_id:' \\
+                    '--limit[Max messages]:number:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                reply)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '(-m --message)'{-m,--message}'[Reply content]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                replies)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '--limit[Max replies]:number:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                react)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '--emoji[Emoji name]:emoji:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                unreact)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '--emoji[Emoji name to remove]:emoji:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                reactions)
+                  _arguments '1:message_id:' '--json[Force JSON output]'
+                  ;;
+                channel-create)
+                  _arguments \\
+                    '1:name:' \\
+                    '--private[Create as private channel]' \\
+                    '--topic[Channel topic]:text:' \\
+                    '--space[Create on a space]:space_id:' \\
+                    '--folder[Create on a folder]:folder_id:' \\
+                    '--list[Create on a list]:list_id:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                dm)
+                  _arguments '*:user_ids:' '--json[Force JSON output]'
+                  ;;
+                channel-update)
+                  _arguments \\
+                    '1:channel_id:' \\
+                    '--name[New name]:text:' \\
+                    '--topic[New topic]:text:' \\
+                    '--description[New description]:text:' \\
+                    '--visibility[PUBLIC or PRIVATE]:visibility:(PUBLIC PRIVATE)' \\
+                    '--json[Force JSON output]'
+                  ;;
+                channel-delete)
+                  _arguments \\
+                    '1:channel_id:' \\
+                    '--confirm[Skip confirmation prompt]' \\
+                    '--json[Force JSON output]'
+                  ;;
+                members|followers)
+                  _arguments '1:channel_id:' '--json[Force JSON output]'
+                  ;;
+                message-update)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '(-m --message)'{-m,--message}'[New message content]:text:' \\
+                    '--json[Force JSON output]'
+                  ;;
+                message-delete)
+                  _arguments \\
+                    '1:message_id:' \\
+                    '--confirm[Skip confirmation prompt]' \\
+                    '--json[Force JSON output]'
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
         completion)
           _arguments '1:shell:(bash zsh fish)'
           ;;
@@ -1018,6 +1151,47 @@ complete -c ${name} -n '__fish_seen_subcommand_from assign; and __fish_seen_subc
 complete -c ${name} -n '__fish_seen_subcommand_from assign; and __fish_seen_subcommand_from bulk' -l remove -d 'Remove user (ID or me)'
 complete -c ${name} -n '__fish_seen_subcommand_from tag; and __fish_seen_subcommand_from bulk' -l add -d 'Add tag'
 complete -c ${name} -n '__fish_seen_subcommand_from tag; and __fish_seen_subcommand_from bulk' -l remove -d 'Remove tag'
+
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a channels -d 'List chat channels'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a channel -d 'Show channel details'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a send -d 'Send a message to a channel'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a messages -d 'List recent messages'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a reply -d 'Reply to a message'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a replies -d 'List replies to a message'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a react -d 'Add a reaction'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a unreact -d 'Remove a reaction'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a reactions -d 'List reactions'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a channel-create -d 'Create a channel'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a dm -d 'Create or open a DM'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a channel-update -d 'Update a channel'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a channel-delete -d 'Delete a channel'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a members -d 'List channel members'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a followers -d 'List channel followers'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a message-update -d 'Edit a message'
+complete -c ${name} -n '__fish_seen_subcommand_from chat; and not __fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete' -a message-delete -d 'Delete a message'
+complete -c ${name} -n '__fish_seen_subcommand_from channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete; and __fish_seen_subcommand_from chat' -l json -d 'Force JSON output'
+complete -c ${name} -n '__fish_seen_subcommand_from channels; and __fish_seen_subcommand_from chat' -l all -d 'List all channels'
+complete -c ${name} -n '__fish_seen_subcommand_from channels; and __fish_seen_subcommand_from chat' -l type -d 'Filter by type'
+complete -c ${name} -n '__fish_seen_subcommand_from send; and __fish_seen_subcommand_from chat' -s m -l message -d 'Message content'
+complete -c ${name} -n '__fish_seen_subcommand_from send; and __fish_seen_subcommand_from chat' -l post -d 'Send as a post'
+complete -c ${name} -n '__fish_seen_subcommand_from send; and __fish_seen_subcommand_from chat' -l title -d 'Post title'
+complete -c ${name} -n '__fish_seen_subcommand_from messages; and __fish_seen_subcommand_from chat' -l limit -d 'Max messages'
+complete -c ${name} -n '__fish_seen_subcommand_from reply; and __fish_seen_subcommand_from chat' -s m -l message -d 'Reply content'
+complete -c ${name} -n '__fish_seen_subcommand_from replies; and __fish_seen_subcommand_from chat' -l limit -d 'Max replies'
+complete -c ${name} -n '__fish_seen_subcommand_from react; and __fish_seen_subcommand_from chat' -l emoji -d 'Emoji name'
+complete -c ${name} -n '__fish_seen_subcommand_from unreact; and __fish_seen_subcommand_from chat' -l emoji -d 'Emoji name to remove'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-create; and __fish_seen_subcommand_from chat' -l private -d 'Create as private'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-create; and __fish_seen_subcommand_from chat' -l topic -d 'Channel topic'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-create; and __fish_seen_subcommand_from chat' -l space -d 'Create on a space'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-create; and __fish_seen_subcommand_from chat' -l folder -d 'Create on a folder'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-create; and __fish_seen_subcommand_from chat' -l list -d 'Create on a list'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-update; and __fish_seen_subcommand_from chat' -l name -d 'New name'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-update; and __fish_seen_subcommand_from chat' -l topic -d 'New topic'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-update; and __fish_seen_subcommand_from chat' -l description -d 'New description'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-update; and __fish_seen_subcommand_from chat' -l visibility -d 'PUBLIC or PRIVATE'
+complete -c ${name} -n '__fish_seen_subcommand_from channel-delete; and __fish_seen_subcommand_from chat' -l confirm -d 'Skip confirmation'
+complete -c ${name} -n '__fish_seen_subcommand_from message-update; and __fish_seen_subcommand_from chat' -s m -l message -d 'New message content'
+complete -c ${name} -n '__fish_seen_subcommand_from message-delete; and __fish_seen_subcommand_from chat' -l confirm -d 'Skip confirmation'
 
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a list -d 'List all profiles'
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a add -d 'Add a new profile'

@@ -175,6 +175,7 @@ Full CRUD for the core ClickUp workflow:
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ✅ **Tasks**         | Create, read, update, delete, duplicate, search, subtasks, assign, dependencies, links, multi-list, bulk operations (status, assign, due-date, tag, priority, field, move) |
 | 💬 **Comments**      | Post, edit, delete by ID or by task scope for your own comments, threaded replies, notify all                                                                              |
+| 🗨️ **Chat**          | List channels, send messages, replies, reactions, channel management                                                                                                       |
 | 📄 **Docs**          | List, read, create, edit, delete (v3 API)                                                                                                                                  |
 | ⏱️ **Time Tracking** | Start/stop timer, log entries, list/update/delete history                                                                                                                  |
 | ☑️ **Checklists**    | View, create, delete, add/edit/delete items                                                                                                                                |
