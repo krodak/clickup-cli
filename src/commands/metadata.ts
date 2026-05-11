@@ -965,6 +965,41 @@ export const commandMetadata = [
         usage: 'chat followers <channelId>',
         description: 'List channel followers',
       },
+      {
+        section: 'write',
+        usage: 'chat reply <messageId>',
+        description: 'Reply to a message',
+      },
+      {
+        section: 'read',
+        usage: 'chat replies <messageId>',
+        description: 'List replies to a message',
+      },
+      {
+        section: 'write',
+        usage: 'chat react <messageId>',
+        description: 'Add a reaction to a message',
+      },
+      {
+        section: 'write',
+        usage: 'chat unreact <messageId>',
+        description: 'Remove a reaction from a message',
+      },
+      {
+        section: 'read',
+        usage: 'chat reactions <messageId>',
+        description: 'List reactions on a message',
+      },
+      {
+        section: 'write',
+        usage: 'chat message-update <messageId>',
+        description: 'Edit a message',
+      },
+      {
+        section: 'write',
+        usage: 'chat message-delete <messageId>',
+        description: 'Delete a message',
+      },
     ],
   },
   {

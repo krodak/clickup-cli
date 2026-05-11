@@ -171,6 +171,7 @@ import {
   formatChatMembersMarkdown,
 } from './commands/chat.js'
 import { formatMessages, formatMessagesMarkdown } from './commands/chat-message.js'
+import { formatReactions, formatReactionsMarkdown } from './commands/chat-reaction.js'
 import { getView as getViewDetail, formatView, formatViewMarkdown } from './commands/view.js'
 import { createView } from './commands/view-create.js'
 import { updateView as updateViewCommand } from './commands/view-update.js'
@@ -3088,6 +3089,150 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatChatMembers(followers))
         } else {
           console.log(formatChatMembersMarkdown(followers))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('reply <messageId>')
+    .description('Reply to a message')
+    .requiredOption('-m, --message <text>', 'Reply content (markdown supported)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { message: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const result = await client.createChatMessageReply(messageId, opts.message)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Reply sent (id: ${result.id})`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('replies <messageId>')
+    .description('List replies to a message')
+    .option('--limit <n>', 'Max replies (default: 50)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { limit?: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const limit = opts.limit ? Number(opts.limit) : undefined
+        if (opts.limit && (!Number.isFinite(limit) || (limit ?? 0) <= 0)) {
+          throw new Error('--limit must be a positive number')
+        }
+        const replies = await client.getChatMessageReplies(messageId, { limit })
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(replies, null, 2))
+        } else if (isTTY()) {
+          console.log(formatMessages(replies))
+        } else {
+          console.log(formatMessagesMarkdown(replies))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('react <messageId>')
+    .description('Add a reaction to a message')
+    .requiredOption('--emoji <name>', 'Emoji name (e.g. "thumbsup", "heart")')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { emoji: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const result = await client.createChatMessageReaction(messageId, opts.emoji)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Added :${opts.emoji}: reaction`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('unreact <messageId>')
+    .description('Remove a reaction from a message')
+    .requiredOption('--emoji <name>', 'Emoji name to remove')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { emoji: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        await client.deleteChatMessageReaction(messageId, opts.emoji)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, emoji: opts.emoji }, null, 2))
+        } else {
+          console.log(`Removed :${opts.emoji}: reaction`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('reactions <messageId>')
+    .description('List reactions on a message')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const reactions = await client.getChatMessageReactions(messageId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(reactions, null, 2))
+        } else if (isTTY()) {
+          console.log(formatReactions(reactions))
+        } else {
+          console.log(formatReactionsMarkdown(reactions))
+        }
+      }),
+    )
+
+  chatCmd
+    .command('message-update <messageId>')
+    .description('Edit a message')
+    .requiredOption('-m, --message <text>', 'New message content')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { message: string; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const client = new ClickUpClient(config)
+        const result = await client.updateChatMessage(messageId, opts.message)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Message ${messageId} updated`)
+        }
+      }),
+    )
+
+  chatCmd
+    .command('message-delete <messageId>')
+    .description('Delete a message')
+    .option('--confirm', 'Skip confirmation prompt')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (messageId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        if (!opts.confirm) {
+          if (!isTTY()) {
+            throw new Error('Destructive operation requires --confirm flag in non-interactive mode')
+          }
+          const { confirm } = await import('@inquirer/prompts')
+          const confirmed = await confirm({
+            message: `Delete message ${messageId}? This cannot be undone.`,
+            default: false,
+          })
+          if (!confirmed) throw new Error('Cancelled')
+        }
+        const client = new ClickUpClient(config)
+        await client.deleteChatMessage(messageId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify({ success: true, id: messageId }, null, 2))
+        } else {
+          console.log(`Message ${messageId} deleted`)
         }
       }),
     )
