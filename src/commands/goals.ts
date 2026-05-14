@@ -60,7 +60,7 @@ export async function createGoal(
   return client.createGoal(config.teamId, name, {
     description: opts?.description,
     color: opts?.color,
-    ...(opts?.dueDate ? { dueDate: parseDueDate(opts.dueDate, timezone) } : {}),
+    ...(opts?.dueDate ? { dueDate: parseDueDate(opts.dueDate, timezone).ms } : {}),
   })
 }
 

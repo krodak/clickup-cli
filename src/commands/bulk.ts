@@ -53,10 +53,13 @@ export async function bulkDueDate(
 ): Promise<BulkResult> {
   const client = new ClickUpClient(config)
   const timezone = await client.getUserTimezone()
-  const payload =
-    date === 'none' || date === 'clear'
-      ? { due_date: null }
-      : { due_date: parseDueDate(date, timezone), due_date_time: false }
+  let payload: { due_date: number | null; due_date_time?: boolean }
+  if (date === 'none' || date === 'clear') {
+    payload = { due_date: null }
+  } else {
+    const parsed = parseDueDate(date, timezone)
+    payload = { due_date: parsed.ms, due_date_time: parsed.hasTime }
+  }
   const outcomes = await runInBatches(taskIds, BULK_CONCURRENCY, id =>
     client.updateTask(id, payload),
   )

@@ -55,12 +55,14 @@ export async function createTask(
     payload.priority = parsePriority(options.priority)
   }
   if (options.dueDate !== undefined) {
-    payload.due_date = parseDueDate(options.dueDate, timezone)
-    payload.due_date_time = false
+    const parsed = parseDueDate(options.dueDate, timezone)
+    payload.due_date = parsed.ms
+    payload.due_date_time = parsed.hasTime
   }
   if (options.startDate !== undefined) {
-    payload.start_date = parseDueDate(options.startDate, timezone)
-    payload.start_date_time = false
+    const parsed = parseDueDate(options.startDate, timezone)
+    payload.start_date = parsed.ms
+    payload.start_date_time = parsed.hasTime
   }
   if (options.assignee !== undefined) {
     payload.assignees = [parseAssigneeId(options.assignee)]
