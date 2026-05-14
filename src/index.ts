@@ -401,8 +401,14 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       'New status (fuzzy matched, e.g. "prog" matches "in progress")',
     )
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
-    .option('--due-date <date>', 'Due date (YYYY-MM-DD, or "none"/"clear" to remove)')
-    .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
+    .option(
+      '--due-date <date>',
+      'Due date (YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 with offset; or "none"/"clear" to remove)',
+    )
+    .option(
+      '--start-date <date>',
+      'Start date (YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 with offset)',
+    )
     .option(
       '--time-estimate <duration>',
       'Time estimate (e.g. "2h", "30m", "1h30m", "0" or "none" to clear)',
@@ -480,8 +486,14 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
     .option('-s, --status <status>', 'Initial status')
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
-    .option('--due-date <date>', 'Due date (YYYY-MM-DD)')
-    .option('--start-date <date>', 'Start date (YYYY-MM-DD)')
+    .option(
+      '--due-date <date>',
+      'Due date (YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 with offset)',
+    )
+    .option(
+      '--start-date <date>',
+      'Start date (YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 with offset)',
+    )
     .option('--assignee <userId>', 'Assignee user ID or "me"')
     .option('--tags <tags>', 'Comma-separated tag names')
     .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
