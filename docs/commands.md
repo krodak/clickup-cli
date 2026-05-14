@@ -552,9 +552,13 @@ cup update abc123 -n "New task name"
 cup update abc123 -d "Updated description with **markdown**"
 cup update abc123 -d $'## Section\n\nUse `copy()` here.\n- Item 1\n- Item 2'  # backticks + newlines
 cup update abc123 --priority high
-cup update abc123 --due-date 2025-03-15
+cup update abc123 --due-date 2025-03-15              # date only
+cup update abc123 --due-date 2025-03-15T14:30        # date + time (user's timezone)
+cup update abc123 --due-date 2025-03-15T14:30:00Z    # UTC
+cup update abc123 --due-date 2025-03-15T14:30:00+08:00  # explicit offset
 cup update abc123 --due-date none         # clear due date
 cup update abc123 --start-date 2025-03-01
+cup update abc123 --start-date 2025-03-01T09:00      # start date with time
 cup update abc123 --assignee me
 cup update abc123 --assignee 12345
 cup update abc123 --remove-assignee me
@@ -574,24 +578,24 @@ cup update abc123 -s "in progress" --json
 
 `--field "Name" value` updates a custom field inline as part of the update. Field names are resolved via the task's list using the same parser as `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.). Repeat the flag to set multiple fields.
 
-| Flag                         | Description                                                                       |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| `-n, --name <text>`          | New task name                                                                     |
-| `-d, --description <text>`   | New description (markdown supported). Use `$'...'` quoting for backticks/newlines |
-| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)       |
-| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                              |
-| `--due-date <date>`          | Due date (`YYYY-MM-DD`), or `"none"`/`"clear"` to remove                          |
-| `--start-date <date>`        | Start date (`YYYY-MM-DD`)                                                         |
-| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                   |
-| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                                 |
-| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                              |
-| `--parent <taskId>`          | Set parent task (makes this a subtask)                                            |
-| `--detach`                   | Remove parent task (promote subtask to top-level)                                 |
-| `--archive`                  | Archive the task                                                                  |
-| `--unarchive`                | Unarchive the task                                                                |
-| `--type <type>`              | Change task type (name or custom_item_id)                                         |
-| `--field <name> <value>`     | Set custom field inline (repeatable; resolves field names via the task's list)    |
-| `--json`                     | Force JSON output even in terminal                                                |
+| Flag                         | Description                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `-n, --name <text>`          | New task name                                                                                         |
+| `-d, --description <text>`   | New description (markdown supported). Use `$'...'` quoting for backticks/newlines                     |
+| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)                           |
+| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                                  |
+| `--due-date <date>`          | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset), or `"none"`/`"clear"` to remove |
+| `--start-date <date>`        | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)                                |
+| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                                       |
+| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                                                     |
+| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                                                  |
+| `--parent <taskId>`          | Set parent task (makes this a subtask)                                                                |
+| `--detach`                   | Remove parent task (promote subtask to top-level)                                                     |
+| `--archive`                  | Archive the task                                                                                      |
+| `--unarchive`                | Unarchive the task                                                                                    |
+| `--type <type>`              | Change task type (name or custom_item_id)                                                             |
+| `--field <name> <value>`     | Set custom field inline (repeatable; resolves field names via the task's list)                        |
+| `--json`                     | Force JSON output even in terminal                                                                    |
 
 ### `cup create`
 
@@ -603,6 +607,8 @@ cup create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
 cup create -n "Task" -l <listId> -d "desc" -s "open"
 cup create -n "Task" -l <listId> -d $'## Overview\n\nCall `init()` first.\n- Step 1\n- Step 2'
 cup create -n "Task" -l <listId> --priority high --due-date 2025-06-01
+cup create -n "Task" -l <listId> --due-date 2025-06-01T10:00        # date + time
+cup create -n "Task" -l <listId> --due-date 2025-06-01T10:00:00Z    # UTC
 cup create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
 cup create -n "Initiative" -l <listId> --custom-item-id 1
 cup create -n "Task" -l <listId> --time-estimate 2h
@@ -616,23 +622,23 @@ cup create -n "Fix bug" -l <listId> --json
 
 `--field "Name" value` sets custom fields inline as part of task creation. Field names are resolved once against the target list via `GET /list/{id}/field`, so the values land in the initial create payload instead of requiring a follow-up `cup field --set` call. Repeat the flag to set multiple fields. Value parsing matches `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.).
 
-| Flag                         | Required         | Description                                                         |
-| ---------------------------- | ---------------- | ------------------------------------------------------------------- |
-| `-n, --name <name>`          | yes              | Task name                                                           |
-| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                 |
-| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                    |
-| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines |
-| `-s, --status <status>`      | no               | Initial status                                                      |
-| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                |
-| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`)                                             |
-| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`)                                           |
-| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                     |
-| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                       |
-| `--tags <tags>`              | no               | Comma-separated tag names                                           |
-| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                 |
-| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)       |
-| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                |
-| `--json`                     | no               | Force JSON output even in terminal                                  |
+| Flag                         | Required         | Description                                                            |
+| ---------------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `-n, --name <name>`          | yes              | Task name                                                              |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                    |
+| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                       |
+| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines    |
+| `-s, --status <status>`      | no               | Initial status                                                         |
+| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                   |
+| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)   |
+| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset) |
+| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                        |
+| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                          |
+| `--tags <tags>`              | no               | Comma-separated tag names                                              |
+| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                    |
+| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)          |
+| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                   |
+| `--json`                     | no               | Force JSON output even in terminal                                     |
 
 ### `cup delete <id>`
 
@@ -1310,10 +1316,12 @@ cup bulk assign t1 t2 t3 --remove 12345 --json
 
 ### `cup bulk due-date <date> <taskIds...>`
 
-Bulk set or clear the due date on multiple tasks. Use `none` or `clear` to remove due dates. Failed updates are reported but don't stop the operation.
+Bulk set or clear the due date on multiple tasks. Accepts `YYYY-MM-DD` (date only), `YYYY-MM-DDTHH:MM` (with time), or full ISO 8601 with offset. Use `none` or `clear` to remove due dates. Failed updates are reported but don't stop the operation.
 
 ```bash
 cup bulk due-date 2025-12-31 t1 t2 t3
+cup bulk due-date 2025-12-31T17:00 t1 t2 t3          # with time
+cup bulk due-date 2025-12-31T17:00:00+05:30 t1 t2    # explicit offset
 cup bulk due-date none t1 t2
 cup bulk due-date clear t1 t2 --json
 ```

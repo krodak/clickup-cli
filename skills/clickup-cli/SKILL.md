@@ -248,7 +248,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | Task IDs                 | Native (`abc123def`) or custom (`PROJ-123`). Custom IDs auto-detected by `PREFIX-DIGITS` format                                                                                                                                                                                                                                                    |
 | `--status`               | Fuzzy matching: exact > starts-with > contains. Prints match to stderr                                                                                                                                                                                                                                                                             |
 | `--priority`             | Names (`urgent`, `high`, `normal`, `low`) or numbers (1-4)                                                                                                                                                                                                                                                                                         |
-| `--due-date`             | `YYYY-MM-DD` format                                                                                                                                                                                                                                                                                                                                |
+| `--due-date`             | `YYYY-MM-DD` (date only), `YYYY-MM-DDTHH:MM` (with time), or full ISO 8601 with offset. Time-of-day formats set `due_date_time: true` in ClickUp                                                                                                                                                                                                   |
 | `--assignee`             | User ID or `me`                                                                                                                                                                                                                                                                                                                                    |
 | `--tags`                 | Comma-separated (e.g. `--tags "bug,frontend"`)                                                                                                                                                                                                                                                                                                     |
 | `--time-estimate`        | Duration: `"2h"`, `"30m"`, `"1h30m"`, or raw milliseconds                                                                                                                                                                                                                                                                                          |
@@ -323,6 +323,8 @@ cup inbox --days 7                   # recently updated
 ```bash
 cup update abc123def -s "done"
 cup update abc123def --priority high --due-date 2025-03-15
+cup update abc123def --due-date 2025-03-15T14:30     # date + time (user's timezone)
+cup update abc123def --due-date 2025-03-15T14:30:00Z # UTC
 cup create -n "Fix the thing" -p abc123def
 cup create -n "Fix bug" -l <listId> --priority urgent --tags "bug,frontend"
 cup create -n "Bug fix" -l sprint:current         # create in active sprint
