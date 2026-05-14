@@ -178,17 +178,56 @@ describe('parsePriority', () => {
 })
 
 describe('parseDueDate', () => {
-  it('parses YYYY-MM-DD format to UTC midnight', async () => {
+  it('parses YYYY-MM-DD format to UTC midnight with hasTime=false', async () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
     const result = parseDueDate('2025-03-15')
-    expect(result).toBe(Date.UTC(2025, 2, 15))
+    expect(result).toEqual({ ms: Date.UTC(2025, 2, 15), hasTime: false })
   })
 
   it('parses YYYY-MM-DD with timezone to midnight in that timezone', async () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
     const result = parseDueDate('2025-06-01', 'America/New_York')
     // June 1 midnight ET = June 1 04:00 UTC (EDT = UTC-4)
-    expect(result).toBe(Date.UTC(2025, 5, 1, 4, 0, 0))
+    expect(result).toEqual({ ms: Date.UTC(2025, 5, 1, 4, 0, 0), hasTime: false })
+  })
+
+  it('parses YYYY-MM-DDTHH:MM as wall clock with hasTime=true (UTC fallback)', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-03-15T14:30')
+    expect(result).toEqual({ ms: Date.UTC(2025, 2, 15, 14, 30, 0), hasTime: true })
+  })
+
+  it('parses YYYY-MM-DDTHH:MM:SS as wall clock with hasTime=true', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-03-15T14:30:45')
+    expect(result).toEqual({ ms: Date.UTC(2025, 2, 15, 14, 30, 45), hasTime: true })
+  })
+
+  it('parses YYYY-MM-DDTHH:MM with timezone (wall clock in tz)', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-05-14T14:30', 'Australia/Perth')
+    // 14:30 AWST (UTC+8) = 06:30 UTC
+    expect(result).toEqual({ ms: Date.UTC(2025, 4, 14, 6, 30, 0), hasTime: true })
+  })
+
+  it('parses full ISO with Z offset as absolute instant', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-03-15T14:30:00Z')
+    expect(result).toEqual({ ms: Date.UTC(2025, 2, 15, 14, 30, 0), hasTime: true })
+  })
+
+  it('parses full ISO with explicit offset as absolute instant', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    const result = parseDueDate('2025-05-14T14:30:00+08:00')
+    // 14:30 +08:00 = 06:30 UTC
+    expect(result).toEqual({ ms: Date.UTC(2025, 4, 14, 6, 30, 0), hasTime: true })
+  })
+
+  it('ISO with offset ignores the timezone argument', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    // Explicit +08:00 wins over the America/New_York hint.
+    const result = parseDueDate('2025-05-14T14:30:00+08:00', 'America/New_York')
+    expect(result).toEqual({ ms: Date.UTC(2025, 4, 14, 6, 30, 0), hasTime: true })
   })
 
   it('throws on invalid date format', async () => {
@@ -200,6 +239,12 @@ describe('parseDueDate', () => {
     const { parseDueDate } = await import('../../../src/commands/update.js')
     expect(() => parseDueDate('2025-02')).toThrow('YYYY-MM-DD')
     expect(() => parseDueDate('2025')).toThrow('YYYY-MM-DD')
+  })
+
+  it('throws on malformed time component', async () => {
+    const { parseDueDate } = await import('../../../src/commands/update.js')
+    expect(() => parseDueDate('2025-03-15T14')).toThrow('YYYY-MM-DD')
+    expect(() => parseDueDate('2025-03-15T25:00')).toThrow('YYYY-MM-DD')
   })
 })
 
@@ -364,6 +409,28 @@ describe('buildUpdatePayload', () => {
     const payload = buildUpdatePayload({ startDate: '2025-06-01' })
     expect(payload.start_date).toBe(Date.UTC(2025, 5, 1))
     expect(payload.start_date_time).toBe(false)
+  })
+
+  it('builds payload with due date + time-of-day sets due_date_time=true', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ dueDate: '2025-05-14T14:30' })
+    expect(payload.due_date).toBe(Date.UTC(2025, 4, 14, 14, 30, 0))
+    expect(payload.due_date_time).toBe(true)
+  })
+
+  it('builds payload with start_date + time-of-day in timezone', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ startDate: '2025-05-14T14:30' }, 'Australia/Perth')
+    // 14:30 AWST (UTC+8) = 06:30 UTC
+    expect(payload.start_date).toBe(Date.UTC(2025, 4, 14, 6, 30, 0))
+    expect(payload.start_date_time).toBe(true)
+  })
+
+  it('builds payload with full ISO offset preserves absolute instant', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({ dueDate: '2025-05-14T14:30:00+08:00' })
+    expect(payload.due_date).toBe(Date.UTC(2025, 4, 14, 6, 30, 0))
+    expect(payload.due_date_time).toBe(true)
   })
 
   it('clears due_date when --due-date is "none"', async () => {

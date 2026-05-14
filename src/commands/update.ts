@@ -18,33 +18,89 @@ export function parsePriority(value: string): Priority {
   throw new Error('Priority must be urgent, high, normal, low, or 1-4')
 }
 
-export function parseDueDate(value: string, timezone?: string): number {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error('Date must be in YYYY-MM-DD format')
-  }
-  const parts = value.split('-').map(Number)
-  const y = parts[0] as number
-  const m = parts[1] as number
-  const d = parts[2] as number
+export interface ParsedDate {
+  ms: number
+  hasTime: boolean
+}
 
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/
+const LOCAL_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
+const ISO_WITH_OFFSET_RE =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/
+
+export function parseDueDate(value: string, timezone?: string): ParsedDate {
+  // Case 1: date-only (YYYY-MM-DD) — interpreted as midnight in the given timezone.
+  if (DATE_ONLY_RE.test(value)) {
+    const parts = value.split('-').map(Number)
+    const y = parts[0] as number
+    const m = parts[1] as number
+    const d = parts[2] as number
+    return { ms: wallClockToMs(y, m, d, 0, 0, 0, timezone, value), hasTime: false }
+  }
+
+  // Case 2: date+time without offset (YYYY-MM-DDTHH:MM[:SS]) — interpreted in the given timezone.
+  const localMatch = LOCAL_DATETIME_RE.exec(value)
+  if (localMatch) {
+    const y = Number(localMatch[1])
+    const m = Number(localMatch[2])
+    const d = Number(localMatch[3])
+    const hh = Number(localMatch[4])
+    const mm = Number(localMatch[5])
+    const ss = localMatch[6] !== undefined ? Number(localMatch[6]) : 0
+    if (hh > 23 || mm > 59 || ss > 59) {
+      throw new Error(
+        'Date must be in YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 format (time component out of range)',
+      )
+    }
+    return { ms: wallClockToMs(y, m, d, hh, mm, ss, timezone, value), hasTime: true }
+  }
+
+  // Case 3: full ISO 8601 with explicit offset or Z — parsed as an absolute instant.
+  if (ISO_WITH_OFFSET_RE.test(value)) {
+    const ms = Date.parse(value)
+    if (!isNaN(ms)) return { ms, hasTime: true }
+  }
+
+  throw new Error(
+    'Date must be in YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 format (e.g. 2025-03-15T14:30 or 2025-03-15T14:30:00+08:00)',
+  )
+}
+
+function wallClockToMs(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  timezone: string | undefined,
+  rawValue: string,
+): number {
   if (timezone) {
     try {
-      const ms = dateToTimezoneMs(y, m, d, timezone)
+      const ms = wallClockToTimezoneMs(year, month, day, hour, minute, second, timezone)
       if (!isNaN(ms)) return ms
     } catch {
-      // Invalid timezone string — fall through to UTC midnight
+      // Invalid timezone string — fall through to UTC.
     }
   }
-
-  const ms = Date.UTC(y, m - 1, d)
-  if (isNaN(ms)) throw new Error(`Invalid date: ${value}`)
+  const ms = Date.UTC(year, month - 1, day, hour, minute, second)
+  if (isNaN(ms)) throw new Error(`Invalid date: ${rawValue}`)
   return ms
 }
 
-function dateToTimezoneMs(year: number, month: number, day: number, timezone: string): number {
-  // Find the UTC epoch that corresponds to midnight on YYYY-MM-DD in the given IANA timezone.
-  // Step 1: treat the date as UTC midnight (approximate starting point).
-  const approxUtc = new Date(Date.UTC(year, month - 1, day))
+function wallClockToTimezoneMs(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  timezone: string,
+): number {
+  // Find the UTC epoch that corresponds to a wall-clock time in the given IANA timezone.
+  // Step 1: treat the wall-clock components as if they were UTC (approximate starting point).
+  const approxUtc = new Date(Date.UTC(year, month - 1, day, hour, minute, second))
   // Step 2: express that UTC instant in the target timezone to find the TZ offset.
   const tzStr = approxUtc.toLocaleString('en-US', {
     timeZone: timezone,
@@ -60,7 +116,7 @@ function dateToTimezoneMs(year: number, month: number, day: number, timezone: st
   const tzDate = new Date(tzStr + ' UTC')
   // Step 4: offset = approxUtc - tzDate.
   // e.g. for UTC-4: approxUtc=00:00Z, tzDate=20:00Z (prev day) → offset=+4h
-  // Midnight in the TZ = approxUtc + offset (shifts UTC midnight forward by the tz offset).
+  // Wall clock in the TZ = approxUtc + offset.
   const offset = approxUtc.getTime() - tzDate.getTime()
   return approxUtc.getTime() + offset
 }
@@ -134,13 +190,15 @@ export function buildUpdatePayload(
     if (opts.dueDate === 'none' || opts.dueDate === 'clear') {
       payload.due_date = null
     } else {
-      payload.due_date = parseDueDate(opts.dueDate, timezone)
-      payload.due_date_time = false
+      const parsed = parseDueDate(opts.dueDate, timezone)
+      payload.due_date = parsed.ms
+      payload.due_date_time = parsed.hasTime
     }
   }
   if (opts.startDate !== undefined) {
-    payload.start_date = parseDueDate(opts.startDate, timezone)
-    payload.start_date_time = false
+    const parsed = parseDueDate(opts.startDate, timezone)
+    payload.start_date = parsed.ms
+    payload.start_date_time = parsed.hasTime
   }
   if (opts.assignee !== undefined || opts.removeAssignee !== undefined) {
     payload.assignees = {}
