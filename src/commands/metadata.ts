@@ -407,6 +407,36 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'attachments',
+    description: 'List attachments on a task',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'attachments <taskId>',
+        description: 'List attachments on a task',
+      },
+    ],
+  },
+  {
+    name: 'task-members',
+    description: 'List members with access to a task',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'task-members <taskId>',
+        description: 'List members with access to a task',
+      },
+    ],
+  },
+  {
+    name: 'plan',
+    description: 'Show workspace plan',
+    flags: ['--json'],
+    quickReference: [{ section: 'read', usage: 'plan', description: 'Show workspace plan' }],
+  },
+  {
     name: 'tag',
     description: 'Add or remove tags from a task',
     flags: ['--add', '--remove', '--json'],

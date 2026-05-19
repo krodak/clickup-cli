@@ -75,6 +75,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup search <query>`                     | Search your tasks by name (--all for all assignees)              |
 | `cup summary`                            | Daily standup helper                                             |
 | `cup overdue`                            | Tasks past their due date                                        |
+| `cup attachments <taskId>`               | List attachments on a task                                       |
+| `cup task-members <taskId>`              | List members with access to a task                               |
+| `cup plan`                               | Show workspace plan                                              |
 | `cup tags <spaceId>`                     | List tags in a space                                             |
 | `cup time-in-status <taskId>`            | Show how long a task has been in each status                     |
 | `cup docs [query]`                       | List workspace docs                                              |
