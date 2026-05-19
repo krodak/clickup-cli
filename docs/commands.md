@@ -12,7 +12,7 @@ Commands behave differently based on how they're invoked:
 | **Piped**          | Clean markdown output, no colors, no prompts. Suitable for agents and scripts.                                                                                                                        |
 | **`--json` flag**  | Structured JSON output. No prompts. Overrides both TTY and piped modes.                                                                                                                               |
 
-Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup archive`, `cup view-delete`).
+Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`).
 
 ## Shell Quoting for Descriptions
 
@@ -477,6 +477,32 @@ cup time-in-status abc123 --json
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
 
+### `cup attachments <taskId>`
+
+List attachments on a task. Shows file name, size, URL, and upload date for each attachment.
+
+```bash
+cup attachments abc123
+cup attachments abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup task-members <taskId>`
+
+List members with access to a task. Shows user ID, username, email, and role for each member.
+
+```bash
+cup task-members abc123
+cup task-members abc123 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
 ### `cup auth`
 
 Check authentication status. Validates your API token and shows your user info.
@@ -485,6 +511,19 @@ Check authentication status. Validates your API token and shows your user info.
 cup auth
 cup auth --json
 ```
+
+### `cup plan`
+
+Show your workspace plan (Free, Unlimited, Business, Enterprise, etc.) and current usage details.
+
+```bash
+cup plan
+cup plan --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
 
 ### `cup docs [query]`
 
@@ -657,6 +696,57 @@ cup delete abc123 --confirm --json
 ```
 
 In TTY mode without `--confirm`: shows the task name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `--confirm` | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | Force JSON output                                           |
+
+### `cup list-delete <listId>`
+
+Delete a list. **DESTRUCTIVE - cannot be undone.**
+
+```bash
+cup list-delete 12345
+cup list-delete 12345 --confirm
+cup list-delete 12345 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the list name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `--confirm` | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | Force JSON output                                           |
+
+### `cup folder-delete <folderId>`
+
+Delete a folder. **DESTRUCTIVE - cannot be undone.**
+
+```bash
+cup folder-delete 12345
+cup folder-delete 12345 --confirm
+cup folder-delete 12345 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the folder name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `--confirm` | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | Force JSON output                                           |
+
+### `cup space-delete <spaceId>`
+
+Delete a space. **DESTRUCTIVE - cannot be undone.**
+
+```bash
+cup space-delete 12345
+cup space-delete 12345 --confirm
+cup space-delete 12345 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the space name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
 
 | Flag        | Description                                                 |
 | ----------- | ----------------------------------------------------------- |
