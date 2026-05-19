@@ -979,6 +979,54 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'list-comments',
+    description: 'List comments on a list',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'list-comments <listId>',
+        description: 'List comments on a list',
+      },
+    ],
+  },
+  {
+    name: 'list-comment',
+    description: 'Post a comment on a list',
+    flags: ['-m', '--message', '--notify-all', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'list-comment <listId>',
+        description: 'Post a comment on a list',
+      },
+    ],
+  },
+  {
+    name: 'view-comments',
+    description: 'List comments on a view',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'view-comments <viewId>',
+        description: 'List comments on a view',
+      },
+    ],
+  },
+  {
+    name: 'view-comment',
+    description: 'Post a comment on a view',
+    flags: ['-m', '--message', '--notify-all', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'view-comment <viewId>',
+        description: 'Post a comment on a view',
+      },
+    ],
+  },
+  {
     name: 'webhook',
     description: 'Manage webhooks',
     quickReference: [
