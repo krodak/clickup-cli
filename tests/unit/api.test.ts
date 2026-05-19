@@ -1786,3 +1786,250 @@ describe('getTaskAttachments', () => {
     expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/attachments')
   })
 })
+
+describe('mergeTasks', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends POST to /task/{id}/merge with merge_with body', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.mergeTasks('t1', ['t2', 't3'])
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/t1/merge')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ merge_with: ['t2', 't3'] }),
+      }),
+    )
+  })
+})
+
+describe('per-user time estimates', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('updateTimeEstimatesByUser sends PATCH to v3 time_estimates_by_user', async () => {
+    const response = { total_time_estimate: 7200000, assignee_estimates: { '42': 3600000 } }
+    mockFetch.mockReturnValue(mockResponse(response))
+    const result = await client.updateTimeEstimatesByUser('t1', [
+      { assignee: 42, time: 3600000 },
+    ])
+    expect(result).toEqual(response)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'PATCH' }),
+    )
+  })
+
+  it('replaceTimeEstimatesByUser sends PUT to v3 time_estimates_by_user', async () => {
+    const response = { total_time_estimate: 5400000, updated_estimates: { '42': 5400000 } }
+    mockFetch.mockReturnValue(mockResponse(response))
+    const result = await client.replaceTimeEstimatesByUser('t1', [
+      { assignee: 42, time: 5400000 },
+    ])
+    expect(result).toEqual(response)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'PUT' }),
+    )
+  })
+})
+
+describe('getSharedHierarchy', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends GET to /team/{teamId}/shared and returns shared hierarchy', async () => {
+    const shared = {
+      spaces: [{ id: 's1', name: 'Shared Space' }],
+      folders: [{ id: 'f1', name: 'Shared Folder' }],
+      lists: [{ id: 'l1', name: 'Shared List' }],
+    }
+    mockFetch.mockReturnValue(mockResponse({ shared }))
+    const result = await client.getSharedHierarchy()
+    expect(result).toEqual({ shared })
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/shared')
+  })
+})
+
+describe('webhooks', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getWebhooks sends GET to /team/{teamId}/webhook', async () => {
+    const webhooks = [{ id: 'wh1', endpoint: 'https://example.com/hook', events: ['taskCreated'] }]
+    mockFetch.mockReturnValue(mockResponse({ webhooks }))
+    const result = await client.getWebhooks()
+    expect(result).toEqual(webhooks)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/webhook')
+  })
+
+  it('createWebhook sends POST to /team/{teamId}/webhook', async () => {
+    const webhook = { id: 'wh1', endpoint: 'https://example.com/hook', events: ['taskCreated'] }
+    mockFetch.mockReturnValue(mockResponse({ webhook }))
+    const result = await client.createWebhook('https://example.com/hook', ['taskCreated'], {
+      spaceId: 's1',
+    })
+    expect(result).toEqual(webhook)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/webhook')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.endpoint).toBe('https://example.com/hook')
+    expect(body.events).toEqual(['taskCreated'])
+    expect(body.space_id).toBe('s1')
+  })
+
+  it('updateWebhook sends PUT to /webhook/{id}', async () => {
+    const webhook = { id: 'wh1', endpoint: 'https://example.com/new', events: ['taskUpdated'] }
+    mockFetch.mockReturnValue(mockResponse({ webhook }))
+    const result = await client.updateWebhook('wh1', {
+      endpoint: 'https://example.com/new',
+      events: ['taskUpdated'],
+    })
+    expect(result).toEqual(webhook)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/webhook/wh1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'PUT' }),
+    )
+  })
+
+  it('deleteWebhook sends DELETE to /webhook/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteWebhook('wh1')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/webhook/wh1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('list comments', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getListComments sends GET to /list/{id}/comment', async () => {
+    const comments = [{ id: 'c1', comment_text: 'hello', user: { username: 'u1' }, date: '123' }]
+    mockFetch.mockReturnValue(mockResponse({ comments }))
+    const result = await client.getListComments('l1')
+    expect(result).toEqual(comments)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/list/l1/comment')
+  })
+
+  it('postListComment sends POST to /list/{id}/comment', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c1' }))
+    const result = await client.postListComment('l1', 'list note', true)
+    expect(result).toEqual({ id: 'c1' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/list/l1/comment'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ comment_text: 'list note', notify_all: true }),
+      }),
+    )
+  })
+})
+
+describe('view comments', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getViewComments sends GET to /view/{id}/comment', async () => {
+    const comments = [{ id: 'c1', comment_text: 'view note', user: { username: 'u1' }, date: '456' }]
+    mockFetch.mockReturnValue(mockResponse({ comments }))
+    const result = await client.getViewComments('v1')
+    expect(result).toEqual(comments)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/view/v1/comment')
+  })
+
+  it('postViewComment sends POST to /view/{id}/comment', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'c2' }))
+    const result = await client.postViewComment('v1', 'view note')
+    expect(result).toEqual({ id: 'c2' })
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/view/v1/comment'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ comment_text: 'view note' }),
+      }),
+    )
+  })
+})

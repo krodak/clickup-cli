@@ -374,6 +374,32 @@ export interface TaskTemplate {
   name: string
 }
 
+export interface TimeEstimateByUser {
+  assignee: string | number
+  time: number
+}
+
+export interface Webhook {
+  id: string
+  userid: number
+  team_id: number
+  endpoint: string
+  events: string[]
+  status: string
+  task_id?: string
+  list_id?: string
+  folder_id?: string
+  space_id?: string
+}
+
+export interface SharedHierarchy {
+  shared: {
+    spaces: Array<{ id: string; name: string }>
+    folders: Array<{ id: string; name: string }>
+    lists: Array<{ id: string; name: string }>
+  }
+}
+
 interface ClientConfig {
   apiToken: string
   teamId?: string
@@ -1674,5 +1700,115 @@ export class ClickUpClient {
       this.chatMessagesPath(`/${messageId}/reactions/${emoji}`),
       { method: 'DELETE' },
     )
+  }
+
+  async mergeTasks(taskId: string, mergeWithTaskIds: string[]): Promise<void> {
+    await this.request(this.taskPath(taskId, '/merge'), {
+      method: 'POST',
+      body: JSON.stringify({ merge_with: mergeWithTaskIds }),
+    })
+  }
+
+  async updateTimeEstimatesByUser(
+    taskId: string,
+    estimates: TimeEstimateByUser[],
+  ): Promise<{ total_time_estimate: number; assignee_estimates: Record<string, number> }> {
+    return this.requestV3<{
+      total_time_estimate: number
+      assignee_estimates: Record<string, number>
+    }>(`/workspaces/${this.teamId}/tasks/${taskId}/time_estimates_by_user`, {
+      method: 'PATCH',
+      body: JSON.stringify({ time_estimates_by_user: estimates }),
+    })
+  }
+
+  async replaceTimeEstimatesByUser(
+    taskId: string,
+    estimates: TimeEstimateByUser[],
+  ): Promise<{ total_time_estimate: number; updated_estimates: Record<string, number> }> {
+    return this.requestV3<{
+      total_time_estimate: number
+      updated_estimates: Record<string, number>
+    }>(`/workspaces/${this.teamId}/tasks/${taskId}/time_estimates_by_user`, {
+      method: 'PUT',
+      body: JSON.stringify({ time_estimates_by_user: estimates }),
+    })
+  }
+
+  async getSharedHierarchy(): Promise<SharedHierarchy> {
+    return this.request<SharedHierarchy>(`/team/${this.teamId}/shared`)
+  }
+
+  async getWebhooks(): Promise<Webhook[]> {
+    const data = await this.request<{ webhooks: Webhook[] }>(`/team/${this.teamId}/webhook`)
+    return readCollectionField<Webhook>(data, 'webhooks', 'webhooks')
+  }
+
+  async createWebhook(
+    endpoint: string,
+    events: string[],
+    opts?: { taskId?: string; listId?: string; folderId?: string; spaceId?: string },
+  ): Promise<Webhook> {
+    const body: Record<string, unknown> = { endpoint, events }
+    if (opts?.taskId) body.task_id = opts.taskId
+    if (opts?.listId) body.list_id = opts.listId
+    if (opts?.folderId) body.folder_id = opts.folderId
+    if (opts?.spaceId) body.space_id = opts.spaceId
+    const data = await this.request<{ webhook: Webhook }>(`/team/${this.teamId}/webhook`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return expectRecordField(data, 'webhook', 'webhook') as unknown as Webhook
+  }
+
+  async updateWebhook(
+    webhookId: string,
+    opts: { endpoint?: string; events?: string[]; status?: string },
+  ): Promise<Webhook> {
+    const data = await this.request<{ webhook: Webhook }>(`/webhook/${webhookId}`, {
+      method: 'PUT',
+      body: JSON.stringify(opts),
+    })
+    return expectRecordField(data, 'webhook', 'webhook') as unknown as Webhook
+  }
+
+  async deleteWebhook(webhookId: string): Promise<void> {
+    await this.request(`/webhook/${webhookId}`, { method: 'DELETE' })
+  }
+
+  async getListComments(listId: string): Promise<Comment[]> {
+    const data = await this.request<{ comments: Comment[] }>(`/list/${listId}/comment`)
+    return readCollectionField<Comment>(data, 'comments', 'list comments')
+  }
+
+  async postListComment(
+    listId: string,
+    commentText: string,
+    notifyAll?: boolean,
+  ): Promise<{ id: string }> {
+    const body: Record<string, unknown> = { comment_text: commentText }
+    if (notifyAll) body.notify_all = true
+    return this.request<{ id: string }>(`/list/${listId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  async getViewComments(viewId: string): Promise<Comment[]> {
+    const data = await this.request<{ comments: Comment[] }>(`/view/${viewId}/comment`)
+    return readCollectionField<Comment>(data, 'comments', 'view comments')
+  }
+
+  async postViewComment(
+    viewId: string,
+    commentText: string,
+    notifyAll?: boolean,
+  ): Promise<{ id: string }> {
+    const body: Record<string, unknown> = { comment_text: commentText }
+    if (notifyAll) body.notify_all = true
+    return this.request<{ id: string }>(`/view/${viewId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
   }
 }
