@@ -252,6 +252,29 @@ export interface Attachment {
   url: string
 }
 
+export interface TaskMember {
+  id: number
+  username: string
+  email: string
+  initials?: string
+}
+
+export interface WorkspacePlan {
+  plan_id: number
+  name: string
+}
+
+export interface TaskAttachment {
+  id: string
+  title: string
+  url: string
+  extension: string
+  mime_type: string
+  size: number
+  date_created: number
+  user_id: number
+}
+
 export interface ChatChannel {
   id: string
   name: string
@@ -892,6 +915,34 @@ export class ClickUpClient {
 
   async deleteTask(taskId: string): Promise<void> {
     await this.request(this.taskPath(taskId), { method: 'DELETE' })
+  }
+
+  async deleteList(listId: string): Promise<void> {
+    await this.request(`/list/${listId}`, { method: 'DELETE' })
+  }
+
+  async deleteFolder(folderId: string): Promise<void> {
+    await this.request(`/folder/${folderId}`, { method: 'DELETE' })
+  }
+
+  async deleteSpace(spaceId: string): Promise<void> {
+    await this.request(`/space/${spaceId}`, { method: 'DELETE' })
+  }
+
+  async getTaskMembers(taskId: string): Promise<TaskMember[]> {
+    const data = await this.request<{ members: TaskMember[] }>(this.taskPath(taskId, '/member'))
+    return readCollectionField<TaskMember>(data, 'members', 'task members')
+  }
+
+  async getWorkspacePlan(): Promise<WorkspacePlan> {
+    return this.request<WorkspacePlan>(`/team/${this.teamId}/plan`)
+  }
+
+  async getTaskAttachments(taskId: string): Promise<TaskAttachment[]> {
+    const data = await this.requestV3<{ data: TaskAttachment[] }>(
+      `/workspaces/${this.teamId}/tasks/${taskId}/attachments`,
+    )
+    return expectArrayField<TaskAttachment>(data, 'data', 'task attachments')
   }
 
   async addTagToTask(taskId: string, tagName: string): Promise<void> {

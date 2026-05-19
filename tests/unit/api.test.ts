@@ -1622,3 +1622,167 @@ describe('postComment', () => {
     )
   })
 })
+
+describe('deleteList', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends DELETE to /list/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteList('l1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.clickup.com/api/v2/list/l1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('deleteFolder', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends DELETE to /folder/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteFolder('f1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.clickup.com/api/v2/folder/f1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('deleteSpace', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends DELETE to /space/{id}', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteSpace('s1')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.clickup.com/api/v2/space/s1',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+  })
+})
+
+describe('getTaskMembers', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns members array from /task/{id}/member', async () => {
+    const members = [
+      { id: 1, username: 'alice', email: 'alice@example.com', initials: 'A' },
+      { id: 2, username: 'bob', email: 'bob@example.com' },
+    ]
+    mockFetch.mockReturnValue(mockResponse({ members }))
+    const result = await client.getTaskMembers('t1')
+    expect(result).toEqual(members)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/t1/member')
+  })
+
+  it('returns empty array when members is missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getTaskMembers('t1')
+    expect(result).toEqual([])
+  })
+})
+
+describe('getWorkspacePlan', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns plan object from /team/{teamId}/plan', async () => {
+    const plan = { plan_id: 3, name: 'Business' }
+    mockFetch.mockReturnValue(mockResponse(plan))
+    const result = await client.getWorkspacePlan()
+    expect(result).toEqual(plan)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/team/team123/plan')
+  })
+})
+
+describe('getTaskAttachments', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('returns attachments via v3 endpoint', async () => {
+    const attachments = [
+      {
+        id: 'att1',
+        title: 'screenshot.png',
+        url: 'https://example.com/screenshot.png',
+        extension: 'png',
+        mime_type: 'image/png',
+        size: 12345,
+        date_created: 1700000000,
+        user_id: 42,
+      },
+    ]
+    mockFetch.mockReturnValue(mockResponse({ data: attachments }))
+    const result = await client.getTaskAttachments('t1')
+    expect(result).toEqual(attachments)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/attachments')
+  })
+})
