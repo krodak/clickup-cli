@@ -1833,12 +1833,12 @@ describe('per-user time estimates', () => {
   it('updateTimeEstimatesByUser sends PATCH to v3 time_estimates_by_user', async () => {
     const response = { total_time_estimate: 7200000, assignee_estimates: { '42': 3600000 } }
     mockFetch.mockReturnValue(mockResponse(response))
-    const result = await client.updateTimeEstimatesByUser('t1', [
-      { assignee: 42, time: 3600000 },
-    ])
+    const result = await client.updateTimeEstimatesByUser('t1', [{ assignee: 42, time: 3600000 }])
     expect(result).toEqual(response)
     const url = String(mockFetch.mock.calls[0]![0])
-    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user')
+    expect(url).toContain(
+      'https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user',
+    )
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ method: 'PATCH' }),
@@ -1848,12 +1848,12 @@ describe('per-user time estimates', () => {
   it('replaceTimeEstimatesByUser sends PUT to v3 time_estimates_by_user', async () => {
     const response = { total_time_estimate: 5400000, updated_estimates: { '42': 5400000 } }
     mockFetch.mockReturnValue(mockResponse(response))
-    const result = await client.replaceTimeEstimatesByUser('t1', [
-      { assignee: 42, time: 5400000 },
-    ])
+    const result = await client.replaceTimeEstimatesByUser('t1', [{ assignee: 42, time: 5400000 }])
     expect(result).toEqual(response)
     const url = String(mockFetch.mock.calls[0]![0])
-    expect(url).toContain('https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user')
+    expect(url).toContain(
+      'https://api.clickup.com/api/v3/workspaces/team123/tasks/t1/time_estimates_by_user',
+    )
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ method: 'PUT' }),
@@ -2012,7 +2012,9 @@ describe('view comments', () => {
   })
 
   it('getViewComments sends GET to /view/{id}/comment', async () => {
-    const comments = [{ id: 'c1', comment_text: 'view note', user: { username: 'u1' }, date: '456' }]
+    const comments = [
+      { id: 'c1', comment_text: 'view note', user: { username: 'u1' }, date: '456' },
+    ]
     mockFetch.mockReturnValue(mockResponse({ comments }))
     const result = await client.getViewComments('v1')
     expect(result).toEqual(comments)

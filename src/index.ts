@@ -208,6 +208,13 @@ import {
   formatFavoritesTable,
   formatFavoritesMarkdown,
 } from './commands/favorite.js'
+import { mergeCommand } from './commands/merge.js'
+import { timeEstimateByUserCommand } from './commands/time-estimate-by-user.js'
+import {
+  fetchSharedHierarchy,
+  formatSharedHierarchy,
+  formatSharedHierarchyMarkdown,
+} from './commands/shared.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -3364,6 +3371,75 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify({ success: true, id: messageId }, null, 2))
         } else {
           console.log(`Message ${messageId} deleted`)
+        }
+      }),
+    )
+
+  program
+    .command('merge <sourceTaskId> <intoTaskId>')
+    .description('Merge a task into another (source becomes subtask of target)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          sourceTaskId: string,
+          intoTaskId: string,
+          opts: { confirm?: boolean; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await mergeCommand(config, sourceTaskId, intoTaskId, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Merged task ${result.sourceTaskId} into ${result.intoTaskId}`)
+          }
+        },
+      ),
+    )
+
+  timeCmd
+    .command('estimate-by-user <taskId> <userId> <duration>')
+    .description(
+      'Set per-user time estimate (e.g. "2h", "30m"). Use --replace to overwrite all estimates.',
+    )
+    .option('--replace', 'Replace all estimates (PUT) instead of updating (PATCH)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          taskId: string,
+          userId: string,
+          duration: string,
+          opts: { replace?: boolean; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await timeEstimateByUserCommand(config, taskId, userId, duration, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(
+              `${opts.replace ? 'Replaced' : 'Updated'} time estimate for user ${userId} on task ${taskId}`,
+            )
+          }
+        },
+      ),
+    )
+
+  program
+    .command('shared')
+    .description('Show shared spaces, folders, and lists')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const hierarchy = await fetchSharedHierarchy(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(hierarchy, null, 2))
+        } else if (isTTY()) {
+          console.log(formatSharedHierarchy(hierarchy))
+        } else {
+          console.log(formatSharedHierarchyMarkdown(hierarchy))
         }
       }),
     )
