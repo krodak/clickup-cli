@@ -97,6 +97,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup filter list`                                        | List saved shortcuts                                             |
 | `cup filter run <name>`                                  | Run a saved shortcut                                             |
 | `cup favorite list`                                      | List saved favorites                                             |
+| `cup webhook list`                                       | List webhooks                                                    |
 | `cup shared`                                             | Show shared spaces, folders, and lists                           |
 | `cup chat channels`                                      | List chat channels you follow                                    |
 | `cup chat channel <channelId>`                           | Show channel details                                             |
@@ -166,6 +167,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup view-create <listId> <name>`                        | Create a view on a list                                          |
 | `cup view-update <viewId>`                               | Update a view                                                    |
 | `cup view-delete <viewId>`                               | Delete a view                                                    |
+| `cup webhook create`                                     | Create a webhook                                                 |
+| `cup webhook update <webhookId>`                         | Update a webhook                                                 |
+| `cup webhook delete <webhookId>`                         | Delete a webhook                                                 |
 | `cup merge <sourceTaskId> <intoTaskId>`                  | Merge a task into another                                        |
 | `cup chat send <channelId>`                              | Send a message to a channel                                      |
 | `cup chat channel-create <name>`                         | Create a new chat channel                                        |
