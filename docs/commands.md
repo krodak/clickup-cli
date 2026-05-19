@@ -116,6 +116,9 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup move <taskId>`                      | Add or remove a task from a list                                 |
 | `cup field <taskId>`                     | Set or remove custom field values                                |
 | `cup delete <taskId>`                    | Delete a task                                                    |
+| `cup list-delete <listId>`               | Delete a list                                                    |
+| `cup folder-delete <folderId>`           | Delete a folder                                                  |
+| `cup space-delete <spaceId>`             | Delete a space                                                   |
 | `cup tag <taskId>`                       | Add or remove tags on a task                                     |
 | `cup tag-create <spaceId> <name>`        | Create a tag in a space                                          |
 | `cup tag-delete <spaceId> <name>`        | Delete a tag from a space                                        |

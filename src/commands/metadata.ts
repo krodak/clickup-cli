@@ -383,6 +383,30 @@ export const commandMetadata = [
     quickReference: [{ section: 'write', usage: 'delete <taskId>', description: 'Delete a task' }],
   },
   {
+    name: 'list-delete',
+    description: 'Delete a list (requires confirmation)',
+    flags: ['--confirm', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'list-delete <listId>', description: 'Delete a list' },
+    ],
+  },
+  {
+    name: 'folder-delete',
+    description: 'Delete a folder (requires confirmation)',
+    flags: ['--confirm', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'folder-delete <folderId>', description: 'Delete a folder' },
+    ],
+  },
+  {
+    name: 'space-delete',
+    description: 'Delete a space (requires confirmation)',
+    flags: ['--confirm', '--json'],
+    quickReference: [
+      { section: 'write', usage: 'space-delete <spaceId>', description: 'Delete a space' },
+    ],
+  },
+  {
     name: 'tag',
     description: 'Add or remove tags from a task',
     flags: ['--add', '--remove', '--json'],

@@ -64,6 +64,10 @@ import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
 import { setCustomField, findFieldByName, parseFieldValue } from './commands/field.js'
 import { deleteTaskCommand } from './commands/delete.js'
+import { deleteListCommand } from './commands/list-delete.js'
+import { deleteFolderCommand } from './commands/folder-delete.js'
+import { deleteSpaceCommand } from './commands/space-delete.js'
+
 import { archiveTaskCommand } from './commands/archive.js'
 import { manageTags } from './commands/tag.js'
 import {
@@ -1160,6 +1164,57 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify(result, null, 2))
         } else {
           console.log(`Deleted task ${result.taskId}`)
+        }
+      }),
+    )
+
+  program
+    .command('list-delete <listId>')
+    .description('Delete a list (requires confirmation)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (listId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await deleteListCommand(config, listId, opts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Deleted list ${result.listId}`)
+        }
+      }),
+    )
+
+  program
+    .command('folder-delete <folderId>')
+    .description('Delete a folder (requires confirmation)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (folderId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await deleteFolderCommand(config, folderId, opts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Deleted folder ${result.folderId}`)
+        }
+      }),
+    )
+
+  program
+    .command('space-delete <spaceId>')
+    .description('Delete a space (requires confirmation)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (spaceId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await deleteSpaceCommand(config, spaceId, opts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Deleted space ${result.spaceId}`)
         }
       }),
     )
