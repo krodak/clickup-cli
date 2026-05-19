@@ -518,6 +518,11 @@ export const commandMetadata = [
       },
       { section: 'write', usage: 'time update <timeEntryId>', description: 'Update a time entry' },
       { section: 'write', usage: 'time delete <timeEntryId>', description: 'Delete a time entry' },
+      {
+        section: 'write',
+        usage: 'time estimate-by-user <taskId> <userId> <duration>',
+        description: 'Set per-user time estimate',
+      },
     ],
   },
   {
@@ -971,6 +976,30 @@ export const commandMetadata = [
         description: 'Remove a favorite',
       },
       { section: 'read', usage: 'favorite list', description: 'List saved favorites' },
+    ],
+  },
+  {
+    name: 'merge',
+    description: 'Merge a task into another (source becomes subtask of target)',
+    flags: ['--confirm', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'merge <sourceTaskId> <intoTaskId>',
+        description: 'Merge a task into another',
+      },
+    ],
+  },
+  {
+    name: 'shared',
+    description: 'Show shared spaces, folders, and lists',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'shared',
+        description: 'Show shared spaces, folders, and lists',
+      },
     ],
   },
   {
