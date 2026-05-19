@@ -17,6 +17,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Assign / unassign    | `cup assign <id>`                                                 | :white_check_mark: |
 | Duplicate task       | `cup duplicate <id>`                                              | :white_check_mark: |
 | Create from template | `cup create --template`                                           | :white_check_mark: |
+| Task members         | `cup task-members <taskId>`                                       | :white_check_mark: |
 | Bulk operations      | `cup bulk <status\|assign\|due-date\|tag\|priority\|field\|move>` | :white_check_mark: |
 
 ## Dependencies & Relations
@@ -106,13 +107,17 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | List spaces     | `cup spaces`                       | :white_check_mark: |
 | Create space    | `cup space-create <name>`          | :white_check_mark: |
 | Rename space    | `cup space-rename <spaceId> <n>`   | :white_check_mark: |
+| Delete space    | `cup space-delete <spaceId>`       | :white_check_mark: |
 | List lists      | `cup lists <spaceId>`              | :white_check_mark: |
 | Create list     | `cup list-create <spaceId> <name>` | :white_check_mark: |
 | Rename list     | `cup list-rename <listId> <n>`     | :white_check_mark: |
+| Delete list     | `cup list-delete <listId>`         | :white_check_mark: |
 | List folders    | `cup folders <spaceId>`            | :white_check_mark: |
 | Create folder   | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
 | Rename folder   | `cup folder-rename <folderId> <n>` | :white_check_mark: |
+| Delete folder   | `cup folder-delete <folderId>`     | :white_check_mark: |
 | Check auth      | `cup auth`                         | :white_check_mark: |
+| Workspace plan  | `cup plan`                         | :white_check_mark: |
 | List members    | `cup members`                      | :white_check_mark: |
 | Task types      | `cup task-types`                   | :white_check_mark: |
 | Task templates  | `cup templates`                    | :white_check_mark: |
@@ -161,7 +166,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Feature           | Command                    | Status                          |
 | ----------------- | -------------------------- | ------------------------------- |
 | Upload file       | `cup attach <id> <file>`   | :white_check_mark:              |
-| List attachments  | shown inline in `cup task` | :white_check_mark:              |
+| List attachments  | `cup attachments <taskId>` | :white_check_mark:              |
 | Delete attachment |                            | :no_entry_sign: No API endpoint |
 
 ## Setup
@@ -205,7 +210,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Chat tagged users       | Low value for CLI. Returns who was @mentioned in a message.                 |
 | Audit logs              | Enterprise admin.                                                           |
 | User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
-| List/Folder/Space U+D   | Update/delete structural items in the UI. Create is supported.              |
+| List/Folder/Space U     | Updating structural item settings (beyond rename) belongs in the UI.        |
 | View/List/Chat comments | API only supports task-level comments.                                      |
 | User Groups             | Enterprise admin feature.                                                   |
 | Shared Hierarchy        | Enterprise admin feature.                                                   |
