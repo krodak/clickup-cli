@@ -67,7 +67,17 @@ import { deleteTaskCommand } from './commands/delete.js'
 import { deleteListCommand } from './commands/list-delete.js'
 import { deleteFolderCommand } from './commands/folder-delete.js'
 import { deleteSpaceCommand } from './commands/space-delete.js'
-
+import {
+  listTaskAttachments,
+  formatAttachmentsTable,
+  formatAttachmentsMarkdown,
+} from './commands/attachments.js'
+import {
+  listTaskMembers,
+  formatTaskMembers,
+  formatTaskMembersMarkdown,
+} from './commands/task-members.js'
+import { getWorkspacePlanCommand, formatPlan, formatPlanMarkdown } from './commands/plan.js'
 import { archiveTaskCommand } from './commands/archive.js'
 import { manageTags } from './commands/tag.js'
 import {
@@ -1215,6 +1225,60 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(JSON.stringify(result, null, 2))
         } else {
           console.log(`Deleted space ${result.spaceId}`)
+        }
+      }),
+    )
+
+  program
+    .command('attachments <taskId>')
+    .description('List attachments on a task')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const attachments = await listTaskAttachments(config, taskId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(attachments, null, 2))
+        } else if (isTTY()) {
+          console.log(formatAttachmentsTable(attachments))
+        } else {
+          console.log(formatAttachmentsMarkdown(attachments))
+        }
+      }),
+    )
+
+  program
+    .command('task-members <taskId>')
+    .description('List members with access to a task')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (taskId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const members = await listTaskMembers(config, taskId)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(members, null, 2))
+        } else if (isTTY()) {
+          console.log(formatTaskMembers(members))
+        } else {
+          console.log(formatTaskMembersMarkdown(members))
+        }
+      }),
+    )
+
+  program
+    .command('plan')
+    .description('Show workspace plan')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const plan = await getWorkspacePlanCommand(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(plan, null, 2))
+        } else if (isTTY()) {
+          console.log(formatPlan(plan))
+        } else {
+          console.log(formatPlanMarkdown(plan))
         }
       }),
     )
