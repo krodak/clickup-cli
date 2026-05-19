@@ -97,6 +97,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup filter list`                                        | List saved shortcuts                                             |
 | `cup filter run <name>`                                  | Run a saved shortcut                                             |
 | `cup favorite list`                                      | List saved favorites                                             |
+| `cup list-comments <listId>`                             | List comments on a list                                          |
+| `cup view-comments <viewId>`                             | List comments on a view                                          |
 | `cup webhook list`                                       | List webhooks                                                    |
 | `cup shared`                                             | Show shared spaces, folders, and lists                           |
 | `cup chat channels`                                      | List chat channels you follow                                    |
@@ -167,6 +169,8 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup view-create <listId> <name>`                        | Create a view on a list                                          |
 | `cup view-update <viewId>`                               | Update a view                                                    |
 | `cup view-delete <viewId>`                               | Delete a view                                                    |
+| `cup list-comment <listId>`                              | Post a comment on a list                                         |
+| `cup view-comment <viewId>`                              | Post a comment on a view                                         |
 | `cup webhook create`                                     | Create a webhook                                                 |
 | `cup webhook update <webhookId>`                         | Update a webhook                                                 |
 | `cup webhook delete <webhookId>`                         | Delete a webhook                                                 |

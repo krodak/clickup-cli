@@ -223,6 +223,8 @@ import {
   formatSharedHierarchy,
   formatSharedHierarchyMarkdown,
 } from './commands/shared.js'
+import { fetchListComments, postListCommentCommand } from './commands/list-comments.js'
+import { fetchViewComments, postViewCommentCommand } from './commands/view-comments.js'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json') as { version: string }
@@ -3450,6 +3452,70 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatSharedHierarchyMarkdown(hierarchy))
         }
       }),
+    )
+
+  program
+    .command('list-comments <listId>')
+    .description('List comments on a list')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (listId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const comments = await fetchListComments(config, listId)
+        printComments(comments, opts.json ?? false)
+      }),
+    )
+
+  program
+    .command('list-comment <listId>')
+    .description('Post a comment on a list')
+    .requiredOption('-m, --message <text>', 'Comment text')
+    .option('--notify-all', 'Notify all assignees')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (listId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const result = await postListCommentCommand(config, listId, opts.message, opts.notifyAll)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(formatCommentConfirmation(result.id))
+          }
+        },
+      ),
+    )
+
+  program
+    .command('view-comments <viewId>')
+    .description('List comments on a view')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (viewId: string, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const comments = await fetchViewComments(config, viewId)
+        printComments(comments, opts.json ?? false)
+      }),
+    )
+
+  program
+    .command('view-comment <viewId>')
+    .description('Post a comment on a view')
+    .requiredOption('-m, --message <text>', 'Comment text')
+    .option('--notify-all', 'Notify all assignees')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (viewId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const result = await postViewCommentCommand(config, viewId, opts.message, opts.notifyAll)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(formatCommentConfirmation(result.id))
+          }
+        },
+      ),
     )
 
   const webhookCmd = program.command('webhook').description('Manage webhooks')
