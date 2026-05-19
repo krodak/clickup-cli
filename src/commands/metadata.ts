@@ -979,6 +979,20 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'webhook',
+    description: 'Manage webhooks',
+    quickReference: [
+      { section: 'read', usage: 'webhook list', description: 'List webhooks' },
+      {
+        section: 'write',
+        usage: 'webhook create',
+        description: 'Create a webhook',
+      },
+      { section: 'write', usage: 'webhook update <webhookId>', description: 'Update a webhook' },
+      { section: 'write', usage: 'webhook delete <webhookId>', description: 'Delete a webhook' },
+    ],
+  },
+  {
     name: 'merge',
     description: 'Merge a task into another (source becomes subtask of target)',
     flags: ['--confirm', '--json'],

@@ -209,6 +209,14 @@ import {
   formatFavoritesMarkdown,
 } from './commands/favorite.js'
 import { mergeCommand } from './commands/merge.js'
+import {
+  fetchWebhooks,
+  createWebhookCommand,
+  updateWebhookCommand,
+  deleteWebhookCommand,
+  formatWebhooks,
+  formatWebhooksMarkdown,
+} from './commands/webhook.js'
 import { timeEstimateByUserCommand } from './commands/time-estimate-by-user.js'
 import {
   fetchSharedHierarchy,
@@ -3440,6 +3448,99 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatSharedHierarchy(hierarchy))
         } else {
           console.log(formatSharedHierarchyMarkdown(hierarchy))
+        }
+      }),
+    )
+
+  const webhookCmd = program.command('webhook').description('Manage webhooks')
+
+  webhookCmd
+    .command('list')
+    .description('List webhooks in your workspace')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const webhooks = await fetchWebhooks(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(webhooks, null, 2))
+        } else if (isTTY()) {
+          console.log(formatWebhooks(webhooks))
+        } else {
+          console.log(formatWebhooksMarkdown(webhooks))
+        }
+      }),
+    )
+
+  webhookCmd
+    .command('create')
+    .description('Create a webhook')
+    .requiredOption('--url <url>', 'Webhook endpoint URL')
+    .requiredOption('--events <events>', 'Comma-separated event names')
+    .option('--space <id>', 'Scope to a space')
+    .option('--folder <id>', 'Scope to a folder')
+    .option('--list <id>', 'Scope to a list')
+    .option('--task <id>', 'Scope to a task')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (opts: {
+          url: string
+          events: string
+          space?: string
+          folder?: string
+          list?: string
+          task?: string
+          json?: boolean
+        }) => {
+          const config = loadConfig(getProfileName())
+          const result = await createWebhookCommand(config, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Created webhook ${result.id} → ${result.endpoint}`)
+          }
+        },
+      ),
+    )
+
+  webhookCmd
+    .command('update <webhookId>')
+    .description('Update a webhook')
+    .option('--url <url>', 'New endpoint URL')
+    .option('--events <events>', 'New comma-separated event names')
+    .option('--status <status>', 'New status (active or inactive)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          webhookId: string,
+          opts: { url?: string; events?: string; status?: string; json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await updateWebhookCommand(config, webhookId, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Updated webhook ${result.id}`)
+          }
+        },
+      ),
+    )
+
+  webhookCmd
+    .command('delete <webhookId>')
+    .description('Delete a webhook (requires confirmation)')
+    .option('--confirm', 'Skip confirmation prompt (required in non-interactive mode)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (webhookId: string, opts: { confirm?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await deleteWebhookCommand(config, webhookId, opts)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else {
+          console.log(`Deleted webhook ${result.webhookId}`)
         }
       }),
     )
