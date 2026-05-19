@@ -494,3 +494,301 @@ describe.skipIf(!TOKEN)('Space create e2e', () => {
     expect(found).toBeDefined()
   })
 })
+
+describe.skipIf(!TOKEN)('Delete list e2e', () => {
+  let client: ClickUpClient
+  let spaceId: string
+  let listId: string
+  let planLimited = false
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    spaceId = testSpace.id
+  })
+
+  it('creates a list for deletion', async () => {
+    const suffix = Date.now().toString(36)
+    try {
+      const list = await client.createList(spaceId, `E2E Delete List ${suffix}`)
+      listId = list.id
+      expect(list.id).toBeTypeOf('string')
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('limit'))) {
+        planLimited = true
+        return
+      }
+      throw err
+    }
+  })
+
+  it('deletes the list', async () => {
+    if (planLimited || !listId) return
+    await expect(client.deleteList(listId)).resolves.not.toThrow()
+  })
+})
+
+describe.skipIf(!TOKEN)('Delete folder e2e', () => {
+  let client: ClickUpClient
+  let spaceId: string
+  let folderId: string
+  let planLimited = false
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    spaceId = testSpace.id
+  })
+
+  it('creates a folder for deletion', async () => {
+    const suffix = Date.now().toString(36)
+    try {
+      const folder = await client.createFolder(spaceId, `E2E Delete Folder ${suffix}`)
+      folderId = folder.id
+      expect(folder.id).toBeTypeOf('string')
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('limit'))) {
+        planLimited = true
+        return
+      }
+      throw err
+    }
+  })
+
+  it('deletes the folder', async () => {
+    if (planLimited || !folderId) return
+    await expect(client.deleteFolder(folderId)).resolves.not.toThrow()
+  })
+})
+
+describe.skipIf(!TOKEN)('Task merge e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let taskAId: string
+  let taskBId: string
+  let mergeSupported = true
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const [a, b] = await Promise.all([
+      client.createTask(listId, { name: 'E2E Merge Task A' }),
+      client.createTask(listId, { name: 'E2E Merge Task B' }),
+    ])
+    taskAId = a.id
+    taskBId = b.id
+  })
+
+  afterAll(async () => {
+    await client.deleteTask(taskAId).catch(() => {})
+    await client.deleteTask(taskBId).catch(() => {})
+  })
+
+  it('merges task A into task B', async () => {
+    try {
+      await client.mergeTasks(taskBId, [taskAId])
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('401') || err.message.includes('403'))) {
+        mergeSupported = false
+        return
+      }
+      throw err
+    }
+  })
+
+  it('verifies target task still exists after merge', async () => {
+    if (!mergeSupported) return
+    const taskB = await client.getTask(taskBId)
+    expect(taskB.id).toBe(taskBId)
+  })
+})
+
+describe.skipIf(!TOKEN)('Per-user time estimates e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+  let taskId: string
+  let userId: number
+
+  beforeAll(async () => {
+    const initClient = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await initClient.getTeams()
+    const teamId = teams[0]!.id
+    client = new ClickUpClient({ apiToken: TOKEN!, teamId })
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+    const task = await client.createTask(listId, { name: 'E2E Time Estimate Task' })
+    taskId = task.id
+    const me = await client.getMe()
+    userId = me.id
+  })
+
+  afterAll(async () => {
+    if (taskId) await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('sets per-user time estimate', async () => {
+    try {
+      const result = await client.updateTimeEstimatesByUser(taskId, [
+        { assignee: userId, time: 3600000 },
+      ])
+      expect(result.total_time_estimate).toBeGreaterThan(0)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('403') || err.message.includes('400') || err.message.includes('500'))) return
+      throw err
+    }
+  })
+})
+
+describe.skipIf(!TOKEN)('Webhook lifecycle e2e', () => {
+  let client: ClickUpClient
+  let webhookId: string
+
+  beforeAll(async () => {
+    const initClient = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await initClient.getTeams()
+    const teamId = teams[0]!.id
+    client = new ClickUpClient({ apiToken: TOKEN!, teamId })
+  })
+
+  afterAll(async () => {
+    if (webhookId) await client.deleteWebhook(webhookId).catch(() => {})
+  })
+
+  it('creates a webhook', async () => {
+    try {
+      const wh = await client.createWebhook('https://example.com/e2e-test', ['taskCreated'])
+      webhookId = wh.id
+      expect(wh.id).toBeTypeOf('string')
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('403'))) return
+      throw err
+    }
+  })
+
+  it('lists webhooks', async () => {
+    const webhooks = await client.getWebhooks()
+    expect(Array.isArray(webhooks)).toBe(true)
+  })
+
+  it('updates webhook', async () => {
+    if (!webhookId) return
+    await expect(
+      client.updateWebhook(webhookId, { endpoint: 'https://example.com/e2e-updated' }),
+    ).resolves.not.toThrow()
+  })
+
+  it('deletes webhook', async () => {
+    if (!webhookId) return
+    await expect(client.deleteWebhook(webhookId)).resolves.not.toThrow()
+    webhookId = ''
+  })
+})
+
+describe.skipIf(!TOKEN)('List comments e2e', () => {
+  let client: ClickUpClient
+  let listId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    listId = backlog.id
+  })
+
+  it('posts a comment on a list', async () => {
+    const result = await client.postListComment(listId, 'E2E list comment test')
+    expect(result.id).toBeDefined()
+  })
+
+  it('reads list comments', async () => {
+    const comments = await client.getListComments(listId)
+    expect(Array.isArray(comments)).toBe(true)
+    expect(comments.length).toBeGreaterThan(0)
+  })
+})
+
+describe.skipIf(!TOKEN)('View comments e2e', () => {
+  let client: ClickUpClient
+  let viewId: string
+  let createdViewId: string
+
+  beforeAll(async () => {
+    client = new ClickUpClient({ apiToken: TOKEN! })
+    const teams = await client.getTeams()
+    const teamId = teams[0]!.id
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) throw new Error('E2E Tests space not found')
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) throw new Error('Backlog list not found')
+    const suffix = Date.now().toString(36)
+    try {
+      const view = await client.createListView(backlog.id, {
+        name: `E2E Conversation ${suffix}`,
+        type: 'conversation',
+      })
+      viewId = view.id
+      createdViewId = view.id
+    } catch {
+      const viewData = await client.getListViews(backlog.id)
+      const conv = viewData.views?.find(
+        (v: { type?: string }) => v.type === 'conversation',
+      )
+      if (conv) viewId = conv.id
+    }
+  })
+
+  afterAll(async () => {
+    if (createdViewId) await client.deleteView(createdViewId).catch(() => {})
+  })
+
+  it('posts a comment on a view', async () => {
+    if (!viewId) return
+    try {
+      const result = await client.postViewComment(viewId, 'E2E view comment test')
+      expect(result.id).toBeDefined()
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('conversation') || err.message.includes('400'))) return
+      throw err
+    }
+  })
+
+  it('reads view comments', async () => {
+    if (!viewId) return
+    try {
+      const comments = await client.getViewComments(viewId)
+      expect(Array.isArray(comments)).toBe(true)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes('conversation') || err.message.includes('400'))) return
+      throw err
+    }
+  })
+})

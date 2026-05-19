@@ -264,4 +264,32 @@ describe.skipIf(!TOKEN)('ClickUpClient e2e', () => {
     const tasks = await client.getViewTasks(viewData.views[0]!.id)
     expect(Array.isArray(tasks)).toBe(true)
   })
+
+  it('getTaskMembers returns members array', async () => {
+    const tasks = await client.getMyTasks(teamId)
+    if (tasks.length === 0) return
+    const members = await client.getTaskMembers(tasks[0]!.id)
+    expect(Array.isArray(members)).toBe(true)
+  })
+
+  it('getWorkspacePlan returns plan object', async () => {
+    const tc = new ClickUpClient({ apiToken: TOKEN!, teamId })
+    const plan = await tc.getWorkspacePlan()
+    expect(plan).toBeDefined()
+    expect(typeof plan.name === 'string' || typeof plan.plan_id === 'number').toBe(true)
+  })
+
+  it('getSharedHierarchy returns hierarchy', async () => {
+    const tc = new ClickUpClient({ apiToken: TOKEN!, teamId })
+    const shared = await tc.getSharedHierarchy()
+    expect(shared).toBeDefined()
+  })
+
+  it('getTaskAttachments returns array', async () => {
+    const tc = new ClickUpClient({ apiToken: TOKEN!, teamId })
+    const tasks = await tc.getMyTasks(teamId)
+    if (tasks.length === 0) return
+    const attachments = await tc.getTaskAttachments(tasks[0]!.id)
+    expect(Array.isArray(attachments)).toBe(true)
+  })
 })
