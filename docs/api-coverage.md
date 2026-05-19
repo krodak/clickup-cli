@@ -18,6 +18,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Duplicate task       | `cup duplicate <id>`                                              | :white_check_mark: |
 | Create from template | `cup create --template`                                           | :white_check_mark: |
 | Task members         | `cup task-members <taskId>`                                       | :white_check_mark: |
+| Merge task           | `cup merge <source> <into>`                                       | :white_check_mark: |
 | Bulk operations      | `cup bulk <status\|assign\|due-date\|tag\|priority\|field\|move>` | :white_check_mark: |
 
 ## Dependencies & Relations
@@ -57,6 +58,10 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Task + comments combined | `cup activity <id>`                   | :white_check_mark: |
 | Delete comment           | `cup comment-delete <id>`             | :white_check_mark: |
 | Threaded replies         | `cup replies <id>` / `cup reply <id>` | :white_check_mark: |
+| List comments (list)     | `cup list-comments <listId>`          | :white_check_mark: |
+| Post comment (list)      | `cup list-comment <listId>`           | :white_check_mark: |
+| List comments (view)     | `cup view-comments <viewId>`          | :white_check_mark: |
+| Post comment (view)      | `cup view-comment <viewId>`           | :white_check_mark: |
 
 ## Checklists
 
@@ -90,40 +95,42 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Time Tracking
 
-| Feature        | Command                        | Status             |
-| -------------- | ------------------------------ | ------------------ |
-| Start timer    | `cup time start <id>`          | :white_check_mark: |
-| Stop timer     | `cup time stop`                | :white_check_mark: |
-| Timer status   | `cup time status`              | :white_check_mark: |
-| Log time entry | `cup time log <id> <duration>` | :white_check_mark: |
-| List entries   | `cup time list`                | :white_check_mark: |
-| Update entry   | `cup time update <id>`         | :white_check_mark: |
-| Delete entry   | `cup time delete <id>`         | :white_check_mark: |
+| Feature           | Command                                         | Status             |
+| ----------------- | ----------------------------------------------- | ------------------ |
+| Start timer       | `cup time start <id>`                           | :white_check_mark: |
+| Stop timer        | `cup time stop`                                 | :white_check_mark: |
+| Timer status      | `cup time status`                               | :white_check_mark: |
+| Log time entry    | `cup time log <id> <duration>`                  | :white_check_mark: |
+| List entries      | `cup time list`                                 | :white_check_mark: |
+| Update entry      | `cup time update <id>`                          | :white_check_mark: |
+| Delete entry      | `cup time delete <id>`                          | :white_check_mark: |
+| Per-user estimate | `cup time estimate-by-user <id> <userId> <dur>` | :white_check_mark: |
 
 ## Workspace
 
-| Feature         | Command                            | Status             |
-| --------------- | ---------------------------------- | ------------------ |
-| List spaces     | `cup spaces`                       | :white_check_mark: |
-| Create space    | `cup space-create <name>`          | :white_check_mark: |
-| Rename space    | `cup space-rename <spaceId> <n>`   | :white_check_mark: |
-| Delete space    | `cup space-delete <spaceId>`       | :white_check_mark: |
-| List lists      | `cup lists <spaceId>`              | :white_check_mark: |
-| Create list     | `cup list-create <spaceId> <name>` | :white_check_mark: |
-| Rename list     | `cup list-rename <listId> <n>`     | :white_check_mark: |
-| Delete list     | `cup list-delete <listId>`         | :white_check_mark: |
-| List folders    | `cup folders <spaceId>`            | :white_check_mark: |
-| Create folder   | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
-| Rename folder   | `cup folder-rename <folderId> <n>` | :white_check_mark: |
-| Delete folder   | `cup folder-delete <folderId>`     | :white_check_mark: |
-| Check auth      | `cup auth`                         | :white_check_mark: |
-| Workspace plan  | `cup plan`                         | :white_check_mark: |
-| List members    | `cup members`                      | :white_check_mark: |
-| Task types      | `cup task-types`                   | :white_check_mark: |
-| Task templates  | `cup templates`                    | :white_check_mark: |
-| List templates  | `cup list-templates`               | :white_check_mark: |
-| Folder tmpl.    | `cup folder-templates`             | :white_check_mark: |
-| Create from tpl | `cup list-from-template <name>`    | :white_check_mark: |
+| Feature          | Command                            | Status             |
+| ---------------- | ---------------------------------- | ------------------ |
+| List spaces      | `cup spaces`                       | :white_check_mark: |
+| Create space     | `cup space-create <name>`          | :white_check_mark: |
+| Rename space     | `cup space-rename <spaceId> <n>`   | :white_check_mark: |
+| Delete space     | `cup space-delete <spaceId>`       | :white_check_mark: |
+| List lists       | `cup lists <spaceId>`              | :white_check_mark: |
+| Create list      | `cup list-create <spaceId> <name>` | :white_check_mark: |
+| Rename list      | `cup list-rename <listId> <n>`     | :white_check_mark: |
+| Delete list      | `cup list-delete <listId>`         | :white_check_mark: |
+| List folders     | `cup folders <spaceId>`            | :white_check_mark: |
+| Create folder    | `cup folder-create <spaceId> <n>`  | :white_check_mark: |
+| Rename folder    | `cup folder-rename <folderId> <n>` | :white_check_mark: |
+| Delete folder    | `cup folder-delete <folderId>`     | :white_check_mark: |
+| Shared hierarchy | `cup shared`                       | :white_check_mark: |
+| Check auth       | `cup auth`                         | :white_check_mark: |
+| Workspace plan   | `cup plan`                         | :white_check_mark: |
+| List members     | `cup members`                      | :white_check_mark: |
+| Task types       | `cup task-types`                   | :white_check_mark: |
+| Task templates   | `cup templates`                    | :white_check_mark: |
+| List templates   | `cup list-templates`               | :white_check_mark: |
+| Folder tmpl.     | `cup folder-templates`             | :white_check_mark: |
+| Create from tpl  | `cup list-from-template <name>`    | :white_check_mark: |
 
 ## Views
 
@@ -200,20 +207,26 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Add reaction        | `cup chat react <messageId>`                      | :white_check_mark: |
 | Remove reaction     | `cup chat unreact <messageId>`                    | :white_check_mark: |
 
+## Webhooks
+
+| Feature        | Command                   | Status             |
+| -------------- | ------------------------- | ------------------ |
+| List webhooks  | `cup webhook list`        | :white_check_mark: |
+| Create webhook | `cup webhook create`      | :white_check_mark: |
+| Update webhook | `cup webhook update <id>` | :white_check_mark: |
+| Delete webhook | `cup webhook delete <id>` | :white_check_mark: |
+
 ## Won't add
 
-| Feature                 | Why                                                                         |
-| ----------------------- | --------------------------------------------------------------------------- |
-| Webhooks                | Server-side. A CLI can't listen for events.                                 |
-| OAuth flow              | `cup init` already handles auth with API tokens.                            |
-| Guest/ACL               | Enterprise admin. Not what you reach for in a terminal.                     |
-| Chat tagged users       | Low value for CLI. Returns who was @mentioned in a message.                 |
-| Audit logs              | Enterprise admin.                                                           |
-| User/group management   | Too destructive for a CLI - removing someone from a workspace is permanent. |
-| List/Folder/Space U     | Updating structural item settings (beyond rename) belongs in the UI.        |
-| View/List/Chat comments | API only supports task-level comments.                                      |
-| User Groups             | Enterprise admin feature.                                                   |
-| Shared Hierarchy        | Enterprise admin feature.                                                   |
+| Feature               | Why                                                                         |
+| --------------------- | --------------------------------------------------------------------------- |
+| OAuth flow            | `cup init` already handles auth with API tokens.                            |
+| Guest/ACL             | Enterprise admin. Not what you reach for in a terminal.                     |
+| Chat tagged users     | Low value for CLI. Returns who was @mentioned in a message.                 |
+| Audit logs            | Enterprise admin.                                                           |
+| User/group management | Too destructive for a CLI - removing someone from a workspace is permanent. |
+| List/Folder/Space U   | Updating structural item settings (beyond rename) belongs in the UI.        |
+| User Groups           | Enterprise admin feature.                                                   |
 
 ## API Limitations
 

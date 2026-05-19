@@ -12,7 +12,7 @@ Commands behave differently based on how they're invoked:
 | **Piped**          | Clean markdown output, no colors, no prompts. Suitable for agents and scripts.                                                                                                                        |
 | **`--json` flag**  | Structured JSON output. No prompts. Overrides both TTY and piped modes.                                                                                                                               |
 
-Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`).
+Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
 
 ## Shell Quoting for Descriptions
 
@@ -530,6 +530,19 @@ Show your workspace plan (Free, Unlimited, Business, Enterprise, etc.) and curre
 ```bash
 cup plan
 cup plan --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup shared`
+
+Show the shared hierarchy for your workspace — shared spaces, folders, and lists that are visible to your team.
+
+```bash
+cup shared
+cup shared --json
 ```
 
 | Flag     | Required | Description       |
@@ -1153,6 +1166,22 @@ cup time delete te123 --json
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
 
+### `cup time estimate-by-user <taskId> <userId> <duration>`
+
+Set a per-user time estimate on a task. Duration accepts human-readable format: "2h", "30m", "1h30m", or raw milliseconds. By default adds to existing estimates; use `--replace` to overwrite all per-user estimates with just this one.
+
+```bash
+cup time estimate-by-user abc123 12345 4h
+cup time estimate-by-user abc123 me 2h30m
+cup time estimate-by-user abc123 12345 8h --replace
+cup time estimate-by-user abc123 12345 4h --json
+```
+
+| Flag        | Required | Description                                               |
+| ----------- | -------- | --------------------------------------------------------- |
+| `--replace` | no       | Replace all per-user estimates instead of adding/updating |
+| `--json`    | no       | Force JSON output                                         |
+
 ### `cup tags <spaceId>`
 
 List tags available in a space. Useful for discovering valid tag names for `cup tag`.
@@ -1365,6 +1394,23 @@ cup duplicate abc123 --json
 | Flag     | Required | Description       |
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
+
+### `cup merge <sourceTaskId> <intoTaskId>`
+
+Merge a task into another task. The source task's comments, attachments, subtasks, and checklists are moved into the target task, and the source task is deleted. **DESTRUCTIVE — the source task is permanently deleted.**
+
+```bash
+cup merge abc123 def456
+cup merge abc123 def456 --confirm
+cup merge abc123 def456 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows both task names and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `--confirm` | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | Force JSON output                                           |
 
 ### `cup task-types`
 
@@ -1614,6 +1660,64 @@ cup key-result-delete kr123 --json
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
 
+### `cup list-comments <listId>`
+
+List comments on a list. Shows author, date, and text for each comment.
+
+```bash
+cup list-comments 12345
+cup list-comments 12345 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup list-comment <listId>`
+
+Post a comment on a list. Markdown formatting in the message is automatically converted to ClickUp rich text.
+
+```bash
+cup list-comment 12345 -m "Sprint retrospective notes"
+cup list-comment 12345 -m "Done" --notify-all
+cup list-comment 12345 -m "Update" --json
+```
+
+| Flag            | Required | Description                            |
+| --------------- | -------- | -------------------------------------- |
+| `-m, --message` | yes      | Comment text (markdown auto-converted) |
+| `--notify-all`  | no       | Notify all list watchers               |
+| `--json`        | no       | Force JSON output                      |
+
+### `cup view-comments <viewId>`
+
+List comments on a view. Shows author, date, and text for each comment.
+
+```bash
+cup view-comments v12345
+cup view-comments v12345 --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup view-comment <viewId>`
+
+Post a comment on a view. Markdown formatting in the message is automatically converted to ClickUp rich text.
+
+```bash
+cup view-comment v12345 -m "View layout looks good"
+cup view-comment v12345 -m "Approved" --notify-all
+cup view-comment v12345 -m "Note" --json
+```
+
+| Flag            | Required | Description                            |
+| --------------- | -------- | -------------------------------------- |
+| `-m, --message` | yes      | Comment text (markdown auto-converted) |
+| `--notify-all`  | no       | Notify all view watchers               |
+| `--json`        | no       | Force JSON output                      |
+
 ### `cup doc-delete <docId>`
 
 Delete a doc.
@@ -1777,6 +1881,84 @@ cup view-delete <viewId> --confirm --json
 ```
 
 In TTY mode without `--confirm`: shows the view name and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
+
+| Flag        | Required | Description                                                 |
+| ----------- | -------- | ----------------------------------------------------------- |
+| `--confirm` | no       | Skip confirmation prompt (required in non-interactive mode) |
+| `--json`    | no       | Force JSON output                                           |
+
+---
+
+## Webhook Commands
+
+`cup webhook` is a subcommand group for managing ClickUp webhooks. Create, list, update, and delete webhooks that notify external URLs when events occur in your workspace.
+
+### `cup webhook list`
+
+List all webhooks in your workspace.
+
+```bash
+cup webhook list
+cup webhook list --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup webhook create`
+
+Create a webhook. Specify the URL to receive events and the event types to listen for. Optionally scope the webhook to a specific space, folder, list, or task.
+
+```bash
+cup webhook create --url https://example.com/hook --events "taskCreated,taskUpdated"
+cup webhook create --url https://example.com/hook --events "taskStatusUpdated" --space 12345
+cup webhook create --url https://example.com/hook --events "taskCreated" --folder 67890
+cup webhook create --url https://example.com/hook --events "taskDeleted" --list 11111
+cup webhook create --url https://example.com/hook --events "taskCreated" --task abc123
+cup webhook create --url https://example.com/hook --events "taskCreated" --json
+```
+
+| Flag              | Required | Description                                                  |
+| ----------------- | -------- | ------------------------------------------------------------ |
+| `--url <url>`     | yes      | Endpoint URL to receive webhook events                       |
+| `--events <list>` | yes      | Comma-separated event types (e.g. "taskCreated,taskUpdated") |
+| `--space <id>`    | no       | Scope webhook to a space                                     |
+| `--folder <id>`   | no       | Scope webhook to a folder                                    |
+| `--list <id>`     | no       | Scope webhook to a list                                      |
+| `--task <id>`     | no       | Scope webhook to a task                                      |
+| `--json`          | no       | Force JSON output                                            |
+
+### `cup webhook update <webhookId>`
+
+Update a webhook's URL, events, or active status.
+
+```bash
+cup webhook update wh123 --url https://new-endpoint.com/hook
+cup webhook update wh123 --events "taskCreated,taskDeleted"
+cup webhook update wh123 --status active
+cup webhook update wh123 --status inactive
+cup webhook update wh123 --url https://example.com/hook --events "taskUpdated" --json
+```
+
+| Flag              | Required | Description                        |
+| ----------------- | -------- | ---------------------------------- |
+| `--url <url>`     | no       | New endpoint URL                   |
+| `--events <list>` | no       | New comma-separated event types    |
+| `--status <s>`    | no       | Set status: `active` or `inactive` |
+| `--json`          | no       | Force JSON output                  |
+
+### `cup webhook delete <webhookId>`
+
+Delete a webhook. **DESTRUCTIVE — cannot be undone.**
+
+```bash
+cup webhook delete wh123
+cup webhook delete wh123 --confirm
+cup webhook delete wh123 --confirm --json
+```
+
+In TTY mode without `--confirm`: shows the webhook URL and prompts for confirmation (default: No). In non-interactive/piped mode, `--confirm` is required.
 
 | Flag        | Required | Description                                                 |
 | ----------- | -------- | ----------------------------------------------------------- |
