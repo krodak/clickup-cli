@@ -614,7 +614,7 @@ cup folders <spaceId> --json
 
 ### `cup update <id>`
 
-Update a task. Provide at least one of: `--name`, `--description`, `--status`, `--priority`, `--due-date`, `--start-date`, `--time-estimate`, `--assignee`, `--remove-assignee`, `--parent`, `--detach`, `--archive`, `--unarchive`, `--type`, `--field`.
+Update a task. Provide at least one of: `--name`, `--description`, `--status`, `--priority`, `--due-date`, `--start-date`, `--time-estimate`, `--assignee`, `--remove-assignee`, `--group-assignee`, `--remove-group-assignee`, `--parent`, `--detach`, `--archive`, `--unarchive`, `--type`, `--field`.
 
 ```bash
 cup update abc123 -s "in progress"
@@ -633,6 +633,10 @@ cup update abc123 --assignee me
 cup update abc123 --assignee 12345
 cup update abc123 --remove-assignee me
 cup update abc123 --assignee 99 --remove-assignee 12345
+cup update abc123 --group-assignee @mobile-team       # assign by handle (find IDs with `cup groups`)
+cup update abc123 --group-assignee mobile-team,backend  # multiple groups, comma-separated
+cup update abc123 --group-assignee 00000000-0000-0000-0000-000000000001  # assign by UUID
+cup update abc123 --remove-group-assignee @backend
 cup update abc123 -n "New name" -s "done" --priority urgent
 cup update abc123 --time-estimate 2h
 cup update abc123 --parent parentTaskId   # make it a subtask
@@ -648,24 +652,26 @@ cup update abc123 -s "in progress" --json
 
 `--field "Name" value` updates a custom field inline as part of the update. Field names are resolved via the task's list using the same parser as `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.). Repeat the flag to set multiple fields.
 
-| Flag                         | Description                                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `-n, --name <text>`          | New task name                                                                                         |
-| `-d, --description <text>`   | New description (markdown supported). Use `$'...'` quoting for backticks/newlines                     |
-| `-s, --status <status>`      | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)                           |
-| `--priority <level>`         | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                                  |
-| `--due-date <date>`          | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset), or `"none"`/`"clear"` to remove |
-| `--start-date <date>`        | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)                                |
-| `--time-estimate <duration>` | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                                       |
-| `--assignee <userId>`        | Add assignee by user ID or `"me"`                                                                     |
-| `--remove-assignee <userId>` | Remove assignee by user ID or `"me"`                                                                  |
-| `--parent <taskId>`          | Set parent task (makes this a subtask)                                                                |
-| `--detach`                   | Remove parent task (promote subtask to top-level)                                                     |
-| `--archive`                  | Archive the task                                                                                      |
-| `--unarchive`                | Unarchive the task                                                                                    |
-| `--type <type>`              | Change task type (name or custom_item_id)                                                             |
-| `--field <name> <value>`     | Set custom field inline (repeatable; resolves field names via the task's list)                        |
-| `--json`                     | Force JSON output even in terminal                                                                    |
+| Flag                           | Description                                                                                           |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `-n, --name <text>`            | New task name                                                                                         |
+| `-d, --description <text>`     | New description (markdown supported). Use `$'...'` quoting for backticks/newlines                     |
+| `-s, --status <status>`        | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)                           |
+| `--priority <level>`           | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                                  |
+| `--due-date <date>`            | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset), or `"none"`/`"clear"` to remove |
+| `--start-date <date>`          | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)                                |
+| `--time-estimate <duration>`   | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                                       |
+| `--assignee <userId>`          | Add assignee by user ID or `"me"`                                                                     |
+| `--remove-assignee <userId>`   | Remove assignee by user ID or `"me"`                                                                  |
+| `--group-assignee <id>`        | Add group assignee by UUID or `@handle` (repeatable or comma-separated; find IDs with `cup groups`)   |
+| `--remove-group-assignee <id>` | Remove group assignee by UUID or `@handle` (repeatable or comma-separated)                            |
+| `--parent <taskId>`            | Set parent task (makes this a subtask)                                                                |
+| `--detach`                     | Remove parent task (promote subtask to top-level)                                                     |
+| `--archive`                    | Archive the task                                                                                      |
+| `--unarchive`                  | Unarchive the task                                                                                    |
+| `--type <type>`                | Change task type (name or custom_item_id)                                                             |
+| `--field <name> <value>`       | Set custom field inline (repeatable; resolves field names via the task's list)                        |
+| `--json`                       | Force JSON output even in terminal                                                                    |
 
 ### `cup create`
 
@@ -680,6 +686,8 @@ cup create -n "Task" -l <listId> --priority high --due-date 2025-06-01
 cup create -n "Task" -l <listId> --due-date 2025-06-01T10:00        # date + time
 cup create -n "Task" -l <listId> --due-date 2025-06-01T10:00:00Z    # UTC
 cup create -n "Task" -l <listId> --assignee me --tags "bug,frontend"
+cup create -n "Task" -l <listId> --group-assignee @mobile-team             # assign group by handle
+cup create -n "Task" -l <listId> --group-assignee mobile-team,backend     # multiple groups
 cup create -n "Initiative" -l <listId> --custom-item-id 1
 cup create -n "Task" -l <listId> --time-estimate 2h
 cup create -n "Bug fix" -l <listId> --field "Story Points" 5 --field "Stage" "In Review"
@@ -692,23 +700,24 @@ cup create -n "Fix bug" -l <listId> --json
 
 `--field "Name" value` sets custom fields inline as part of task creation. Field names are resolved once against the target list via `GET /list/{id}/field`, so the values land in the initial create payload instead of requiring a follow-up `cup field --set` call. Repeat the flag to set multiple fields. Value parsing matches `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.).
 
-| Flag                         | Required         | Description                                                            |
-| ---------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| `-n, --name <name>`          | yes              | Task name                                                              |
-| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                    |
-| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                       |
-| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines    |
-| `-s, --status <status>`      | no               | Initial status                                                         |
-| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                   |
-| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)   |
-| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset) |
-| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                        |
-| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                          |
-| `--tags <tags>`              | no               | Comma-separated tag names                                              |
-| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                    |
-| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)          |
-| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                   |
-| `--json`                     | no               | Force JSON output even in terminal                                     |
+| Flag                         | Required         | Description                                                                        |
+| ---------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
+| `-n, --name <name>`          | yes              | Task name                                                                          |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                                |
+| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                                   |
+| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines                |
+| `-s, --status <status>`      | no               | Initial status                                                                     |
+| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                               |
+| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)               |
+| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)             |
+| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                    |
+| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                                      |
+| `--group-assignee <ids>`     | no               | Group assignees by UUID or `@handle` (comma-separated; find IDs with `cup groups`) |
+| `--tags <tags>`              | no               | Comma-separated tag names                                                          |
+| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                                |
+| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)                      |
+| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                               |
+| `--json`                     | no               | Force JSON output even in terminal                                                 |
 
 ### `cup delete <id>`
 
@@ -925,7 +934,7 @@ cup archive abc123 --json
 
 ### `cup assign <id>`
 
-Assign or unassign users from a task. Supports `me` as shorthand for your user ID. Both `--to` and `--remove` accept a comma-separated list of user IDs to add or remove multiple assignees in a single call.
+Assign or unassign users and groups from a task. Supports `me` as shorthand for your user ID. All four flags accept comma-separated lists to add or remove multiple assignees in a single call. Group values accept either a UUID or a handle (with or without the leading `@`); find handles and IDs with `cup groups`.
 
 ```bash
 cup assign abc123 --to 12345
@@ -935,13 +944,20 @@ cup assign abc123 --to me --remove 67890
 cup assign abc123 --to user1,user2,user3
 cup assign abc123 --remove user1,user2
 cup assign abc123 --to "me,12345" --json
+cup assign abc123 --group @mobile-team                 # assign a group by handle
+cup assign abc123 --group mobile-team,backend          # assign multiple groups
+cup assign abc123 --group 00000000-0000-0000-0000-000000000001  # assign by UUID
+cup assign abc123 --remove-group @backend              # unassign a group
+cup assign abc123 --to me --group @mobile-team         # users and groups together
 ```
 
-| Flag                 | Description                                   |
-| -------------------- | --------------------------------------------- |
-| `--to <userIds>`     | Add assignee(s) (comma-separated, or `me`)    |
-| `--remove <userIds>` | Remove assignee(s) (comma-separated, or `me`) |
-| `--json`             | Force JSON output                             |
+| Flag                        | Description                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| `--to <userIds>`            | Add assignee(s) (comma-separated, or `me`)                    |
+| `--remove <userIds>`        | Remove assignee(s) (comma-separated, or `me`)                 |
+| `--group <groupIds>`        | Add group assignee(s) (UUID or `@handle`, comma-separated)    |
+| `--remove-group <groupIds>` | Remove group assignee(s) (UUID or `@handle`, comma-separated) |
+| `--json`                    | Force JSON output                                             |
 
 ### `cup depend <id>`
 
@@ -1364,6 +1380,19 @@ List workspace members with username, ID, and email.
 ```bash
 cup members
 cup members --json
+```
+
+| Flag     | Required | Description       |
+| -------- | -------- | ----------------- |
+| `--json` | no       | Force JSON output |
+
+### `cup groups`
+
+List user groups (teams) in your workspace. Shows handle, name, UUID, and member count. Use this to find handles and IDs for `--group-assignee` flags on `cup assign`, `cup update`, and `cup create`.
+
+```bash
+cup groups
+cup groups --json
 ```
 
 | Flag     | Required | Description       |

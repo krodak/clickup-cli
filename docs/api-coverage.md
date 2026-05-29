@@ -4,22 +4,23 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Tasks
 
-| Feature              | Command                                                           | Status             |
-| -------------------- | ----------------------------------------------------------------- | ------------------ |
-| List my tasks        | `cup tasks`                                                       | :white_check_mark: |
-| Get task details     | `cup task <id>`                                                   | :white_check_mark: |
-| Create task          | `cup create`                                                      | :white_check_mark: |
-| Update task          | `cup update <id>`                                                 | :white_check_mark: |
-| Delete task          | `cup delete <id>`                                                 | :white_check_mark: |
-| Search tasks         | `cup search <query>`                                              | :white_check_mark: |
-| Open in browser      | `cup open <query>`                                                | :white_check_mark: |
-| List subtasks        | `cup subtasks <id>`                                               | :white_check_mark: |
-| Assign / unassign    | `cup assign <id>`                                                 | :white_check_mark: |
-| Duplicate task       | `cup duplicate <id>`                                              | :white_check_mark: |
-| Create from template | `cup create --template`                                           | :white_check_mark: |
-| Task members         | `cup task-members <taskId>`                                       | :white_check_mark: |
-| Merge task           | `cup merge <source> <into>`                                       | :white_check_mark: |
-| Bulk operations      | `cup bulk <status\|assign\|due-date\|tag\|priority\|field\|move>` | :white_check_mark: |
+| Feature              | Command                                                                            | Status             |
+| -------------------- | ---------------------------------------------------------------------------------- | ------------------ |
+| List my tasks        | `cup tasks`                                                                        | :white_check_mark: |
+| Get task details     | `cup task <id>`                                                                    | :white_check_mark: |
+| Create task          | `cup create`                                                                       | :white_check_mark: |
+| Update task          | `cup update <id>`                                                                  | :white_check_mark: |
+| Delete task          | `cup delete <id>`                                                                  | :white_check_mark: |
+| Search tasks         | `cup search <query>`                                                               | :white_check_mark: |
+| Open in browser      | `cup open <query>`                                                                 | :white_check_mark: |
+| List subtasks        | `cup subtasks <id>`                                                                | :white_check_mark: |
+| Assign / unassign    | `cup assign <id>`                                                                  | :white_check_mark: |
+| Group assignees      | `cup assign --group`, `cup update --group-assignee`, `cup create --group-assignee` | :white_check_mark: |
+| Duplicate task       | `cup duplicate <id>`                                                               | :white_check_mark: |
+| Create from template | `cup create --template`                                                            | :white_check_mark: |
+| Task members         | `cup task-members <taskId>`                                                        | :white_check_mark: |
+| Merge task           | `cup merge <source> <into>`                                                        | :white_check_mark: |
+| Bulk operations      | `cup bulk <status\|assign\|due-date\|tag\|priority\|field\|move>`                  | :white_check_mark: |
 
 ## Dependencies & Relations
 
@@ -126,6 +127,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Check auth       | `cup auth`                         | :white_check_mark: |
 | Workspace plan   | `cup plan`                         | :white_check_mark: |
 | List members     | `cup members`                      | :white_check_mark: |
+| List user groups | `cup groups`                       | :white_check_mark: |
 | Task types       | `cup task-types`                   | :white_check_mark: |
 | Task templates   | `cup templates`                    | :white_check_mark: |
 | List templates   | `cup list-templates`               | :white_check_mark: |
@@ -226,7 +228,6 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | Audit logs            | Enterprise admin.                                                           |
 | User/group management | Too destructive for a CLI - removing someone from a workspace is permanent. |
 | List/Folder/Space U   | Updating structural item settings (beyond rename) belongs in the UI.        |
-| User Groups           | Enterprise admin feature.                                                   |
 
 ## API Limitations
 
