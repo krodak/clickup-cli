@@ -135,6 +135,7 @@ import {
   deleteSpaceTag,
 } from './commands/tags.js'
 import { listMembers, formatMembers, formatMembersMarkdown } from './commands/members.js'
+import { listGroups, formatGroupsTable, formatGroupsMarkdown } from './commands/groups.js'
 import { listFields, formatFields, formatFieldsMarkdown } from './commands/fields.js'
 import { duplicateTask } from './commands/duplicate.js'
 import {
@@ -1730,6 +1731,24 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatMembers(members))
         } else {
           console.log(formatMembersMarkdown(members))
+        }
+      }),
+    )
+
+  program
+    .command('groups')
+    .description('List user groups (teams) in your workspace')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const groups = await listGroups(config)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(groups, null, 2))
+        } else if (isTTY()) {
+          console.log(formatGroupsTable(groups))
+        } else {
+          console.log(formatGroupsMarkdown(groups))
         }
       }),
     )

@@ -77,6 +77,7 @@ export interface UpdateTaskOptions {
   start_date_time?: boolean
   time_estimate?: number
   assignees?: { add?: number[]; rem?: number[] }
+  group_assignees?: { add?: string[]; rem?: string[] }
   parent?: string | null
   archived?: boolean
   custom_item_id?: number
@@ -95,6 +96,7 @@ export interface CreateTaskOptions {
   start_date_time?: boolean
   time_estimate?: number
   assignees?: number[]
+  group_assignees?: string[]
   tags?: string[]
   custom_item_id?: number
   custom_fields?: Array<{ id: string; value: unknown }>
@@ -343,6 +345,15 @@ export interface Member {
   email: string
   initials?: string
   role?: number
+}
+
+export interface UserGroup {
+  id: string
+  team_id: string
+  name: string
+  handle: string
+  date_created: string
+  members: Array<{ id: number; username: string; email: string }>
 }
 
 export interface Goal {
@@ -1244,6 +1255,11 @@ export class ClickUpClient {
       'workspace members',
     ).find(t => t.id === teamId)
     return team?.members?.map(m => m.user) ?? []
+  }
+
+  async getGroups(): Promise<UserGroup[]> {
+    const data = await this.request<{ groups: UserGroup[] }>(`/group?team_id=${this.teamId}`)
+    return readCollectionField<UserGroup>(data, 'groups', 'groups')
   }
 
   async deleteTimeEntry(teamId: string, timeEntryId: string): Promise<void> {
