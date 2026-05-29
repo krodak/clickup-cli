@@ -19,7 +19,12 @@ import {
 } from './config.js'
 import type { FilterEntry, FavoriteEntry } from './config.js'
 import { fetchMyTasks, printTasks } from './commands/tasks.js'
-import { updateTask, buildUpdatePayload, resolveAssigneeId } from './commands/update.js'
+import {
+  updateTask,
+  buildUpdatePayload,
+  resolveAssigneeId,
+  resolveGroupId,
+} from './commands/update.js'
 import type { UpdateCommandOptions } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
@@ -267,6 +272,24 @@ function parseOptionalNumberOption(value: string, optionName: string): number {
   return parsed
 }
 
+function splitCommaList(value: string): string[] {
+  return value
+    .split(',')
+    .map(v => v.trim())
+    .filter(v => v.length > 0)
+}
+
+function createCachedGroupResolver(client: ClickUpClient): (value: string) => Promise<string> {
+  let cache: import('./api.js').UserGroup[] | null = null
+  const cachingClient = {
+    getGroups: async (): Promise<import('./api.js').UserGroup[]> => {
+      if (cache === null) cache = await client.getGroups()
+      return cache
+    },
+  } as ClickUpClient
+  return (value: string) => resolveGroupId(cachingClient, value)
+}
+
 export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): Command {
   const program = new Command()
 
@@ -447,6 +470,14 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
     .option('--assignee <userId>', 'Add assignee by user ID or "me"')
     .option('--remove-assignee <userId>', 'Remove assignee by user ID or "me"')
+    .option(
+      '--group-assignee <groupIds...>',
+      'Add group assignee (UUID or @handle, can repeat or comma-separated)',
+    )
+    .option(
+      '--remove-group-assignee <groupIds...>',
+      'Remove group assignee (UUID or @handle, can repeat or comma-separated)',
+    )
     .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
     .option('--detach', 'Remove parent task (promote subtask to top-level)')
     .option('--archive', 'Archive the task')
@@ -458,7 +489,12 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           taskId: string,
-          opts: UpdateCommandOptions & { field?: string[]; json?: boolean },
+          opts: UpdateCommandOptions & {
+            field?: string[]
+            groupAssignee?: string[]
+            removeGroupAssignee?: string[]
+            json?: boolean
+          },
         ) => {
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
@@ -475,12 +511,25 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
                 })
               : Promise.resolve(),
           ])
+          const groupAddRaw = (opts.groupAssignee ?? []).flatMap(splitCommaList)
+          const groupRemRaw = (opts.removeGroupAssignee ?? []).flatMap(splitCommaList)
+          if (groupAddRaw.length > 0 || groupRemRaw.length > 0) {
+            const resolveGroup = createCachedGroupResolver(client)
+            opts.groupAssigneeIds = []
+            for (const value of groupAddRaw) {
+              opts.groupAssigneeIds.push(await resolveGroup(value))
+            }
+            opts.removeGroupAssigneeIds = []
+            for (const value of groupRemRaw) {
+              opts.removeGroupAssigneeIds.push(await resolveGroup(value))
+            }
+          }
           const payload = buildUpdatePayload(opts, timezone)
           const hasFields = (opts.field?.length ?? 0) > 0
           const hasTypeName = opts.type !== undefined
           if (!hasFields && !hasTypeName && Object.keys(payload).length === 0) {
             throw new Error(
-              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --remove-assignee, --parent, --archive, --unarchive, --type, --field',
+              'Provide at least one of: --name, --description, --status, --priority, --due-date, --time-estimate, --assignee, --remove-assignee, --group-assignee, --remove-group-assignee, --parent, --archive, --unarchive, --type, --field',
             )
           }
           let result: { id: string; name: string } | undefined
@@ -527,6 +576,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       'Start date (YYYY-MM-DD, YYYY-MM-DDTHH:MM[:SS], or full ISO 8601 with offset)',
     )
     .option('--assignee <userId>', 'Assignee user ID or "me"')
+    .option('--group-assignee <groupIds>', 'Group assignees (UUID or @handle, comma-separated)')
     .option('--tags <tags>', 'Comma-separated tag names')
     .option('--custom-item-id <id>', 'Custom task type ID (use to create initiatives)')
     .option('--time-estimate <duration>', 'Time estimate (e.g. "2h", "30m", "1h30m")')
@@ -534,48 +584,67 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--field <nameAndValue...>', 'Set custom field: --field "Name" value (can repeat)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (opts: CreateOptions & { field?: string[]; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        if (opts.list === 'sprint:current') {
-          opts.list = await resolveActiveSprintListId(config)
-        }
-        if (opts.assignee === 'me') {
-          const client = new ClickUpClient(config)
-          opts.assignee = String(await resolveAssigneeId(client, 'me'))
-        }
-        if (opts.field?.length) {
-          if (opts.field.length % 2 !== 0) {
-            throw new Error('--field requires pairs: --field "Name" value')
+      wrapAction(
+        async (
+          opts: CreateOptions & {
+            field?: string[]
+            groupAssignee?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          if (opts.list === 'sprint:current') {
+            opts.list = await resolveActiveSprintListId(config)
           }
-          let listId = opts.list
-          if (!listId && opts.parent) {
+          if (opts.assignee === 'me') {
             const client = new ClickUpClient(config)
-            const parentTask = await client.getTask(opts.parent)
-            listId = parentTask.list.id
-            opts.list = listId
+            opts.assignee = String(await resolveAssigneeId(client, 'me'))
           }
-          if (!listId) {
-            throw new Error('--field requires --list or --parent to resolve custom field names')
+          if (opts.groupAssignee !== undefined) {
+            const rawList = splitCommaList(opts.groupAssignee)
+            if (rawList.length > 0) {
+              const client = new ClickUpClient(config)
+              const resolveGroup = createCachedGroupResolver(client)
+              opts.groupAssigneeIds = []
+              for (const value of rawList) {
+                opts.groupAssigneeIds.push(await resolveGroup(value))
+              }
+            }
           }
-          const client = new ClickUpClient(config)
-          const fields = await client.getListCustomFields(listId)
-          const customFields: Array<{ id: string; value: unknown }> = []
-          for (let i = 0; i < opts.field.length; i += 2) {
-            const fieldName = opts.field[i]!
-            const rawValue = opts.field[i + 1]!
-            const field = findFieldByName(fields, fieldName)
-            const value = parseFieldValue(field, rawValue)
-            customFields.push({ id: field.id, value })
+          if (opts.field?.length) {
+            if (opts.field.length % 2 !== 0) {
+              throw new Error('--field requires pairs: --field "Name" value')
+            }
+            let listId = opts.list
+            if (!listId && opts.parent) {
+              const client = new ClickUpClient(config)
+              const parentTask = await client.getTask(opts.parent)
+              listId = parentTask.list.id
+              opts.list = listId
+            }
+            if (!listId) {
+              throw new Error('--field requires --list or --parent to resolve custom field names')
+            }
+            const client = new ClickUpClient(config)
+            const fields = await client.getListCustomFields(listId)
+            const customFields: Array<{ id: string; value: unknown }> = []
+            for (let i = 0; i < opts.field.length; i += 2) {
+              const fieldName = opts.field[i]!
+              const rawValue = opts.field[i + 1]!
+              const field = findFieldByName(fields, fieldName)
+              const value = parseFieldValue(field, rawValue)
+              customFields.push({ id: field.id, value })
+            }
+            opts.customFields = customFields
           }
-          opts.customFields = customFields
-        }
-        const result = await createTask(config, opts)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(formatCreateConfirmation(result.id, result.name, result.url))
-        }
-      }),
+          const result = await createTask(config, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(formatCreateConfirmation(result.id, result.name, result.url))
+          }
+        },
+      ),
     )
 
   program
@@ -1037,20 +1106,40 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('assign <taskId>')
-    .description('Assign or unassign users from a task')
-    .option('--to <userId>', 'Add assignee (user ID or "me")')
-    .option('--remove <userId>', 'Remove assignee (user ID or "me")')
+    .description('Assign or unassign users and groups from a task')
+    .option('--to <userId>', 'Add assignee (user ID or "me", comma-separated)')
+    .option('--remove <userId>', 'Remove assignee (user ID or "me", comma-separated)')
+    .option('--group <groupIds>', 'Add group assignee (UUID or @handle, comma-separated)')
+    .option('--remove-group <groupIds>', 'Remove group assignee (UUID or @handle, comma-separated)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (taskId: string, opts: { to?: string; remove?: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const result = await assignTask(config, taskId, opts)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(formatAssignConfirmation(taskId, { to: opts.to, remove: opts.remove }))
-        }
-      }),
+      wrapAction(
+        async (
+          taskId: string,
+          opts: {
+            to?: string
+            remove?: string
+            group?: string
+            removeGroup?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await assignTask(config, taskId, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(
+              formatAssignConfirmation(taskId, {
+                to: opts.to,
+                remove: opts.remove,
+                group: opts.group,
+                removeGroup: opts.removeGroup,
+              }),
+            )
+          }
+        },
+      ),
     )
 
   program

@@ -259,4 +259,39 @@ describe('createTask', () => {
     const payload = mockCreateTask.mock.calls.at(-1)?.[1] as Record<string, unknown>
     expect(payload).toEqual({ name: 'Plain task' })
   })
+
+  it('passes group_assignees when groupAssigneeIds provided', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      {
+        list: 'l1',
+        name: 'Task with group',
+        groupAssigneeIds: [
+          '00000000-0000-0000-0000-000000000001',
+          '00000000-0000-0000-0000-000000000002',
+        ],
+      },
+    )
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'l1',
+      expect.objectContaining({
+        name: 'Task with group',
+        group_assignees: [
+          '00000000-0000-0000-0000-000000000001',
+          '00000000-0000-0000-0000-000000000002',
+        ],
+      }),
+    )
+  })
+
+  it('omits group_assignees when groupAssigneeIds is empty', async () => {
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Plain task', groupAssigneeIds: [] },
+    )
+    const payload = mockCreateTask.mock.calls.at(-1)?.[1] as Record<string, unknown>
+    expect(payload.group_assignees).toBeUndefined()
+  })
 })

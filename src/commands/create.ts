@@ -13,6 +13,7 @@ export interface CreateOptions {
   dueDate?: string
   startDate?: string
   assignee?: string
+  groupAssigneeIds?: string[]
   tags?: string
   customItemId?: string
   timeEstimate?: string
@@ -66,6 +67,9 @@ export async function createTask(
   }
   if (options.assignee !== undefined) {
     payload.assignees = [parseAssigneeId(options.assignee)]
+  }
+  if (options.groupAssigneeIds !== undefined && options.groupAssigneeIds.length > 0) {
+    payload.group_assignees = options.groupAssigneeIds
   }
   if (options.tags !== undefined) {
     payload.tags = options.tags.split(',').map(t => t.trim())

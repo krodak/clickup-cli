@@ -117,7 +117,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup comment-delete [commentId]`                         | Delete a comment                                                 |
 | `cup reply <commentId>`                                  | Reply to a comment                                               |
 | `cup archive <taskId>`                                   | Archive or unarchive a task                                      |
-| `cup assign <taskId>`                                    | Assign or unassign users                                         |
+| `cup assign <taskId>`                                    | Assign or unassign users and groups                              |
 | `cup depend <taskId>`                                    | Add or remove task dependencies                                  |
 | `cup link <taskId> <linksTo>`                            | Add or remove a link between tasks                               |
 | `cup attach <taskId> <filePath>`                         | Upload a file attachment to a task                               |
