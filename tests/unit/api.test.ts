@@ -2035,3 +2035,47 @@ describe('view comments', () => {
     )
   })
 })
+
+describe('getGroups', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('sends GET to /group with team_id query', async () => {
+    const groups = [
+      {
+        id: '00000000-0000-0000-0000-000000000001',
+        team_id: 'team123',
+        name: 'Mobile Team',
+        handle: 'mobile-team',
+        date_created: '1700000000000',
+        members: [{ id: 1, username: 'alice', email: 'a@example.com' }],
+      },
+    ]
+    mockFetch.mockReturnValue(mockResponse({ groups }))
+    const result = await client.getGroups()
+    expect(result).toEqual(groups)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/group?team_id=team123')
+  })
+
+  it('returns empty array when groups payload is missing', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    const result = await client.getGroups()
+    expect(result).toEqual([])
+  })
+
+  it('throws when groups payload is not an array', async () => {
+    mockFetch.mockReturnValue(mockResponse({ groups: { id: 'g1' } }))
+    await expect(client.getGroups()).rejects.toThrow('expected groups.groups to be an array')
+  })
+})

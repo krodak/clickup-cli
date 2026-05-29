@@ -85,6 +85,7 @@ Custom ID resolution uses the `teamId` from your config, which is required (`cup
 | `cup doc-pages <docId>`                                  | All pages in a doc with content                                  |
 | `cup folders <spaceId>`                                  | List folders in a space                                          |
 | `cup members`                                            | List workspace members                                           |
+| `cup groups`                                             | List user groups (teams) in your workspace                       |
 | `cup fields <listId>`                                    | List custom fields for a list                                    |
 | `cup goals`                                              | List goals in your workspace                                     |
 | `cup key-results <goalId>`                               | List key results for a goal                                      |

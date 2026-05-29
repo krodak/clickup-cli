@@ -712,6 +712,18 @@ export const commandMetadata = [
     quickReference: [{ section: 'read', usage: 'members', description: 'List workspace members' }],
   },
   {
+    name: 'groups',
+    description: 'List user groups (teams) in your workspace',
+    flags: ['--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'groups',
+        description: 'List user groups (teams) in your workspace',
+      },
+    ],
+  },
+  {
     name: 'fields',
     description: 'List custom fields for a list',
     flags: ['--json'],
