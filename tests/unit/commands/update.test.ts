@@ -36,6 +36,25 @@ const mockGetCustomTaskTypes = vi.fn().mockResolvedValue([
   { id: 1002, name: 'Bug' },
 ])
 
+const mockGetGroups = vi.fn().mockResolvedValue([
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    team_id: 'team1',
+    name: 'Mobile Team',
+    handle: 'mobile-team',
+    date_created: '0',
+    members: [],
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    team_id: 'team1',
+    name: 'Backend',
+    handle: 'backend',
+    date_created: '0',
+    members: [],
+  },
+])
+
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
@@ -43,6 +62,7 @@ vi.mock('../../../src/api.js', () => ({
       getTask: mockGetTask,
       getListWithStatuses: mockGetListWithStatuses,
       getCustomTaskTypes: mockGetCustomTaskTypes,
+      getGroups: mockGetGroups,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -342,6 +362,38 @@ describe('buildUpdatePayload', () => {
     expect(payload.assignees).toEqual({ add: [12], rem: [99] })
   })
 
+  it('builds payload with group_assignees.add from groupAssigneeIds', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({
+      groupAssigneeIds: ['00000000-0000-0000-0000-000000000001'],
+    })
+    expect(payload.group_assignees).toEqual({
+      add: ['00000000-0000-0000-0000-000000000001'],
+    })
+  })
+
+  it('builds payload with group_assignees.rem from removeGroupAssigneeIds', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({
+      removeGroupAssigneeIds: ['00000000-0000-0000-0000-000000000002'],
+    })
+    expect(payload.group_assignees).toEqual({
+      rem: ['00000000-0000-0000-0000-000000000002'],
+    })
+  })
+
+  it('builds payload with both group_assignees.add and rem', async () => {
+    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
+    const payload = buildUpdatePayload({
+      groupAssigneeIds: ['00000000-0000-0000-0000-000000000001'],
+      removeGroupAssigneeIds: ['00000000-0000-0000-0000-000000000002'],
+    })
+    expect(payload.group_assignees).toEqual({
+      add: ['00000000-0000-0000-0000-000000000001'],
+      rem: ['00000000-0000-0000-0000-000000000002'],
+    })
+  })
+
   it('builds payload with all fields', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({
@@ -533,5 +585,64 @@ describe('fuzzy status matching', () => {
     await expect(
       updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {}, 'Initiative'),
     ).resolves.toBeDefined()
+  })
+})
+
+describe('resolveGroupId', () => {
+  beforeEach(() => {
+    mockGetGroups.mockClear()
+  })
+
+  it('passes through UUID values without calling getGroups', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    const uuid = '00000000-0000-0000-0000-000000000001'
+    const result = await resolveGroupId(client, uuid)
+    expect(result).toBe(uuid)
+    expect(mockGetGroups).not.toHaveBeenCalled()
+  })
+
+  it('accepts uppercase UUID format', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    const uuid = 'ABCDEF12-3456-7890-ABCD-EF1234567890'
+    const result = await resolveGroupId(client, uuid)
+    expect(result).toBe(uuid)
+    expect(mockGetGroups).not.toHaveBeenCalled()
+  })
+
+  it('resolves bare handle to UUID', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    const result = await resolveGroupId(client, 'mobile-team')
+    expect(result).toBe('00000000-0000-0000-0000-000000000001')
+  })
+
+  it('resolves @-prefixed handle to UUID', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    const result = await resolveGroupId(client, '@backend')
+    expect(result).toBe('00000000-0000-0000-0000-000000000002')
+  })
+
+  it('resolves handle case-insensitively', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    const result = await resolveGroupId(client, 'Mobile-Team')
+    expect(result).toBe('00000000-0000-0000-0000-000000000001')
+  })
+
+  it('throws with available handles when no match is found', async () => {
+    const { resolveGroupId } = await import('../../../src/commands/update.js')
+    const { ClickUpClient } = await import('../../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_t', teamId: 'team1' })
+    await expect(resolveGroupId(client, 'nonexistent')).rejects.toThrow(
+      /Group "nonexistent" not found.*@mobile-team.*@backend/,
+    )
   })
 })

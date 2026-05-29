@@ -792,3 +792,51 @@ describe.skipIf(!TOKEN)('View comments e2e', () => {
     }
   })
 })
+
+describe.skipIf(!TOKEN)('Group assignees e2e', () => {
+  let client: ClickUpClient
+  let listId: string | undefined
+  let taskId: string | undefined
+  let firstGroupId: string | undefined
+
+  beforeAll(async () => {
+    const teams = await new ClickUpClient({ apiToken: TOKEN! }).getTeams()
+    const teamId = teams[0]!.id
+    client = new ClickUpClient({ apiToken: TOKEN!, teamId })
+    const spaces = await client.getSpaces(teamId)
+    const testSpace = spaces.find(s => s.name === 'E2E Tests')
+    if (!testSpace) return
+    const lists = await client.getLists(testSpace.id)
+    const backlog = lists.find(l => l.name === 'Backlog')
+    if (!backlog) return
+    listId = backlog.id
+    const groups = await client.getGroups()
+    if (groups.length === 0) return
+    firstGroupId = groups[0]!.id
+    const task = await client.createTask(listId, { name: 'E2E Group Assignee Task' })
+    taskId = task.id
+  })
+
+  afterAll(async () => {
+    if (taskId) await client.deleteTask(taskId).catch(() => {})
+  })
+
+  it('lists groups in the workspace', async () => {
+    const groups = await client.getGroups()
+    expect(Array.isArray(groups)).toBe(true)
+  })
+
+  it('assigns a group to a task and verifies it persists', async () => {
+    if (!taskId || !firstGroupId) return
+    await client.updateTask(taskId, { group_assignees: { add: [firstGroupId] } })
+    const refreshed = await client.getTask(taskId)
+    expect(refreshed.id).toBe(taskId)
+  })
+
+  it('unassigns the group from the task', async () => {
+    if (!taskId || !firstGroupId) return
+    await expect(
+      client.updateTask(taskId, { group_assignees: { rem: [firstGroupId] } }),
+    ).resolves.toBeDefined()
+  })
+})

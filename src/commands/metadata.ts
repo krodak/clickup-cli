@@ -86,6 +86,8 @@ export const commandMetadata = [
       '--time-estimate',
       '--assignee',
       '--remove-assignee',
+      '--group-assignee',
+      '--remove-group-assignee',
       '--parent',
       '--detach',
       '--archive',
@@ -114,6 +116,7 @@ export const commandMetadata = [
       '--due-date',
       '--start-date',
       '--assignee',
+      '--group-assignee',
       '--tags',
       '--custom-item-id',
       '--time-estimate',
@@ -313,10 +316,14 @@ export const commandMetadata = [
   },
   {
     name: 'assign',
-    description: 'Assign or unassign users from a task',
-    flags: ['--to', '--remove', '--json'],
+    description: 'Assign or unassign users and groups from a task',
+    flags: ['--to', '--remove', '--group', '--remove-group', '--json'],
     quickReference: [
-      { section: 'write', usage: 'assign <taskId>', description: 'Assign or unassign users' },
+      {
+        section: 'write',
+        usage: 'assign <taskId>',
+        description: 'Assign or unassign users and groups',
+      },
     ],
   },
   {

@@ -2,12 +2,31 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockUpdateTask = vi.fn()
 const mockGetMe = vi.fn().mockResolvedValue({ id: 42, username: 'me' })
+const mockGetGroups = vi.fn().mockResolvedValue([
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    team_id: 'team1',
+    name: 'Mobile Team',
+    handle: 'mobile-team',
+    date_created: '0',
+    members: [],
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    team_id: 'team1',
+    name: 'Backend',
+    handle: 'backend',
+    date_created: '0',
+    members: [],
+  },
+])
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
       updateTask: mockUpdateTask,
       getMe: mockGetMe,
+      getGroups: mockGetGroups,
     }
   }),
 }))
@@ -72,10 +91,10 @@ describe('assignTask', () => {
     })
   })
 
-  it('throws when neither --to nor --remove is provided', async () => {
+  it('throws when no assignment flag is provided', async () => {
     const { assignTask } = await import('../../../src/commands/assign.js')
     await expect(assignTask(config, 'abc123', {})).rejects.toThrow(
-      'Provide at least one of: --to, --remove',
+      'Provide at least one of: --to, --remove, --group, --remove-group',
     )
   })
 
@@ -136,5 +155,71 @@ describe('assignTask', () => {
     expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
       assignees: { add: [10, 20, 30], rem: [1, 2] },
     })
+  })
+
+  it('adds a group assignee by handle', async () => {
+    mockGetGroups.mockClear()
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { group: 'mobile-team' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      group_assignees: { add: ['00000000-0000-0000-0000-000000000001'] },
+    })
+  })
+
+  it('adds a group assignee by @handle', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { group: '@backend' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      group_assignees: { add: ['00000000-0000-0000-0000-000000000002'] },
+    })
+  })
+
+  it('adds a group assignee by UUID', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { group: '00000000-0000-0000-0000-000000000003' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      group_assignees: { add: ['00000000-0000-0000-0000-000000000003'] },
+    })
+  })
+
+  it('removes a group assignee', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { removeGroup: 'mobile-team' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      group_assignees: { rem: ['00000000-0000-0000-0000-000000000001'] },
+    })
+  })
+
+  it('supports comma-separated --group', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { group: 'mobile-team,@backend' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      group_assignees: {
+        add: ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'],
+      },
+    })
+  })
+
+  it('combines users and groups in a single call', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { to: '10', group: 'mobile-team' })
+    expect(mockUpdateTask).toHaveBeenCalledWith('abc123', {
+      assignees: { add: [10] },
+      group_assignees: { add: ['00000000-0000-0000-0000-000000000001'] },
+    })
+  })
+
+  it('caches getGroups across multiple handle resolutions in one call', async () => {
+    mockGetGroups.mockClear()
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await assignTask(config, 'abc123', { group: 'mobile-team,@backend' })
+    expect(mockGetGroups).toHaveBeenCalledOnce()
+  })
+
+  it('throws with available handles when group not found', async () => {
+    const { assignTask } = await import('../../../src/commands/assign.js')
+    await expect(assignTask(config, 'abc123', { group: 'nonexistent' })).rejects.toThrow(
+      /Group "nonexistent" not found/,
+    )
   })
 })

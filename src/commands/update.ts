@@ -135,6 +135,18 @@ export async function resolveAssigneeId(client: ClickUpClient, value: string): P
   return parseAssigneeId(value)
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export async function resolveGroupId(client: ClickUpClient, value: string): Promise<string> {
+  if (UUID_RE.test(value)) return value
+  const handle = value.startsWith('@') ? value.slice(1) : value
+  const groups = await client.getGroups()
+  const match = groups.find(g => g.handle.toLowerCase() === handle.toLowerCase())
+  if (match) return match.id
+  const available = groups.map(g => `@${g.handle}`).join(', ') || '(none)'
+  throw new Error(`Group "${value}" not found. Available: ${available}`)
+}
+
 export function parseTimeEstimate(value: string): number {
   if (value === '0' || value.toLowerCase() === 'none' || value === '') return 0
   const pattern = /^(?:(\d+)h)?(?:(\d+)m)?$/i
@@ -160,6 +172,8 @@ export interface UpdateCommandOptions {
   startDate?: string
   assignee?: string
   removeAssignee?: string
+  groupAssigneeIds?: string[]
+  removeGroupAssigneeIds?: string[]
   timeEstimate?: string
   parent?: string
   detach?: boolean
@@ -209,6 +223,14 @@ export function buildUpdatePayload(
       payload.assignees.rem = [parseAssigneeId(opts.removeAssignee)]
     }
   }
+  const addGroups = opts.groupAssigneeIds ?? []
+  const remGroups = opts.removeGroupAssigneeIds ?? []
+  if (addGroups.length > 0 || remGroups.length > 0) {
+    payload.group_assignees = {
+      ...(addGroups.length > 0 ? { add: addGroups } : {}),
+      ...(remGroups.length > 0 ? { rem: remGroups } : {}),
+    }
+  }
   if (opts.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
   }
@@ -239,6 +261,7 @@ function hasUpdateFields(options: UpdateTaskOptions): boolean {
     options.start_date !== undefined ||
     options.time_estimate !== undefined ||
     options.assignees !== undefined ||
+    options.group_assignees !== undefined ||
     options.parent !== undefined ||
     options.archived !== undefined ||
     options.custom_item_id !== undefined
@@ -289,7 +312,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options) && typeInput === undefined)
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --parent, --detach, --archive, --unarchive, --type',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --group-assignee, --remove-group-assignee, --parent, --detach, --archive, --unarchive, --type',
     )
 
   const client = new ClickUpClient(config)

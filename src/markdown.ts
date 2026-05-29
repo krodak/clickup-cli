@@ -179,10 +179,12 @@ export function formatCommentConfirmation(id: string): string {
 
 export function formatAssignConfirmation(
   taskId: string,
-  opts: { to?: string; remove?: string },
+  opts: { to?: string; remove?: string; group?: string; removeGroup?: string },
 ): string {
   const parts: string[] = []
   if (opts.to) parts.push(`Assigned ${opts.to} to ${taskId}`)
   if (opts.remove) parts.push(`Removed ${opts.remove} from ${taskId}`)
+  if (opts.group) parts.push(`Assigned group ${opts.group} to ${taskId}`)
+  if (opts.removeGroup) parts.push(`Removed group ${opts.removeGroup} from ${taskId}`)
   return parts.join('; ')
 }
