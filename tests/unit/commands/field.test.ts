@@ -49,9 +49,9 @@ const taskWithFields = {
       value: null,
       type_config: {
         options: [
-          { id: 'opt-1', name: 'High', orderindex: 0 },
-          { id: 'opt-2', name: 'Medium', orderindex: 1 },
-          { id: 'opt-3', name: 'Low', orderindex: 2 },
+          { id: 'opt-1', label: 'High', orderindex: 0 },
+          { id: 'opt-2', label: 'Medium', orderindex: 1 },
+          { id: 'opt-3', label: 'Low', orderindex: 2 },
         ],
       },
     },
@@ -297,6 +297,54 @@ describe('setCustomField', () => {
     await expect(
       setCustomField(config, 'task1', { set: ['Priority Labels', 'Critical'] }),
     ).rejects.toThrow('Available: High, Medium, Low')
+  })
+
+  it('sets labels field when API returns options with label (not name)', async () => {
+    mockGetTask.mockResolvedValue({
+      ...taskWithFields,
+      custom_fields: [
+        {
+          id: 'uuid-context',
+          name: 'Context',
+          type: 'labels',
+          value: null,
+          type_config: {
+            options: [
+              { id: 'opt-home', label: 'Home', orderindex: 0 },
+              { id: 'opt-office', label: 'Office', orderindex: 1 },
+            ],
+          },
+        },
+      ],
+    })
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', { set: ['Context', 'Home'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-context', ['opt-home'])
+    expect(results[0]!.value).toEqual(['opt-home'])
+  })
+
+  it('lists labels using label field in error message when option not found', async () => {
+    mockGetTask.mockResolvedValue({
+      ...taskWithFields,
+      custom_fields: [
+        {
+          id: 'uuid-context',
+          name: 'Context',
+          type: 'labels',
+          value: null,
+          type_config: {
+            options: [
+              { id: 'opt-home', label: 'Home', orderindex: 0 },
+              { id: 'opt-office', label: 'Office', orderindex: 1 },
+            ],
+          },
+        },
+      ],
+    })
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await expect(setCustomField(config, 'task1', { set: ['Context', 'Nowhere'] })).rejects.toThrow(
+      'Available: Home, Office',
+    )
   })
 
   it('throws when labels field has no options', async () => {

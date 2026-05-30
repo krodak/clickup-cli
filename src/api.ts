@@ -11,7 +11,7 @@ export interface CustomField {
   type: string
   value: unknown
   type_config?: {
-    options?: Array<{ id: string; name: string; orderindex?: number }>
+    options?: Array<{ id: string; name?: string; label?: string; orderindex?: number }>
   }
 }
 
@@ -208,9 +208,9 @@ export interface CustomFieldDefinition {
   type_config?: {
     options?: Array<{
       id: string
-      name: string
-      orderindex: number
+      name?: string
       label?: string
+      orderindex?: number
       color?: string
     }>
   }

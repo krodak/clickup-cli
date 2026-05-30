@@ -8,7 +8,8 @@ export interface FieldDescriptor {
   type_config?: {
     options?: ReadonlyArray<{
       id: string
-      name: string
+      name?: string
+      label?: string
       orderindex?: number
     }>
   }
@@ -48,6 +49,23 @@ const SUPPORTED_TYPES = new Set([
   'users',
 ])
 
+type FieldOption = NonNullable<NonNullable<FieldDescriptor['type_config']>['options']>[number]
+
+function labelOptionName(option: FieldOption): string | undefined {
+  return option.label ?? option.name
+}
+
+function dropdownOptionName(option: FieldOption): string | undefined {
+  return option.name ?? option.label
+}
+
+function availableOptionNames(
+  options: readonly FieldOption[],
+  getOptionName: (option: FieldOption) => string | undefined,
+): string {
+  return options.map(option => getOptionName(option) ?? option.id).join(', ')
+}
+
 export function findFieldByName<T extends FieldDescriptor>(fields: readonly T[], name: string): T {
   const lower = name.toLowerCase()
   const match = fields.find(f => f.name.toLowerCase() === lower)
@@ -80,13 +98,15 @@ export function parseFieldValue(field: FieldDescriptor, rawValue: string): unkno
       const options = field.type_config?.options
       if (!options?.length) throw new Error('Dropdown field has no configured options')
       const lower = rawValue.toLowerCase()
-      const option = options.find(o => o.name.toLowerCase() === lower)
+      const option = options.find(o => dropdownOptionName(o)?.toLowerCase() === lower)
       if (!option) {
-        const available = options.map(o => o.name).join(', ')
+        const available = availableOptionNames(options, dropdownOptionName)
         throw new Error(`Option "${rawValue}" not found. Available options: ${available}`)
       }
       if (option.orderindex === undefined) {
-        throw new Error(`Dropdown option "${option.name}" has no orderindex`)
+        throw new Error(
+          `Dropdown option "${dropdownOptionName(option) ?? option.id}" has no orderindex`,
+        )
       }
       return option.orderindex
     }
@@ -101,9 +121,9 @@ export function parseFieldValue(field: FieldDescriptor, rawValue: string): unkno
       const ids: string[] = []
       for (const name of names) {
         const lower = name.toLowerCase()
-        const option = options.find(o => o.name.toLowerCase() === lower)
+        const option = options.find(o => labelOptionName(o)?.toLowerCase() === lower)
         if (!option) {
-          const available = options.map(o => o.name).join(', ')
+          const available = availableOptionNames(options, labelOptionName)
           throw new Error(`Label "${name}" not found. Available: ${available}`)
         }
         ids.push(option.id)
