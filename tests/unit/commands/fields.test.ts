@@ -25,6 +25,18 @@ const sampleFields = [
       ],
     },
   },
+  {
+    id: 'f3',
+    name: 'Context',
+    type: 'labels',
+    required: false,
+    type_config: {
+      options: [
+        { id: 'home', label: 'Home', orderindex: 0 },
+        { id: 'office', label: 'Office', orderindex: 1 },
+      ],
+    },
+  },
   { id: 'f2', name: 'Notes', type: 'text', required: false },
 ]
 
@@ -57,6 +69,8 @@ describe('formatFields', () => {
     expect(result).toContain('Notes')
     expect(result).toContain('Low')
     expect(result).toContain('High')
+    expect(result).toContain('Home')
+    expect(result).toContain('Office')
   })
 })
 
@@ -70,6 +84,7 @@ describe('formatFieldsMarkdown', () => {
     const { formatFieldsMarkdown } = await import('../../../src/commands/fields.js')
     const result = formatFieldsMarkdown(sampleFields)
     expect(result).toContain('- **Priority Level** `f1` (drop_down) - required [Low, High]')
+    expect(result).toContain('- **Context** `f3` (labels) [Home, Office]')
     expect(result).toContain('- **Notes** `f2` (text)')
   })
 })

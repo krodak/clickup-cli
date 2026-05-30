@@ -81,13 +81,30 @@ describe('formatCustomFieldValue', () => {
       value: ['uuid-bug', 'uuid-urgent'],
       type_config: {
         options: [
-          { id: 'uuid-bug', name: 'Bug', orderindex: 0 },
-          { id: 'uuid-feature', name: 'Feature', orderindex: 1 },
-          { id: 'uuid-urgent', name: 'Urgent', orderindex: 2 },
+          { id: 'uuid-bug', label: 'Bug', orderindex: 0 },
+          { id: 'uuid-feature', label: 'Feature', orderindex: 1 },
+          { id: 'uuid-urgent', label: 'Urgent', orderindex: 2 },
         ],
       },
     }
     expect(formatCustomFieldValue(field)).toBe('Bug, Urgent')
+  })
+
+  it('renders labels field value when API options use label (not name)', async () => {
+    const { formatCustomFieldValue } = await import('../../src/interactive.js')
+    const field: CustomField = {
+      id: 'f1',
+      name: 'Context',
+      type: 'labels',
+      value: ['opt-home', 'opt-office'],
+      type_config: {
+        options: [
+          { id: 'opt-home', label: 'Home', orderindex: 0 },
+          { id: 'opt-office', label: 'Office', orderindex: 1 },
+        ],
+      },
+    }
+    expect(formatCustomFieldValue(field)).toBe('Home, Office')
   })
 
   it('returns string for number type', async () => {

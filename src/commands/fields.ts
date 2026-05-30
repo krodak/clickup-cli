@@ -26,6 +26,10 @@ const FIELD_COLUMNS: Column<FieldRow>[] = [
   { key: 'options', label: 'Options', maxWidth: 40 },
 ]
 
+function optionDisplayName(option: { id: string; name?: string; label?: string }): string {
+  return option.label ?? option.name ?? option.id
+}
+
 export async function listFields(config: Config, listId: string): Promise<CustomFieldDefinition[]> {
   const client = new ClickUpClient(config)
   return client.getListCustomFields(listId)
@@ -38,7 +42,7 @@ export function formatFields(fields: CustomFieldDefinition[]): string {
     name: f.name,
     type: f.type,
     required: f.required ? 'yes' : 'no',
-    options: f.type_config?.options?.map(o => o.name).join(', ') ?? '',
+    options: f.type_config?.options?.map(optionDisplayName).join(', ') ?? '',
   }))
   return formatTable(rows, FIELD_COLUMNS)
 }
@@ -47,7 +51,7 @@ export function formatFieldsMarkdown(fields: CustomFieldDefinition[]): string {
   if (fields.length === 0) return 'No custom fields'
   return fields
     .map(f => {
-      const options = f.type_config?.options?.map(o => o.name).join(', ')
+      const options = f.type_config?.options?.map(optionDisplayName).join(', ')
       const optStr = options ? ` [${options}]` : ''
       return `- **${f.name}** \`${f.id}\` (${f.type})${f.required ? ' - required' : ''}${optStr}`
     })

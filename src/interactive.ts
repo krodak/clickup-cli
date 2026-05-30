@@ -41,6 +41,14 @@ function stringifyFieldValue(value: unknown): string {
   return JSON.stringify(value)
 }
 
+function optionDisplayName(option: { name?: string; label?: string }): string | undefined {
+  return option.label ?? option.name
+}
+
+function dropdownOptionName(option: { name?: string; label?: string }): string | undefined {
+  return option.name ?? option.label
+}
+
 export function formatCustomFieldValue(field: CustomField): string | null {
   if (field.value === null || field.value === undefined) return null
 
@@ -50,12 +58,17 @@ export function formatCustomFieldValue(field: CustomField): string | null {
     case 'drop_down': {
       if (!options) return stringifyFieldValue(field.value)
       const match = options.find(o => o.orderindex === Number(field.value))
-      return match?.name ?? stringifyFieldValue(field.value)
+      return match
+        ? (dropdownOptionName(match) ?? stringifyFieldValue(field.value))
+        : stringifyFieldValue(field.value)
     }
     case 'labels': {
       if (!Array.isArray(field.value) || !options) return stringifyFieldValue(field.value)
       const names = (field.value as string[])
-        .map(id => options.find(o => o.id === id)?.name)
+        .map(id => {
+          const match = options.find(o => o.id === id)
+          return match ? optionDisplayName(match) : undefined
+        })
         .filter((n): n is string => n !== undefined)
       return names.length > 0 ? names.join(', ') : null
     }
