@@ -518,7 +518,10 @@ describe.skipIf(!TOKEN)('Delete list e2e', () => {
       listId = list.id
       expect(list.id).toBeTypeOf('string')
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('limit'))) {
+      if (
+        err instanceof Error &&
+        (err.message.includes('plan is limited') || err.message.includes('limit'))
+      ) {
         planLimited = true
         return
       }
@@ -555,7 +558,10 @@ describe.skipIf(!TOKEN)('Delete folder e2e', () => {
       folderId = folder.id
       expect(folder.id).toBeTypeOf('string')
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('limit'))) {
+      if (
+        err instanceof Error &&
+        (err.message.includes('plan is limited') || err.message.includes('limit'))
+      ) {
         planLimited = true
         return
       }
@@ -604,7 +610,12 @@ describe.skipIf(!TOKEN)('Task merge e2e', () => {
     try {
       await client.mergeTasks(taskBId, [taskAId])
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('401') || err.message.includes('403'))) {
+      if (
+        err instanceof Error &&
+        (err.message.includes('plan is limited') ||
+          err.message.includes('401') ||
+          err.message.includes('403'))
+      ) {
         mergeSupported = false
         return
       }
@@ -654,7 +665,14 @@ describe.skipIf(!TOKEN)('Per-user time estimates e2e', () => {
       ])
       expect(result.total_time_estimate).toBeGreaterThan(0)
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('403') || err.message.includes('400') || err.message.includes('500'))) return
+      if (
+        err instanceof Error &&
+        (err.message.includes('plan is limited') ||
+          err.message.includes('403') ||
+          err.message.includes('400') ||
+          err.message.includes('500'))
+      )
+        return
       throw err
     }
   })
@@ -681,7 +699,11 @@ describe.skipIf(!TOKEN)('Webhook lifecycle e2e', () => {
       webhookId = wh.id
       expect(wh.id).toBeTypeOf('string')
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('plan is limited') || err.message.includes('403'))) return
+      if (
+        err instanceof Error &&
+        (err.message.includes('plan is limited') || err.message.includes('403'))
+      )
+        return
       throw err
     }
   })
@@ -759,9 +781,7 @@ describe.skipIf(!TOKEN)('View comments e2e', () => {
       createdViewId = view.id
     } catch {
       const viewData = await client.getListViews(backlog.id)
-      const conv = viewData.views?.find(
-        (v: { type?: string }) => v.type === 'conversation',
-      )
+      const conv = viewData.views?.find((v: { type?: string }) => v.type === 'conversation')
       if (conv) viewId = conv.id
     }
   })
@@ -776,7 +796,11 @@ describe.skipIf(!TOKEN)('View comments e2e', () => {
       const result = await client.postViewComment(viewId, 'E2E view comment test')
       expect(result.id).toBeDefined()
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('conversation') || err.message.includes('400'))) return
+      if (
+        err instanceof Error &&
+        (err.message.includes('conversation') || err.message.includes('400'))
+      )
+        return
       throw err
     }
   })
@@ -787,7 +811,11 @@ describe.skipIf(!TOKEN)('View comments e2e', () => {
       const comments = await client.getViewComments(viewId)
       expect(Array.isArray(comments)).toBe(true)
     } catch (err) {
-      if (err instanceof Error && (err.message.includes('conversation') || err.message.includes('400'))) return
+      if (
+        err instanceof Error &&
+        (err.message.includes('conversation') || err.message.includes('400'))
+      )
+        return
       throw err
     }
   })

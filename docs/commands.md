@@ -1014,14 +1014,20 @@ Deleting task attachments is not currently supported because the public ClickUp 
 
 ### `cup move <id>`
 
-Add or remove a task from a list. Tasks can belong to multiple lists in ClickUp.
+Add or remove a task from a list. Tasks can belong to multiple lists in ClickUp — every task has one **home list** plus zero or more additional list memberships.
+
+**Important behavior:**
+
+- `--to <listId>` **alone** — adds the task as a member of the additional list (the home list is unchanged). Uses v2 `addTaskToList`.
+- `--to <newListId> --remove <oldListId>` — **changes the task's home list** from `oldListId` to `newListId`. Uses the v3 `home_list` endpoint with automatic status mapping for any statuses that don't exist in the destination.
+- `--remove <listId>` **alone** — removes the task from an additional list (cannot remove a home list this way).
 
 ```bash
-cup move abc123 --to <listId>                    # add task to a list
-cup move abc123 --remove <listId>                # remove task from a list
-cup move abc123 --to <newListId> --remove <oldListId>  # move between lists
-cup move abc123 --to sprint:current              # move to active sprint
-cup move abc123 --to sprint:current --remove <oldListId>
+cup move abc123 --to <listId>                    # add task to additional list (multi-list membership)
+cup move abc123 --remove <listId>                # remove task from an additional list
+cup move abc123 --to <newListId> --remove <oldListId>  # CHANGE HOME LIST (v3 home_list, status mapped)
+cup move abc123 --to sprint:current              # add to active sprint as additional list
+cup move abc123 --to sprint:current --remove <oldListId>  # change home list to active sprint
 cup move abc123 --to <listId> --json
 ```
 
