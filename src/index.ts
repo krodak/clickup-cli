@@ -3756,10 +3756,27 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   return program
 }
 
+/**
+ * Rewrites the `--list-id` alias to the canonical `--list` flag.
+ *
+ * ClickUp's API names the list identifier `list_id` (GET /api/v2/list/{list_id}/task),
+ * so `--list-id` is the flag many humans and AI agents intuitively reach for. Commander
+ * only defines `--list`, so we normalize the alias once at the single parse gate — covering
+ * every command that accepts `--list` (tasks, create, time list, …) without duplicating the
+ * option declaration. The canonical `--list` and unrelated arguments are left untouched.
+ */
+export function normalizeListIdAlias(argv: string[]): string[] {
+  return argv.map(arg => {
+    if (arg === '--list-id') return '--list'
+    if (arg.startsWith('--list-id=')) return `--list=${arg.slice('--list-id='.length)}`
+    return arg
+  })
+}
+
 export async function run(argv = process.argv): Promise<void> {
   const programName = basename(argv[1] ?? 'cup')
   const program = buildProgram(programName)
-  await program.parseAsync(argv)
+  await program.parseAsync(normalizeListIdAlias(argv))
 }
 
 process.on('SIGINT', () => {
