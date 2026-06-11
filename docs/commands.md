@@ -46,6 +46,12 @@ cup subtasks DEV-100
 
 Custom ID resolution uses the `teamId` from your config, which is required (`cup init` sets it up).
 
+**Task URLs:** Anywhere a task ID is accepted, you can also pass a full ClickUp task URL. The ID is extracted automatically, including from URLs with a workspace segment or trailing query/fragment.
+
+```bash
+cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV-2760
+```
+
 **Task links with custom IDs:** The `cup link` command passes both task IDs in a single API request. When both IDs are custom, this works correctly. However, mixing custom and native IDs in a single link command may not work as expected because the ClickUp API applies the `custom_task_ids` flag to all IDs in the request.
 
 <!-- quick-reference:start -->
