@@ -487,6 +487,11 @@ export function isCustomTaskId(id: string): boolean {
   return /^[A-Z]+-\d+$/i.test(id)
 }
 
+export function normalizeTaskId(input: string): string {
+  const match = /^https?:\/\/app\.clickup\.com\/t\/(?:[^/?#]+\/)?([^/?#]+)/.exec(input.trim())
+  return match ? match[1]! : input
+}
+
 export class ClickUpClient {
   private apiToken: string
   private teamId: string | undefined
@@ -498,8 +503,9 @@ export class ClickUpClient {
   }
 
   private taskPath(taskId: string, suffix = ''): string {
-    const base = `/task/${taskId}${suffix}`
-    if (isCustomTaskId(taskId) && this.teamId) {
+    const normalized = normalizeTaskId(taskId)
+    const base = `/task/${normalized}${suffix}`
+    if (isCustomTaskId(normalized) && this.teamId) {
       const sep = base.includes('?') ? '&' : '?'
       return `${base}${sep}custom_task_ids=true&team_id=${this.teamId}`
     }
@@ -507,7 +513,7 @@ export class ClickUpClient {
   }
 
   private customIdQueryParams(taskId: string): string {
-    if (isCustomTaskId(taskId) && this.teamId) {
+    if (isCustomTaskId(normalizeTaskId(taskId)) && this.teamId) {
       return `?custom_task_ids=true&team_id=${this.teamId}`
     }
     return ''
@@ -905,19 +911,22 @@ export class ClickUpClient {
   }
 
   async addTaskToList(taskId: string, listId: string): Promise<void> {
-    await this.request(`/list/${listId}/task/${taskId}`, { method: 'POST' })
+    const normalized = normalizeTaskId(taskId)
+    await this.request(`/list/${listId}/task/${normalized}`, { method: 'POST' })
   }
 
   async removeTaskFromList(taskId: string, listId: string): Promise<void> {
-    await this.request(`/list/${listId}/task/${taskId}`, { method: 'DELETE' })
+    const normalized = normalizeTaskId(taskId)
+    await this.request(`/list/${listId}/task/${normalized}`, { method: 'DELETE' })
   }
 
   async moveTaskToList(taskId: string, listId: string): Promise<void> {
     if (!this.teamId) {
       throw new Error('teamId is required to move a task to a new home list')
     }
+    const normalized = normalizeTaskId(taskId)
     const [task, destList] = await Promise.all([
-      this.getTask(taskId),
+      this.getTask(normalized),
       this.getListWithStatuses(listId),
     ])
     const taskStatus = task.status.status.toLowerCase()
@@ -933,7 +942,7 @@ export class ClickUpClient {
         destination_status: destStatus.status,
       })
     }
-    await this.requestV3(`/workspaces/${this.teamId}/tasks/${taskId}/home_list/${listId}`, {
+    await this.requestV3(`/workspaces/${this.teamId}/tasks/${normalized}/home_list/${listId}`, {
       method: 'PUT',
       body: JSON.stringify({ status_mappings: statusMappings }),
     })
@@ -976,8 +985,9 @@ export class ClickUpClient {
   }
 
   async getTaskAttachments(taskId: string): Promise<TaskAttachment[]> {
+    const normalized = normalizeTaskId(taskId)
     const data = await this.requestV3<{ data: TaskAttachment[] }>(
-      `/workspaces/${this.teamId}/tasks/${taskId}/attachments`,
+      `/workspaces/${this.teamId}/tasks/${normalized}/attachments`,
     )
     return expectArrayField<TaskAttachment>(data, 'data', 'task attachments')
   }
@@ -1061,15 +1071,17 @@ export class ClickUpClient {
   }
 
   async addTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(this.taskPath(taskId, `/link/${linksTo}`), {
-      method: 'POST',
-    })
+    await this.request<{ task: unknown }>(
+      this.taskPath(taskId, `/link/${normalizeTaskId(linksTo)}`),
+      { method: 'POST' },
+    )
   }
 
   async deleteTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(this.taskPath(taskId, `/link/${linksTo}`), {
-      method: 'DELETE',
-    })
+    await this.request<{ task: unknown }>(
+      this.taskPath(taskId, `/link/${normalizeTaskId(linksTo)}`),
+      { method: 'DELETE' },
+    )
   }
 
   async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {
@@ -1721,7 +1733,7 @@ export class ClickUpClient {
   async mergeTasks(taskId: string, mergeWithTaskIds: string[]): Promise<void> {
     await this.request(this.taskPath(taskId, '/merge'), {
       method: 'POST',
-      body: JSON.stringify({ merge_with: mergeWithTaskIds }),
+      body: JSON.stringify({ merge_with: mergeWithTaskIds.map(normalizeTaskId) }),
     })
   }
 
@@ -1732,7 +1744,7 @@ export class ClickUpClient {
     return this.requestV3<{
       total_time_estimate: number
       assignee_estimates: Record<string, number>
-    }>(`/workspaces/${this.teamId}/tasks/${taskId}/time_estimates_by_user`, {
+    }>(`/workspaces/${this.teamId}/tasks/${normalizeTaskId(taskId)}/time_estimates_by_user`, {
       method: 'PATCH',
       body: JSON.stringify({ time_estimates_by_user: estimates }),
     })
@@ -1745,7 +1757,7 @@ export class ClickUpClient {
     return this.requestV3<{
       total_time_estimate: number
       updated_estimates: Record<string, number>
-    }>(`/workspaces/${this.teamId}/tasks/${taskId}/time_estimates_by_user`, {
+    }>(`/workspaces/${this.teamId}/tasks/${normalizeTaskId(taskId)}/time_estimates_by_user`, {
       method: 'PUT',
       body: JSON.stringify({ time_estimates_by_user: estimates }),
     })

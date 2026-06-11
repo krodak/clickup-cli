@@ -160,6 +160,112 @@ describe('custom task ID URL construction', () => {
   })
 })
 
+describe('task URL input', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('extracts custom task ID from a workspace URL for getTask', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'DEV-2760', name: 'Task' }))
+    await client.getTask('https://app.clickup.com/t/9017679539/DEV-2760')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/DEV-2760')
+    expect(url).toContain('custom_task_ids=true')
+    expect(url).toContain('team_id=team123')
+  })
+
+  it('extracts native task ID from a URL for getTask', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 'abc123def', name: 'Task' }))
+    await client.getTask('https://app.clickup.com/t/abc123def?tab=comments')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/abc123def')
+    expect(url).not.toContain('custom_task_ids')
+  })
+
+  it('extracts task ID from a URL for deleteTask', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.deleteTask('https://app.clickup.com/t/9017679539/DEV-2760')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/DEV-2760')
+    expect(url).toContain('custom_task_ids=true')
+  })
+
+  it('extracts task ID from a URL for addTaskToList', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.addTaskToList('https://app.clickup.com/t/abc123def', 'list_1')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/list/list_1/task/abc123def')
+  })
+
+  it('extracts task ID from a URL for removeTaskFromList', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.removeTaskFromList('https://app.clickup.com/t/abc123def', 'list_1')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/list/list_1/task/abc123def')
+  })
+
+  it('extracts task ID from a URL for getTaskAttachments', async () => {
+    mockFetch.mockReturnValue(mockResponse({ data: [] }))
+    await client.getTaskAttachments('https://app.clickup.com/t/abc123def')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/tasks/abc123def/attachments')
+  })
+
+  it('extracts task ID from a URL for updateTimeEstimatesByUser', async () => {
+    mockFetch.mockReturnValue(mockResponse({ total_time_estimate: 0, assignee_estimates: {} }))
+    await client.updateTimeEstimatesByUser('https://app.clickup.com/t/abc123def', [])
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/tasks/abc123def/time_estimates_by_user')
+  })
+
+  it('extracts task ID from a URL for replaceTimeEstimatesByUser', async () => {
+    mockFetch.mockReturnValue(mockResponse({ total_time_estimate: 0, updated_estimates: {} }))
+    await client.replaceTimeEstimatesByUser('https://app.clickup.com/t/abc123def', [])
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/tasks/abc123def/time_estimates_by_user')
+  })
+
+  it('normalizes both task IDs from URLs for addTaskLink', async () => {
+    mockFetch.mockReturnValue(mockResponse({ task: {} }))
+    await client.addTaskLink(
+      'https://app.clickup.com/t/abc123def',
+      'https://app.clickup.com/t/xyz789',
+    )
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/abc123def/link/xyz789')
+  })
+
+  it('normalizes both task IDs from URLs for deleteTaskLink', async () => {
+    mockFetch.mockReturnValue(mockResponse({ task: {} }))
+    await client.deleteTaskLink(
+      'https://app.clickup.com/t/abc123def',
+      'https://app.clickup.com/t/xyz789',
+    )
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/abc123def/link/xyz789')
+  })
+
+  it('normalizes task ID and merge IDs from URLs for mergeTasks', async () => {
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.mergeTasks('https://app.clickup.com/t/abc123def', [
+      'https://app.clickup.com/t/xyz789',
+    ])
+    const url = String(mockFetch.mock.calls[0]![0])
+    const body = JSON.parse(String(mockFetch.mock.calls[0]![1]!.body))
+    expect(url).toContain('/task/abc123def/merge')
+    expect(body.merge_with).toEqual(['xyz789'])
+  })
+})
+
 describe('ClickUpClient', () => {
   let client: import('../../src/api.js').ClickUpClient
 
