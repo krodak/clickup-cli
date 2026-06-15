@@ -51,18 +51,19 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 ## Comments
 
-| Feature                  | Command                               | Status             |
-| ------------------------ | ------------------------------------- | ------------------ |
-| List comments            | `cup comments <id>`                   | :white_check_mark: |
-| Post comment             | `cup comment <id>`                    | :white_check_mark: |
-| Edit comment             | `cup comment-edit <id>`               | :white_check_mark: |
-| Task + comments combined | `cup activity <id>`                   | :white_check_mark: |
-| Delete comment           | `cup comment-delete <id>`             | :white_check_mark: |
-| Threaded replies         | `cup replies <id>` / `cup reply <id>` | :white_check_mark: |
-| List comments (list)     | `cup list-comments <listId>`          | :white_check_mark: |
-| Post comment (list)      | `cup list-comment <listId>`           | :white_check_mark: |
-| List comments (view)     | `cup view-comments <viewId>`          | :white_check_mark: |
-| Post comment (view)      | `cup view-comment <viewId>`           | :white_check_mark: |
+| Feature                  | Command                                | Status             |
+| ------------------------ | -------------------------------------- | ------------------ |
+| List comments            | `cup comments <id>`                    | :white_check_mark: |
+| Post comment             | `cup comment <id>`                     | :white_check_mark: |
+| Edit comment             | `cup comment-edit <id>`                | :white_check_mark: |
+| Task + comments combined | `cup activity <id>`                    | :white_check_mark: |
+| Delete comment           | `cup comment-delete <id>`              | :white_check_mark: |
+| Threaded replies         | `cup replies <id>` / `cup reply <id>`  | :white_check_mark: |
+| @mention users           | `--mention <user>` / `<@userId>` token | :white_check_mark: |
+| List comments (list)     | `cup list-comments <listId>`           | :white_check_mark: |
+| Post comment (list)      | `cup list-comment <listId>`            | :white_check_mark: |
+| List comments (view)     | `cup view-comments <viewId>`           | :white_check_mark: |
+| Post comment (view)      | `cup view-comment <viewId>`            | :white_check_mark: |
 
 ## Checklists
 
@@ -233,11 +234,11 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 
 These features exist in the ClickUp UI but aren't possible through the API:
 
-| Feature                   | Limitation                                                                         |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| Comment attachments       | API only supports task-level attachments (`cup attach`), not files within comments |
-| @mention individual users | API provides `--notify-all` but no way to target specific users via @syntax        |
-| Comment reactions         | No API endpoint for adding or viewing reactions                                    |
-| ClickUp Brain / AI        | No public API                                                                      |
-| In-comment checklists     | Only task-level checklists are supported via API                                   |
-| Voice notes / Video       | Recording is a UI-only feature                                                     |
+| Feature                | Limitation                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------- |
+| Comment attachments    | API only supports task-level attachments (`cup attach`), not files within comments  |
+| Comment reactions      | No API endpoint for adding or viewing reactions                                     |
+| Unfurled link previews | Links post as clickable text/markdown links; embedded preview cards are web-UI only |
+| ClickUp Brain / AI     | No public API                                                                       |
+| In-comment checklists  | Only task-level checklists are supported via API                                    |
+| Voice notes / Video    | Recording is a UI-only feature                                                      |

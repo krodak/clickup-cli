@@ -31,6 +31,42 @@ EOF
 
 This applies to `cup create -d`, `cup update -d`, `cup comment -m`, and `cup reply -m`. The same `$'...'` quoting works for any flag value containing backticks.
 
+## Mentions
+
+Comment commands (`cup comment`, `cup reply`, `cup comment-edit`, `cup list-comment`, `cup view-comment`) can post real ClickUp @mentions that generate a notification for the mentioned user. There are two ways to add one:
+
+**1. The `--mention` flag** prepends a mention to the comment. It accepts a user ID, email, username, or `me`, is repeatable, and resolves the value to a real ClickUp user before posting.
+
+```bash
+cup comment abc123 -m "ticket created" --mention 158675336
+cup comment abc123 -m "please review" --mention john@example.com --mention me
+cup reply <commentId> -m "agreed" --mention jane@example.com
+```
+
+**2. The `<@userId>` inline token** places a mention mid-sentence, exactly where you write it in the `-m` message. The token must use a numeric user ID (find IDs with `cup members`).
+
+```bash
+cup comment abc123 -m "I need <@158675336> to check this. Thanks!"
+```
+
+Both approaches produce a real mention (a ClickUp tag block) that notifies the user — unlike `--notify-all`, which notifies every assignee/watcher without tagging anyone specific.
+
+> **Why isn't bare `@Name` parsed?** A plain `@Name` in the message text is left as-is. Matching names to users is ambiguous (duplicate or partial names, display vs. username), so the CLI requires an explicit ID, email, or `me` via `--mention`, or a numeric `<@userId>` token, to avoid mentioning the wrong person.
+
+## Rich links in comments
+
+Links in comment messages render as clickable links in ClickUp:
+
+- **Markdown links** — `[text](https://example.com)` renders `text` as a clickable link.
+- **Bare URLs** — a plain `https://...` in the message is auto-linked, so you don't need markdown syntax for a simple URL.
+
+```bash
+cup comment abc123 -m "Fixed in [PR #42](https://github.com/org/repo/pull/42)"
+cup comment abc123 -m "See https://example.com/pr/42 for details"
+```
+
+Unfurled preview cards (the embedded link previews shown in the ClickUp web UI) are **not** supported — they are a web-UI-only feature with no API support. Links post as clickable text links.
+
 ## Custom Task IDs
 
 ClickUp workspaces can configure custom task IDs with a prefix per space (e.g., `PROJ-123`, `DEV-42`). The CLI detects these automatically - any ID matching the `PREFIX-DIGITS` format (uppercase letters, hyphen, digits) is treated as a custom task ID.
@@ -844,39 +880,46 @@ cup field-create "Contact Email" -t email --json
 
 ### `cup comment <id>`
 
-Post a comment on a task. Markdown formatting in the message is automatically converted to ClickUp rich text (bold, italic, headers, lists, code blocks, links, etc.).
+Post a comment on a task. Markdown formatting in the message is automatically converted to ClickUp rich text (bold, italic, headers, lists, code blocks, links, etc.). See [Mentions](#mentions) and [Rich links](#rich-links-in-comments) for `--mention`, inline `<@userId>` tokens, and auto-linking.
 
 ```bash
 cup comment abc123 -m "Addressed in PR #42"
 cup comment abc123 -m "## Results\n\n**Passed**: 15/15\n- Unit tests\n- Integration"
 cup comment abc123 -m "Done" --notify-all
+cup comment abc123 -m "ticket created" --mention 158675336
+cup comment abc123 -m "please review" --mention john@example.com --mention me
+cup comment abc123 -m "I need <@158675336> to check this. Thanks!"
+cup comment abc123 -m "See https://example.com/pr/42 for details"
 cup comment abc123 -m "Done" --json
 ```
 
-| Flag            | Required | Description                            |
-| --------------- | -------- | -------------------------------------- |
-| `-m, --message` | yes      | Comment text (markdown auto-converted) |
-| `--notify-all`  | no       | Notify all task assignees              |
-| `--json`        | no       | Force JSON output                      |
+| Flag               | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `-m, --message`    | yes      | Comment text (markdown auto-converted; bare URLs auto-link)                 |
+| `--notify-all`     | no       | Notify all task assignees                                                   |
+| `--mention <user>` | no       | Mention a user by ID, email, username, or `me` (notifies them). Repeatable. |
+| `--json`           | no       | Force JSON output                                                           |
 
 ### `cup comment-edit <commentId>`
 
-Edit an existing comment on a task. Provide `--message`, `--resolved`, or `--unresolved` (or any combination). Markdown in the message is automatically converted to rich text.
+Edit an existing comment on a task. Provide `--message`, `--resolved`, or `--unresolved` (or any combination). Markdown in the message is automatically converted to rich text. Supports `--mention` and inline `<@userId>` tokens (see [Mentions](#mentions)).
 
 ```bash
 cup comment-edit <commentId> -m "Updated text"
 cup comment-edit <commentId> -m "Fixed" --resolved
 cup comment-edit <commentId> --resolved
 cup comment-edit <commentId> -m "Reopening" --unresolved
+cup comment-edit <commentId> -m "cc on the fix" --mention jane@example.com
 cup comment-edit <commentId> -m "Updated" --json
 ```
 
-| Flag            | Required | Description                |
-| --------------- | -------- | -------------------------- |
-| `-m, --message` | no       | New comment text           |
-| `--resolved`    | no       | Mark comment as resolved   |
-| `--unresolved`  | no       | Mark comment as unresolved |
-| `--json`        | no       | Force JSON output          |
+| Flag               | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `-m, --message`    | no       | New comment text (markdown auto-converted; bare URLs auto-link)             |
+| `--resolved`       | no       | Mark comment as resolved                                                    |
+| `--unresolved`     | no       | Mark comment as unresolved                                                  |
+| `--mention <user>` | no       | Mention a user by ID, email, username, or `me` (notifies them). Repeatable. |
+| `--json`           | no       | Force JSON output                                                           |
 
 ### `cup comment-delete [commentId]`
 
@@ -907,18 +950,20 @@ cup replies 12345 --json
 
 ### `cup reply <commentId>`
 
-Reply to a comment. Markdown in the message is automatically converted to rich text.
+Reply to a comment. Markdown in the message is automatically converted to rich text. Supports `--mention` and inline `<@userId>` tokens (see [Mentions](#mentions)).
 
 ```bash
 cup reply 12345 -m "Agreed, will fix"
+cup reply 12345 -m "agreed" --mention jane@example.com
 cup reply 12345 -m "Done" --json
 ```
 
-| Flag            | Required | Description                          |
-| --------------- | -------- | ------------------------------------ |
-| `-m, --message` | yes      | Reply text (markdown auto-converted) |
-| `--notify-all`  | no       | Notify all task assignees            |
-| `--json`        | no       | Force JSON output                    |
+| Flag               | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `-m, --message`    | yes      | Reply text (markdown auto-converted; bare URLs auto-link)                   |
+| `--notify-all`     | no       | Notify all task assignees                                                   |
+| `--mention <user>` | no       | Mention a user by ID, email, username, or `me` (notifies them). Repeatable. |
+| `--json`           | no       | Force JSON output                                                           |
 
 ### `cup archive <taskId>`
 
@@ -1717,19 +1762,21 @@ cup list-comments 12345 --json
 
 ### `cup list-comment <listId>`
 
-Post a comment on a list. Markdown formatting in the message is automatically converted to ClickUp rich text.
+Post a comment on a list. Markdown formatting in the message is automatically converted to ClickUp rich text. Supports `--mention` and inline `<@userId>` tokens (see [Mentions](#mentions)).
 
 ```bash
 cup list-comment 12345 -m "Sprint retrospective notes"
+cup list-comment 12345 -m "please review" --mention john@example.com
 cup list-comment 12345 -m "Done" --notify-all
 cup list-comment 12345 -m "Update" --json
 ```
 
-| Flag            | Required | Description                            |
-| --------------- | -------- | -------------------------------------- |
-| `-m, --message` | yes      | Comment text (markdown auto-converted) |
-| `--notify-all`  | no       | Notify all list watchers               |
-| `--json`        | no       | Force JSON output                      |
+| Flag               | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `-m, --message`    | yes      | Comment text (markdown auto-converted; bare URLs auto-link)                 |
+| `--notify-all`     | no       | Notify all list watchers                                                    |
+| `--mention <user>` | no       | Mention a user by ID, email, username, or `me` (notifies them). Repeatable. |
+| `--json`           | no       | Force JSON output                                                           |
 
 ### `cup view-comments <viewId>`
 
@@ -1746,19 +1793,21 @@ cup view-comments v12345 --json
 
 ### `cup view-comment <viewId>`
 
-Post a comment on a view. Markdown formatting in the message is automatically converted to ClickUp rich text.
+Post a comment on a view. Markdown formatting in the message is automatically converted to ClickUp rich text. Supports `--mention` and inline `<@userId>` tokens (see [Mentions](#mentions)).
 
 ```bash
 cup view-comment v12345 -m "View layout looks good"
+cup view-comment v12345 -m "please review" --mention jane@example.com
 cup view-comment v12345 -m "Approved" --notify-all
 cup view-comment v12345 -m "Note" --json
 ```
 
-| Flag            | Required | Description                            |
-| --------------- | -------- | -------------------------------------- |
-| `-m, --message` | yes      | Comment text (markdown auto-converted) |
-| `--notify-all`  | no       | Notify all view watchers               |
-| `--json`        | no       | Force JSON output                      |
+| Flag               | Required | Description                                                                 |
+| ------------------ | -------- | --------------------------------------------------------------------------- |
+| `-m, --message`    | yes      | Comment text (markdown auto-converted; bare URLs auto-link)                 |
+| `--notify-all`     | no       | Notify all view watchers                                                    |
+| `--mention <user>` | no       | Mention a user by ID, email, username, or `me` (notifies them). Repeatable. |
+| `--json`           | no       | Force JSON output                                                           |
 
 ### `cup doc-delete <docId>`
 
