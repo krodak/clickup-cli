@@ -252,4 +252,79 @@ describe('markdownToCommentBlocks', () => {
       { text: '\n' },
     ])
   })
+
+  it('converts <@id> token to a tag block', () => {
+    const blocks = markdownToCommentBlocks('hello <@1234567> world')
+    expect(blocks).toContainEqual({ type: 'tag', user: { id: 1234567 } })
+  })
+
+  it('emits text before and after a mention', () => {
+    const blocks = markdownToCommentBlocks('I need <@123> to check')
+    expect(blocks).toEqual([
+      { text: 'I need ' },
+      { type: 'tag', user: { id: 123 } },
+      { text: ' to check' },
+      { text: '\n' },
+    ])
+  })
+
+  it('handles mention at start of line', () => {
+    const blocks = markdownToCommentBlocks('<@123> please review')
+    expect(blocks).toEqual([
+      { type: 'tag', user: { id: 123 } },
+      { text: ' please review' },
+      { text: '\n' },
+    ])
+  })
+
+  it('handles multiple mentions in one line', () => {
+    const blocks = markdownToCommentBlocks('<@1> and <@2> here')
+    expect(blocks).toEqual([
+      { type: 'tag', user: { id: 1 } },
+      { text: ' and ' },
+      { type: 'tag', user: { id: 2 } },
+      { text: ' here' },
+      { text: '\n' },
+    ])
+  })
+
+  it('auto-links bare https URLs', () => {
+    const blocks = markdownToCommentBlocks('see https://example.com here')
+    expect(blocks).toContainEqual(
+      expect.objectContaining({
+        text: 'https://example.com',
+        attributes: expect.objectContaining({ link: 'https://example.com' }),
+      }),
+    )
+  })
+
+  it('auto-links bare http URLs', () => {
+    const blocks = markdownToCommentBlocks('see http://example.com here')
+    expect(blocks).toEqual([
+      { text: 'see ' },
+      { text: 'http://example.com', attributes: { link: 'http://example.com' } },
+      { text: ' here' },
+      { text: '\n' },
+    ])
+  })
+
+  it('does NOT double-link markdown links', () => {
+    const blocks = markdownToCommentBlocks('[click](https://example.com)')
+    expect(blocks).toEqual([
+      { text: 'click', attributes: { link: 'https://example.com' } },
+      { text: '\n' },
+    ])
+  })
+
+  it('mention works alongside bold/italic in same line', () => {
+    const blocks = markdownToCommentBlocks('**hi** <@5> *there*')
+    expect(blocks).toEqual([
+      { text: 'hi', attributes: { bold: true } },
+      { text: ' ' },
+      { type: 'tag', user: { id: 5 } },
+      { text: ' ' },
+      { text: 'there', attributes: { italic: true } },
+      { text: '\n' },
+    ])
+  })
 })
