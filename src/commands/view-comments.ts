@@ -1,5 +1,6 @@
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
+import { buildCommentBlocks } from './comment.js'
 import type { CommentSummary } from './comments.js'
 
 export async function fetchViewComments(config: Config, viewId: string): Promise<CommentSummary[]> {
@@ -18,8 +19,10 @@ export async function postViewCommentCommand(
   viewId: string,
   text: string,
   notifyAll?: boolean,
+  mentionIds?: number[],
 ): Promise<{ id: string }> {
   if (!text.trim()) throw new Error('Comment text cannot be empty')
   const client = new ClickUpClient(config)
-  return client.postViewComment(viewId, text, notifyAll)
+  const blocks = buildCommentBlocks(text, mentionIds ?? [])
+  return client.postViewComment(viewId, text, notifyAll, blocks)
 }

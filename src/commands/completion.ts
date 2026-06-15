@@ -280,6 +280,7 @@ ${renderZshTopLevelCommands(name)}
             '1:task_id:' \\
             '(-m --message)'{-m,--message}'[Comment text]:text:' \\
             '--notify-all[Notify all assignees]' \\
+            '--mention[Mention a user (ID, email, username, or me)]:user:' \\
             '--json[Force JSON output]'
           ;;
         comments)
@@ -514,6 +515,7 @@ ${renderZshTopLevelCommands(name)}
             '(-m --message)'{-m,--message}'[New comment text]:text:' \\
             '--resolved[Mark comment as resolved]' \\
             '--unresolved[Mark comment as unresolved]' \\
+            '--mention[Mention a user (ID, email, username, or me)]:user:' \\
             '--json[Force JSON output]'
           ;;
         comment-delete)
@@ -534,6 +536,7 @@ ${renderZshTopLevelCommands(name)}
             '1:comment_id:' \\
             '(-m --message)'{-m,--message}'[Reply text]:text:' \\
             '--notify-all[Notify all assignees]' \\
+            '--mention[Mention a user (ID, email, username, or me)]:user:' \\
             '--json[Force JSON output]'
           ;;
         link)

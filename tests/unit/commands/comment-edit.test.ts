@@ -52,6 +52,14 @@ describe('editComment', () => {
     )
   })
 
+  it('prepends mention tag blocks when mentionIds are provided', async () => {
+    const { editComment } = await import('../../../src/commands/comment-edit.js')
+    await editComment({ apiToken: 'pk_t', teamId: 'team1' }, 'c1', 'updated text', undefined, [7])
+    const blocks = mockUpdateComment.mock.calls[0]![3]
+    expect(blocks[0]).toEqual({ type: 'tag', user: { id: 7 } })
+    expect(blocks[1]).toEqual({ text: ' ' })
+  })
+
   it('resolves when only resolved flag is provided (no message)', async () => {
     const { editComment } = await import('../../../src/commands/comment-edit.js')
     await editComment({ apiToken: 'pk_t', teamId: 'team1' }, 'c1', undefined, true)
