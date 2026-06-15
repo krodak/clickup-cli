@@ -1,7 +1,14 @@
-export interface CommentBlock {
+export interface TextBlock {
   text: string
   attributes?: Record<string, unknown>
 }
+
+export interface TagBlock {
+  type: 'tag'
+  user: { id: number }
+}
+
+export type CommentBlock = TextBlock | TagBlock
 
 const HEADER_RE = /^(#{1,6})\s+(.+)$/
 const BULLET_RE = /^[-*]\s+(.+)$/
@@ -26,7 +33,9 @@ function processInlineFormatting(text: string, lineAttrs: Record<string, unknown
       { type: 'bold', re: /\*{2}([^*]+)\*{2}/ },
       { type: 'italic', re: /(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/ },
       { type: 'strike', re: /~~([^~]+)~~/ },
+      { type: 'mention', re: /<@(\d+)>/ },
       { type: 'link', re: /\[([^\]]+)\]\(([^)]+)\)/ },
+      { type: 'autolink', re: /(?<![([])(https?:\/\/[^\s<>]+)/ },
     ]
 
     for (const { type, re } of patterns) {
@@ -77,6 +86,15 @@ function processInlineFormatting(text: string, lineAttrs: Record<string, unknown
           text: innerText,
           attributes: { ...lineAttrs, link: matchResult[2]! },
         })
+        break
+      case 'autolink':
+        blocks.push({
+          text: innerText,
+          attributes: { ...lineAttrs, link: innerText },
+        })
+        break
+      case 'mention':
+        blocks.push({ type: 'tag', user: { id: Number(innerText) } })
         break
     }
 
