@@ -153,7 +153,7 @@ export const commandMetadata = [
   {
     name: 'comment',
     description: 'Post a comment on a task',
-    flags: ['-m', '--message', '--notify-all', '--json'],
+    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
     quickReference: [
       { section: 'write', usage: 'comment <taskId>', description: 'Post a comment on a task' },
     ],
@@ -161,7 +161,7 @@ export const commandMetadata = [
   {
     name: 'comment-edit',
     description: 'Edit an existing comment',
-    flags: ['-m', '--message', '--resolved', '--unresolved', '--json'],
+    flags: ['-m', '--message', '--resolved', '--unresolved', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -206,7 +206,7 @@ export const commandMetadata = [
   {
     name: 'reply',
     description: 'Reply to a comment',
-    flags: ['-m', '--message', '--notify-all', '--json'],
+    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
     quickReference: [
       { section: 'write', usage: 'reply <commentId>', description: 'Reply to a comment' },
     ],
@@ -1012,7 +1012,7 @@ export const commandMetadata = [
   {
     name: 'list-comment',
     description: 'Post a comment on a list',
-    flags: ['-m', '--message', '--notify-all', '--json'],
+    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -1036,7 +1036,7 @@ export const commandMetadata = [
   {
     name: 'view-comment',
     description: 'Post a comment on a view',
-    flags: ['-m', '--message', '--notify-all', '--json'],
+    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',

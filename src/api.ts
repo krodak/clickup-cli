@@ -1813,8 +1813,11 @@ export class ClickUpClient {
     listId: string,
     commentText: string,
     notifyAll?: boolean,
+    richBlocks?: CommentBlock[],
   ): Promise<{ id: string }> {
-    const body: Record<string, unknown> = { comment_text: commentText }
+    const body: Record<string, unknown> = richBlocks
+      ? { comment: richBlocks }
+      : { comment_text: commentText }
     if (notifyAll) body.notify_all = true
     return this.request<{ id: string }>(`/list/${listId}/comment`, {
       method: 'POST',
@@ -1831,8 +1834,11 @@ export class ClickUpClient {
     viewId: string,
     commentText: string,
     notifyAll?: boolean,
+    richBlocks?: CommentBlock[],
   ): Promise<{ id: string }> {
-    const body: Record<string, unknown> = { comment_text: commentText }
+    const body: Record<string, unknown> = richBlocks
+      ? { comment: richBlocks }
+      : { comment_text: commentText }
     if (notifyAll) body.notify_all = true
     return this.request<{ id: string }>(`/view/${viewId}/comment`, {
       method: 'POST',

@@ -41,4 +41,12 @@ describe('postComment', () => {
     await postComment({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'ping everyone', true)
     expect(mockPostComment).toHaveBeenCalledWith('t1', 'ping everyone', true, expect.any(Array))
   })
+
+  it('prepends mention tag blocks when mentionIds are provided', async () => {
+    const { postComment } = await import('../../../src/commands/comment.js')
+    await postComment({ apiToken: 'pk_t', teamId: 'team1' }, 't1', 'review please', false, [99])
+    const blocks = mockPostComment.mock.calls[0]![3]
+    expect(blocks[0]).toEqual({ type: 'tag', user: { id: 99 } })
+    expect(blocks[1]).toEqual({ text: ' ' })
+  })
 })

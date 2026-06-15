@@ -57,7 +57,7 @@ describe('postViewCommentCommand', () => {
     mockPostViewComment.mockResolvedValue({ id: 'vc_new' })
     const { postViewCommentCommand } = await import('../../../src/commands/view-comments.js')
     const result = await postViewCommentCommand(config, 'view_1', 'Hello', false)
-    expect(mockPostViewComment).toHaveBeenCalledWith('view_1', 'Hello', false)
+    expect(mockPostViewComment).toHaveBeenCalledWith('view_1', 'Hello', false, expect.any(Array))
     expect(result.id).toBe('vc_new')
   })
 
@@ -65,7 +65,21 @@ describe('postViewCommentCommand', () => {
     mockPostViewComment.mockResolvedValue({ id: 'vc_new2' })
     const { postViewCommentCommand } = await import('../../../src/commands/view-comments.js')
     await postViewCommentCommand(config, 'view_1', 'Notify test', true)
-    expect(mockPostViewComment).toHaveBeenCalledWith('view_1', 'Notify test', true)
+    expect(mockPostViewComment).toHaveBeenCalledWith(
+      'view_1',
+      'Notify test',
+      true,
+      expect.any(Array),
+    )
+  })
+
+  it('prepends mention tag blocks when mentionIds are provided', async () => {
+    mockPostViewComment.mockResolvedValue({ id: 'vc_m' })
+    const { postViewCommentCommand } = await import('../../../src/commands/view-comments.js')
+    await postViewCommentCommand(config, 'view_1', 'review', false, [7])
+    const blocks = mockPostViewComment.mock.calls[0]![3]
+    expect(blocks[0]).toEqual({ type: 'tag', user: { id: 7 } })
+    expect(blocks[1]).toEqual({ text: ' ' })
   })
 
   it('throws on empty comment text', async () => {

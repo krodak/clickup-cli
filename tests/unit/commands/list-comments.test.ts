@@ -63,7 +63,7 @@ describe('postListCommentCommand', () => {
     mockPostListComment.mockResolvedValue({ id: 'c_new' })
     const { postListCommentCommand } = await import('../../../src/commands/list-comments.js')
     const result = await postListCommentCommand(config, 'list_1', 'Hello', false)
-    expect(mockPostListComment).toHaveBeenCalledWith('list_1', 'Hello', false)
+    expect(mockPostListComment).toHaveBeenCalledWith('list_1', 'Hello', false, expect.any(Array))
     expect(result.id).toBe('c_new')
   })
 
@@ -71,7 +71,21 @@ describe('postListCommentCommand', () => {
     mockPostListComment.mockResolvedValue({ id: 'c_new2' })
     const { postListCommentCommand } = await import('../../../src/commands/list-comments.js')
     await postListCommentCommand(config, 'list_1', 'Notify test', true)
-    expect(mockPostListComment).toHaveBeenCalledWith('list_1', 'Notify test', true)
+    expect(mockPostListComment).toHaveBeenCalledWith(
+      'list_1',
+      'Notify test',
+      true,
+      expect.any(Array),
+    )
+  })
+
+  it('prepends mention tag blocks when mentionIds are provided', async () => {
+    mockPostListComment.mockResolvedValue({ id: 'c_m' })
+    const { postListCommentCommand } = await import('../../../src/commands/list-comments.js')
+    await postListCommentCommand(config, 'list_1', 'review', false, [7])
+    const blocks = mockPostListComment.mock.calls[0]![3]
+    expect(blocks[0]).toEqual({ type: 'tag', user: { id: 7 } })
+    expect(blocks[1]).toEqual({ text: ' ' })
   })
 
   it('throws on empty comment text', async () => {

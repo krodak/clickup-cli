@@ -74,6 +74,14 @@ describe('createReply', () => {
       expect.any(Array),
     )
   })
+
+  it('prepends mention tag blocks when mentionIds are provided', async () => {
+    const { createReply } = await import('../../../src/commands/replies.js')
+    await createReply(config, 'c1', 'see this', false, [7])
+    const blocks = mockCreateThreadedComment.mock.calls[0]![3]
+    expect(blocks[0]).toEqual({ type: 'tag', user: { id: 7 } })
+    expect(blocks[1]).toEqual({ text: ' ' })
+  })
 })
 
 describe('formatReplies', () => {

@@ -33,7 +33,7 @@ import { runInitCommand } from './commands/init.js'
 import { runSprintCommand, resolveActiveSprintListId } from './commands/sprint.js'
 import { listSprints } from './commands/sprints.js'
 import { fetchSubtasks } from './commands/subtasks.js'
-import { postComment } from './commands/comment.js'
+import { postComment, createCachedMemberResolver } from './commands/comment.js'
 import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
 import { formatTaskDetail } from './interactive.js'
@@ -277,6 +277,24 @@ function splitCommaList(value: string): string[] {
     .split(',')
     .map(v => v.trim())
     .filter(v => v.length > 0)
+}
+
+function collect(value: string, previous: string[]): string[] {
+  return [...previous, value]
+}
+
+async function resolveMentions(
+  client: ClickUpClient,
+  teamId: string,
+  mentions: string[],
+): Promise<number[]> {
+  if (mentions.length === 0) return []
+  const resolve = createCachedMemberResolver(client, teamId)
+  const ids: number[] = []
+  for (const mention of mentions) {
+    ids.push(await resolve(mention))
+  }
+  return ids
 }
 
 function createCachedGroupResolver(client: ClickUpClient): (value: string) => Promise<string> {
@@ -715,12 +733,23 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Post a comment on a task')
     .requiredOption('-m, --message <text>', 'Comment text')
     .option('--notify-all', 'Notify all assignees')
+    .option(
+      '--mention <user>',
+      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      collect,
+      [],
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (taskId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+        async (
+          taskId: string,
+          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+        ) => {
           const config = loadConfig(getProfileName())
-          const result = await postComment(config, taskId, opts.message, opts.notifyAll)
+          const client = new ClickUpClient(config)
+          const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
+          const result = await postComment(config, taskId, opts.message, opts.notifyAll, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else {
@@ -748,18 +777,32 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-m, --message <text>', 'New comment text')
     .option('--resolved', 'Mark comment as resolved')
     .option('--unresolved', 'Mark comment as unresolved')
+    .option(
+      '--mention <user>',
+      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      collect,
+      [],
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
         async (
           commentId: string,
-          opts: { message?: string; resolved?: boolean; unresolved?: boolean; json?: boolean },
+          opts: {
+            message?: string
+            resolved?: boolean
+            unresolved?: boolean
+            mention: string[]
+            json?: boolean
+          },
         ) => {
           const config = loadConfig(getProfileName())
           let resolved: boolean | undefined
           if (opts.resolved) resolved = true
           if (opts.unresolved) resolved = false
-          await editComment(config, commentId, opts.message, resolved)
+          const client = new ClickUpClient(config)
+          const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
+          await editComment(config, commentId, opts.message, resolved, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, commentId }, null, 2))
           } else {
@@ -843,15 +886,23 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Reply to a comment')
     .requiredOption('-m, --message <text>', 'Reply text')
     .option('--notify-all', 'Notify all assignees')
+    .option(
+      '--mention <user>',
+      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      collect,
+      [],
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
         async (
           commentId: string,
-          opts: { message: string; notifyAll?: boolean; json?: boolean },
+          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
         ) => {
           const config = loadConfig(getProfileName())
-          await createReply(config, commentId, opts.message, opts.notifyAll)
+          const client = new ClickUpClient(config)
+          const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
+          await createReply(config, commentId, opts.message, opts.notifyAll, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, commentId }, null, 2))
           } else {
@@ -3579,12 +3630,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Post a comment on a list')
     .requiredOption('-m, --message <text>', 'Comment text')
     .option('--notify-all', 'Notify all assignees')
+    .option(
+      '--mention <user>',
+      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      collect,
+      [],
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (listId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+        async (
+          listId: string,
+          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+        ) => {
           const config = loadConfig(getProfileName())
-          const result = await postListCommentCommand(config, listId, opts.message, opts.notifyAll)
+          const client = new ClickUpClient(config)
+          const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
+          const result = await postListCommentCommand(
+            config,
+            listId,
+            opts.message,
+            opts.notifyAll,
+            mentionIds,
+          )
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else {
@@ -3611,12 +3679,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Post a comment on a view')
     .requiredOption('-m, --message <text>', 'Comment text')
     .option('--notify-all', 'Notify all assignees')
+    .option(
+      '--mention <user>',
+      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      collect,
+      [],
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (viewId: string, opts: { message: string; notifyAll?: boolean; json?: boolean }) => {
+        async (
+          viewId: string,
+          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+        ) => {
           const config = loadConfig(getProfileName())
-          const result = await postViewCommentCommand(config, viewId, opts.message, opts.notifyAll)
+          const client = new ClickUpClient(config)
+          const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
+          const result = await postViewCommentCommand(
+            config,
+            viewId,
+            opts.message,
+            opts.notifyAll,
+            mentionIds,
+          )
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else {
