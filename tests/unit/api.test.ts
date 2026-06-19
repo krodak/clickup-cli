@@ -312,8 +312,8 @@ describe('ClickUpClient', () => {
     mockFetch.mockReturnValue(
       Promise.resolve({
         ok: false,
-        status: 502,
-        statusText: 'Bad Gateway',
+        status: 500,
+        statusText: 'Internal Server Error',
         headers: new Headers({ 'content-length': '1' }),
         json: () => Promise.reject(new SyntaxError('Unexpected token')),
       }),
@@ -2183,5 +2183,126 @@ describe('getGroups', () => {
   it('throws when groups payload is not an array', async () => {
     mockFetch.mockReturnValue(mockResponse({ groups: { id: 'g1' } }))
     await expect(client.getGroups()).rejects.toThrow('expected groups.groups to be an array')
+  })
+})
+
+describe('rate limit retry', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    vi.useFakeTimers()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 't' })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  function retryableResponse(status: number, statusText: string, retryAfter?: string) {
+    return Promise.resolve({
+      ok: false,
+      status,
+      statusText,
+      headers: new Headers(retryAfter ? { 'retry-after': retryAfter } : {}),
+      json: () => Promise.resolve({ err: 'Rate limit' }),
+    })
+  }
+
+  function response429(retryAfter?: string) {
+    return retryableResponse(429, 'Too Many Requests', retryAfter)
+  }
+
+  it('retries on 429 then succeeds', async () => {
+    mockFetch
+      .mockReturnValueOnce(response429('1'))
+      .mockReturnValueOnce(mockResponse({ id: 'abc', name: 'Task' }))
+    const promise = client.getTask('abc')
+    await vi.advanceTimersByTimeAsync(1000)
+    const task = await promise
+    expect(task.id).toBe('abc')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('honors Retry-After header', async () => {
+    mockFetch
+      .mockReturnValueOnce(response429('5'))
+      .mockReturnValueOnce(mockResponse({ id: 'abc', name: 'Task' }))
+    const promise = client.getTask('abc')
+    await vi.advanceTimersByTimeAsync(4000)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1000)
+    const task = await promise
+    expect(task.id).toBe('abc')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('uses exponential backoff when no Retry-After', async () => {
+    mockFetch
+      .mockReturnValueOnce(response429())
+      .mockReturnValueOnce(response429())
+      .mockReturnValueOnce(mockResponse({ id: 'abc', name: 'Task' }))
+    const promise = client.getTask('abc')
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(2000)
+    const task = await promise
+    expect(task.id).toBe('abc')
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+  })
+
+  it('gives up after max retries and throws', async () => {
+    mockFetch.mockReturnValue(response429('1'))
+    const promise = client.getTask('abc').catch(e => e)
+    await vi.advanceTimersByTimeAsync(10000)
+    const result = await promise
+    expect(result).toBeInstanceOf(Error)
+    expect((result as Error).message).toContain('429')
+    expect(mockFetch).toHaveBeenCalledTimes(4)
+  })
+
+  it('retries on 503', async () => {
+    mockFetch
+      .mockReturnValueOnce(retryableResponse(503, 'Service Unavailable'))
+      .mockReturnValueOnce(mockResponse({ id: 'abc', name: 'Task' }))
+    const promise = client.getTask('abc')
+    await vi.advanceTimersByTimeAsync(1000)
+    const task = await promise
+    expect(task.id).toBe('abc')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('does NOT retry on 400', async () => {
+    mockFetch.mockReturnValue(mockResponse({ err: 'bad' }, false))
+    await expect(client.getTask('abc')).rejects.toThrow('400')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT retry on 404', async () => {
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        headers: new Headers(),
+        json: () => Promise.resolve({ err: 'Not found' }),
+      }),
+    )
+    await expect(client.getTask('abc')).rejects.toThrow('404')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries the requestV3Array fetch path on 429', async () => {
+    mockFetch
+      .mockReturnValueOnce(response429('1'))
+      .mockReturnValueOnce(mockResponse([{ id: 'p1' }]))
+    const promise = client.getDocPageListing('ws', 'doc')
+    await vi.advanceTimersByTimeAsync(1000)
+    const pages = await promise
+    expect(pages).toEqual([{ id: 'p1' }])
+    expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 })

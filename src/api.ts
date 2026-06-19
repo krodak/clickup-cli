@@ -519,10 +519,41 @@ export class ClickUpClient {
     return ''
   }
 
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  private retryDelayMs(res: Response, attempt: number): number {
+    const retryAfter = res.headers.get('retry-after')
+    if (retryAfter) {
+      const seconds = Number(retryAfter)
+      if (Number.isFinite(seconds) && seconds > 0) {
+        return Math.min(seconds, 60) * 1000
+      }
+    }
+    return Math.min(2 ** (attempt - 1) * 1000, 60_000)
+  }
+
+  private async fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+    const maxRetries = 3
+    let attempt = 0
+    for (;;) {
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(30_000) })
+      const retryable =
+        res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504
+      if (!retryable || attempt >= maxRetries) return res
+      attempt++
+      const delayMs = this.retryDelayMs(res, attempt)
+      process.stderr.write(
+        `Rate limited (${res.status}). Retrying in ${Math.round(delayMs / 1000)}s... (attempt ${attempt}/${maxRetries})\n`,
+      )
+      await this.sleep(delayMs)
+    }
+  }
+
   private async _fetch<T>(baseUrl: string, path: string, options: RequestInit = {}): Promise<T> {
-    const res = await fetch(`${baseUrl}${path}`, {
+    const res = await this.fetchWithRetry(`${baseUrl}${path}`, {
       ...options,
-      signal: AbortSignal.timeout(30_000),
       headers: {
         Authorization: this.apiToken,
         ...(options.body ? { 'Content-Type': 'application/json' } : {}),
@@ -559,8 +590,7 @@ export class ClickUpClient {
   }
 
   private async requestV3Array<T>(path: string): Promise<T[]> {
-    const res = await fetch(`${BASE_URL_V3}${path}`, {
-      signal: AbortSignal.timeout(30_000),
+    const res = await this.fetchWithRetry(`${BASE_URL_V3}${path}`, {
       headers: { Authorization: this.apiToken },
     })
     if (res.status === 204 || res.headers.get('content-length') === '0') {
