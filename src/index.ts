@@ -105,6 +105,8 @@ import {
 } from './commands/replies.js'
 import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
+import { attachGet } from './commands/attach-get.js'
+import type { AttachGetOptions } from './commands/attach-get.js'
 import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
 import {
   getDocInfo,
@@ -1403,6 +1405,34 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(formatAttachmentsMarkdown(attachments))
         }
       }),
+    )
+
+  program
+    .command('attach-get <taskId> [selector]')
+    .description('Download task attachment(s) by ID or title')
+    .option('-o, --output <path>', 'Output file path (single attachment only)')
+    .option('--dir <dir>', 'Directory to save into (default: current dir)')
+    .option('--all', 'Download all attachments')
+    .option('--force', 'Overwrite existing files')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          taskId: string,
+          selector: string | undefined,
+          opts: AttachGetOptions & { json?: boolean },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const results = await attachGet(config, taskId, selector, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(results, null, 2))
+          } else {
+            for (const r of results) {
+              console.log(`Downloaded "${r.title}" -> ${r.path} (${r.size} bytes)`)
+            }
+          }
+        },
+      ),
     )
 
   program
