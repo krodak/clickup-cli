@@ -426,6 +426,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'attach-get',
+    description: 'Download task attachment(s) by ID or title',
+    flags: ['-o', '--output', '--dir', '--all', '--force', '--json'],
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'attach-get <taskId> [selector]',
+        description: 'Download task attachment(s)',
+      },
+    ],
+  },
+  {
     name: 'task-members',
     description: 'List members with access to a task',
     flags: ['--json'],

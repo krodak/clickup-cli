@@ -118,6 +118,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup summary`                                            | Daily standup helper                                             |
 | `cup overdue`                                            | Tasks past their due date                                        |
 | `cup attachments <taskId>`                               | List attachments on a task                                       |
+| `cup attach-get <taskId> [selector]`                     | Download task attachment(s)                                      |
 | `cup task-members <taskId>`                              | List members with access to a task                               |
 | `cup plan`                                               | Show workspace plan                                              |
 | `cup tags <spaceId>`                                     | List tags in a space                                             |
