@@ -1535,12 +1535,11 @@ export class ClickUpClient {
     })
   }
 
-  async createCustomField(
-    teamId: string,
+  private buildCustomFieldBody(
     name: string,
     type: string,
     opts?: { description?: string; required?: boolean; options?: string[] },
-  ): Promise<{ id: string; name: string; type: string }> {
+  ): Record<string, unknown> {
     const typeConfig: Record<string, unknown> = {}
     if (opts?.options?.length) {
       typeConfig.options = opts.options.map((optName, i) => ({
@@ -1548,7 +1547,7 @@ export class ClickUpClient {
         orderindex: i,
       }))
     }
-    const body: Record<string, unknown> = {
+    return {
       name,
       type,
       type_config: typeConfig,
@@ -1562,11 +1561,34 @@ export class ClickUpClient {
       members: [],
       groups: [],
     }
-    const data = await this.request<{ data: { id: string; name: string; type: string } }>(
-      `/field?workspace_id=${teamId}`,
+  }
+
+  async createCustomField(
+    teamId: string,
+    name: string,
+    type: string,
+    opts?: { description?: string; required?: boolean; options?: string[] },
+  ): Promise<{ id: string; name: string; type: string }> {
+    const body = this.buildCustomFieldBody(name, type, opts)
+    const data = await this.request<{ field: { id: string; name: string; type: string } }>(
+      `/team/${teamId}/field`,
       { method: 'POST', body: JSON.stringify(body) },
     )
-    return data.data
+    return data.field
+  }
+
+  async createListCustomField(
+    listId: string,
+    name: string,
+    type: string,
+    opts?: { description?: string; required?: boolean; options?: string[] },
+  ): Promise<{ id: string; name: string; type: string }> {
+    const body = this.buildCustomFieldBody(name, type, opts)
+    const data = await this.request<{ field: { id: string; name: string; type: string } }>(
+      `/list/${listId}/field`,
+      { method: 'POST', body: JSON.stringify(body) },
+    )
+    return data.field
   }
 
   private chatChannelsPath(suffix = ''): string {

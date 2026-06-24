@@ -752,13 +752,23 @@ export const commandMetadata = [
   },
   {
     name: 'field-create',
-    description: 'Create a custom field in your workspace',
-    flags: ['-t', '--type', '-d', '--description', '--options', '--required', '--json'],
+    description: 'Create a custom field in your workspace or on one or more lists',
+    flags: [
+      '-t',
+      '--type',
+      '-d',
+      '--description',
+      '--options',
+      '--required',
+      '--list',
+      '--lists',
+      '--json',
+    ],
     quickReference: [
       {
         section: 'write',
         usage: 'field-create <name>',
-        description: 'Create a custom field in your workspace',
+        description: 'Create a custom field in your workspace or on one or more lists',
       },
     ],
   },

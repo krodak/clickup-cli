@@ -194,7 +194,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup list-rename <listId> <newName>`                     | Rename a list                                                    |
 | `cup folder-rename <folderId> <newName>`                 | Rename a folder                                                  |
 | `cup space-rename <spaceId> <newName>`                   | Rename a space                                                   |
-| `cup field-create <name>`                                | Create a custom field in your workspace                          |
+| `cup field-create <name>`                                | Create a custom field in your workspace or on one or more lists  |
 | `cup duplicate <taskId>`                                 | Duplicate a task                                                 |
 | `cup bulk status <status> <taskIds...>`                  | Bulk update task status                                          |
 | `cup bulk assign <taskIds...>`                           | Bulk assign user to tasks                                        |

@@ -1470,13 +1470,14 @@ describe('createCustomField', () => {
     vi.unstubAllGlobals()
   })
 
-  it('sends POST to /field with workspace_id query param', async () => {
+  it('posts to /team/{id}/field and returns the field from the wrapper', async () => {
     const fieldData = { id: 'cf1', name: 'Story Points', type: 'number' }
-    mockFetch.mockReturnValue(mockResponse({ data: fieldData }))
+    mockFetch.mockReturnValue(mockResponse({ field: fieldData }))
     const result = await client.createCustomField('team123', 'Story Points', 'number')
     expect(result).toEqual(fieldData)
     const url = String(mockFetch.mock.calls[0]![0])
-    expect(url).toContain('/field?workspace_id=team123')
+    expect(url).toContain('/team/team123/field')
+    expect(url).not.toContain('workspace_id')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ method: 'POST' }),
@@ -1484,7 +1485,7 @@ describe('createCustomField', () => {
   })
 
   it('includes name and type in the request body', async () => {
-    mockFetch.mockReturnValue(mockResponse({ data: { id: 'cf1', name: 'Status', type: 'text' } }))
+    mockFetch.mockReturnValue(mockResponse({ field: { id: 'cf1', name: 'Status', type: 'text' } }))
     await client.createCustomField('team123', 'Status', 'text', {
       description: 'Task status',
       required: true,
@@ -1498,12 +1499,86 @@ describe('createCustomField', () => {
   })
 
   it('defaults description to empty string and required to false', async () => {
-    mockFetch.mockReturnValue(mockResponse({ data: { id: 'cf1', name: 'Notes', type: 'text' } }))
+    mockFetch.mockReturnValue(mockResponse({ field: { id: 'cf1', name: 'Notes', type: 'text' } }))
     await client.createCustomField('team123', 'Notes', 'text')
     const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
     const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
     expect(body.description).toBe('')
     expect(body.required).toBe(false)
+  })
+
+  it('builds drop_down type_config options from the options array', async () => {
+    mockFetch.mockReturnValue(
+      mockResponse({ field: { id: 'cf1', name: 'Stage', type: 'drop_down' } }),
+    )
+    await client.createCustomField('team123', 'Stage', 'drop_down', {
+      options: ['Alpha', 'Beta'],
+    })
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    const typeConfig = body.type_config as { options: Array<{ name: string; orderindex: number }> }
+    expect(typeConfig.options).toEqual([
+      { name: 'Alpha', orderindex: 0 },
+      { name: 'Beta', orderindex: 1 },
+    ])
+  })
+})
+
+describe('createListCustomField', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('posts to /list/{id}/field and returns the field from the wrapper', async () => {
+    const fieldData = { id: 'cf9', name: 'Story Points', type: 'number' }
+    mockFetch.mockReturnValue(mockResponse({ field: fieldData }))
+    const result = await client.createListCustomField('list42', 'Story Points', 'number')
+    expect(result).toEqual(fieldData)
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/list/list42/field')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('includes name, type, description and required in the request body', async () => {
+    mockFetch.mockReturnValue(mockResponse({ field: { id: 'cf9', name: 'Status', type: 'text' } }))
+    await client.createListCustomField('list42', 'Status', 'text', {
+      description: 'Task status',
+      required: true,
+    })
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.name).toBe('Status')
+    expect(body.type).toBe('text')
+    expect(body.description).toBe('Task status')
+    expect(body.required).toBe(true)
+  })
+
+  it('builds drop_down type_config options from the options array', async () => {
+    mockFetch.mockReturnValue(
+      mockResponse({ field: { id: 'cf9', name: 'Stage', type: 'drop_down' } }),
+    )
+    await client.createListCustomField('list42', 'Stage', 'drop_down', {
+      options: ['Alpha', 'Beta'],
+    })
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    const typeConfig = body.type_config as { options: Array<{ name: string; orderindex: number }> }
+    expect(typeConfig.options).toEqual([
+      { name: 'Alpha', orderindex: 0 },
+      { name: 'Beta', orderindex: 1 },
+    ])
   })
 })
 
