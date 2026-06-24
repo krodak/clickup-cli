@@ -144,6 +144,12 @@ import {
 import { listMembers, formatMembers, formatMembersMarkdown } from './commands/members.js'
 import { listGroups, formatGroupsTable, formatGroupsMarkdown } from './commands/groups.js'
 import { listFields, formatFields, formatFieldsMarkdown } from './commands/fields.js'
+import {
+  resolveFieldScope,
+  validateFieldType,
+  createFieldAcrossLists,
+  type ListFieldOutcome,
+} from './commands/field-create.js'
 import { duplicateTask } from './commands/duplicate.js'
 import {
   bulkUpdateStatus,
@@ -1943,7 +1949,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('field-create <name>')
-    .description('Create a custom field in your workspace')
+    .description('Create a custom field in your workspace or on one or more lists')
     .requiredOption(
       '-t, --type <type>',
       'Field type (text, number, date, checkbox, drop_down, labels, email, phone, url, currency, short_text)',
@@ -1951,6 +1957,8 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-d, --description <text>', 'Field description')
     .option('--options <items>', 'Comma-separated options for drop_down or labels types')
     .option('--required', 'Make the field required')
+    .option('--list <listId>', 'Create the field scoped to a single list')
+    .option('--lists <ids>', 'Comma-separated list IDs to create the same field on each')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1961,46 +1969,42 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             description?: string
             options?: string
             required?: boolean
+            list?: string
+            lists?: string
             json?: boolean
           },
         ) => {
           if (!name.trim()) throw new Error('Field name cannot be empty')
-          const validTypes = [
-            'text',
-            'short_text',
-            'number',
-            'date',
-            'checkbox',
-            'drop_down',
-            'labels',
-            'email',
-            'phone',
-            'url',
-            'currency',
-          ]
-          if (!validTypes.includes(opts.type)) {
-            throw new Error(
-              `Invalid field type "${opts.type}". Valid types: ${validTypes.join(', ')}`,
-            )
-          }
-          const config = loadConfig(getProfileName())
-          const client = new ClickUpClient(config)
+          const scope = resolveFieldScope(opts.list, opts.lists)
           const options = opts.options
             ? opts.options
                 .split(',')
                 .map(o => o.trim())
                 .filter(Boolean)
             : undefined
-          if ((opts.type === 'drop_down' || opts.type === 'labels') && !options?.length) {
-            throw new Error(
-              `--options is required for ${opts.type} fields (comma-separated values)`,
-            )
-          }
-          const field = await client.createCustomField(config.teamId, name, opts.type, {
+          validateFieldType(opts.type, options)
+          const config = loadConfig(getProfileName())
+          const fieldOpts = {
             description: opts.description,
             required: opts.required,
             options,
-          })
+          }
+          if (scope.mode === 'bulk') {
+            const results = await createFieldAcrossLists(
+              config,
+              name,
+              opts.type,
+              scope.listIds,
+              fieldOpts,
+            )
+            outputListFieldResults(results, opts.json ?? false)
+            return
+          }
+          const client = new ClickUpClient(config)
+          const field =
+            scope.mode === 'single'
+              ? await client.createListCustomField(scope.listId, name, opts.type, fieldOpts)
+              : await client.createCustomField(config.teamId, name, opts.type, fieldOpts)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(field, null, 2))
           } else {
@@ -2025,6 +2029,22 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         }
       }),
     )
+
+  function outputListFieldResults(results: ListFieldOutcome[], forceJson: boolean): void {
+    if (shouldOutputJson(forceJson)) {
+      console.log(JSON.stringify(results, null, 2))
+      return
+    }
+    for (const result of results) {
+      if (result.ok) {
+        console.log(`\u2713 ${result.listId}: created field ${result.fieldId}`)
+      } else {
+        console.error(`\u2717 ${result.listId}: ${result.error}`)
+      }
+    }
+    const created = results.filter(r => r.ok).length
+    console.log(`Created on ${created}/${results.length} lists`)
+  }
 
   function outputBulkResult(result: BulkResult, forceJson: boolean, operation: string): void {
     if (shouldOutputJson(forceJson)) {
