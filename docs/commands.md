@@ -862,22 +862,30 @@ Both `--set` and `--remove` can be used together in one invocation.
 
 ### `cup field-create <name>`
 
-Create a custom field in your workspace. Requires specifying the field type.
+Create a custom field — workspace-wide, on a single list, or on multiple lists at once. Requires specifying the field type.
 
 ```bash
-cup field-create "Story Points" -t number
-cup field-create "Priority Level" -t drop_down
+cup field-create "Story Points" -t number                       # workspace-wide
+cup field-create "Priority Level" -t drop_down --options "Low,Med,High"
 cup field-create "Approved" -t checkbox --required
-cup field-create "Notes" -t text -d "Internal notes for the team"
+cup field-create "Sprint Goal" -t text --list 901614127479      # one list
+cup field-create "Story Points" -t number --lists 901,902,903   # bulk across lists
 cup field-create "Contact Email" -t email --json
 ```
 
-| Flag                | Required | Description                                                                                          |
-| ------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
-| `-t, --type <type>` | yes      | Field type: text, short_text, number, date, checkbox, drop_down, labels, email, phone, url, currency |
-| `-d, --description` | no       | Field description                                                                                    |
-| `--required`        | no       | Make the field required                                                                              |
-| `--json`            | no       | Force JSON output                                                                                    |
+For `--lists`, the same field is created on every listed list in parallel; per-list success/failure is reported and one failure does not stop the rest.
+
+| Flag                | Required             | Description                                                                                          |
+| ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| `-t, --type <type>` | yes                  | Field type: text, short_text, number, date, checkbox, drop_down, labels, email, phone, url, currency |
+| `-d, --description` | no                   | Field description                                                                                    |
+| `--options <items>` | for drop_down/labels | Comma-separated options                                                                              |
+| `--required`        | no                   | Make the field required                                                                              |
+| `--list <listId>`   | no                   | Create the field scoped to a single list (mutually exclusive with `--lists`)                         |
+| `--lists <ids>`     | no                   | Comma-separated list IDs — create the field on each (mutually exclusive with `--list`)               |
+| `--json`            | no                   | Force JSON output                                                                                    |
+
+Default (no `--list`/`--lists`) creates a workspace-level field available across all lists.
 
 ### `cup comment <id>`
 
