@@ -266,6 +266,50 @@ describe('task URL input', () => {
   })
 })
 
+describe('view URL input', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('extracts view ID from a URL for getViewTasks', async () => {
+    mockFetch.mockReturnValue(mockResponse({ tasks: [], last_page: true }))
+    await client.getViewTasks('https://app.clickup.com/9017679539/v/gr/a0z2g-712814')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/view/a0z2g-712814/task')
+    expect(url).not.toContain('app.clickup.com/9017679539')
+  })
+
+  it('extracts view ID from a URL for getView', async () => {
+    mockFetch.mockReturnValue(mockResponse({ view: { id: 'a0z2g-712814' } }))
+    await client.getView('https://app.clickup.com/9017679539/v/li/a0z2g-712814')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/view/a0z2g-712814')
+  })
+
+  it('extracts view ID from a URL for getViewComments', async () => {
+    mockFetch.mockReturnValue(mockResponse({ comments: [] }))
+    await client.getViewComments('https://app.clickup.com/9017679539/v/gr/a0z2g-712814')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/view/a0z2g-712814/comment')
+  })
+
+  it('passes through a bare view ID for getViewTasks', async () => {
+    mockFetch.mockReturnValue(mockResponse({ tasks: [], last_page: true }))
+    await client.getViewTasks('a0z2g-712814')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/view/a0z2g-712814/task')
+  })
+})
+
 describe('ClickUpClient', () => {
   let client: import('../../src/api.js').ClickUpClient
 

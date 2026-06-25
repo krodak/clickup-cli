@@ -492,6 +492,11 @@ export function normalizeTaskId(input: string): string {
   return match ? match[1]! : input
 }
 
+export function normalizeViewId(input: string): string {
+  const match = /^https?:\/\/app\.clickup\.com\/[^/]+\/v\/[^/]+\/([^/?#]+)/.exec(input.trim())
+  return match ? match[1]! : input
+}
+
 export class ClickUpClient {
   private apiToken: string
   private teamId: string | undefined
@@ -885,11 +890,13 @@ export class ClickUpClient {
   }
 
   async getViewTasks(viewId: string): Promise<Task[]> {
-    return this.paginate(page => `/view/${viewId}/task?page=${page}`)
+    const id = normalizeViewId(viewId)
+    return this.paginate(page => `/view/${id}/task?page=${page}`)
   }
 
   async getView(viewId: string): Promise<View> {
-    const data = await this.request<{ view: View }>(`/view/${viewId}`)
+    const id = normalizeViewId(viewId)
+    const data = await this.request<{ view: View }>(`/view/${id}`)
     return expectRecordField(data, 'view', 'view') as unknown as View
   }
 
@@ -905,7 +912,8 @@ export class ClickUpClient {
   }
 
   async updateView(viewId: string, payload: Record<string, unknown>): Promise<View> {
-    const data = await this.request<{ view: View }>(`/view/${viewId}`, {
+    const id = normalizeViewId(viewId)
+    const data = await this.request<{ view: View }>(`/view/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     })
@@ -913,7 +921,8 @@ export class ClickUpClient {
   }
 
   async deleteView(viewId: string): Promise<void> {
-    await this.request(`/view/${viewId}`, { method: 'DELETE' })
+    const id = normalizeViewId(viewId)
+    await this.request(`/view/${id}`, { method: 'DELETE' })
   }
 
   async getListTemplates(teamId: string): Promise<ListTemplate[]> {
@@ -1878,7 +1887,8 @@ export class ClickUpClient {
   }
 
   async getViewComments(viewId: string): Promise<Comment[]> {
-    const data = await this.request<{ comments: Comment[] }>(`/view/${viewId}/comment`)
+    const id = normalizeViewId(viewId)
+    const data = await this.request<{ comments: Comment[] }>(`/view/${id}/comment`)
     return readCollectionField<Comment>(data, 'comments', 'view comments')
   }
 
@@ -1888,11 +1898,12 @@ export class ClickUpClient {
     notifyAll?: boolean,
     richBlocks?: CommentBlock[],
   ): Promise<{ id: string }> {
+    const id = normalizeViewId(viewId)
     const body: Record<string, unknown> = richBlocks
       ? { comment: richBlocks }
       : { comment_text: commentText }
     if (notifyAll) body.notify_all = true
-    return this.request<{ id: string }>(`/view/${viewId}/comment`, {
+    return this.request<{ id: string }>(`/view/${id}/comment`, {
       method: 'POST',
       body: JSON.stringify(body),
     })
