@@ -201,6 +201,7 @@ import {
 import { formatMessages, formatMessagesMarkdown } from './commands/chat-message.js'
 import { formatReactions, formatReactionsMarkdown } from './commands/chat-reaction.js'
 import { getView as getViewDetail, formatView, formatViewMarkdown } from './commands/view.js'
+import { listViewTasks } from './commands/view-tasks.js'
 import { createView } from './commands/view-create.js'
 import { updateView as updateViewCommand } from './commands/view-update.js'
 import { deleteViewCommand } from './commands/view-delete.js'
@@ -2827,6 +2828,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         } else {
           console.log(formatView(view))
         }
+      }),
+    )
+
+  program
+    .command('view-tasks <viewId>')
+    .description('List tasks in a view')
+    .option('--me', 'Only tasks assigned to the current user')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (viewId: string, opts: { me?: boolean; json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const tasks = await listViewTasks(config, viewId, { me: opts.me })
+        await printTasks(tasks, opts.json ?? false, config)
       }),
     )
 
