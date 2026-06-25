@@ -138,6 +138,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup folder-templates`                                   | List folder templates                                            |
 | `cup views <id>`                                         | List views on a list, space, folder, or workspace                |
 | `cup view <viewId>`                                      | Get view details                                                 |
+| `cup view-tasks <viewId>`                                | List tasks in a view                                             |
 | `cup filter list`                                        | List saved shortcuts                                             |
 | `cup filter run <name>`                                  | Run a saved shortcut                                             |
 | `cup favorite list`                                      | List saved favorites                                             |
@@ -1936,6 +1937,23 @@ cup view <viewId> --json
 | Flag     | Required | Description       |
 | -------- | -------- | ----------------- |
 | `--json` | no       | Force JSON output |
+
+### `cup view-tasks <viewId>`
+
+List the tasks in a view. Renders the same task table as `cup tasks` in a terminal, Markdown when piped, and JSON with `--json`. Use `--me` to show only tasks assigned to you.
+
+```bash
+cup view-tasks <viewId>
+cup view-tasks <viewId> --me
+cup view-tasks <viewId> --json
+```
+
+| Flag     | Required | Description                             |
+| -------- | -------- | --------------------------------------- |
+| `--me`   | no       | Only tasks assigned to the current user |
+| `--json` | no       | Force JSON output                       |
+
+All view commands (`cup view`, `cup view-tasks`, `cup view-comments`, `cup view-comment`, `cup view-update`, `cup view-delete`) accept a pasted view URL (e.g. `https://app.clickup.com/<workspace>/v/gr/<viewId>`) in place of a bare view ID.
 
 ### `cup view-create <listId> <name>`
 
