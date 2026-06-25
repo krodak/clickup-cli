@@ -962,6 +962,14 @@ export const commandMetadata = [
     quickReference: [{ section: 'read', usage: 'view <viewId>', description: 'Get view details' }],
   },
   {
+    name: 'view-tasks',
+    description: 'List tasks in a view',
+    flags: ['--me', '--json'],
+    quickReference: [
+      { section: 'read', usage: 'view-tasks <viewId>', description: 'List tasks in a view' },
+    ],
+  },
+  {
     name: 'view-create',
     description: 'Create a view on a list',
     flags: ['-t', '--type', '--group-by', '--json'],
