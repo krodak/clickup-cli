@@ -743,7 +743,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
-      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      'Prepend an @mention (ID, email, username, or "me"), repeatable. For a mid-sentence mention, put a <@userId> token in -m instead; bare @Name is not parsed.',
       collect,
       [],
     )
@@ -787,7 +787,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--unresolved', 'Mark comment as unresolved')
     .option(
       '--mention <user>',
-      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      'Prepend an @mention (ID, email, username, or "me"), repeatable. For a mid-sentence mention, put a <@userId> token in -m instead; bare @Name is not parsed.',
       collect,
       [],
     )
@@ -896,7 +896,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
-      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      'Prepend an @mention (ID, email, username, or "me"), repeatable. For a mid-sentence mention, put a <@userId> token in -m instead; bare @Name is not parsed.',
       collect,
       [],
     )
@@ -3695,7 +3695,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
-      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      'Prepend an @mention (ID, email, username, or "me"), repeatable. For a mid-sentence mention, put a <@userId> token in -m instead; bare @Name is not parsed.',
       collect,
       [],
     )
@@ -3744,7 +3744,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
-      'Mention a user (ID, email, username, or "me"). Repeatable.',
+      'Prepend an @mention (ID, email, username, or "me"), repeatable. For a mid-sentence mention, put a <@userId> token in -m instead; bare @Name is not parsed.',
       collect,
       [],
     )
