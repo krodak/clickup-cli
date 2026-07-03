@@ -156,12 +156,6 @@ describe('updateTask', () => {
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { due_date: null })
   })
 
-  it('calls API with parent: null to detach', async () => {
-    const { updateTask } = await import('../../../src/commands/update.js')
-    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: null })
-    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: null })
-  })
-
   it('calls API with assignees.rem to remove assignee', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { assignees: { rem: [99] } })
@@ -498,17 +492,10 @@ describe('buildUpdatePayload', () => {
     expect(payload.due_date).toBeNull()
   })
 
-  it('builds payload with parent: null for --detach', async () => {
+  it('builds payload with parent id when --parent is set', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
-    const payload = buildUpdatePayload({ detach: true })
-    expect(payload.parent).toBeNull()
-  })
-
-  it('throws when both --parent and --detach are set', async () => {
-    const { buildUpdatePayload } = await import('../../../src/commands/update.js')
-    expect(() => buildUpdatePayload({ parent: 'p1', detach: true })).toThrow(
-      'Cannot use --parent and --detach together',
-    )
+    const payload = buildUpdatePayload({ parent: 'p1' })
+    expect(payload.parent).toBe('p1')
   })
 })
 
