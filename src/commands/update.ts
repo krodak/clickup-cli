@@ -176,7 +176,6 @@ export interface UpdateCommandOptions {
   removeGroupAssigneeIds?: string[]
   timeEstimate?: string
   parent?: string
-  detach?: boolean
   archive?: boolean
   unarchive?: boolean
   type?: string
@@ -188,9 +187,6 @@ export function buildUpdatePayload(
 ): UpdateTaskOptions {
   if (opts.archive && opts.unarchive) {
     throw new Error('Cannot use --archive and --unarchive together')
-  }
-  if (opts.parent !== undefined && opts.detach) {
-    throw new Error('Cannot use --parent and --detach together')
   }
   const payload: UpdateTaskOptions = {}
   if (opts.name !== undefined) {
@@ -234,9 +230,7 @@ export function buildUpdatePayload(
   if (opts.timeEstimate !== undefined) {
     payload.time_estimate = parseTimeEstimate(opts.timeEstimate)
   }
-  if (opts.detach) {
-    payload.parent = null
-  } else if (opts.parent !== undefined) {
+  if (opts.parent !== undefined) {
     payload.parent = opts.parent
   }
   if (opts.archive) payload.archived = true
@@ -312,7 +306,7 @@ export async function updateTask(
 ): Promise<{ id: string; name: string }> {
   if (!hasUpdateFields(options) && typeInput === undefined)
     throw new Error(
-      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --group-assignee, --remove-group-assignee, --parent, --detach, --archive, --unarchive, --type',
+      'Provide at least one of: --name, --description, --status, --priority, --due-date, --start-date, --time-estimate, --assignee, --remove-assignee, --group-assignee, --remove-group-assignee, --parent, --archive, --unarchive, --type',
     )
 
   const client = new ClickUpClient(config)

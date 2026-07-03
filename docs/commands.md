@@ -658,7 +658,7 @@ cup folders <spaceId> --json
 
 ### `cup update <id>`
 
-Update a task. Provide at least one of: `--name`, `--description`, `--status`, `--priority`, `--due-date`, `--start-date`, `--time-estimate`, `--assignee`, `--remove-assignee`, `--group-assignee`, `--remove-group-assignee`, `--parent`, `--detach`, `--archive`, `--unarchive`, `--type`, `--field`.
+Update a task. Provide at least one of: `--name`, `--description`, `--status`, `--priority`, `--due-date`, `--start-date`, `--time-estimate`, `--assignee`, `--remove-assignee`, `--group-assignee`, `--remove-group-assignee`, `--parent`, `--archive`, `--unarchive`, `--type`, `--field`.
 
 ```bash
 cup update abc123 -s "in progress"
@@ -684,7 +684,6 @@ cup update abc123 --remove-group-assignee @backend
 cup update abc123 -n "New name" -s "done" --priority urgent
 cup update abc123 --time-estimate 2h
 cup update abc123 --parent parentTaskId   # make it a subtask
-cup update abc123 --detach                # remove parent (promote to top-level)
 cup update abc123 --archive               # archive a task
 cup update abc123 --unarchive             # unarchive a task
 cup update abc123 --type Initiative       # change task type by name
@@ -710,7 +709,6 @@ cup update abc123 -s "in progress" --json
 | `--group-assignee <id>`        | Add group assignee by UUID or `@handle` (repeatable or comma-separated; find IDs with `cup groups`)   |
 | `--remove-group-assignee <id>` | Remove group assignee by UUID or `@handle` (repeatable or comma-separated)                            |
 | `--parent <taskId>`            | Set parent task (makes this a subtask)                                                                |
-| `--detach`                     | Remove parent task (promote subtask to top-level)                                                     |
 | `--archive`                    | Archive the task                                                                                      |
 | `--unarchive`                  | Unarchive the task                                                                                    |
 | `--type <type>`                | Change task type (name or custom_item_id)                                                             |

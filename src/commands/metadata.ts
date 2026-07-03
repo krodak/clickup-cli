@@ -89,7 +89,6 @@ export const commandMetadata = [
       '--group-assignee',
       '--remove-group-assignee',
       '--parent',
-      '--detach',
       '--archive',
       '--unarchive',
       '--type',

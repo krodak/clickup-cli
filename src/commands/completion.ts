@@ -232,7 +232,6 @@ ${renderZshTopLevelCommands(name)}
             '--assignee[Add assignee]:user_id:' \\
             '--remove-assignee[Remove assignee]:user_id:' \\
             '--parent[Set parent task]:task_id:' \\
-            '--detach[Remove parent task]' \\
             '--archive[Archive the task]' \\
             '--unarchive[Unarchive the task]' \\
             '--field[Set custom field]:field_name_and_value:' \\
