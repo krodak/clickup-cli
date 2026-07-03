@@ -19,12 +19,15 @@ describe('duplicateTask', () => {
     vi.clearAllMocks()
   })
 
-  it('creates a copy of the task', async () => {
+  it('creates a copy of the task, preserving markdown from markdown_description', async () => {
+    // getTask (include_markdown_description=true) returns markdown_description,
+    // while markdown_content is always null on read.
     mockGetTask.mockResolvedValue({
       id: 'abc',
       name: 'Original',
       description: 'Some desc',
-      markdown_content: '# Content',
+      markdown_description: '# Content',
+      markdown_content: null,
       list: { id: 'list1', name: 'My List' },
       priority: { priority: 'high' },
       tags: [{ name: 'bug' }],
@@ -53,6 +56,61 @@ describe('duplicateTask', () => {
       name: 'Original (copy)',
       url: 'https://app.clickup.com/t/xyz',
     })
+  })
+
+  it('preserves markdown formatting (headings, checkboxes, links) on the copy', async () => {
+    const md = '## Summary\n\nTest **bold** and `code`.\n\n- [ ] Checkbox one\n- [example](https://example.com)'
+    mockGetTask.mockResolvedValue({
+      id: 'abc',
+      name: 'Markdown probe',
+      description: 'Summary\n\nTest bold and code.\n\nCheckbox one\nexample',
+      markdown_description: md,
+      markdown_content: null,
+      list: { id: 'list1', name: 'My List' },
+      priority: null,
+      tags: [],
+      time_estimate: null,
+    })
+    mockCreateTask.mockResolvedValue({
+      id: 'xyz',
+      name: 'Markdown probe (copy)',
+      url: 'https://app.clickup.com/t/xyz',
+    })
+
+    const { duplicateTask } = await import('../../../src/commands/duplicate.js')
+    await duplicateTask(mockConfig, 'abc')
+
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'list1',
+      expect.objectContaining({ markdown_content: md }),
+    )
+  })
+
+  it('falls back to plain description when markdown_description is absent', async () => {
+    mockGetTask.mockResolvedValue({
+      id: 'abc',
+      name: 'No markdown',
+      description: 'Just plain text',
+      markdown_description: undefined,
+      markdown_content: null,
+      list: { id: 'list1', name: 'My List' },
+      priority: null,
+      tags: [],
+      time_estimate: null,
+    })
+    mockCreateTask.mockResolvedValue({
+      id: 'xyz',
+      name: 'No markdown (copy)',
+      url: 'https://app.clickup.com/t/xyz',
+    })
+
+    const { duplicateTask } = await import('../../../src/commands/duplicate.js')
+    await duplicateTask(mockConfig, 'abc')
+
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'list1',
+      expect.objectContaining({ markdown_content: 'Just plain text' }),
+    )
   })
 
   it('handles task without priority or tags', async () => {

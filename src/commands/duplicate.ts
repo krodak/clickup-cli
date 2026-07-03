@@ -11,7 +11,9 @@ export async function duplicateTask(
   const created = await client.createTask(task.list.id, {
     name: `${task.name} (copy)`,
     description: task.description,
-    markdown_content: task.markdown_content,
+    // getTask requests include_markdown_description=true, so the source markdown
+    // lives in markdown_description (markdown_content is always null on read).
+    markdown_content: task.markdown_description ?? task.description,
     priority: task.priority ? parsePriority(task.priority.priority.toLowerCase()) : undefined,
     tags: task.tags?.map(t => t.name),
     time_estimate: task.time_estimate ?? undefined,
