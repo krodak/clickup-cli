@@ -1731,7 +1731,7 @@ export class ClickUpClient {
       content,
       content_format: 'text/md',
     }
-    if (opts?.postTitle) body.post_data = { title: opts.postTitle }
+    if (opts?.postTitle) body.title = opts.postTitle
     return this.requestV3<ChatMessage>(this.chatChannelsPath(`/${channelId}/messages`), {
       method: 'POST',
       body: JSON.stringify(body),

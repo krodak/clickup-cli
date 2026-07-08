@@ -211,14 +211,26 @@ describe('Chat messaging', () => {
     expect(body.type).toBe('message')
   })
 
-  it('sendChatMessage sends post type with title', async () => {
+  it('sendChatMessage sends post type with title at top level', async () => {
     const message = { id: 'm3', content: 'Post body', type: 'post' }
     mockFetch.mockReturnValue(mockResponse(message))
     await client.sendChatMessage('ch1', 'Post body', { type: 'post', postTitle: 'My Post' })
     const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
     const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
     expect(body.type).toBe('post')
-    expect(body.post_data).toEqual({ title: 'My Post' })
+    expect(body.title).toBe('My Post')
+    expect(body).not.toHaveProperty('post_data')
+  })
+
+  it('sendChatMessage omits title for regular messages', async () => {
+    const message = { id: 'm4', content: 'Just a msg', type: 'message' }
+    mockFetch.mockReturnValue(mockResponse(message))
+    await client.sendChatMessage('ch1', 'Just a msg')
+    const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
+    const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
+    expect(body.type).toBe('message')
+    expect(body).not.toHaveProperty('title')
+    expect(body).not.toHaveProperty('post_data')
   })
 
   it('updateChatMessage sends PATCH to message endpoint', async () => {
