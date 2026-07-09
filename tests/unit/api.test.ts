@@ -160,6 +160,71 @@ describe('custom task ID URL construction', () => {
   })
 })
 
+describe('resolveTaskId and custom-id resolution in relationship fields', () => {
+  let client: import('../../src/api.js').ClickUpClient
+
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+    const { ClickUpClient } = await import('../../src/api.js')
+    client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team123' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('resolveTaskId resolves a custom id to its native id via getTask', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ id: '86native', name: 'X' }))
+    const id = await client.resolveTaskId('PROD-811')
+    expect(id).toBe('86native')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('/task/PROD-811')
+    expect(url).toContain('custom_task_ids=true')
+  })
+
+  it('resolveTaskId passes native ids through without an API call', async () => {
+    const id = await client.resolveTaskId('86abc')
+    expect(id).toBe('86abc')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('resolveTaskId extracts the id from a task URL without an API call', async () => {
+    const id = await client.resolveTaskId('https://app.clickup.com/t/86urlid?tab=comments')
+    expect(id).toBe('86urlid')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('addTaskLink resolves a custom-id linksTo to a native id in the path', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ id: '86native', name: 'X' }))
+    mockFetch.mockReturnValue(mockResponse({ task: {} }))
+    await client.addTaskLink('t1', 'PROD-811')
+    const opUrl = String(mockFetch.mock.calls.at(-1)![0])
+    expect(opUrl).toContain('/task/t1/link/86native')
+    expect(opUrl).not.toContain('PROD-811')
+  })
+
+  it('addDependency resolves a custom-id depends_on to a native id in the body', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ id: '86dep', name: 'X' }))
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.addDependency('t1', { dependsOn: 'PROD-99' })
+    const opUrl = String(mockFetch.mock.calls.at(-1)![0])
+    const body = JSON.parse(String(mockFetch.mock.calls.at(-1)![1]!.body)) as Record<string, string>
+    expect(opUrl).toContain('/task/t1/dependency')
+    expect(body.depends_on).toBe('86dep')
+  })
+
+  it('mergeTasks resolves custom merge ids to native ids in the body', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ id: '86m', name: 'X' }))
+    mockFetch.mockReturnValue(mockResponse({}))
+    await client.mergeTasks('t1', ['PROD-5'])
+    const body = JSON.parse(String(mockFetch.mock.calls.at(-1)![1]!.body)) as {
+      merge_with: string[]
+    }
+    expect(body.merge_with).toEqual(['86m'])
+  })
+})
+
 describe('task URL input', () => {
   let client: import('../../src/api.js').ClickUpClient
 

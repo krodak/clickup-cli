@@ -30,9 +30,19 @@ export async function createTask(
   const client = new ClickUpClient(config)
 
   let listId = options.list
-  if (!listId && options.parent) {
-    const parentTask = await client.getTask(options.parent)
-    listId = parentTask.list.id
+  let parentId = options.parent
+  if (options.parent) {
+    if (!listId) {
+      // Fetch the parent to auto-detect its list; this also gives the native id
+      // (getTask resolves workspace custom ids like PROD-811).
+      const parentTask = await client.getTask(options.parent)
+      parentId = parentTask.id
+      listId = parentTask.list.id
+    } else {
+      // List already known — still resolve custom ids/URLs to a native id, since
+      // the create payload's `parent` field must be a native task id.
+      parentId = await client.resolveTaskId(options.parent)
+    }
   }
   if (!listId) {
     throw new Error('Provide --list or --parent (list is auto-detected from parent task)')
@@ -48,7 +58,7 @@ export async function createTask(
   const payload: CreateTaskOptions = {
     name: options.name,
     ...(options.description !== undefined ? { markdown_content: options.description } : {}),
-    ...(options.parent !== undefined ? { parent: options.parent } : {}),
+    ...(parentId !== undefined ? { parent: parentId } : {}),
     ...(options.status !== undefined ? { status: options.status } : {}),
   }
 
