@@ -505,7 +505,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       '--remove-group-assignee <groupIds...>',
       'Remove group assignee (UUID or @handle, can repeat or comma-separated)',
     )
-    .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
+    .option(
+      '--parent <taskId>',
+      'Set parent task (makes this a subtask): native id, custom id, or task URL',
+    )
     .option('--archive', 'Archive the task')
     .option('--unarchive', 'Unarchive the task')
     .option('--type <type>', 'Change task type (name or custom_item_id)')
@@ -590,7 +593,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-l, --list <listId>', 'Target list ID or "sprint:current" for active sprint')
     .requiredOption('-n, --name <name>', 'Task name')
     .option('-d, --description <text>', 'Task description (markdown supported)')
-    .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
+    .option(
+      '-p, --parent <taskId>',
+      'Parent task: native id, custom id (e.g. PROD-811), or task URL (list auto-detected)',
+    )
     .option('-s, --status <status>', 'Initial status')
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
     .option(

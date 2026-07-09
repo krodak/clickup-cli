@@ -55,6 +55,8 @@ const mockGetGroups = vi.fn().mockResolvedValue([
   },
 ])
 
+const mockResolveTaskId = vi.fn((id: string) => Promise.resolve(id))
+
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
     return {
@@ -63,6 +65,7 @@ vi.mock('../../../src/api.js', () => ({
       getListWithStatuses: mockGetListWithStatuses,
       getCustomTaskTypes: mockGetCustomTaskTypes,
       getGroups: mockGetGroups,
+      resolveTaskId: mockResolveTaskId,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -74,6 +77,8 @@ describe('updateTask', () => {
     mockGetTask.mockClear()
     mockGetListWithStatuses.mockClear()
     mockGetCustomTaskTypes.mockClear()
+    mockResolveTaskId.mockClear()
+    mockResolveTaskId.mockImplementation((id: string) => Promise.resolve(id))
   })
 
   it('calls API with task id and markdown_content', async () => {
@@ -109,7 +114,16 @@ describe('updateTask', () => {
   it('calls API with parent update', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: 'parent123' })
+    expect(mockResolveTaskId).toHaveBeenCalledWith('parent123')
     expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: 'parent123' })
+  })
+
+  it('resolves a custom-id parent to native id before updating', async () => {
+    mockResolveTaskId.mockResolvedValue('86e26w1ew')
+    const { updateTask } = await import('../../../src/commands/update.js')
+    await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', { parent: 'PROD-811' })
+    expect(mockResolveTaskId).toHaveBeenCalledWith('PROD-811')
+    expect(mockUpdateTask).toHaveBeenCalledWith('t1', { parent: '86e26w1ew' })
   })
 
   it('throws when no fields provided', async () => {

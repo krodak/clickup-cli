@@ -5,6 +5,7 @@ const mockCreateTask = vi
   .fn()
   .mockResolvedValue({ id: 'new1', name: 'New Task', url: 'http://cu/new1' })
 const mockCreateTaskFromTemplate = vi.fn()
+const mockResolveTaskId = vi.fn((id: string) => Promise.resolve(id))
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -12,6 +13,7 @@ vi.mock('../../../src/api.js', () => ({
       createTask: mockCreateTask,
       getTask: mockGetTask,
       createTaskFromTemplate: mockCreateTaskFromTemplate,
+      resolveTaskId: mockResolveTaskId,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -21,6 +23,8 @@ describe('createTask', () => {
   beforeEach(() => {
     mockCreateTask.mockClear()
     mockGetTask.mockClear()
+    mockResolveTaskId.mockClear()
+    mockResolveTaskId.mockImplementation((id: string) => Promise.resolve(id))
     mockCreateTask.mockResolvedValue({ id: 't_new', name: 'New task', url: 'http://cu/t_new' })
   })
 
@@ -77,6 +81,37 @@ describe('createTask', () => {
       expect.objectContaining({ name: 'New task', parent: 'p1' }),
     )
     expect(result.id).toBe('new_t')
+  })
+
+  it('resolves a custom-id parent to native id in the payload when --list is given', async () => {
+    mockResolveTaskId.mockResolvedValue('86e26w1ew')
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask(
+      { apiToken: 'pk_t', teamId: 'tm_1' },
+      { list: 'l1', name: 'Subtask', parent: 'PROD-811' },
+    )
+    expect(mockResolveTaskId).toHaveBeenCalledWith('PROD-811')
+    expect(mockGetTask).not.toHaveBeenCalled()
+    expect(mockCreateTask).toHaveBeenCalledWith('l1', { name: 'Subtask', parent: '86e26w1ew' })
+  })
+
+  it('uses native parent id from getTask when --list omitted (custom-id parent)', async () => {
+    mockGetTask.mockResolvedValue({
+      id: '86e26w1ew',
+      name: 'Parent',
+      list: { id: 'auto_list', name: 'Roadmap' },
+      status: { status: 'open', color: '' },
+      assignees: [],
+      url: '',
+    })
+    const { createTask } = await import('../../../src/commands/create.js')
+    await createTask({ apiToken: 'pk_t', teamId: 'team1' }, { name: 'Subtask', parent: 'PROD-811' })
+    expect(mockGetTask).toHaveBeenCalledWith('PROD-811')
+    expect(mockResolveTaskId).not.toHaveBeenCalled()
+    expect(mockCreateTask).toHaveBeenCalledWith(
+      'auto_list',
+      expect.objectContaining({ parent: '86e26w1ew' }),
+    )
   })
 
   it('throws when both --list and --parent are omitted', async () => {

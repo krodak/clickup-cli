@@ -744,6 +744,25 @@ export class ClickUpClient {
     return this.request<Task>(this.taskPath(taskId, '?include_markdown_description=true'))
   }
 
+  /**
+   * Resolve any accepted task-id form to a native ClickUp task id.
+   * - Task URLs are reduced to their id segment.
+   * - Workspace custom ids (e.g. PROD-811) are resolved to the native id via GET.
+   * - Native ids pass through without an API call.
+   *
+   * Use this for task ids that appear in request bodies, query params, or
+   * secondary path segments, where ClickUp's custom_task_ids handling
+   * (applied by taskPath to the primary path id) does not reach.
+   */
+  async resolveTaskId(input: string): Promise<string> {
+    const normalized = normalizeTaskId(input)
+    if (isCustomTaskId(normalized) && this.teamId) {
+      const task = await this.getTask(normalized)
+      return task.id
+    }
+    return normalized
+  }
+
   async getTimeInStatus(taskId: string): Promise<TimeInStatusResponse> {
     return this.request<TimeInStatusResponse>(this.taskPath(taskId, '/time_in_status'))
   }
@@ -1047,10 +1066,11 @@ export class ClickUpClient {
     taskId: string,
     opts: { dependsOn?: string; dependencyOf?: string },
   ): Promise<void> {
+    const primary = await this.resolveTaskId(taskId)
     const body: Record<string, string> = {}
-    if (opts.dependsOn) body.depends_on = opts.dependsOn
-    if (opts.dependencyOf) body.dependency_of = opts.dependencyOf
-    await this.request(this.taskPath(taskId, '/dependency'), {
+    if (opts.dependsOn) body.depends_on = await this.resolveTaskId(opts.dependsOn)
+    if (opts.dependencyOf) body.dependency_of = await this.resolveTaskId(opts.dependencyOf)
+    await this.request(`/task/${primary}/dependency`, {
       method: 'POST',
       body: JSON.stringify(body),
     })
@@ -1060,10 +1080,11 @@ export class ClickUpClient {
     taskId: string,
     opts: { dependsOn?: string; dependencyOf?: string },
   ): Promise<void> {
+    const primary = await this.resolveTaskId(taskId)
     const params = new URLSearchParams()
-    if (opts.dependsOn) params.set('depends_on', opts.dependsOn)
-    if (opts.dependencyOf) params.set('dependency_of', opts.dependencyOf)
-    await this.request(this.taskPath(taskId, `/dependency?${params.toString()}`), {
+    if (opts.dependsOn) params.set('depends_on', await this.resolveTaskId(opts.dependsOn))
+    if (opts.dependencyOf) params.set('dependency_of', await this.resolveTaskId(opts.dependencyOf))
+    await this.request(`/task/${primary}/dependency?${params.toString()}`, {
       method: 'DELETE',
     })
   }
@@ -1110,17 +1131,13 @@ export class ClickUpClient {
   }
 
   async addTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(
-      this.taskPath(taskId, `/link/${normalizeTaskId(linksTo)}`),
-      { method: 'POST' },
-    )
+    const [a, b] = await Promise.all([this.resolveTaskId(taskId), this.resolveTaskId(linksTo)])
+    await this.request<{ task: unknown }>(`/task/${a}/link/${b}`, { method: 'POST' })
   }
 
   async deleteTaskLink(taskId: string, linksTo: string): Promise<void> {
-    await this.request<{ task: unknown }>(
-      this.taskPath(taskId, `/link/${normalizeTaskId(linksTo)}`),
-      { method: 'DELETE' },
-    )
+    const [a, b] = await Promise.all([this.resolveTaskId(taskId), this.resolveTaskId(linksTo)])
+    await this.request<{ task: unknown }>(`/task/${a}/link/${b}`, { method: 'DELETE' })
   }
 
   async getListCustomFields(listId: string): Promise<CustomFieldDefinition[]> {
@@ -1792,9 +1809,11 @@ export class ClickUpClient {
   }
 
   async mergeTasks(taskId: string, mergeWithTaskIds: string[]): Promise<void> {
-    await this.request(this.taskPath(taskId, '/merge'), {
+    const primary = await this.resolveTaskId(taskId)
+    const mergeWith = await Promise.all(mergeWithTaskIds.map(id => this.resolveTaskId(id)))
+    await this.request(`/task/${primary}/merge`, {
       method: 'POST',
-      body: JSON.stringify({ merge_with: mergeWithTaskIds.map(normalizeTaskId) }),
+      body: JSON.stringify({ merge_with: mergeWith }),
     })
   }
 
