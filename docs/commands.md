@@ -14,22 +14,46 @@ Commands behave differently based on how they're invoked:
 
 Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
 
-## Shell Quoting for Descriptions
+## Multiline markdown for descriptions and comments
 
-When `--description` / `-d` contains markdown with backticks or newlines, use `$'...'` (ANSI-C quoting) instead of double quotes or heredocs:
+Agents and scripts frequently pass multiline markdown to `-d` / `-m`. Shell quoting is the main failure point (natural-language apostrophes, bullet lists, code blocks). In order of preference:
+
+**1. File input — most robust, no shell quoting at all.** Use `--description-file` / `--message-file`; `-` reads stdin:
 
 ```bash
-# Correct — backticks and newlines preserved
-cup update abc123 -d $'## API Notes\n\nCall `init()` before `run()`.\n\n- Step 1\n- Step 2'
+cup create -n "Task" -l <listId> --description-file /tmp/desc.md
+cup update <taskId> --description-file /tmp/desc.md
+cup comment <taskId> --message-file /tmp/comment.md
+cup update <taskId> --description-file - < desc.md          # stdin
+```
 
-# Broken — heredoc strips backticks
+`--description-file` works on `cup create` / `cup update`; `--message-file` works on `cup comment`, `cup comment-edit`, `cup reply`, `cup list-comment`, `cup view-comment`, and chat `send` / `reply` / `message-update`. It is mutually exclusive with the inline `-d` / `-m` flag.
+
+**2. Quoted heredoc for inline multiline** — preserves backticks, newlines, **and** apostrophes:
+
+```bash
 cup update abc123 -d "$(cat <<'EOF'
-Call `init()` here
+## API Notes
+
+Call `init()` before `run()`. Follow the team's conventions.
+
+- Step 1
+- Step 2
 EOF
 )"
 ```
 
-This applies to `cup create -d`, `cup update -d`, `cup comment -m`, and `cup reply -m`. The same `$'...'` quoting works for any flag value containing backticks.
+**3. `$'...'` (ANSI-C) only for short strings with backticks** — and never split it with `'\''` for an apostrophe:
+
+```bash
+cup update abc123 -d $'Call `init()` first.\n\n- Step 1'
+
+# BROKEN: after the '\'' apostrophe break the tail is normal single-quoted,
+# so \n is passed literally and renders as "\n\n## Goals" text in ClickUp.
+cup update abc123 -d $'team'\''s notes\n\n## Goals'   # don't do this
+```
+
+Avoid plain double quotes for content with backticks — backticks are legacy command substitution, so `"Use `init()`"` tries to execute `init`.
 
 ## Mentions
 
@@ -698,7 +722,8 @@ cup update abc123 -s "in progress" --json
 | Flag                           | Description                                                                                           |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `-n, --name <text>`            | New task name                                                                                         |
-| `-d, --description <text>`     | New description (markdown supported). Use `$'...'` quoting for backticks/newlines                     |
+| `-d, --description <text>`     | New description (markdown supported). See "Multiline markdown" above for quoting                      |
+| `--description-file <path>`    | Read description from a file (`-` for stdin); avoids shell quoting. Mutually exclusive with `-d`      |
 | `-s, --status <status>`        | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)                           |
 | `--priority <level>`           | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                                  |
 | `--due-date <date>`            | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset), or `"none"`/`"clear"` to remove |
@@ -747,7 +772,8 @@ cup create -n "Fix bug" -l <listId> --json
 | `-n, --name <name>`          | yes              | Task name                                                                          |
 | `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                                |
 | `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                                   |
-| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines                |
+| `-d, --description <text>`   | no               | Description (markdown). See "Multiline markdown" above for quoting                 |
+| `--description-file <path>`  | no               | Read description from a file (`-` for stdin). Mutually exclusive with `-d`         |
 | `-s, --status <status>`      | no               | Initial status                                                                     |
 | `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                               |
 | `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)               |

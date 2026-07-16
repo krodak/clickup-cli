@@ -224,6 +224,7 @@ ${renderZshTopLevelCommands(name)}
             '1:task_id:' \\
             '(-n --name)'{-n,--name}'[New task name]:text:' \\
             '(-d --description)'{-d,--description}'[New description]:text:' \\
+            '--description-file[Read description from a file (- for stdin)]:path:_files' \\
             '(-s --status)'{-s,--status}'[New status]:status:(open "in progress" "in review" done closed)' \\
             '--priority[Priority level]:priority:(urgent high normal low)' \\
             '--due-date[Due date (YYYY-MM-DD or "none" to clear)]:date:' \\
@@ -242,6 +243,7 @@ ${renderZshTopLevelCommands(name)}
             '(-l --list)'{-l,--list}'[Target list ID]:list_id:' \\
             '(-n --name)'{-n,--name}'[Task name]:name:' \\
             '(-d --description)'{-d,--description}'[Task description]:text:' \\
+            '--description-file[Read description from a file (- for stdin)]:path:_files' \\
             '(-p --parent)'{-p,--parent}'[Parent task ID]:task_id:' \\
             '(-s --status)'{-s,--status}'[Initial status]:status:(open "in progress" "in review" done closed)' \\
             '--priority[Priority level]:priority:(urgent high normal low)' \\
@@ -278,6 +280,7 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '1:task_id:' \\
             '(-m --message)'{-m,--message}'[Comment text]:text:' \\
+            '--message-file[Read comment from a file (- for stdin)]:path:_files' \\
             '--notify-all[Notify all assignees]' \\
             '--mention[Mention a user (ID, email, username, or me)]:user:' \\
             '--json[Force JSON output]'
@@ -512,6 +515,7 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '1:comment_id:' \\
             '(-m --message)'{-m,--message}'[New comment text]:text:' \\
+            '--message-file[Read comment from a file (- for stdin)]:path:_files' \\
             '--resolved[Mark comment as resolved]' \\
             '--unresolved[Mark comment as unresolved]' \\
             '--mention[Mention a user (ID, email, username, or me)]:user:' \\
@@ -534,6 +538,7 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '1:comment_id:' \\
             '(-m --message)'{-m,--message}'[Reply text]:text:' \\
+            '--message-file[Read reply from a file (- for stdin)]:path:_files' \\
             '--notify-all[Notify all assignees]' \\
             '--mention[Mention a user (ID, email, username, or me)]:user:' \\
             '--json[Force JSON output]'
@@ -1001,6 +1006,7 @@ ${renderZshTopLevelCommands(name)}
                   _arguments \\
                     '1:channel_id:' \\
                     '(-m --message)'{-m,--message}'[Message content]:text:' \\
+                    '--message-file[Read message from a file (- for stdin)]:path:_files' \\
                     '--post[Send as a post]' \\
                     '--title[Post title]:text:' \\
                     '--json[Force JSON output]'
@@ -1015,6 +1021,7 @@ ${renderZshTopLevelCommands(name)}
                   _arguments \\
                     '1:message_id:' \\
                     '(-m --message)'{-m,--message}'[Reply content]:text:' \\
+                    '--message-file[Read reply from a file (- for stdin)]:path:_files' \\
                     '--json[Force JSON output]'
                   ;;
                 replies)
@@ -1073,6 +1080,7 @@ ${renderZshTopLevelCommands(name)}
                   _arguments \\
                     '1:message_id:' \\
                     '(-m --message)'{-m,--message}'[New message content]:text:' \\
+                    '--message-file[Read message from a file (- for stdin)]:path:_files' \\
                     '--json[Force JSON output]'
                   ;;
                 message-delete)
