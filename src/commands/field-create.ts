@@ -19,9 +19,7 @@ export const VALID_FIELD_TYPES = [
 ]
 
 export type FieldScope =
-  | { mode: 'workspace' }
-  | { mode: 'single'; listId: string }
-  | { mode: 'bulk'; listIds: string[] }
+  { mode: 'workspace' } | { mode: 'single'; listId: string } | { mode: 'bulk'; listIds: string[] }
 
 export type ListFieldOutcome = {
   listId: string
