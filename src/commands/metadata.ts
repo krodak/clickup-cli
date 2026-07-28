@@ -78,6 +78,7 @@ export const commandMetadata = [
       '--name',
       '-d',
       '--description',
+      '--description-file',
       '-s',
       '--status',
       '--priority',
@@ -107,6 +108,7 @@ export const commandMetadata = [
       '--name',
       '-d',
       '--description',
+      '--description-file',
       '-p',
       '--parent',
       '-s',
@@ -152,7 +154,7 @@ export const commandMetadata = [
   {
     name: 'comment',
     description: 'Post a comment on a task',
-    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
+    flags: ['-m', '--message', '--message-file', '--notify-all', '--mention', '--json'],
     quickReference: [
       { section: 'write', usage: 'comment <taskId>', description: 'Post a comment on a task' },
     ],
@@ -160,7 +162,7 @@ export const commandMetadata = [
   {
     name: 'comment-edit',
     description: 'Edit an existing comment',
-    flags: ['-m', '--message', '--resolved', '--unresolved', '--mention', '--json'],
+    flags: ['-m', '--message', '--message-file', '--resolved', '--unresolved', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -205,7 +207,7 @@ export const commandMetadata = [
   {
     name: 'reply',
     description: 'Reply to a comment',
-    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
+    flags: ['-m', '--message', '--message-file', '--notify-all', '--mention', '--json'],
     quickReference: [
       { section: 'write', usage: 'reply <commentId>', description: 'Reply to a comment' },
     ],
@@ -267,7 +269,7 @@ export const commandMetadata = [
   {
     name: 'search',
     description:
-      'Search tasks assigned to you by default. Use --all to search across all assignees.',
+      'Search tasks by name. Without a query, lists tasks filtered by flags. Defaults to your tasks; use --all for all assignees.',
     flags: [
       '--status',
       '--list',
@@ -286,8 +288,8 @@ export const commandMetadata = [
     quickReference: [
       {
         section: 'read',
-        usage: 'search <query>',
-        description: 'Search your tasks by name (--all for all assignees)',
+        usage: 'search [query]',
+        description: 'Search tasks by name or filter by flags (--all for all assignees)',
       },
     ],
   },
@@ -1041,7 +1043,7 @@ export const commandMetadata = [
   {
     name: 'list-comment',
     description: 'Post a comment on a list',
-    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
+    flags: ['-m', '--message', '--message-file', '--notify-all', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -1065,7 +1067,7 @@ export const commandMetadata = [
   {
     name: 'view-comment',
     description: 'Post a comment on a view',
-    flags: ['-m', '--message', '--notify-all', '--mention', '--json'],
+    flags: ['-m', '--message', '--message-file', '--notify-all', '--mention', '--json'],
     quickReference: [
       {
         section: 'write',
