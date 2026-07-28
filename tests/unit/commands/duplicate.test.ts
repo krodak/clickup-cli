@@ -59,7 +59,8 @@ describe('duplicateTask', () => {
   })
 
   it('preserves markdown formatting (headings, checkboxes, links) on the copy', async () => {
-    const md = '## Summary\n\nTest **bold** and `code`.\n\n- [ ] Checkbox one\n- [example](https://example.com)'
+    const md =
+      '## Summary\n\nTest **bold** and `code`.\n\n- [ ] Checkbox one\n- [example](https://example.com)'
     mockGetTask.mockResolvedValue({
       id: 'abc',
       name: 'Markdown probe',
