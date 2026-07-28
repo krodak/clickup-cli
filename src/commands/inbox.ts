@@ -8,12 +8,7 @@ import type { TaskSummary } from './tasks.js'
 import { summarize, buildTypeMap } from './tasks.js'
 
 export type TimePeriod =
-  | 'today'
-  | 'yesterday'
-  | 'last_7_days'
-  | 'earlier_this_month'
-  | 'last_month'
-  | 'older'
+  'today' | 'yesterday' | 'last_7_days' | 'earlier_this_month' | 'last_month' | 'older'
 
 interface TimePeriodDef {
   key: TimePeriod

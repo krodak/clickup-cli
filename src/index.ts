@@ -1162,8 +1162,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           }
 
           let customFields:
-            | Array<{ field_id: string; operator: string; value?: unknown }>
-            | undefined
+            Array<{ field_id: string; operator: string; value?: unknown }> | undefined
           if (opts.field?.length) {
             if (opts.field.length % 2 !== 0) {
               throw new Error('--field requires pairs: --field "Name" value')
