@@ -326,7 +326,7 @@ ${renderZshTopLevelCommands(name)}
           ;;
         search)
           _arguments \\
-            '1:query:' \\
+            '1::query:' \\
             '--status[Filter by status]:status:(open "in progress" "in review" done closed)' \\
             '--list[Filter by list ID]:list_id:' \\
             '--space[Filter by space ID]:space_id:' \\
