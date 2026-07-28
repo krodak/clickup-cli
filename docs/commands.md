@@ -14,22 +14,46 @@ Commands behave differently based on how they're invoked:
 
 Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
 
-## Shell Quoting for Descriptions
+## Multiline markdown for descriptions and comments
 
-When `--description` / `-d` contains markdown with backticks or newlines, use `$'...'` (ANSI-C quoting) instead of double quotes or heredocs:
+Agents and scripts frequently pass multiline markdown to `-d` / `-m`. Shell quoting is the main failure point (natural-language apostrophes, bullet lists, code blocks). In order of preference:
+
+**1. File input — most robust, no shell quoting at all.** Use `--description-file` / `--message-file`; `-` reads stdin:
 
 ```bash
-# Correct — backticks and newlines preserved
-cup update abc123 -d $'## API Notes\n\nCall `init()` before `run()`.\n\n- Step 1\n- Step 2'
+cup create -n "Task" -l <listId> --description-file /tmp/desc.md
+cup update <taskId> --description-file /tmp/desc.md
+cup comment <taskId> --message-file /tmp/comment.md
+cup update <taskId> --description-file - < desc.md          # stdin
+```
 
-# Broken — heredoc strips backticks
+`--description-file` works on `cup create` / `cup update`; `--message-file` works on `cup comment`, `cup comment-edit`, `cup reply`, `cup list-comment`, `cup view-comment`, and chat `send` / `reply` / `message-update`. It is mutually exclusive with the inline `-d` / `-m` flag.
+
+**2. Quoted heredoc for inline multiline** — preserves backticks, newlines, **and** apostrophes:
+
+```bash
 cup update abc123 -d "$(cat <<'EOF'
-Call `init()` here
+## API Notes
+
+Call `init()` before `run()`. Follow the team's conventions.
+
+- Step 1
+- Step 2
 EOF
 )"
 ```
 
-This applies to `cup create -d`, `cup update -d`, `cup comment -m`, and `cup reply -m`. The same `$'...'` quoting works for any flag value containing backticks.
+**3. `$'...'` (ANSI-C) only for short strings with backticks** — and never split it with `'\''` for an apostrophe:
+
+```bash
+cup update abc123 -d $'Call `init()` first.\n\n- Step 1'
+
+# BROKEN: after the '\'' apostrophe break the tail is normal single-quoted,
+# so \n is passed literally and renders as "\n\n## Goals" text in ClickUp.
+cup update abc123 -d $'team'\''s notes\n\n## Goals'   # don't do this
+```
+
+Avoid plain double quotes for content with backticks — backticks are legacy command substitution, so `"Use `init()`"` tries to execute `init`.
 
 ## Mentions
 
@@ -94,148 +118,148 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 
 ## Quick Reference
 
-| Command                                                  | Description                                                      |
-| -------------------------------------------------------- | ---------------------------------------------------------------- |
-| `cup init`                                               | First-time setup (interactive, or use --token --team for agents) |
-| `cup skill`                                              | Install skill for your agents                                    |
-| `cup filter save <name> [args...]`                       | Save a command shortcut                                          |
-| **Read**                                                 |                                                                  |
-| `cup auth`                                               | Check authentication status                                      |
-| `cup tasks`                                              | My tasks (--all for all assignees)                               |
-| `cup task <taskId>`                                      | Get task details                                                 |
-| `cup sprint`                                             | My tasks in the active sprint                                    |
-| `cup sprints`                                            | List all sprints across folders                                  |
-| `cup subtasks <taskId>`                                  | List subtasks of a task                                          |
-| `cup comments <taskId>`                                  | List comments on a task                                          |
-| `cup replies <commentId>`                                | List threaded replies on a comment                               |
-| `cup activity <taskId>`                                  | Task details + comment history                                   |
-| `cup lists <spaceId>`                                    | List all lists in a space                                        |
-| `cup spaces`                                             | List spaces in workspace                                         |
-| `cup inbox`                                              | Recently updated tasks assigned to me                            |
-| `cup assigned`                                           | My tasks grouped by pipeline stage                               |
-| `cup open <query>`                                       | Open a task in the browser                                       |
-| `cup search <query>`                                     | Search your tasks by name (--all for all assignees)              |
-| `cup summary`                                            | Daily standup helper                                             |
-| `cup overdue`                                            | Tasks past their due date                                        |
-| `cup attachments <taskId>`                               | List attachments on a task                                       |
-| `cup attach-get <taskId> [selector]`                     | Download task attachment(s)                                      |
-| `cup task-members <taskId>`                              | List members with access to a task                               |
-| `cup plan`                                               | Show workspace plan                                              |
-| `cup tags <spaceId>`                                     | List tags in a space                                             |
-| `cup time-in-status <taskId>`                            | Show how long a task has been in each status                     |
-| `cup docs [query]`                                       | List workspace docs                                              |
-| `cup doc <docId> [pageId]`                               | View a doc or doc page                                           |
-| `cup doc-pages <docId>`                                  | All pages in a doc with content                                  |
-| `cup folders <spaceId>`                                  | List folders in a space                                          |
-| `cup members`                                            | List workspace members                                           |
-| `cup groups`                                             | List user groups (teams) in your workspace                       |
-| `cup fields <listId>`                                    | List custom fields for a list                                    |
-| `cup goals`                                              | List goals in your workspace                                     |
-| `cup key-results <goalId>`                               | List key results for a goal                                      |
-| `cup task-types`                                         | List custom task types                                           |
-| `cup templates`                                          | List task templates                                              |
-| `cup list-templates`                                     | List list templates                                              |
-| `cup folder-templates`                                   | List folder templates                                            |
-| `cup views <id>`                                         | List views on a list, space, folder, or workspace                |
-| `cup view <viewId>`                                      | Get view details                                                 |
-| `cup view-tasks <viewId>`                                | List tasks in a view                                             |
-| `cup filter list`                                        | List saved shortcuts                                             |
-| `cup filter run <name>`                                  | Run a saved shortcut                                             |
-| `cup favorite list`                                      | List saved favorites                                             |
-| `cup list-comments <listId>`                             | List comments on a list                                          |
-| `cup view-comments <viewId>`                             | List comments on a view                                          |
-| `cup webhook list`                                       | List webhooks                                                    |
-| `cup shared`                                             | Show shared spaces, folders, and lists                           |
-| `cup chat channels`                                      | List chat channels you follow                                    |
-| `cup chat channel <channelId>`                           | Show channel details                                             |
-| `cup chat messages <channelId>`                          | List recent messages in a channel                                |
-| `cup chat members <channelId>`                           | List channel members                                             |
-| `cup chat followers <channelId>`                         | List channel followers                                           |
-| `cup chat replies <messageId>`                           | List replies to a message                                        |
-| `cup chat reactions <messageId>`                         | List reactions on a message                                      |
-| **Write**                                                |                                                                  |
-| `cup update <taskId>`                                    | Update a task                                                    |
-| `cup create`                                             | Create a new task                                                |
-| `cup comment <taskId>`                                   | Post a comment on a task                                         |
-| `cup comment-edit <commentId>`                           | Edit an existing comment                                         |
-| `cup comment-delete [commentId]`                         | Delete a comment                                                 |
-| `cup reply <commentId>`                                  | Reply to a comment                                               |
-| `cup archive <taskId>`                                   | Archive or unarchive a task                                      |
-| `cup assign <taskId>`                                    | Assign or unassign users and groups                              |
-| `cup depend <taskId>`                                    | Add or remove task dependencies                                  |
-| `cup link <taskId> <linksTo>`                            | Add or remove a link between tasks                               |
-| `cup attach <taskId> <filePath>`                         | Upload a file attachment to a task                               |
-| `cup move <taskId>`                                      | Add or remove a task from a list                                 |
-| `cup field <taskId>`                                     | Set or remove custom field values                                |
-| `cup delete <taskId>`                                    | Delete a task                                                    |
-| `cup list-delete <listId>`                               | Delete a list                                                    |
-| `cup folder-delete <folderId>`                           | Delete a folder                                                  |
-| `cup space-delete <spaceId>`                             | Delete a space                                                   |
-| `cup tag <taskId>`                                       | Add or remove tags on a task                                     |
-| `cup tag-create <spaceId> <name>`                        | Create a tag in a space                                          |
-| `cup tag-delete <spaceId> <name>`                        | Delete a tag from a space                                        |
-| `cup tag-update <spaceId> <tagName>`                     | Update a tag in a space                                          |
-| `cup checklist`                                          | Manage checklists on tasks                                       |
-| `cup time start <taskId>`                                | Start tracking time on a task                                    |
-| `cup time stop`                                          | Stop the running timer                                           |
-| `cup time status`                                        | Show the currently running timer                                 |
-| `cup time log <taskId> <duration>`                       | Log a manual time entry                                          |
-| `cup time list`                                          | List my recent time entries (--all for team)                     |
-| `cup time update <timeEntryId>`                          | Update a time entry                                              |
-| `cup time delete <timeEntryId>`                          | Delete a time entry                                              |
-| `cup time estimate-by-user <taskId> <userId> <duration>` | Set per-user time estimate                                       |
-| `cup doc-create <title>`                                 | Create a new doc                                                 |
-| `cup doc-page-create <docId> <name>`                     | Create a page in a doc                                           |
-| `cup doc-page-edit <docId> <pageId>`                     | Edit a doc page                                                  |
-| `cup doc-delete <docId>`                                 | Delete a doc                                                     |
-| `cup doc-page-delete <docId> <pageId>`                   | Delete a doc page                                                |
-| `cup space-create <name>`                                | Create a space                                                   |
-| `cup list-create <spaceId> <name>`                       | Create a list in a space                                         |
-| `cup folder-create <spaceId> <name>`                     | Create a folder in a space                                       |
-| `cup list-rename <listId> <newName>`                     | Rename a list                                                    |
-| `cup folder-rename <folderId> <newName>`                 | Rename a folder                                                  |
-| `cup space-rename <spaceId> <newName>`                   | Rename a space                                                   |
-| `cup field-create <name>`                                | Create a custom field in your workspace or on one or more lists  |
-| `cup duplicate <taskId>`                                 | Duplicate a task                                                 |
-| `cup bulk status <status> <taskIds...>`                  | Bulk update task status                                          |
-| `cup bulk assign <taskIds...>`                           | Bulk assign user to tasks                                        |
-| `cup bulk due-date <date> <taskIds...>`                  | Bulk set due date                                                |
-| `cup bulk tag <tagName> <taskIds...>`                    | Bulk add/remove tag                                              |
-| `cup bulk priority <taskIds...>`                         | Bulk set priority on tasks                                       |
-| `cup bulk field <taskIds...>`                            | Bulk set a custom field value on tasks                           |
-| `cup bulk move <taskIds...>`                             | Move multiple tasks to a destination list                        |
-| `cup goal-create <name>`                                 | Create a goal                                                    |
-| `cup goal-update <goalId>`                               | Update a goal                                                    |
-| `cup goal-delete <goalId>`                               | Delete a goal                                                    |
-| `cup key-result-create <goalId> <name>`                  | Create a key result on a goal                                    |
-| `cup key-result-update <keyResultId>`                    | Update a key result                                              |
-| `cup key-result-delete <keyResultId>`                    | Delete a key result                                              |
-| `cup list-from-template <name>`                          | Create a list from a template                                    |
-| `cup view-create <listId> <name>`                        | Create a view on a list                                          |
-| `cup view-update <viewId>`                               | Update a view                                                    |
-| `cup view-delete <viewId>`                               | Delete a view                                                    |
-| `cup list-comment <listId>`                              | Post a comment on a list                                         |
-| `cup view-comment <viewId>`                              | Post a comment on a view                                         |
-| `cup webhook create`                                     | Create a webhook                                                 |
-| `cup webhook update <webhookId>`                         | Update a webhook                                                 |
-| `cup webhook delete <webhookId>`                         | Delete a webhook                                                 |
-| `cup merge <sourceTaskId> <intoTaskId>`                  | Merge a task into another                                        |
-| `cup chat send <channelId>`                              | Send a message to a channel                                      |
-| `cup chat channel-create <name>`                         | Create a new chat channel                                        |
-| `cup chat dm <userIds...>`                               | Create or open a DM                                              |
-| `cup chat channel-update <channelId>`                    | Update a channel                                                 |
-| `cup chat channel-delete <channelId>`                    | Delete a channel                                                 |
-| `cup chat reply <messageId>`                             | Reply to a message                                               |
-| `cup chat react <messageId>`                             | Add a reaction to a message                                      |
-| `cup chat unreact <messageId>`                           | Remove a reaction from a message                                 |
-| `cup chat message-update <messageId>`                    | Edit a message                                                   |
-| `cup chat message-delete <messageId>`                    | Delete a message                                                 |
-| **Configuration**                                        |                                                                  |
-| `cup favorite add <type> <id> [alias]`                   | Add a favorite                                                   |
-| `cup favorite remove <alias>`                            | Remove a favorite                                                |
-| `cup profile`                                            | Manage profiles                                                  |
-| `cup config`                                             | Manage CLI configuration                                         |
-| `cup completion <shell>`                                 | Output shell completion script                                   |
+| Command                                                  | Description                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------- |
+| `cup init`                                               | First-time setup (interactive, or use --token --team for agents)  |
+| `cup skill`                                              | Install skill for your agents                                     |
+| `cup filter save <name> [args...]`                       | Save a command shortcut                                           |
+| **Read**                                                 |                                                                   |
+| `cup auth`                                               | Check authentication status                                       |
+| `cup tasks`                                              | My tasks (--all for all assignees)                                |
+| `cup task <taskId>`                                      | Get task details                                                  |
+| `cup sprint`                                             | My tasks in the active sprint                                     |
+| `cup sprints`                                            | List all sprints across folders                                   |
+| `cup subtasks <taskId>`                                  | List subtasks of a task                                           |
+| `cup comments <taskId>`                                  | List comments on a task                                           |
+| `cup replies <commentId>`                                | List threaded replies on a comment                                |
+| `cup activity <taskId>`                                  | Task details + comment history                                    |
+| `cup lists <spaceId>`                                    | List all lists in a space                                         |
+| `cup spaces`                                             | List spaces in workspace                                          |
+| `cup inbox`                                              | Recently updated tasks assigned to me                             |
+| `cup assigned`                                           | My tasks grouped by pipeline stage                                |
+| `cup open <query>`                                       | Open a task in the browser                                        |
+| `cup search [query]`                                     | Search tasks by name or filter by flags (--all for all assignees) |
+| `cup summary`                                            | Daily standup helper                                              |
+| `cup overdue`                                            | Tasks past their due date                                         |
+| `cup attachments <taskId>`                               | List attachments on a task                                        |
+| `cup attach-get <taskId> [selector]`                     | Download task attachment(s)                                       |
+| `cup task-members <taskId>`                              | List members with access to a task                                |
+| `cup plan`                                               | Show workspace plan                                               |
+| `cup tags <spaceId>`                                     | List tags in a space                                              |
+| `cup time-in-status <taskId>`                            | Show how long a task has been in each status                      |
+| `cup docs [query]`                                       | List workspace docs                                               |
+| `cup doc <docId> [pageId]`                               | View a doc or doc page                                            |
+| `cup doc-pages <docId>`                                  | All pages in a doc with content                                   |
+| `cup folders <spaceId>`                                  | List folders in a space                                           |
+| `cup members`                                            | List workspace members                                            |
+| `cup groups`                                             | List user groups (teams) in your workspace                        |
+| `cup fields <listId>`                                    | List custom fields for a list                                     |
+| `cup goals`                                              | List goals in your workspace                                      |
+| `cup key-results <goalId>`                               | List key results for a goal                                       |
+| `cup task-types`                                         | List custom task types                                            |
+| `cup templates`                                          | List task templates                                               |
+| `cup list-templates`                                     | List list templates                                               |
+| `cup folder-templates`                                   | List folder templates                                             |
+| `cup views <id>`                                         | List views on a list, space, folder, or workspace                 |
+| `cup view <viewId>`                                      | Get view details                                                  |
+| `cup view-tasks <viewId>`                                | List tasks in a view                                              |
+| `cup filter list`                                        | List saved shortcuts                                              |
+| `cup filter run <name>`                                  | Run a saved shortcut                                              |
+| `cup favorite list`                                      | List saved favorites                                              |
+| `cup list-comments <listId>`                             | List comments on a list                                           |
+| `cup view-comments <viewId>`                             | List comments on a view                                           |
+| `cup webhook list`                                       | List webhooks                                                     |
+| `cup shared`                                             | Show shared spaces, folders, and lists                            |
+| `cup chat channels`                                      | List chat channels you follow                                     |
+| `cup chat channel <channelId>`                           | Show channel details                                              |
+| `cup chat messages <channelId>`                          | List recent messages in a channel                                 |
+| `cup chat members <channelId>`                           | List channel members                                              |
+| `cup chat followers <channelId>`                         | List channel followers                                            |
+| `cup chat replies <messageId>`                           | List replies to a message                                         |
+| `cup chat reactions <messageId>`                         | List reactions on a message                                       |
+| **Write**                                                |                                                                   |
+| `cup update <taskId>`                                    | Update a task                                                     |
+| `cup create`                                             | Create a new task                                                 |
+| `cup comment <taskId>`                                   | Post a comment on a task                                          |
+| `cup comment-edit <commentId>`                           | Edit an existing comment                                          |
+| `cup comment-delete [commentId]`                         | Delete a comment                                                  |
+| `cup reply <commentId>`                                  | Reply to a comment                                                |
+| `cup archive <taskId>`                                   | Archive or unarchive a task                                       |
+| `cup assign <taskId>`                                    | Assign or unassign users and groups                               |
+| `cup depend <taskId>`                                    | Add or remove task dependencies                                   |
+| `cup link <taskId> <linksTo>`                            | Add or remove a link between tasks                                |
+| `cup attach <taskId> <filePath>`                         | Upload a file attachment to a task                                |
+| `cup move <taskId>`                                      | Add or remove a task from a list                                  |
+| `cup field <taskId>`                                     | Set or remove custom field values                                 |
+| `cup delete <taskId>`                                    | Delete a task                                                     |
+| `cup list-delete <listId>`                               | Delete a list                                                     |
+| `cup folder-delete <folderId>`                           | Delete a folder                                                   |
+| `cup space-delete <spaceId>`                             | Delete a space                                                    |
+| `cup tag <taskId>`                                       | Add or remove tags on a task                                      |
+| `cup tag-create <spaceId> <name>`                        | Create a tag in a space                                           |
+| `cup tag-delete <spaceId> <name>`                        | Delete a tag from a space                                         |
+| `cup tag-update <spaceId> <tagName>`                     | Update a tag in a space                                           |
+| `cup checklist`                                          | Manage checklists on tasks                                        |
+| `cup time start <taskId>`                                | Start tracking time on a task                                     |
+| `cup time stop`                                          | Stop the running timer                                            |
+| `cup time status`                                        | Show the currently running timer                                  |
+| `cup time log <taskId> <duration>`                       | Log a manual time entry                                           |
+| `cup time list`                                          | List my recent time entries (--all for team)                      |
+| `cup time update <timeEntryId>`                          | Update a time entry                                               |
+| `cup time delete <timeEntryId>`                          | Delete a time entry                                               |
+| `cup time estimate-by-user <taskId> <userId> <duration>` | Set per-user time estimate                                        |
+| `cup doc-create <title>`                                 | Create a new doc                                                  |
+| `cup doc-page-create <docId> <name>`                     | Create a page in a doc                                            |
+| `cup doc-page-edit <docId> <pageId>`                     | Edit a doc page                                                   |
+| `cup doc-delete <docId>`                                 | Delete a doc                                                      |
+| `cup doc-page-delete <docId> <pageId>`                   | Delete a doc page                                                 |
+| `cup space-create <name>`                                | Create a space                                                    |
+| `cup list-create <spaceId> <name>`                       | Create a list in a space                                          |
+| `cup folder-create <spaceId> <name>`                     | Create a folder in a space                                        |
+| `cup list-rename <listId> <newName>`                     | Rename a list                                                     |
+| `cup folder-rename <folderId> <newName>`                 | Rename a folder                                                   |
+| `cup space-rename <spaceId> <newName>`                   | Rename a space                                                    |
+| `cup field-create <name>`                                | Create a custom field in your workspace or on one or more lists   |
+| `cup duplicate <taskId>`                                 | Duplicate a task                                                  |
+| `cup bulk status <status> <taskIds...>`                  | Bulk update task status                                           |
+| `cup bulk assign <taskIds...>`                           | Bulk assign user to tasks                                         |
+| `cup bulk due-date <date> <taskIds...>`                  | Bulk set due date                                                 |
+| `cup bulk tag <tagName> <taskIds...>`                    | Bulk add/remove tag                                               |
+| `cup bulk priority <taskIds...>`                         | Bulk set priority on tasks                                        |
+| `cup bulk field <taskIds...>`                            | Bulk set a custom field value on tasks                            |
+| `cup bulk move <taskIds...>`                             | Move multiple tasks to a destination list                         |
+| `cup goal-create <name>`                                 | Create a goal                                                     |
+| `cup goal-update <goalId>`                               | Update a goal                                                     |
+| `cup goal-delete <goalId>`                               | Delete a goal                                                     |
+| `cup key-result-create <goalId> <name>`                  | Create a key result on a goal                                     |
+| `cup key-result-update <keyResultId>`                    | Update a key result                                               |
+| `cup key-result-delete <keyResultId>`                    | Delete a key result                                               |
+| `cup list-from-template <name>`                          | Create a list from a template                                     |
+| `cup view-create <listId> <name>`                        | Create a view on a list                                           |
+| `cup view-update <viewId>`                               | Update a view                                                     |
+| `cup view-delete <viewId>`                               | Delete a view                                                     |
+| `cup list-comment <listId>`                              | Post a comment on a list                                          |
+| `cup view-comment <viewId>`                              | Post a comment on a view                                          |
+| `cup webhook create`                                     | Create a webhook                                                  |
+| `cup webhook update <webhookId>`                         | Update a webhook                                                  |
+| `cup webhook delete <webhookId>`                         | Delete a webhook                                                  |
+| `cup merge <sourceTaskId> <intoTaskId>`                  | Merge a task into another                                         |
+| `cup chat send <channelId>`                              | Send a message to a channel                                       |
+| `cup chat channel-create <name>`                         | Create a new chat channel                                         |
+| `cup chat dm <userIds...>`                               | Create or open a DM                                               |
+| `cup chat channel-update <channelId>`                    | Update a channel                                                  |
+| `cup chat channel-delete <channelId>`                    | Delete a channel                                                  |
+| `cup chat reply <messageId>`                             | Reply to a message                                                |
+| `cup chat react <messageId>`                             | Add a reaction to a message                                       |
+| `cup chat unreact <messageId>`                           | Remove a reaction from a message                                  |
+| `cup chat message-update <messageId>`                    | Edit a message                                                    |
+| `cup chat message-delete <messageId>`                    | Delete a message                                                  |
+| **Configuration**                                        |                                                                   |
+| `cup favorite add <type> <id> [alias]`                   | Add a favorite                                                    |
+| `cup favorite remove <alias>`                            | Remove a favorite                                                 |
+| `cup profile`                                            | Manage profiles                                                   |
+| `cup config`                                             | Manage CLI configuration                                          |
+| `cup completion <shell>`                                 | Output shell completion script                                    |
 
 <!-- quick-reference:end -->
 
@@ -456,9 +480,9 @@ cup open abc123 --json
 
 If the query matches multiple tasks by name, all matches are listed and the first is opened.
 
-### `cup search <query>`
+### `cup search [query]`
 
-Search tasks assigned to you by default. Use `--all` to search across all assignees. Supports multi-word queries with case-insensitive matching. Status filter supports fuzzy matching.
+Search tasks by name, or list tasks filtered by flags when no query is given. Defaults to your tasks; use `--all` for all assignees. Supports multi-word queries with case-insensitive matching. Status filter supports fuzzy matching.
 
 ```bash
 cup search "login bug"
@@ -470,6 +494,8 @@ cup search "payment" --all          # search all workspace tasks
 cup search "auth" --list 123 --space 456
 cup search "bug" --tag "frontend" --due-before 2026-04-01
 cup search "sprint" --list 123 --field "Sprint" "Week 1"
+cup search --assignee me            # no query — all my tasks
+cup search --assignee me --status "in progress"  # filter without query
 ```
 
 | Flag                      | Description                                |
@@ -698,7 +724,8 @@ cup update abc123 -s "in progress" --json
 | Flag                           | Description                                                                                           |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `-n, --name <text>`            | New task name                                                                                         |
-| `-d, --description <text>`     | New description (markdown supported). Use `$'...'` quoting for backticks/newlines                     |
+| `-d, --description <text>`     | New description (markdown supported). See "Multiline markdown" above for quoting                      |
+| `--description-file <path>`    | Read description from a file (`-` for stdin); avoids shell quoting. Mutually exclusive with `-d`      |
 | `-s, --status <status>`        | New status, supports fuzzy matching (e.g. `"prog"` matches `"in progress"`)                           |
 | `--priority <level>`           | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                                  |
 | `--due-date <date>`            | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset), or `"none"`/`"clear"` to remove |
@@ -747,7 +774,8 @@ cup create -n "Fix bug" -l <listId> --json
 | `-n, --name <name>`          | yes              | Task name                                                                          |
 | `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                                |
 | `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                                   |
-| `-d, --description <text>`   | no               | Description (markdown). Use `$'...'` quoting for backticks/newlines                |
+| `-d, --description <text>`   | no               | Description (markdown). See "Multiline markdown" above for quoting                 |
+| `--description-file <path>`  | no               | Read description from a file (`-` for stdin). Mutually exclusive with `-d`         |
 | `-s, --status <status>`      | no               | Initial status                                                                     |
 | `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                               |
 | `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)               |

@@ -316,6 +316,12 @@ export async function updateTask(
     resolved.status = await resolveStatus(client, taskId, resolved.status)
   }
 
+  // The update payload's `parent` field must be a native task id; resolve custom
+  // ids (e.g. PROD-811) and task URLs before sending.
+  if (typeof resolved.parent === 'string') {
+    resolved.parent = await client.resolveTaskId(resolved.parent)
+  }
+
   if (resolved.custom_item_id === undefined && typeInput !== undefined) {
     resolved.custom_item_id = await resolveTaskType(client, config.teamId, typeInput)
   }

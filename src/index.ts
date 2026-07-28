@@ -28,6 +28,7 @@ import {
 import type { UpdateCommandOptions } from './commands/update.js'
 import { createTask } from './commands/create.js'
 import type { CreateOptions } from './commands/create.js'
+import { resolveTextInput } from './text-input.js'
 import { getTask } from './commands/get.js'
 import { runInitCommand } from './commands/init.js'
 import { runSprintCommand, resolveActiveSprintListId } from './commands/sprint.js'
@@ -292,6 +293,23 @@ function collect(value: string, previous: string[]): string[] {
   return [...previous, value]
 }
 
+/**
+ * Resolve a required message from either -m/--message or --message-file
+ * (the latter accepts "-" for stdin). Throws if neither is provided.
+ */
+function resolveRequiredMessage(opts: { message?: string; messageFile?: string }): string {
+  const message = resolveTextInput({
+    inline: opts.message,
+    file: opts.messageFile,
+    inlineFlag: '-m',
+    fileFlag: '--message-file',
+  })
+  if (message === undefined) {
+    throw new Error('Provide a message with -m/--message or --message-file')
+  }
+  return message
+}
+
 async function resolveMentions(
   client: ClickUpClient,
   teamId: string,
@@ -479,6 +497,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-n, --name <text>', 'New task name')
     .option('-d, --description <text>', 'New description (markdown supported)')
     .option(
+      '--description-file <path>',
+      'Read description from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -d',
+    )
+    .option(
       '-s, --status <status>',
       'New status (fuzzy matched, e.g. "prog" matches "in progress")',
     )
@@ -505,7 +527,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       '--remove-group-assignee <groupIds...>',
       'Remove group assignee (UUID or @handle, can repeat or comma-separated)',
     )
-    .option('--parent <taskId>', 'Set parent task (makes this a subtask)')
+    .option(
+      '--parent <taskId>',
+      'Set parent task (makes this a subtask): native id, custom id, or task URL',
+    )
     .option('--archive', 'Archive the task')
     .option('--unarchive', 'Unarchive the task')
     .option('--type <type>', 'Change task type (name or custom_item_id)')
@@ -519,9 +544,16 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             field?: string[]
             groupAssignee?: string[]
             removeGroupAssignee?: string[]
+            descriptionFile?: string
             json?: boolean
           },
         ) => {
+          opts.description = resolveTextInput({
+            inline: opts.description,
+            file: opts.descriptionFile,
+            inlineFlag: '-d',
+            fileFlag: '--description-file',
+          })
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
           const [timezone] = await Promise.all([
@@ -590,7 +622,14 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('-l, --list <listId>', 'Target list ID or "sprint:current" for active sprint')
     .requiredOption('-n, --name <name>', 'Task name')
     .option('-d, --description <text>', 'Task description (markdown supported)')
-    .option('-p, --parent <taskId>', 'Parent task ID (list auto-detected from parent)')
+    .option(
+      '--description-file <path>',
+      'Read description from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -d',
+    )
+    .option(
+      '-p, --parent <taskId>',
+      'Parent task: native id, custom id (e.g. PROD-811), or task URL (list auto-detected)',
+    )
     .option('-s, --status <status>', 'Initial status')
     .option('--priority <level>', 'Priority: urgent, high, normal, low (or 1-4)')
     .option(
@@ -615,9 +654,16 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           opts: CreateOptions & {
             field?: string[]
             groupAssignee?: string
+            descriptionFile?: string
             json?: boolean
           },
         ) => {
+          opts.description = resolveTextInput({
+            inline: opts.description,
+            file: opts.descriptionFile,
+            inlineFlag: '-d',
+            fileFlag: '--description-file',
+          })
           const config = loadConfig(getProfileName())
           if (opts.list === 'sprint:current') {
             opts.list = await resolveActiveSprintListId(config)
@@ -739,7 +785,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('comment <taskId>')
     .description('Post a comment on a task')
-    .requiredOption('-m, --message <text>', 'Comment text')
+    .option('-m, --message <text>', 'Comment text')
+    .option(
+      '--message-file <path>',
+      'Read comment from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
@@ -752,12 +802,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           taskId: string,
-          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+          opts: {
+            message?: string
+            messageFile?: string
+            notifyAll?: boolean
+            mention: string[]
+            json?: boolean
+          },
         ) => {
+          const message = resolveRequiredMessage(opts)
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
           const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
-          const result = await postComment(config, taskId, opts.message, opts.notifyAll, mentionIds)
+          const result = await postComment(config, taskId, message, opts.notifyAll, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else {
@@ -783,6 +840,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('comment-edit <commentId>')
     .description('Edit an existing comment')
     .option('-m, --message <text>', 'New comment text')
+    .option(
+      '--message-file <path>',
+      'Read comment from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--resolved', 'Mark comment as resolved')
     .option('--unresolved', 'Mark comment as unresolved')
     .option(
@@ -798,19 +859,26 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           commentId: string,
           opts: {
             message?: string
+            messageFile?: string
             resolved?: boolean
             unresolved?: boolean
             mention: string[]
             json?: boolean
           },
         ) => {
+          const message = resolveTextInput({
+            inline: opts.message,
+            file: opts.messageFile,
+            inlineFlag: '-m',
+            fileFlag: '--message-file',
+          })
           const config = loadConfig(getProfileName())
           let resolved: boolean | undefined
           if (opts.resolved) resolved = true
           if (opts.unresolved) resolved = false
           const client = new ClickUpClient(config)
           const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
-          await editComment(config, commentId, opts.message, resolved, mentionIds)
+          await editComment(config, commentId, message, resolved, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, commentId }, null, 2))
           } else {
@@ -892,7 +960,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('reply <commentId>')
     .description('Reply to a comment')
-    .requiredOption('-m, --message <text>', 'Reply text')
+    .option('-m, --message <text>', 'Reply text')
+    .option(
+      '--message-file <path>',
+      'Read reply from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
@@ -905,12 +977,19 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           commentId: string,
-          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+          opts: {
+            message?: string
+            messageFile?: string
+            notifyAll?: boolean
+            mention: string[]
+            json?: boolean
+          },
         ) => {
+          const message = resolveRequiredMessage(opts)
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
           const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
-          await createReply(config, commentId, opts.message, opts.notifyAll, mentionIds)
+          await createReply(config, commentId, message, opts.notifyAll, mentionIds)
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify({ success: true, commentId }, null, 2))
           } else {
@@ -1022,9 +1101,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
-    .command('search <query>')
+    .command('search [query]')
     .description(
-      'Search tasks assigned to you by default. Use --all to search across all assignees.',
+      'Search tasks by name. Without a query, lists tasks filtered by flags. Defaults to your tasks; use --all for all assignees.',
     )
     .option('--status <status>', 'Filter by status')
     .option('--list <listId>', 'Filter by list ID')
@@ -1042,7 +1121,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (
-          query: string,
+          query: string | undefined,
           opts: {
             status?: string
             list?: string
@@ -3238,7 +3317,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   chatCmd
     .command('send <channelId>')
     .description('Send a message to a channel')
-    .requiredOption('-m, --message <text>', 'Message content (markdown supported)')
+    .option('-m, --message <text>', 'Message content (markdown supported)')
+    .option(
+      '--message-file <path>',
+      'Read message from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--post', 'Send as a post instead of a message')
     .option('--title <title>', 'Post title (requires --post)')
     .option('--json', 'Force JSON output even in terminal')
@@ -3246,14 +3329,21 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           channelId: string,
-          opts: { message: string; post?: boolean; title?: string; json?: boolean },
+          opts: {
+            message?: string
+            messageFile?: string
+            post?: boolean
+            title?: string
+            json?: boolean
+          },
         ) => {
+          const message = resolveRequiredMessage(opts)
           if (opts.title && !opts.post) {
             throw new Error('--title requires --post')
           }
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
-          const result = await client.sendChatMessage(channelId, opts.message, {
+          const result = await client.sendChatMessage(channelId, message, {
             type: opts.post ? 'post' : 'message',
             postTitle: opts.title,
           })
@@ -3466,19 +3556,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   chatCmd
     .command('reply <messageId>')
     .description('Reply to a message')
-    .requiredOption('-m, --message <text>', 'Reply content (markdown supported)')
+    .option('-m, --message <text>', 'Reply content (markdown supported)')
+    .option(
+      '--message-file <path>',
+      'Read reply from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (messageId: string, opts: { message: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const client = new ClickUpClient(config)
-        const result = await client.createChatMessageReply(messageId, opts.message)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(`Reply sent (id: ${result.id})`)
-        }
-      }),
+      wrapAction(
+        async (
+          messageId: string,
+          opts: { message?: string; messageFile?: string; json?: boolean },
+        ) => {
+          const message = resolveRequiredMessage(opts)
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const result = await client.createChatMessageReply(messageId, message)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Reply sent (id: ${result.id})`)
+          }
+        },
+      ),
     )
 
   chatCmd
@@ -3563,19 +3663,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   chatCmd
     .command('message-update <messageId>')
     .description('Edit a message')
-    .requiredOption('-m, --message <text>', 'New message content')
+    .option('-m, --message <text>', 'New message content')
+    .option(
+      '--message-file <path>',
+      'Read message from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (messageId: string, opts: { message: string; json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        const client = new ClickUpClient(config)
-        const result = await client.updateChatMessage(messageId, opts.message)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify(result, null, 2))
-        } else {
-          console.log(`Message ${messageId} updated`)
-        }
-      }),
+      wrapAction(
+        async (
+          messageId: string,
+          opts: { message?: string; messageFile?: string; json?: boolean },
+        ) => {
+          const message = resolveRequiredMessage(opts)
+          const config = loadConfig(getProfileName())
+          const client = new ClickUpClient(config)
+          const result = await client.updateChatMessage(messageId, message)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(`Message ${messageId} updated`)
+          }
+        },
+      ),
     )
 
   chatCmd
@@ -3691,7 +3801,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('list-comment <listId>')
     .description('Post a comment on a list')
-    .requiredOption('-m, --message <text>', 'Comment text')
+    .option('-m, --message <text>', 'Comment text')
+    .option(
+      '--message-file <path>',
+      'Read comment from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
@@ -3704,15 +3818,22 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           listId: string,
-          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+          opts: {
+            message?: string
+            messageFile?: string
+            notifyAll?: boolean
+            mention: string[]
+            json?: boolean
+          },
         ) => {
+          const message = resolveRequiredMessage(opts)
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
           const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
           const result = await postListCommentCommand(
             config,
             listId,
-            opts.message,
+            message,
             opts.notifyAll,
             mentionIds,
           )
@@ -3740,7 +3861,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   program
     .command('view-comment <viewId>')
     .description('Post a comment on a view')
-    .requiredOption('-m, --message <text>', 'Comment text')
+    .option('-m, --message <text>', 'Comment text')
+    .option(
+      '--message-file <path>',
+      'Read comment from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -m',
+    )
     .option('--notify-all', 'Notify all assignees')
     .option(
       '--mention <user>',
@@ -3753,15 +3878,22 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       wrapAction(
         async (
           viewId: string,
-          opts: { message: string; notifyAll?: boolean; mention: string[]; json?: boolean },
+          opts: {
+            message?: string
+            messageFile?: string
+            notifyAll?: boolean
+            mention: string[]
+            json?: boolean
+          },
         ) => {
+          const message = resolveRequiredMessage(opts)
           const config = loadConfig(getProfileName())
           const client = new ClickUpClient(config)
           const mentionIds = await resolveMentions(client, config.teamId, opts.mention)
           const result = await postViewCommentCommand(
             config,
             viewId,
-            opts.message,
+            message,
             opts.notifyAll,
             mentionIds,
           )
