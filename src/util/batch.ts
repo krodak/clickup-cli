@@ -1,6 +1,5 @@
 export type BatchOutcome<T, R> =
-  | { item: T; ok: true; result: R }
-  | { item: T; ok: false; error: Error }
+  { item: T; ok: true; result: R } | { item: T; ok: false; error: Error }
 
 export async function runInBatches<T, R>(
   items: readonly T[],
