@@ -162,7 +162,15 @@ export const commandMetadata = [
   {
     name: 'comment-edit',
     description: 'Edit an existing comment',
-    flags: ['-m', '--message', '--message-file', '--resolved', '--unresolved', '--mention', '--json'],
+    flags: [
+      '-m',
+      '--message',
+      '--message-file',
+      '--resolved',
+      '--unresolved',
+      '--mention',
+      '--json',
+    ],
     quickReference: [
       {
         section: 'write',
