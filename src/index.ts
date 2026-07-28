@@ -1101,9 +1101,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     )
 
   program
-    .command('search <query>')
+    .command('search [query]')
     .description(
-      'Search tasks assigned to you by default. Use --all to search across all assignees.',
+      'Search tasks by name. Without a query, lists tasks filtered by flags. Defaults to your tasks; use --all for all assignees.',
     )
     .option('--status <status>', 'Filter by status')
     .option('--list <listId>', 'Filter by list ID')
@@ -1121,7 +1121,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (
-          query: string,
+          query: string | undefined,
           opts: {
             status?: string
             list?: string
