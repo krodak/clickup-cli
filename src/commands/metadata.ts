@@ -269,7 +269,7 @@ export const commandMetadata = [
   {
     name: 'search',
     description:
-      'Search tasks assigned to you by default. Use --all to search across all assignees.',
+      'Search tasks by name. Without a query, lists tasks filtered by flags. Defaults to your tasks; use --all for all assignees.',
     flags: [
       '--status',
       '--list',
@@ -288,8 +288,8 @@ export const commandMetadata = [
     quickReference: [
       {
         section: 'read',
-        usage: 'search <query>',
-        description: 'Search your tasks by name (--all for all assignees)',
+        usage: 'search [query]',
+        description: 'Search tasks by name or filter by flags (--all for all assignees)',
       },
     ],
   },

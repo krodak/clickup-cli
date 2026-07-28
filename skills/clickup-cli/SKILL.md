@@ -3,11 +3,11 @@ name: clickup
 description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results, saved filters, favorites.'
 ---
 
-# ClickUp CLI (`cup`) - skill version 1.39.0
+# ClickUp CLI (`cup`) - skill version 1.39.1
 
 Reference for AI agents using the `cup` CLI tool. Covers task management, sprint tracking, comments, time tracking, custom fields, goals, docs, and project workflows.
 
-> **Version check:** Run `cup --version`. If your installed version is older than 1.39.0, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
+> **Version check:** Run `cup --version`. If your installed version is older than 1.39.1, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
 
 ## Install & Configure
 
@@ -113,7 +113,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup assigned [--status s] [--include-closed]`                                                                                                                                                                                  | All my tasks grouped by status                                                                                                                               |
 | `cup sprint [--status s] [--space nameOrId] [--folder id] [--include-closed]`                                                                                                                                                   | Tasks in active sprint (auto-detected)                                                                                                                       |
 | `cup sprints [--space nameOrId]`                                                                                                                                                                                                | List all sprints (marks active with \*)                                                                                                                      |
-| `cup search <query> [--status s] [--list id] [--space id] [--all] [--include-closed] [--assignee id\|me] [--tag t] [--due-before d] [--due-after d] [--created-after d] [--created-before d] [--field "Name" val]`              | Search your tasks by name. `--all` for all assignees                                                                                                         |
+| `cup search [query] [--status s] [--list id] [--space id] [--all] [--include-closed] [--assignee id\|me] [--tag t] [--due-before d] [--due-after d] [--created-after d] [--created-before d] [--field "Name" val]`              | Search tasks by name, or list tasks filtered by flags when no query is given. `--all` for all assignees                                                       |
 | `cup task <id>`                                                                                                                                                                                                                 | Single task details (custom fields, checklists, attachments, deps, links)                                                                                    |
 | `cup subtasks <id> [--status s] [--name q] [--include-closed]`                                                                                                                                                                  | Subtasks of a task                                                                                                                                           |
 | `cup comments <id>`                                                                                                                                                                                                             | Comments on a task                                                                                                                                           |
@@ -337,6 +337,8 @@ cup tasks --assignee me --created-after 2026-03-01  # my tasks created recently
 cup search "payment flow"            # multi-word search
 cup search auth --status "prog"      # fuzzy status match
 cup search "auth" --list 123 --space 456  # search within list and space
+cup search --assignee me             # no query — all my tasks
+cup search --assignee me --status "in progress"  # filter without query
 cup sprint                           # current sprint
 cup assigned                         # all my tasks by status
 cup overdue                          # past due date

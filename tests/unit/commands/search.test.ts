@@ -32,10 +32,35 @@ describe('searchTasks', () => {
     mockGetMyTasks.mockReset()
   })
 
-  it('throws on empty query', async () => {
+  it('returns all tasks when query is undefined', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug' }),
+      baseTask({ id: 't2', name: 'Add search feature' }),
+    ])
     const { searchTasks } = await import('../../../src/commands/search.js')
-    await expect(searchTasks(config, '')).rejects.toThrow('Search query cannot be empty')
-    await expect(searchTasks(config, '   ')).rejects.toThrow('Search query cannot be empty')
+    const result = await searchTasks(config, undefined)
+    expect(result).toHaveLength(2)
+  })
+
+  it('returns all tasks when query is empty string', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug' }),
+      baseTask({ id: 't2', name: 'Add search feature' }),
+    ])
+    const { searchTasks } = await import('../../../src/commands/search.js')
+    const result = await searchTasks(config, '')
+    expect(result).toHaveLength(2)
+  })
+
+  it('still filters by status when query is absent', async () => {
+    mockGetMyTasks.mockResolvedValue([
+      baseTask({ id: 't1', name: 'Fix login bug', status: { status: 'in progress', color: '' } }),
+      baseTask({ id: 't2', name: 'Add search feature', status: { status: 'open', color: '' } }),
+    ])
+    const { searchTasks } = await import('../../../src/commands/search.js')
+    const result = await searchTasks(config, undefined, { status: 'in progress' })
+    expect(result).toHaveLength(1)
+    expect(result[0]!.id).toBe('t1')
   })
 
   it('matches tasks by name (case-insensitive)', async () => {
