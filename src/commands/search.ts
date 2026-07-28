@@ -45,13 +45,10 @@ export interface SearchOptions {
 
 export async function searchTasks(
   config: Config,
-  query: string,
+  query: string | undefined,
   opts: SearchOptions = {},
 ): Promise<TaskSummary[]> {
-  const trimmed = query.trim()
-  if (!trimmed) {
-    throw new Error('Search query cannot be empty')
-  }
+  const trimmed = (query ?? '').trim()
 
   const client = new ClickUpClient(config)
   const [allTasks, customTypes] = await Promise.all([
@@ -72,12 +69,14 @@ export async function searchTasks(
   ])
   const typeMap = buildTypeMap(customTypes)
 
-  const words = trimmed.toLowerCase().split(/\s+/)
-
-  let matched = allTasks.filter(task => {
-    const name = task.name.toLowerCase()
-    return words.every(word => name.includes(word))
-  })
+  let matched = allTasks
+  if (trimmed) {
+    const words = trimmed.toLowerCase().split(/\s+/)
+    matched = allTasks.filter(task => {
+      const name = task.name.toLowerCase()
+      return words.every(word => name.includes(word))
+    })
+  }
 
   if (opts.status) {
     const availableStatuses = [...new Set(allTasks.map(t => t.status.status))]
