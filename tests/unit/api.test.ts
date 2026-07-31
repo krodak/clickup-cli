@@ -477,9 +477,21 @@ describe('ClickUpClient', () => {
   })
 
   it('getFolders returns folders for a space', async () => {
-    mockFetch.mockReturnValue(mockResponse({ folders: [{ id: 'f1', name: 'Q1 Work' }] }))
+    mockFetch.mockReturnValue(
+      mockResponse({
+        folders: [
+          { id: 'f1', name: 'Q1 Work' },
+          { id: 'f2', name: 'Q1 Work Subfolder', parent_folder: 'f1' },
+        ],
+      }),
+    )
     const folders = await client.getFolders('s1')
-    expect(folders).toEqual([{ id: 'f1', name: 'Q1 Work' }])
+    expect(folders).toEqual([
+      { id: 'f1', name: 'Q1 Work' },
+      { id: 'f2', name: 'Q1 Work Subfolder', parent_folder: 'f1' },
+    ])
+    expect(folders[0]).not.toHaveProperty('parent_folder')
+    expect(folders[1]).toHaveProperty('parent_folder', 'f1')
     expect(String(mockFetch.mock.calls[0]![0])).toContain('/space/s1/folder')
   })
 
