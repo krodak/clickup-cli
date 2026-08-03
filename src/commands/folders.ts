@@ -5,6 +5,7 @@ import type { Config } from '../config.js'
 interface FolderWithLists {
   id: string
   name: string
+  parent_folder?: string
   lists: Array<{ id: string; name: string }>
 }
 
@@ -24,7 +25,12 @@ export async function listFolders(
   const results: FolderWithLists[] = []
   for (const folder of filtered) {
     const lists = await client.getFolderLists(folder.id)
-    results.push({ id: folder.id, name: folder.name, lists })
+    results.push({
+      id: folder.id,
+      name: folder.name,
+      ...(folder.parent_folder !== undefined ? { parent_folder: folder.parent_folder } : {}),
+      lists,
+    })
   }
   return results
 }
