@@ -665,6 +665,8 @@ cup doc-pages abc123 --json
 ### `cup folders <spaceId>`
 
 List folders in a space with their contained lists. Useful for discovering folder and list IDs.
+JSON output remains a flat array and includes `parent_folder` on subfolders so clients can
+reconstruct the hierarchy. Top-level folders omit the field.
 
 ```bash
 cup folders <spaceId>
