@@ -881,9 +881,18 @@ cup field abc123 --set "Points" 3 --remove "Old Field"
 cup field abc123 --set "Points" 3 --json
 ```
 
+For long or free-text values (standup notes, summaries), read the value from a file with
+`--value-file` instead of quoting it inline — see "Multiline markdown" above. Pass `-` to read stdin:
+
+```bash
+cup field abc123 --set "Standup 4 - 6/25" --value-file /tmp/note.md
+cup field abc123 --set "Standup 4 - 6/25" --value-file -   # stdin
+```
+
 | Flag                       | Description                                                                                                                                                                                                                                                                                           |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--set "Field Name" <val>` | Set a custom field by name. Supports: text, number, checkbox (true/false), dropdown (option name), labels (comma-separated names), date (YYYY-MM-DD), url, email, emoji/rating (0-5), manual_progress (0-100), tasks/relationship (comma-separated task IDs), users/people (comma-separated user IDs) |
+| `--value-file <path>`      | Read the field value from a file (`-` for stdin). Use with `--set "Field Name"`; mutually exclusive with an inline value                                                                                                                                                                              |
 | `--remove "Field Name"`    | Remove a custom field value                                                                                                                                                                                                                                                                           |
 | `--json`                   | Force JSON output                                                                                                                                                                                                                                                                                     |
 
