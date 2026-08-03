@@ -1,4 +1,7 @@
 import { execFile } from 'child_process'
+import { existsSync, rmSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 import { promisify } from 'util'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -15,6 +18,8 @@ const mockShouldOutputJson = vi.fn<(forceJson: boolean) => boolean>()
 const mockFormatTaskDetail = vi.fn()
 const mockFormatTaskDetailMarkdown = vi.fn()
 const mockBulkUpdateStatus = vi.fn()
+const mockSetCustomField = vi.fn()
+const mockBulkField = vi.fn()
 
 async function loadCli() {
   vi.resetModules()
@@ -77,6 +82,15 @@ async function loadCli() {
     return {
       ...actual,
       bulkUpdateStatus: mockBulkUpdateStatus,
+      bulkField: mockBulkField,
+    }
+  })
+
+  vi.doMock('../../src/commands/field.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/field.js')>()
+    return {
+      ...actual,
+      setCustomField: mockSetCustomField,
     }
   })
 
@@ -96,6 +110,8 @@ describe('CLI entry point', () => {
     mockFormatTaskDetail.mockReset().mockReturnValue('TTY detail')
     mockFormatTaskDetailMarkdown.mockReset().mockReturnValue('# Markdown detail')
     mockBulkUpdateStatus.mockReset()
+    mockSetCustomField.mockReset().mockResolvedValue({ results: [] })
+    mockBulkField.mockReset().mockResolvedValue({ updated: 1, failed: [] })
     vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
@@ -224,6 +240,111 @@ describe('CLI entry point', () => {
     expect(stderrCalls.some(line => line.includes('t2') && line.includes('Not found'))).toBe(true)
     expect(stderrCalls.some(line => line.includes('t4') && line.includes('Invalid status'))).toBe(
       true,
+    )
+  })
+})
+
+describe('cup field --value-file', () => {
+  const tmpFile = join(tmpdir(), `cup-value-file-test-${process.pid}.md`)
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    mockLoadConfig.mockClear().mockReturnValue(config)
+    mockSetCustomField.mockReset().mockResolvedValue({ results: [] })
+    mockBulkField.mockReset().mockResolvedValue({ updated: 1, failed: [] })
+    mockIsTTY.mockReset().mockReturnValue(false)
+    mockShouldOutputJson.mockReset().mockReturnValue(false)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    process.exitCode = undefined
+    writeFileSync(tmpFile, "Done X; didn't finish the team's review.\n\nNext: Y with `code`.\n")
+  })
+
+  afterEach(() => {
+    process.exitCode = undefined
+    if (existsSync(tmpFile)) rmSync(tmpFile)
+  })
+
+  it('reads the field value from a file, stripping one trailing newline', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['field', 'task-1', '--set', 'Notes', '--value-file', tmpFile], {
+      from: 'user',
+    })
+
+    expect(mockSetCustomField).toHaveBeenCalledWith(config, 'task-1', {
+      set: ['Notes', "Done X; didn't finish the team's review.\n\nNext: Y with `code`."],
+    })
+  })
+
+  it('still accepts an inline value (backward compatible)', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['field', 'task-1', '--set', 'Notes', 'inline value'], {
+      from: 'user',
+    })
+
+    expect(mockSetCustomField).toHaveBeenCalledWith(config, 'task-1', {
+      set: ['Notes', 'inline value'],
+    })
+  })
+
+  it('rejects an inline value combined with --value-file', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      ['field', 'task-1', '--set', 'Notes', 'inline', '--value-file', tmpFile],
+      { from: 'user' },
+    )
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot use --set <value> and --value-file together'),
+    )
+    expect(process.exitCode).toBe(1)
+    expect(mockSetCustomField).not.toHaveBeenCalled()
+  })
+
+  it('rejects --value-file without --set', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['field', 'task-1', '--value-file', tmpFile], { from: 'user' })
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('--value-file requires --set'),
+    )
+    expect(process.exitCode).toBe(1)
+    expect(mockSetCustomField).not.toHaveBeenCalled()
+  })
+
+  it('rejects --set with a name but no value and no --value-file', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(['field', 'task-1', '--set', 'Notes'], { from: 'user' })
+
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('--set requires a value'))
+    expect(process.exitCode).toBe(1)
+    expect(mockSetCustomField).not.toHaveBeenCalled()
+  })
+
+  it('supports --value-file on bulk field', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      ['bulk', 'field', 't1', 't2', '--set', 'Notes', '--value-file', tmpFile],
+      { from: 'user' },
+    )
+
+    expect(mockBulkField).toHaveBeenCalledWith(
+      config,
+      'Notes',
+      "Done X; didn't finish the team's review.\n\nNext: Y with `code`.",
+      ['t1', 't2'],
     )
   })
 })

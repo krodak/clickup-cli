@@ -383,7 +383,7 @@ export const commandMetadata = [
   {
     name: 'field',
     description: 'Set or remove a custom field value on a task',
-    flags: ['--set', '--remove', '--json'],
+    flags: ['--set', '--value-file', '--remove', '--json'],
     quickReference: [
       {
         section: 'write',

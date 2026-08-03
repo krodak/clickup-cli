@@ -294,6 +294,35 @@ function collect(value: string, previous: string[]): string[] {
 }
 
 /**
+ * Resolve `--set "Field Name" [value]` into a [name, value] pair, taking the
+ * value from --value-file when it is not supplied inline.
+ *
+ * `--set` is variadic, so `--set "Name" --value-file p` yields ["Name"] and the
+ * value comes from the file; `--set "Name" value` yields both inline.
+ */
+function resolveFieldSet(set: string[], valueFile?: string): [string, string] {
+  if (set.length > 2) {
+    throw new Error('--set requires exactly two arguments: field name and value')
+  }
+  const name = set[0]
+  if (name === undefined) {
+    throw new Error('--set requires a field name')
+  }
+  const value = resolveTextInput({
+    inline: set[1],
+    file: valueFile,
+    inlineFlag: '--set <value>',
+    fileFlag: '--value-file',
+  })
+  if (value === undefined) {
+    throw new Error(
+      '--set requires a value: pass it inline (--set "Field Name" value) or use --value-file',
+    )
+  }
+  return [name, value]
+}
+
+/**
  * Resolve a required message from either -m/--message or --message-file
  * (the latter accepts "-" for stdin). Throws if neither is provided.
  */
@@ -1373,18 +1402,24 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('field <taskId>')
     .description('Set or remove a custom field value on a task')
     .option('--set <nameAndValue...>', 'Set field: --set "Field Name" value')
+    .option(
+      '--value-file <path>',
+      'Read the field value from a file ("-" for stdin); use with --set "Field Name". Avoids shell quoting',
+    )
     .option('--remove <fieldName>', 'Remove field value by name')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
-        async (taskId: string, opts: { set?: string[]; remove?: string; json?: boolean }) => {
+        async (
+          taskId: string,
+          opts: { set?: string[]; valueFile?: string; remove?: string; json?: boolean },
+        ) => {
           const config = loadConfig(getProfileName())
           const fieldOpts: { set?: [string, string]; remove?: string } = {}
           if (opts.set) {
-            if (opts.set.length !== 2) {
-              throw new Error('--set requires exactly two arguments: field name and value')
-            }
-            fieldOpts.set = [opts.set[0]!, opts.set[1]!]
+            fieldOpts.set = resolveFieldSet(opts.set, opts.valueFile)
+          } else if (opts.valueFile !== undefined) {
+            throw new Error('--value-file requires --set "Field Name"')
           }
           if (opts.remove) {
             fieldOpts.remove = opts.remove
@@ -2217,16 +2252,20 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('field <taskIds...>')
     .description('Bulk set the same custom field value on tasks')
     .requiredOption('--set <nameAndValue...>', 'Set field: --set "Field Name" value')
+    .option(
+      '--value-file <path>',
+      'Read the field value from a file ("-" for stdin); use with --set "Field Name"',
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (taskIds: string[], opts: { set: string[]; json?: boolean }) => {
-        if (opts.set.length !== 2) {
-          throw new Error('--set requires exactly two arguments: field name and value')
-        }
-        const config = loadConfig(getProfileName())
-        const result = await bulkField(config, opts.set[0]!, opts.set[1]!, taskIds)
-        outputBulkResult(result, opts.json ?? false, `field "${opts.set[0]}"`)
-      }),
+      wrapAction(
+        async (taskIds: string[], opts: { set: string[]; valueFile?: string; json?: boolean }) => {
+          const [fieldName, fieldValue] = resolveFieldSet(opts.set, opts.valueFile)
+          const config = loadConfig(getProfileName())
+          const result = await bulkField(config, fieldName, fieldValue, taskIds)
+          outputBulkResult(result, opts.json ?? false, `field "${fieldName}"`)
+        },
+      ),
     )
 
   bulkCmd

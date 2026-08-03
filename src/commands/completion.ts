@@ -382,6 +382,7 @@ ${renderZshTopLevelCommands(name)}
           _arguments \\
             '1:task_id:' \\
             '--set[Set field name and value]:name_and_value:' \\
+            '--value-file[Read the field value from a file (- for stdin)]:path:_files' \\
             '--remove[Remove field value by name]:field_name:' \\
             '--json[Force JSON output]'
           ;;
