@@ -136,6 +136,7 @@ export interface ListWithStatuses extends List {
 interface Folder {
   id: string
   name: string
+  parent_folder?: string
 }
 
 export interface ViewSummary {

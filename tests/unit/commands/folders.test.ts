@@ -22,16 +22,27 @@ describe('listFolders', () => {
   it('returns folders with their lists', async () => {
     mockGetFolders.mockResolvedValue([
       { id: 'f1', name: 'Sprint Folder' },
-      { id: 'f2', name: 'Backlog' },
+      { id: 'f2', name: 'Sprint Subfolder', parent_folder: 'f1' },
     ])
     mockGetFolderLists.mockResolvedValueOnce([{ id: 'l1', name: 'Sprint 1' }])
-    mockGetFolderLists.mockResolvedValueOnce([{ id: 'l2', name: 'Backlog Items' }])
+    mockGetFolderLists.mockResolvedValueOnce([{ id: 'l2', name: 'Sprint 2' }])
     const { listFolders } = await import('../../../src/commands/folders.js')
     const result = await listFolders(mockConfig, 's1')
     expect(result).toEqual([
-      { id: 'f1', name: 'Sprint Folder', lists: [{ id: 'l1', name: 'Sprint 1' }] },
-      { id: 'f2', name: 'Backlog', lists: [{ id: 'l2', name: 'Backlog Items' }] },
+      {
+        id: 'f1',
+        name: 'Sprint Folder',
+        lists: [{ id: 'l1', name: 'Sprint 1' }],
+      },
+      {
+        id: 'f2',
+        name: 'Sprint Subfolder',
+        parent_folder: 'f1',
+        lists: [{ id: 'l2', name: 'Sprint 2' }],
+      },
     ])
+    expect(result[0]).not.toHaveProperty('parent_folder')
+    expect(result[1]).toHaveProperty('parent_folder', 'f1')
     expect(mockGetFolders).toHaveBeenCalledWith('s1', undefined)
     expect(mockGetFolderLists).toHaveBeenCalledTimes(2)
   })
@@ -72,12 +83,14 @@ describe('formatFolders', () => {
   it('shows folder names with list names', async () => {
     const { formatFolders } = await import('../../../src/commands/folders.js')
     const result = formatFolders([
-      { id: 'f1', name: 'Sprint', lists: [{ id: 'l1', name: 'Sprint 1' }] },
+      {
+        id: 'f2',
+        name: 'Sprint',
+        parent_folder: 'f1',
+        lists: [{ id: 'l1', name: 'Sprint 1' }],
+      },
     ])
-    expect(result).toContain('Sprint')
-    expect(result).toContain('Sprint 1')
-    expect(result).toContain('f1')
-    expect(result).toContain('l1')
+    expect(result).toBe('Sprint f2\n  > Sprint 1 l1')
   })
 })
 
@@ -91,15 +104,16 @@ describe('formatFoldersMarkdown', () => {
     const { formatFoldersMarkdown } = await import('../../../src/commands/folders.js')
     const result = formatFoldersMarkdown([
       {
-        id: 'f1',
+        id: 'f2',
         name: 'Sprint',
+        parent_folder: 'f1',
         lists: [
           { id: 'l1', name: 'Sprint 1' },
           { id: 'l2', name: 'Sprint 2' },
         ],
       },
     ])
-    expect(result).toBe('- **Sprint** (f1)\n  - Sprint 1 (l1)\n  - Sprint 2 (l2)')
+    expect(result).toBe('- **Sprint** (f2)\n  - Sprint 1 (l1)\n  - Sprint 2 (l2)')
   })
 
   it('handles folders without lists', async () => {
