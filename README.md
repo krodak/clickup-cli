@@ -186,7 +186,7 @@ Full CRUD for the core ClickUp workflow:
 | ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                                                                                                      |
 | 👁️ **Views**         | List, get, create, update, delete views on lists                                                                                                                                                              |
 | 🔗 **Webhooks**      | List, create, update, delete webhooks; scope to space, folder, list, or task                                                                                                                                  |
-| 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template), members, user groups, task types, templates, plan, shared hierarchy                                                                              |
+| 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template; subfolder parent IDs in JSON), members, user groups, task types, templates, plan, shared hierarchy                                                |
 | 📎 **Attachments**   | Upload files to tasks, list task attachments, shown in detail views                                                                                                                                           |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
