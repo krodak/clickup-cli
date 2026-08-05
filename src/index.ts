@@ -2736,17 +2736,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('doc-delete <docId>')
-    .description('Delete a doc')
+    .description('Not supported: ClickUp has no delete-Doc API (use the ClickUp UI)')
     .option('--json', 'Force JSON output even in terminal')
     .action(
-      wrapAction(async (docId: string, opts: { json?: boolean }) => {
-        const config = loadConfig(getProfileName())
-        await deleteDoc(config, docId)
-        if (shouldOutputJson(opts.json ?? false)) {
-          console.log(JSON.stringify({ success: true, docId }, null, 2))
-        } else {
-          console.log(`Deleted doc ${docId}`)
-        }
+      wrapAction(async (docId: string) => {
+        await deleteDoc(docId)
       }),
     )
 

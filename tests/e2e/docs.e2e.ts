@@ -18,13 +18,28 @@ describe.skipIf(!TOKEN)('Doc lifecycle e2e', () => {
 
   afterAll(async () => {
     if (subPageId) await client.deleteDocPage(teamId, docId, subPageId).catch(() => {})
-    if (docId) await client.deleteDoc(teamId, docId).catch(() => {})
+    // Docs cannot be deleted: ClickUp's public API exposes no delete-Doc endpoint
+    // (returns HTTP 405), so the created Doc is left behind by design.
   })
 
-  it('creates a doc', async () => {
+  it('creates a doc with a persisted name', async () => {
     const doc = await client.createDoc(teamId, 'E2E Doc Test')
     docId = doc.id
     expect(doc.id).toBeTypeOf('string')
+    // Regression: the Doc used to come back unnamed because `title` was sent
+    // instead of `name`, and the API ignored it while still returning 201.
+    expect(doc.name).toBe('E2E Doc Test')
+    const persisted = await client.getDoc(teamId, docId)
+    expect(persisted.name).toBe('E2E Doc Test')
+  })
+
+  it('creates a doc whose root page carries the title and content', async () => {
+    const { createDoc } = await import('../../src/commands/doc.js')
+    const created = await createDoc({ apiToken: TOKEN!, teamId }, 'E2E Doc Content', '# Hello')
+    const pages = await client.getDocPages(teamId, created.id)
+    expect(pages.length).toBeGreaterThan(0)
+    expect(pages[0]!.name).toBe('E2E Doc Content')
+    expect(pages[0]!.content).toContain('Hello')
   })
 
   it('lists docs and finds the created one', async () => {

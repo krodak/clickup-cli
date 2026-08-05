@@ -211,7 +211,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup doc-create <title>`                                 | Create a new doc                                                  |
 | `cup doc-page-create <docId> <name>`                     | Create a page in a doc                                            |
 | `cup doc-page-edit <docId> <pageId>`                     | Edit a doc page                                                   |
-| `cup doc-delete <docId>`                                 | Delete a doc                                                      |
+| `cup doc-delete <docId>`                                 | Not supported by ClickUp API (delete Docs in the UI)              |
 | `cup doc-page-delete <docId> <pageId>`                   | Delete a doc page                                                 |
 | `cup space-create <name>`                                | Create a space                                                    |
 | `cup list-create <spaceId> <name>`                       | Create a list in a space                                          |
@@ -1401,7 +1401,7 @@ cup space-rename <spaceId> "Design System" --json
 
 ### `cup doc-create <title>`
 
-Create a new doc in your workspace.
+Create a new doc in your workspace. The doc is created with a root page named after the title; `-c/--content` writes that page's initial markdown content.
 
 ```bash
 cup doc-create "Architecture Notes"
@@ -1413,6 +1413,8 @@ cup doc-create "Plan" --json
 | --------------- | -------- | -------------------------- |
 | `-c, --content` | no       | Initial content (markdown) |
 | `--json`        | no       | Force JSON output          |
+
+ClickUp's Create Doc endpoint accepts only a name, so the title and content are applied to the doc's root page in a follow-up call. If the doc is created but its root page cannot be written, the error includes the new doc ID so the partial doc can be found.
 
 ### `cup doc-page-create <docId> <name>`
 
@@ -1858,16 +1860,14 @@ cup view-comment v12345 -m "Note" --json
 
 ### `cup doc-delete <docId>`
 
-Delete a doc.
+**Not supported.** ClickUp's public API exposes no delete-Doc endpoint — the request returns HTTP 405 — so this command fails immediately with an explanation instead of sending a call that cannot succeed.
 
 ```bash
 cup doc-delete abc123
-cup doc-delete abc123 --json
+# Cannot delete doc abc123: ClickUp's public API does not support deleting Docs...
 ```
 
-| Flag     | Required | Description       |
-| -------- | -------- | ----------------- |
-| `--json` | no       | Force JSON output |
+Delete or archive the doc in the ClickUp UI instead. To remove a single page, use [`cup doc-page-delete`](#cup-doc-page-delete-docid-pageid).
 
 ### `cup doc-page-delete <docId> <pageId>`
 

@@ -92,8 +92,27 @@ export async function createDoc(
 ): Promise<{ id: string; title: string }> {
   if (!title.trim()) throw new Error('Doc title cannot be empty')
   const client = new ClickUpClient(config)
-  const doc = await client.createDoc(config.teamId, title, content)
-  return { id: doc.id, title: doc.name ?? title }
+  const doc = await client.createDoc(config.teamId, title)
+
+  // ClickUp creates the Doc with a single unnamed, empty root page. Create Doc
+  // accepts neither a page name nor content, so name that page after the Doc and
+  // write any initial content through the page-edit endpoint.
+  try {
+    const pages = await client.getDocPageListing(config.teamId, doc.id)
+    const rootPage = pages[0]
+    if (!rootPage) throw new Error('the doc has no root page')
+    await client.editDocPage(config.teamId, doc.id, rootPage.id, {
+      name: title,
+      ...(content !== undefined ? { content } : {}),
+    })
+  } catch (err) {
+    throw new Error(
+      `Created doc ${doc.id} but could not write its root page: ${(err as Error).message}`,
+      { cause: err },
+    )
+  }
+
+  return { id: doc.id, title: doc.name || title }
 }
 
 export async function createDocPage(
@@ -121,9 +140,17 @@ export async function editDocPage(
   return client.editDocPage(config.teamId, docId, pageId, updates)
 }
 
-export async function deleteDoc(config: Config, docId: string): Promise<void> {
-  const client = new ClickUpClient(config)
-  await client.deleteDoc(config.teamId, docId)
+/**
+ * ClickUp's public API exposes no delete-Doc endpoint; the request returns HTTP
+ * 405. Fail immediately with an actionable message rather than sending a call
+ * that cannot succeed.
+ */
+export async function deleteDoc(docId: string): Promise<never> {
+  throw new Error(
+    `Cannot delete doc ${docId}: ClickUp's public API does not support deleting Docs ` +
+      `(no delete endpoint exists; the request returns HTTP 405). Delete or archive the ` +
+      `Doc in the ClickUp UI instead. To remove a single page, use \`cup doc-page-delete <docId> <pageId>\`.`,
+  )
 }
 
 export async function deleteDocPage(config: Config, docId: string, pageId: string): Promise<void> {
