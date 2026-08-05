@@ -1380,10 +1380,10 @@ describe('Docs API v3 methods', () => {
     expect(url).toContain('content_format=text/md')
   })
 
-  it('createDoc sends POST to v3 /workspaces/{id}/docs', async () => {
+  it('createDoc sends POST to v3 /workspaces/{id}/docs with name', async () => {
     const doc = { id: 'd1', name: 'New Doc', workspace_id: 1 }
     mockFetch.mockReturnValue(mockResponse(doc))
-    const result = await client.createDoc('w1', 'New Doc', '# Content')
+    const result = await client.createDoc('w1', 'New Doc')
     expect(result).toEqual(doc)
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('https://api.clickup.com/api/v3/workspaces/w1/docs'),
@@ -1391,8 +1391,11 @@ describe('Docs API v3 methods', () => {
     )
     const callArgs = mockFetch.mock.calls[0]![1] as RequestInit
     const body = JSON.parse(callArgs.body as string) as Record<string, unknown>
-    expect(body.title).toBe('New Doc')
-    expect(body.content).toBe('# Content')
+    // ClickUp's v3 Create Doc accepts `name`; `title` and `content` are ignored,
+    // which produced unnamed Docs with empty root pages.
+    expect(body.name).toBe('New Doc')
+    expect(body).not.toHaveProperty('title')
+    expect(body).not.toHaveProperty('content')
   })
 
   it('createDocPage sends POST to v3 /workspaces/{id}/docs/{docId}/pages', async () => {

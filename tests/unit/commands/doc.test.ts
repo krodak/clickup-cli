@@ -124,24 +124,54 @@ describe('createDoc', () => {
     vi.clearAllMocks()
   })
 
-  it('creates a doc and returns id and title', async () => {
+  it('creates a doc with its name and names the root page after it', async () => {
     mockCreateDoc.mockResolvedValue({ id: 'd1', name: 'New Doc', workspace_id: 1 })
+    mockGetDocPageListing.mockResolvedValue([{ id: 'p1', doc_id: 'd1', name: null }])
+    mockEditDocPage.mockResolvedValue({ id: 'p1', doc_id: 'd1', name: 'New Doc' })
     const { createDoc } = await import('../../../src/commands/doc.js')
     const result = await createDoc(mockConfig, 'New Doc')
     expect(result).toEqual({ id: 'd1', title: 'New Doc' })
-    expect(mockCreateDoc).toHaveBeenCalledWith('team1', 'New Doc', undefined)
+    expect(mockCreateDoc).toHaveBeenCalledWith('team1', 'New Doc')
+    // Root page is created unnamed by ClickUp, so it is named after the Doc.
+    expect(mockEditDocPage).toHaveBeenCalledWith('team1', 'd1', 'p1', { name: 'New Doc' })
   })
 
-  it('passes content when provided', async () => {
+  it('writes initial content to the root page when provided', async () => {
     mockCreateDoc.mockResolvedValue({ id: 'd1', name: 'Doc', workspace_id: 1 })
+    mockGetDocPageListing.mockResolvedValue([{ id: 'p1', doc_id: 'd1', name: null }])
+    mockEditDocPage.mockResolvedValue({ id: 'p1', doc_id: 'd1', name: 'Doc' })
     const { createDoc } = await import('../../../src/commands/doc.js')
     await createDoc(mockConfig, 'Doc', '# Content')
-    expect(mockCreateDoc).toHaveBeenCalledWith('team1', 'Doc', '# Content')
+    // Content is not accepted by Create Doc; it must go through the page edit.
+    expect(mockCreateDoc).toHaveBeenCalledWith('team1', 'Doc')
+    expect(mockEditDocPage).toHaveBeenCalledWith('team1', 'd1', 'p1', {
+      name: 'Doc',
+      content: '# Content',
+    })
+  })
+
+  it('includes the created doc id when the root page cannot be written', async () => {
+    mockCreateDoc.mockResolvedValue({ id: 'd1', name: 'Doc', workspace_id: 1 })
+    mockGetDocPageListing.mockResolvedValue([{ id: 'p1', doc_id: 'd1', name: null }])
+    mockEditDocPage.mockRejectedValue(new Error('ClickUp API error 500'))
+    const { createDoc } = await import('../../../src/commands/doc.js')
+    await expect(createDoc(mockConfig, 'Doc', '# Content')).rejects.toThrow(
+      /Created doc d1 but could not write its root page: ClickUp API error 500/,
+    )
+  })
+
+  it('includes the created doc id when the doc has no root page', async () => {
+    mockCreateDoc.mockResolvedValue({ id: 'd1', name: 'Doc', workspace_id: 1 })
+    mockGetDocPageListing.mockResolvedValue([])
+    const { createDoc } = await import('../../../src/commands/doc.js')
+    await expect(createDoc(mockConfig, 'Doc')).rejects.toThrow(/Created doc d1 but/)
+    expect(mockEditDocPage).not.toHaveBeenCalled()
   })
 
   it('throws on empty title', async () => {
     const { createDoc } = await import('../../../src/commands/doc.js')
     await expect(createDoc(mockConfig, '  ')).rejects.toThrow('Doc title cannot be empty')
+    expect(mockCreateDoc).not.toHaveBeenCalled()
   })
 })
 
@@ -206,11 +236,15 @@ describe('deleteDoc', () => {
     vi.clearAllMocks()
   })
 
-  it('deletes a doc via API', async () => {
-    mockDeleteDoc.mockResolvedValue(undefined)
+  it('fails fast without calling the API, since ClickUp has no delete-Doc endpoint', async () => {
     const { deleteDoc } = await import('../../../src/commands/doc.js')
-    await deleteDoc(mockConfig, 'd1')
-    expect(mockDeleteDoc).toHaveBeenCalledWith('team1', 'd1')
+    await expect(deleteDoc('d1')).rejects.toThrow(/does not support deleting Docs/)
+    expect(mockDeleteDoc).not.toHaveBeenCalled()
+  })
+
+  it('points to the page-delete alternative', async () => {
+    const { deleteDoc } = await import('../../../src/commands/doc.js')
+    await expect(deleteDoc('d1')).rejects.toThrow(/cup doc-page-delete/)
   })
 })
 

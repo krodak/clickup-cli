@@ -627,10 +627,14 @@ export const commandMetadata = [
   },
   {
     name: 'doc-delete',
-    description: 'Delete a doc',
+    description: 'Not supported: ClickUp has no delete-Doc API (use the ClickUp UI)',
     flags: ['--json'],
     quickReference: [
-      { section: 'write', usage: 'doc-delete <docId>', description: 'Delete a doc' },
+      {
+        section: 'write',
+        usage: 'doc-delete <docId>',
+        description: 'Not supported by ClickUp API (delete Docs in the UI)',
+      },
     ],
   },
   {

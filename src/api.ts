@@ -1380,21 +1380,18 @@ export class ClickUpClient {
     )
   }
 
-  async createDoc(
-    workspaceId: string,
-    title: string,
-    content?: string,
-    parentId?: string,
-  ): Promise<Doc> {
-    const body: Record<string, unknown> = { title }
-    if (content) body.content = content
-    if (parentId) {
-      body.parent_id = parentId
-      body.parent_type = 'doc'
-    }
+  /**
+   * Create a Doc.
+   *
+   * ClickUp's v3 Create Doc endpoint accepts `name` only — `title` and `content`
+   * are silently ignored (the request still returns 201), which is why passing
+   * them produced unnamed Docs with empty root pages. Initial content must be
+   * written to the Doc's root page via {@link editDocPage}.
+   */
+  async createDoc(workspaceId: string, name: string): Promise<Doc> {
     return this.requestV3<Doc>(`/workspaces/${workspaceId}/docs`, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ name }),
     })
   }
 
@@ -1513,12 +1510,6 @@ export class ClickUpClient {
 
   async deleteKeyResult(keyResultId: string): Promise<void> {
     await this.request<Record<string, never>>(`/key_result/${keyResultId}`, { method: 'DELETE' })
-  }
-
-  async deleteDoc(workspaceId: string, docId: string): Promise<void> {
-    await this.requestV3<Record<string, never>>(`/workspaces/${workspaceId}/docs/${docId}`, {
-      method: 'DELETE',
-    })
   }
 
   async deleteDocPage(workspaceId: string, docId: string, pageId: string): Promise<void> {
