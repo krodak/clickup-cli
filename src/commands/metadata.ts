@@ -109,7 +109,6 @@ export const commandMetadata = [
       '-d',
       '--description',
       '--description-file',
-      '-p',
       '--parent',
       '-s',
       '--status',

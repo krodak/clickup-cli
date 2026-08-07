@@ -244,7 +244,7 @@ ${renderZshTopLevelCommands(name)}
             '(-n --name)'{-n,--name}'[Task name]:name:' \\
             '(-d --description)'{-d,--description}'[Task description]:text:' \\
             '--description-file[Read description from a file (- for stdin)]:path:_files' \\
-            '(-p --parent)'{-p,--parent}'[Parent task ID]:task_id:' \\
+            '--parent[Parent task ID]:task_id:' \\
             '(-s --status)'{-s,--status}'[Initial status]:status:(open "in progress" "in review" done closed)' \\
             '--priority[Priority level]:priority:(urgent high normal low)' \\
             '--due-date[Due date]:date:' \\

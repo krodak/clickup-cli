@@ -48,6 +48,19 @@ export interface MultiProfileConfig {
   profiles: Record<string, ProfileData>
 }
 
+/**
+ * Heuristic for "this profile name is really a task ID".
+ *
+ * `-p` is the global --profile, so `cup create -p <taskId>` (meaning --parent)
+ * fails with an unhelpful "profile not found". Only used to add a hint to an
+ * error that is already being thrown, so a false positive costs nothing.
+ * Matches custom IDs (PROD-811) and native IDs (86d3zaqa0), not word-like names.
+ */
+function looksLikeTaskId(value: string): boolean {
+  if (/^[A-Za-z]+-\d+$/.test(value)) return true
+  return value.length >= 6 && /^[a-z0-9]+$/i.test(value) && /\d/.test(value)
+}
+
 function isFilterEntry(v: unknown): v is FilterEntry {
   if (!isRecord(v)) return false
   if (!Array.isArray(v.command)) return false
@@ -303,7 +316,12 @@ export function loadConfig(profileName?: string): Config {
   const profile = multi.profiles[resolvedProfile]
   if (!profile) {
     const available = Object.keys(multi.profiles).join(', ')
-    throw new Error(`Profile "${resolvedProfile}" not found. Available: ${available}`)
+    throw new Error(
+      `Profile "${resolvedProfile}" not found. Available: ${available}` +
+        (looksLikeTaskId(resolvedProfile)
+          ? `. That looks like a task ID — note that -p is --profile, not --parent. For a subtask use: cup create --parent ${resolvedProfile} ...`
+          : ''),
+    )
   }
 
   const apiToken = envToken ?? profile.apiToken?.trim()

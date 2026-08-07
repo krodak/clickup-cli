@@ -750,7 +750,7 @@ Create a new task. If `--parent` is given, list is auto-detected from the parent
 
 ```bash
 cup create -n "Fix login bug" -l <listId>
-cup create -n "Subtask name" -p <parentTaskId>    # --list auto-detected
+cup create -n "Subtask name" --parent <parentTaskId>    # --list auto-detected
 cup create -n "Task" -l <listId> -d "desc" -s "open"
 cup create -n "Task" -l <listId> -d $'## Overview\n\nCall `init()` first.\n- Step 1\n- Step 2'
 cup create -n "Task" -l <listId> --priority high --due-date 2025-06-01
@@ -771,25 +771,25 @@ cup create -n "Fix bug" -l <listId> --json
 
 `--field "Name" value` sets custom fields inline as part of task creation. Field names are resolved once against the target list via `GET /list/{id}/field`, so the values land in the initial create payload instead of requiring a follow-up `cup field --set` call. Repeat the flag to set multiple fields. Value parsing matches `cup field --set` (text, number, checkbox, dropdown name, labels, date, url, email, etc.).
 
-| Flag                         | Required         | Description                                                                        |
-| ---------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
-| `-n, --name <name>`          | yes              | Task name                                                                          |
-| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                                |
-| `-p, --parent <taskId>`      | no               | Parent task (list auto-detected)                                                   |
-| `-d, --description <text>`   | no               | Description (markdown). See "Multiline markdown" above for quoting                 |
-| `--description-file <path>`  | no               | Read description from a file (`-` for stdin). Mutually exclusive with `-d`         |
-| `-s, --status <status>`      | no               | Initial status                                                                     |
-| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                               |
-| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)               |
-| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)             |
-| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                    |
-| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                                      |
-| `--group-assignee <ids>`     | no               | Group assignees by UUID or `@handle` (comma-separated; find IDs with `cup groups`) |
-| `--tags <tags>`              | no               | Comma-separated tag names                                                          |
-| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                                |
-| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)                      |
-| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                               |
-| `--json`                     | no               | Force JSON output even in terminal                                                 |
+| Flag                         | Required         | Description                                                                          |
+| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------ |
+| `-n, --name <name>`          | yes              | Task name                                                                            |
+| `-l, --list <listId>`        | if no `--parent` | Target list ID (accepts `sprint:current` pseudo-ID)                                  |
+| `--parent <taskId>`          | no               | Parent task (list auto-detected). No `-p` short form: `-p` is the global `--profile` |
+| `-d, --description <text>`   | no               | Description (markdown). See "Multiline markdown" above for quoting                   |
+| `--description-file <path>`  | no               | Read description from a file (`-` for stdin). Mutually exclusive with `-d`           |
+| `-s, --status <status>`      | no               | Initial status                                                                       |
+| `--priority <level>`         | no               | Priority: `urgent`, `high`, `normal`, `low` (or 1-4)                                 |
+| `--due-date <date>`          | no               | Due date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)                 |
+| `--start-date <date>`        | no               | Start date (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM`, or ISO 8601 with offset)               |
+| `--time-estimate <duration>` | no               | Time estimate (e.g. `"2h"`, `"30m"`, `"1h30m"`)                                      |
+| `--assignee <userId>`        | no               | Assignee by user ID or `"me"`                                                        |
+| `--group-assignee <ids>`     | no               | Group assignees by UUID or `@handle` (comma-separated; find IDs with `cup groups`)   |
+| `--tags <tags>`              | no               | Comma-separated tag names                                                            |
+| `--custom-item-id <id>`      | no               | Custom task type ID (e.g. for creating initiatives)                                  |
+| `--template <id>`            | no               | Create from a task template (use `cup templates` to find IDs)                        |
+| `--field <name> <value>`     | no               | Set custom field inline (repeatable)                                                 |
+| `--json`                     | no               | Force JSON output even in terminal                                                   |
 
 ### `cup delete <id>`
 

@@ -349,6 +349,39 @@ describe('cup field --value-file', () => {
   })
 })
 
+describe('global option collisions', () => {
+  it('no subcommand declares a short flag that a global option already uses', async () => {
+    // Commander resolves a shared short flag to the global option, so a
+    // subcommand that reuses one silently becomes unreachable. `cup create -p`
+    // was parsed as --profile and failed with "Profile <taskId> not found".
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    const isHelp = (long?: string | null) => long === '--help'
+    const globalShorts = new Map<string, string>()
+    for (const option of program.options) {
+      if (option.short && !isHelp(option.long)) {
+        globalShorts.set(option.short, option.long ?? option.short)
+      }
+    }
+
+    const collisions: string[] = []
+    for (const command of program.commands) {
+      for (const option of command.options) {
+        if (!option.short || isHelp(option.long)) continue
+        const globalLong = globalShorts.get(option.short)
+        if (globalLong) {
+          collisions.push(
+            `${command.name()}: ${option.short}, ${option.long} collides with global ${option.short}, ${globalLong}`,
+          )
+        }
+      }
+    }
+
+    expect(collisions).toEqual([])
+  })
+})
+
 describe('binary smoke test', () => {
   it('node dist/index.js --version outputs a valid semver', async () => {
     const { stdout } = await execFileAsync('node', ['dist/index.js', '--version'])
