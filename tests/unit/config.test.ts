@@ -326,6 +326,30 @@ describe('loadConfig multi-profile', () => {
     const { loadConfig } = await import('../../src/config.js')
     expect(() => loadConfig('nonexistent')).toThrow('Profile "nonexistent" not found')
     expect(() => loadConfig('nonexistent')).toThrow('Available: work, personal')
+    // A plain word is a plausible profile name, so no --parent hint.
+    expect(() => loadConfig('nonexistent')).not.toThrow(/--parent/)
+  })
+
+  it('hints at --parent when the profile name looks like a task id', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    // `cup create -p <taskId>` is parsed as --profile; the value gives it away.
+    expect(() => loadConfig('86d3zaqa0')).toThrow(/--parent/)
+    expect(() => loadConfig('PROD-811')).toThrow(/--parent/)
+  })
+
+  it('does not hint at --parent for ordinary profile names', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { loadConfig } = await import('../../src/config.js')
+    for (const name of ['personal', 'staging', 'my-team']) {
+      expect(() => loadConfig(name)).not.toThrow(/--parent/)
+    }
   })
 
   it('auto-migrates old flat config to multi-profile format', async () => {

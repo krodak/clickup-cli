@@ -656,7 +656,9 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       'Read description from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -d',
     )
     .option(
-      '-p, --parent <taskId>',
+      // No -p short flag: it collides with the global -p, --profile and would be
+      // parsed as the profile name (see the global-option-collision test).
+      '--parent <taskId>',
       'Parent task: native id, custom id (e.g. PROD-811), or task URL (list auto-detected)',
     )
     .option('-s, --status <status>', 'Initial status')
