@@ -11,9 +11,18 @@ describe('mermaid renderer', () => {
     expect(out).toContain('#000000')
   })
 
+  it('keeps node fills distinct from text colors', () => {
+    const svg = '<rect fill="var(--_node-fill)"/><text fill="var(--_text)">A</text>'
+    const out = inlineSvgColors(svg, { bg: '#ffffff', fg: '#1f2328' })
+    expect(out).toContain('<rect fill="#f8f8f9"/>')
+    expect(out).toContain('<text fill="#1f2328">')
+  })
+
   it('renders a flowchart to a PNG', async () => {
-    const { png, width, height } = await renderMermaidPng('flowchart LR\n  A --> B\n')
+    const { png, svg, width, height } = await renderMermaidPng('flowchart LR\n  A --> B\n')
     expect(png.subarray(0, 8).toString('binary')).toBe('\x89PNG\r\n\x1a\n')
+    expect(svg).not.toMatch(/<rect[^>]+fill="#1f2328"/)
+    expect(svg).toMatch(/<text[^>]+fill="#1f2328"/)
     expect(width).toBeGreaterThan(10)
     expect(height).toBeGreaterThan(10)
   })

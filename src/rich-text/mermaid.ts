@@ -69,14 +69,31 @@ export function inlineSvgColors(
 ): string {
   const bg = colors.bg
   const fg = colors.fg
+  const line = colors.line ?? mixHex(fg, bg, 30)
+  const accent = colors.accent ?? mixHex(fg, bg, 50)
+  const muted = colors.muted ?? mixHex(fg, bg, 60)
+  const surface = colors.surface ?? mixHex(fg, bg, 3)
+  const border = colors.border ?? mixHex(fg, bg, 20)
   const resolved: Record<string, string> = {
     '--bg': bg,
     '--fg': fg,
-    '--line': colors.line ?? mixHex(fg, bg, 30),
-    '--accent': colors.accent ?? mixHex(fg, bg, 50),
-    '--muted': colors.muted ?? mixHex(fg, bg, 60),
-    '--surface': colors.surface ?? mixHex(fg, bg, 3),
-    '--border': colors.border ?? mixHex(fg, bg, 20),
+    '--line': line,
+    '--accent': accent,
+    '--muted': muted,
+    '--surface': surface,
+    '--border': border,
+    '--_text': fg,
+    '--_text-sec': muted,
+    '--_text-muted': muted,
+    '--_text-faint': mixHex(fg, bg, 22),
+    '--_line': line,
+    '--_arrow': accent,
+    '--_node-fill': surface,
+    '--_node-stroke': border,
+    '--_group-fill': bg,
+    '--_group-hdr': mixHex(fg, bg, 4),
+    '--_inner-stroke': mixHex(fg, bg, 10),
+    '--_key-badge': mixHex(fg, bg, 8),
   }
 
   let out = svg
@@ -85,6 +102,9 @@ export function inlineSvgColors(
     (_all, a: string, pct: string, b: string) =>
       mixHex(resolved[a] ?? fg, resolved[b] ?? bg, Number(pct)),
   )
-  out = out.replace(/var\((--[\w-]+)\)/g, (_all, name: string) => resolved[name] ?? fg)
+  out = out.replace(
+    /var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g,
+    (_all, name: string, fallback: string | undefined) => resolved[name] ?? fallback?.trim() ?? fg,
+  )
   return out
 }

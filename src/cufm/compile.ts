@@ -69,16 +69,19 @@ function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): D
         const close = findClose(tokens, i, 'heading_close')
         const inner = innerInline(tokens, i, close)
         const level = clampHeader(Number(token.tag.slice(1) || '1'))
-        ops.push(...compileInline(inner, ctx))
-        ops.push(newlineOp({ header: level, ...blockExtra(token) }))
+        const inline = compileInline(inner, ctx)
+        const lineAttrs = liftLineAttrs(inline)
+        ops.push(...inline)
+        ops.push(newlineOp({ header: level, ...blockExtra(token), ...lineAttrs }))
         i = close + 1
         break
       }
       case 'paragraph_open': {
         const close = findClose(tokens, i, 'paragraph_close')
         const inner = innerInline(tokens, i, close)
-        const extra = blockExtra(token)
-        ops.push(...compileInline(inner, ctx))
+        const inline = compileInline(inner, ctx)
+        const extra = { ...blockExtra(token), ...liftLineAttrs(inline) }
+        ops.push(...inline)
         ops.push(newlineOp(Object.keys(extra).length > 0 ? extra : undefined))
         i = close + 1
         break
@@ -105,7 +108,7 @@ function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): D
         break
       }
       case 'hr': {
-        ops.push(embedOp({ divider: true }), newlineOp())
+        ops.push(embedOp({ divider: true }))
         i += 1
         break
       }
@@ -161,7 +164,12 @@ function compileList(
       if (child.type === 'paragraph_open') {
         const pClose = findClose(tokens, j, 'paragraph_close')
         const inner = innerInline(tokens, j, pClose)
-        ops.push(...compileInline(inner, ctx))
+        ops.push(
+          ...compileInline(
+            itemKind === 'checked' || itemKind === 'unchecked' ? stripTaskListPrefix(inner) : inner,
+            ctx,
+          ),
+        )
         const attrs: Record<string, unknown> = { ...listAttr(itemKind) }
         if (ctx.indent > 0) attrs.indent = ctx.indent
         ops.push(newlineOp(attrs))
@@ -260,39 +268,27 @@ function compileBlockquote(tokens: Token[], openIndex: number, close: number, ct
 }
 
 function matchAlert(token: Token): string | undefined {
-  const text = inlinePlain(token).trim()
-  const m = /^\[!([A-Z]+)\]/.exec(text)
-  if (m) return m[1]
-  const childText = token.children?.map(c => c.content).join('') ?? ''
-  const m2 = /^!?([A-Z]+)/.exec(childText.trim())
-  if (m2 && ALERT_TO_BANNER[m2[1]!]) {
-    const hadBracket =
-      token.content.includes('[!') || token.children?.some(c => c.content.includes('!'))
-    if (hadBracket) return m2[1]
+  const raw = token.content.trimStart()
+  const sourceMatch = /^\[!([A-Z]+)\](?:\r?\n|$)/.exec(raw)
+  if (sourceMatch && ALERT_TO_BANNER[sourceMatch[1]!]) return sourceMatch[1]
+  const firstLine = inlinePlain(token).trimStart().split('\n', 1)[0] ?? ''
+  const parsedMatch = /^!?([A-Z]+)$/.exec(firstLine)
+  if (parsedMatch && ALERT_TO_BANNER[parsedMatch[1]!] && raw.includes('[!')) {
+    return parsedMatch[1]
   }
   return undefined
 }
 
 function stripAlertFromTokens(tokens: Token[]): Token[] {
+  let stripped = false
   return tokens.map(t => {
-    if (t.type !== 'inline' || !t.children) return t
-    const children = t.children.filter((c, idx, arr) => {
-      if (c.type === 'mdc_inline_span') return false
-      if (
-        c.type === 'text' &&
-        /^!?[A-Z]+$/.test(c.content.trim()) &&
-        arr[idx - 1]?.type === 'mdc_inline_span'
-      ) {
-        return false
-      }
-      if (c.type === 'text') {
-        c.content = c.content.replace(/^\[![A-Z]+\]\s*/, '')
-      }
-      return true
-    })
+    if (stripped || t.type !== 'inline' || !t.children || !matchAlert(t)) return t
+    const breakIndex = t.children.findIndex(c => c.type === 'softbreak' || c.type === 'hardbreak')
+    const children = breakIndex >= 0 ? t.children.slice(breakIndex + 1) : []
     const clone = Object.create(t) as Token
     clone.children = children
-    clone.content = children.map(c => c.content).join('')
+    clone.content = children.map(plainOf).join('')
+    stripped = true
     return clone
   })
 }
@@ -309,7 +305,7 @@ function compileFence(token: Token, ctx: Ctx): DeltaOp[] {
   }
   const attrs: Record<string, unknown> = { 'code-block': codeBlock }
   if (ctx.indent > 0) attrs.indent = ctx.indent
-  return [textOp(body), newlineOp(attrs)]
+  return compileCodeLines(body, attrs)
 }
 
 function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx): DeltaOp[] {
@@ -331,7 +327,7 @@ function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx):
   } else if (!ctx.options.renderMermaid) {
     ctx.warnings.push('mermaid fence compiled without renderer; emitting source toggle only')
   } else {
-    ctx.warnings.push('mermaid render failed; keeping source as a code block inside a toggle')
+    ctx.warnings.push('mermaid render failed; keeping source as inline code inside a toggle')
   }
   const toggleId = ctx.ids.short('list')
   ops.push(textOp('mermaid source'))
@@ -339,11 +335,10 @@ function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx):
   if (ctx.indent > 0) titleAttrs.indent = ctx.indent
   ops.push(newlineOp(titleAttrs))
   const bodyAttrs: Record<string, unknown> = {
-    'code-block': { 'code-block': 'mermaid' },
     indent: ctx.indent + 1,
     ...listAttr('none'),
   }
-  ops.push(textOp(source), newlineOp(bodyAttrs))
+  ops.push(...compileCodeLines(source, bodyAttrs, { code: true }))
   return ops
 }
 
@@ -366,7 +361,7 @@ function compileComponent(
   }
   switch (name) {
     case 'toc':
-      return [embedOp({ table_content: true }), newlineOp()]
+      return [embedOp({ table_content: true })]
     case 'toggle':
       return compileToggle(props, tokens, start, close, ctx)
     case 'banner':
@@ -548,8 +543,8 @@ function compileTable(
   ctx: Ctx,
   widths: string[] | undefined,
 ): DeltaOp[] {
-  const rows: string[][] = []
-  let currentRow: string[] = []
+  const rows: Token[][][] = []
+  let currentRow: Token[][] = []
   let i = openIndex + 1
   while (i < close) {
     const token = tokens[i]
@@ -568,7 +563,7 @@ function compileTable(
       const closeType = token.type === 'th_open' ? 'th_close' : 'td_close'
       const cellClose = findClose(tokens, i, closeType)
       const inline = innerInline(tokens, i, cellClose)
-      currentRow.push(inlinePlainFromChildren(inline))
+      currentRow.push(inline)
       i = cellClose + 1
       continue
     }
@@ -578,7 +573,10 @@ function compileTable(
 
   const colCount = Math.max(...rows.map(r => r.length), 0)
   const auto = Array.from({ length: colCount }, (_, col) => {
-    const max = rows.reduce((m, row) => Math.max(m, (row[col] ?? '').length), 0)
+    const max = rows.reduce(
+      (m, row) => Math.max(m, inlinePlainFromChildren(row[col] ?? []).length),
+      0,
+    )
     return String(estimateColumnWidth(max))
   })
   const colWidths = Array.from(
@@ -597,15 +595,19 @@ function compileTable(
   > = {}
   rows.forEach((row, r) => {
     for (let c = 0; c < colCount; c++) {
-      const text = row[c] ?? ''
-      const content: DeltaOp[] = text ? [textOp(text), newlineOp()] : [newlineOp()]
+      const inline = compileInline(row[c] ?? [], ctx)
+      const lineAttrs = liftLineAttrs(inline)
+      const content: DeltaOp[] = [
+        ...inline,
+        newlineOp(Object.keys(lineAttrs).length > 0 ? lineAttrs : undefined),
+      ]
       cells[`${r + 1}:${c + 1}`] = {
         content,
         attributes: { colspan: '1', rowspan: '1' },
       }
     }
   })
-  return [embedOp({ 'table-embed': { rows: rowIds, columns, cells } }), newlineOp()]
+  return [embedOp({ 'table-embed': { rows: rowIds, columns, cells } })]
 }
 
 function compileButton(
@@ -643,7 +645,7 @@ function compileFrame(props: Record<string, string>): DeltaOp[] {
 
 function compileHtmlBlock(html: string, ctx: Ctx): DeltaOp[] {
   ctx.warnings.push('Raw HTML block stored as a cufm code fence')
-  return [textOp(html.trim()), newlineOp({ 'code-block': { 'code-block': 'html' } })]
+  return compileCodeLines(html.trim(), { 'code-block': { 'code-block': 'html' } })
 }
 
 interface InlineState {
@@ -920,6 +922,58 @@ function applyAttrsToOps(ops: DeltaOp[], extra: Record<string, unknown>): void {
       if (width) op.attributes = { ...op.attributes, width }
     }
   }
+}
+
+function liftLineAttrs(ops: DeltaOp[]): Record<string, unknown> {
+  const lineAttrs: Record<string, unknown> = {}
+  for (const op of ops) {
+    if (typeof op.insert !== 'string' || !op.attributes) continue
+    if (op.attributes['block-color'] !== undefined) {
+      lineAttrs['block-color'] = op.attributes['block-color']
+      delete op.attributes['block-color']
+    }
+    if (Object.keys(op.attributes).length === 0) delete op.attributes
+  }
+  return lineAttrs
+}
+
+function compileCodeLines(
+  body: string,
+  attrs: Record<string, unknown>,
+  textAttrs?: Record<string, unknown>,
+): DeltaOp[] {
+  const ops: DeltaOp[] = []
+  for (const line of body.split('\n')) {
+    if (line) ops.push(textOp(line, textAttrs ? { ...textAttrs } : undefined))
+    ops.push(newlineOp({ ...attrs }))
+  }
+  return ops
+}
+
+function stripTaskListPrefix(children: Token[]): Token[] {
+  let start = 0
+  if (children[start]?.type === 'html_inline' && children[start]?.content.includes('checkbox')) {
+    start += 1
+  }
+  if (
+    children[start]?.type === 'mdc_inline_span' &&
+    children[start]?.nesting === 1 &&
+    children[start + 1]?.type === 'text' &&
+    /^[ xX]$/.test(children[start + 1]?.content ?? '') &&
+    children[start + 2]?.type === 'mdc_inline_span' &&
+    children[start + 2]?.nesting === -1
+  ) {
+    start += 3
+  }
+  const rest = children.slice(start)
+  const firstText = rest.findIndex(token => token.type === 'text')
+  if (firstText >= 0) {
+    const original = rest[firstText]!
+    const clone = Object.create(original) as Token
+    clone.content = original.content.replace(/^\s+/, '')
+    rest[firstText] = clone
+  }
+  return rest
 }
 
 function embedTypeOf(op: DeltaOp): string | undefined {

@@ -127,7 +127,7 @@ GitHub alerts become banners: `NOTE` → blue, `TIP` → green, `IMPORTANT` → 
 
 ## Mermaid
 
-A fenced `mermaid` block (or `::mermaid`) is rendered to PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original fence. Default theme is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
+A fenced `mermaid` block (or `::mermaid`) is rendered to PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source as inline-code lines. ClickUp does not preserve block-code attributes inside toggle list items. Default theme is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
 
 ````md
 ```mermaid
@@ -136,7 +136,7 @@ flowchart LR
 ```
 ````
 
-If rendering fails, the original fence is kept as a code block.
+If rendering fails, the source toggle is still kept.
 
 ## Tables
 

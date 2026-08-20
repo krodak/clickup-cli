@@ -60,6 +60,12 @@ describe('compileCufm', () => {
     )
   })
 
+  it('lifts block backgrounds from inline spans onto the paragraph newline', () => {
+    const { ops } = compile('[green]{color="green" background="green"}\n')
+    expect(ops[0]).toEqual({ insert: 'green', attributes: { 'color-class': 'green' } })
+    expect(ops[1]).toEqual({ insert: '\n', attributes: { 'block-color': 'green' } })
+  })
+
   it('compiles a toggle with body marked list none', () => {
     const { ops } = compile(`::toggle{title="mermaid source"}
 flowchart body
@@ -95,6 +101,27 @@ flowchart body
     expect(embed.cells['1:1']?.content[0]).toEqual({ insert: 'A' })
   })
 
+  it('preserves inline formatting inside table cells', () => {
+    const { ops } = compile('| A | B |\n| --- | --- |\n| `code` | **bold** |\n')
+    const table = ops.find(op => embedType(op.insert) === 'table-embed')
+    const embed = (
+      table!.insert as {
+        'table-embed': { cells: Record<string, { content: DeltaOp[] }> }
+      }
+    )['table-embed']
+    expect(embed.cells['2:1']?.content[0]).toEqual({ insert: 'code', attributes: { code: true } })
+    expect(embed.cells['2:2']?.content[0]).toEqual({ insert: 'bold', attributes: { bold: true } })
+  })
+
+  it('does not append blank paragraph ops after native block embeds', () => {
+    const { ops } = compile('::toc\n::\n\n---\n\n| A |\n| --- |\n| B |\n\n# Next\n')
+    for (const kind of ['table_content', 'divider', 'table-embed']) {
+      const index = ops.findIndex(op => embedType(op.insert) === kind)
+      expect(index).toBeGreaterThanOrEqual(0)
+      expect(ops[index + 1]?.insert).not.toBe('\n')
+    }
+  })
+
   it('applies explicit table widths from ::table', () => {
     const { ops } = compile(`::table{widths="120,360"}
 | A | B |
@@ -122,11 +149,35 @@ flowchart body
     )
     expect(toggle).toBeTruthy()
     const body = newlines(ops).find(
-      op =>
-        (op.attributes?.['code-block'] as { 'code-block'?: string } | undefined)?.['code-block'] ===
-        'mermaid',
+      op => (op.attributes?.list as { list?: string } | undefined)?.list === 'none',
     )
     expect(body?.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
+    expect(ops.some(op => op.insert === 'flowchart LR' && op.attributes?.code === true)).toBe(true)
+  })
+
+  it('keeps every mermaid source line as inline code inside the toggle', () => {
+    const { ops } = compileCufm('```mermaid\nflowchart LR\n  A --> B\n```\n', {
+      ids: sequentialIdFactory(),
+      renderMermaid: () => ({ url: 'https://example.com/cup-abc.png', width: 640 }),
+    })
+    const sourceLines = newlines(ops).filter(
+      op => (op.attributes?.list as { list?: string } | undefined)?.list === 'none',
+    )
+    expect(sourceLines).toHaveLength(2)
+    for (const line of sourceLines) {
+      expect(line.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
+      expect(line.attributes).not.toHaveProperty('code-block')
+    }
+    expect(ops.filter(op => op.attributes?.code === true).map(op => op.insert)).toEqual([
+      'flowchart LR',
+      '  A --> B',
+    ])
+  })
+
+  it('applies code-block attributes to every line of a multiline fence', () => {
+    const { ops } = compile('```text\none\ntwo\n```\n')
+    const codeLines = newlines(ops).filter(op => op.attributes?.['code-block'])
+    expect(codeLines).toHaveLength(2)
   })
 
   it('embeds images with width from attributes', () => {
@@ -143,12 +194,17 @@ flowchart body
     )
     expect(kinds).toContain('unchecked')
     expect(kinds).toContain('checked')
+    expect(ops.filter(op => typeof op.insert === 'string' && op.insert !== '\n')).toEqual([
+      { insert: 'open' },
+      { insert: 'done' },
+    ])
   })
 
   it('compiles GitHub alerts to banners', () => {
-    const { ops } = compile('> [!NOTE]\n> hello\n')
+    const { ops } = compile('> [!NOTE]\n> GitHub alert\n')
     const nl = newlines(ops).find(op => op.attributes?.['advanced-banner'])
     expect(nl?.attributes).toMatchObject({ 'advanced-banner-color': 'blue' })
+    expect(ops[0]).toEqual({ insert: 'GitHub alert' })
   })
 
   it('compiles ::banner and ::toc', () => {
@@ -175,6 +231,6 @@ flowchart body
 
   it('compiles <@id> mentions', () => {
     const { ops } = compile('see <@2685610> please\n')
-    expect(ops.some(op => embedType(op.insert) === 'user_mention')).toBe(true)
+    expect(ops.filter(op => embedType(op.insert) === 'user_mention')).toHaveLength(1)
   })
 })
