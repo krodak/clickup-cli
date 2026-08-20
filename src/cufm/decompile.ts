@@ -35,8 +35,19 @@ export function splitMultilineInserts(ops: DeltaOp[]): DeltaOp[] {
   return out
 }
 
-export function decompileCufm(rawOps: DeltaOp[]): string {
+export interface SyncedContentBlock {
+  id: string
+  ops: DeltaOp[]
+}
+
+export interface DecompileOptions {
+  syncBlocks?: readonly SyncedContentBlock[]
+}
+
+export function decompileCufm(rawOps: DeltaOp[], options: DecompileOptions = {}): string {
   const ops = splitMultilineInserts(rawOps)
+  const syncBlocks = new Map(options.syncBlocks?.map(block => [block.id, block.ops]) ?? [])
+  const emittedSyncBlocks = new Set<string>()
   const lines: string[] = []
   let i = 0
   while (i < ops.length) {
@@ -80,6 +91,19 @@ export function decompileCufm(rawOps: DeltaOp[]): string {
       const height = op.attributes?.height
       const h = height !== undefined ? ` height="${attrStr(height)}"` : ''
       lines.push(`::frame{src="${frame.src ?? ''}"${h}}`, '::', '')
+      i = skipFollowingNewline(ops, i)
+      continue
+    }
+    if (kind === 'sync-block') {
+      const id = (op.insert as { 'sync-block': { id?: string } })['sync-block'].id ?? ''
+      const content = syncBlocks.get(id)
+      if (lines.length > 0 && lines.at(-1) !== '') lines.push('')
+      lines.push(`::sync-block{id="${escapeAttr(id)}"}`)
+      if (content && !emittedSyncBlocks.has(id)) {
+        lines.push(decompileCufm(content).trimEnd())
+        emittedSyncBlocks.add(id)
+      }
+      lines.push('::', '')
       i = skipFollowingNewline(ops, i)
       continue
     }

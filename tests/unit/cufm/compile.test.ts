@@ -81,6 +81,40 @@ flowchart body
     })
   })
 
+  it('compiles synced content and its clones to the same block embed', () => {
+    const { ops, syncBlocks, warnings } = compile(`::sync-block{id="block-uuid"}
+This is a synced content block
+::
+
+Below is a clone of the above block:
+
+::sync-block{id="block-uuid"}
+::
+`)
+    expect(warnings).toEqual([])
+    expect(syncBlocks).toEqual([
+      {
+        id: 'block-uuid',
+        ops: [{ insert: 'This is a synced content block' }, { insert: '\n' }],
+      },
+    ])
+    expect(ops.filter(op => embedType(op.insert) === 'sync-block')).toEqual([
+      { insert: { 'sync-block': { id: 'block-uuid' } } },
+      { insert: { 'sync-block': { id: 'block-uuid' } } },
+    ])
+    const firstEmbed = ops.findIndex(op => embedType(op.insert) === 'sync-block')
+    expect(ops[firstEmbed + 1]).toEqual({ insert: 'Below is a clone of the above block:' })
+  })
+
+  it('warns instead of emitting a synced content block without an id', () => {
+    const { ops, warnings } = compile(`::sync-block
+Content
+::
+`)
+    expect(ops).toEqual([{ insert: '\n' }])
+    expect(warnings).toEqual(['::sync-block requires an id'])
+  })
+
   it('keeps multiline fenced code as one indented native block inside a toggle', () => {
     const { ops } = compile(`::toggle{title="Details"}
 \`\`\`json

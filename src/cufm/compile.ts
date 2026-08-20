@@ -36,7 +36,13 @@ export interface CompileOptions {
 
 export interface CompileResult {
   ops: DeltaOp[]
+  syncBlocks: CompiledSyncBlock[]
   warnings: string[]
+}
+
+export interface CompiledSyncBlock {
+  id: string
+  ops: DeltaOp[]
 }
 
 const MENTION_RE = /<@(\d+)>/g
@@ -45,16 +51,22 @@ export function compileCufm(source: string, options: CompileOptions = {}): Compi
   const warnings = options.warnings ?? []
   const ids = options.ids ?? sequentialIdFactory()
   const tokens = parseCufm(source)
-  const ctx: Ctx = { ids, options, warnings, indent: 0 }
+  const syncBlocks = new Map<string, DeltaOp[]>()
+  const ctx: Ctx = { ids, options, warnings, syncBlocks, indent: 0 }
   const ops = compileBlocks(tokens, 0, tokens.length, ctx)
   ensureTrailingNewline(ops)
-  return { ops, warnings }
+  return {
+    ops,
+    syncBlocks: [...syncBlocks].map(([id, blockOps]) => ({ id, ops: blockOps })),
+    warnings,
+  }
 }
 
 interface Ctx {
   ids: IdFactory
   options: CompileOptions
   warnings: string[]
+  syncBlocks: Map<string, DeltaOp[]>
   indent: number
 }
 
@@ -405,7 +417,7 @@ function compileComponent(
         newlineOp(),
       ]
     case 'sync-block':
-      return [embedOp({ 'sync-block': { id: props.id ?? '' } }), newlineOp()]
+      return compileSyncBlock(props, tokens, start, close, ctx)
     case 'whiteboard':
       return [
         embedOp({
@@ -429,6 +441,30 @@ function compileComponent(
     default:
       return compileBlocks(tokens, start, close, ctx)
   }
+}
+
+function compileSyncBlock(
+  props: Record<string, string>,
+  tokens: Token[],
+  start: number,
+  close: number,
+  ctx: Ctx,
+): DeltaOp[] {
+  const id = props.id?.trim()
+  if (!id) {
+    ctx.warnings.push('::sync-block requires an id')
+    return []
+  }
+  const body = compileBlocks(tokens, start, close, ctx)
+  if (body.length > 0) {
+    ensureTrailingNewline(body)
+    if (ctx.syncBlocks.has(id)) {
+      ctx.warnings.push(`::sync-block id "${id}" has more than one content definition`)
+    } else {
+      ctx.syncBlocks.set(id, body)
+    }
+  }
+  return [embedOp({ 'sync-block': { id } })]
 }
 
 function compileToggle(

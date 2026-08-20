@@ -3,6 +3,7 @@ import type { ClickUpClient } from '../api.js'
 import type { DeltaOp } from '../rich-text/delta.js'
 import { DEFAULT_MERMAID_THEME, renderMermaidPng } from '../rich-text/mermaid.js'
 import { compileCufm } from './compile.js'
+import type { CompileResult } from './compile.js'
 import type { MediaIndex } from '../task-sync/media.js'
 import { isRemoteSrc, resolveLocalPath, uploadBytes, uploadLocalImage } from '../task-sync/media.js'
 
@@ -30,7 +31,7 @@ export async function compileForTask(opts: {
   baseDir: string
   media: MediaIndex
   mermaidTheme?: string
-}): Promise<{ ops: DeltaOp[]; warnings: string[] }> {
+}): Promise<CompileResult> {
   const theme = opts.mermaidTheme ?? DEFAULT_MERMAID_THEME
   const uploaded = new Map<string, { url: string; width?: number }>()
   for (const img of collectLocalImages(opts.markdown, opts.baseDir)) {
@@ -87,7 +88,7 @@ export async function compileForTask(opts: {
   })
 }
 
-export function compilePlain(markdown: string): { ops: DeltaOp[]; warnings: string[] } {
+export function compilePlain(markdown: string): CompileResult {
   return compileCufm(markdown)
 }
 
