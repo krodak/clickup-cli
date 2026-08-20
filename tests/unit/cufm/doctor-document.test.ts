@@ -15,7 +15,7 @@ describe('doctor document', () => {
   it('covers every supported color in its channel', () => {
     for (const token of TEXT_COLORS) {
       expect(doc).toContain(`[${token}]{color="${token}"}`)
-      expect(doc).toContain(`background="${token}"`)
+      expect(doc).toContain(`${token} block {background="${token}"}`)
     }
     for (const token of HIGHLIGHT_COLORS) {
       expect(doc).toContain(`[${token}]{highlight="${token}"}`)
@@ -42,6 +42,8 @@ describe('doctor document', () => {
     expect(doc).toContain('{align="right"}')
     expect(doc).toContain('{align="center"}')
     expect(doc).toContain('{lineNumbers}')
+    expect(doc).toContain('## Block backgrounds')
+    expect(doc).not.toContain('text on grey block')
   })
 
   it('compiles to native ops including table-embed, banners, and toggles', () => {

@@ -15,9 +15,7 @@ export function generateDoctorDocument(opts: DoctorDocumentOptions = {}): string
   const textRow = TEXT_COLORS.map(c => `[${c}]{color="${c}"}`).join(' · ')
   const highlightRow = HIGHLIGHT_COLORS.map(c => `[${c}]{highlight="${c}"}`).join(' · ')
   const badgeRow = BADGE_COLORS.map(c => `:badge[${c}]{color="${c}"}`).join(' ')
-  const blockRows = TEXT_COLORS.map(
-    c => `${c} text on ${c} block {color="${c}" background="${c}"}`,
-  ).join('\n\n')
+  const blockRows = TEXT_COLORS.map(c => `${c} block {background="${c}"}`).join('\n\n')
   const banners = BANNER_COLORS.map(c => `::banner{color="${c}"}\nBanner ${c}\n::`).join('\n\n')
 
   return `# Tight H1
@@ -41,7 +39,7 @@ ${highlightRow}
 ## Badges
 ${badgeRow}
 
-## Block text + background
+## Block backgrounds
 ${blockRows}
 
 ## Alignment

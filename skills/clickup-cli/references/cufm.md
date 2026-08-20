@@ -38,7 +38,7 @@ Right aligned {align="right"}
 [underline]{underline}
 [Red]{highlight="red"}
 [pink]{color="pink"}
-Green on green {color="green" background="green"}
+Green block {background="green"}
 ```json {lineNumbers}
 {"ok": true}
 ```
@@ -49,6 +49,8 @@ Base color tokens (text, highlight, badge, block background, banners):
 `grey`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`
 
 Banners also support a `-strong` variant of each base (`pink-strong`, `blue-strong`, …). Text, highlight, badge, and block background channels use only base colors.
+
+ClickUp keeps a block background but resets inline text color in the same paragraph, so use `color` and `background` on separate lines.
 
 ## Block components
 
