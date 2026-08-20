@@ -2,6 +2,7 @@
 // them only when a diagram is actually rendered so plain commands start fast.
 
 export const DEFAULT_MERMAID_THEME = 'github-light'
+export const MERMAID_PIXEL_RATIO = 2
 
 export async function mermaidThemeColors(name: string): Promise<{
   bg: string
@@ -20,7 +21,14 @@ export async function mermaidThemeColors(name: string): Promise<{
 export async function renderMermaidPng(
   source: string,
   themeName = DEFAULT_MERMAID_THEME,
-): Promise<{ png: Buffer; svg: string; width: number; height: number }> {
+): Promise<{
+  png: Buffer
+  svg: string
+  width: number
+  height: number
+  pixelWidth: number
+  pixelHeight: number
+}> {
   const [{ renderMermaid }, { Resvg }] = await Promise.all([
     import('beautiful-mermaid'),
     import('@resvg/resvg-js'),
@@ -28,9 +36,20 @@ export async function renderMermaidPng(
   const colors = await mermaidThemeColors(themeName)
   const svg = await renderMermaid(source, { ...colors, transparent: false })
   const inlined = inlineSvgColors(svg, colors)
-  const resvg = new Resvg(inlined, { fitTo: { mode: 'original' } })
+  const resvg = new Resvg(inlined, {
+    fitTo: { mode: 'zoom', value: MERMAID_PIXEL_RATIO },
+    shapeRendering: 2,
+    textRendering: 2,
+  })
   const img = resvg.render()
-  return { png: Buffer.from(img.asPng()), svg: inlined, width: img.width, height: img.height }
+  return {
+    png: Buffer.from(img.asPng()),
+    svg: inlined,
+    width: resvg.width,
+    height: resvg.height,
+    pixelWidth: img.width,
+    pixelHeight: img.height,
+  }
 }
 
 function mixHex(fg: string, bg: string, fgPercent: number): string {

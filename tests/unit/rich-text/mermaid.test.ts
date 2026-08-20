@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { inlineSvgColors, renderMermaidPng } from '../../../src/rich-text/mermaid.js'
+import {
+  MERMAID_PIXEL_RATIO,
+  inlineSvgColors,
+  renderMermaidPng,
+} from '../../../src/rich-text/mermaid.js'
 
 describe('mermaid renderer', () => {
   it('inlines CSS custom properties', () => {
@@ -19,11 +23,15 @@ describe('mermaid renderer', () => {
   })
 
   it('renders a flowchart to a PNG', async () => {
-    const { png, svg, width, height } = await renderMermaidPng('flowchart LR\n  A --> B\n')
+    const { png, svg, width, height, pixelWidth, pixelHeight } = await renderMermaidPng(
+      'flowchart LR\n  A --> B\n',
+    )
     expect(png.subarray(0, 8).toString('binary')).toBe('\x89PNG\r\n\x1a\n')
     expect(svg).not.toMatch(/<rect[^>]+fill="#1f2328"/)
     expect(svg).toMatch(/<text[^>]+fill="#1f2328"/)
     expect(width).toBeGreaterThan(10)
     expect(height).toBeGreaterThan(10)
+    expect(pixelWidth).toBe(width * MERMAID_PIXEL_RATIO)
+    expect(pixelHeight).toBe(height * MERMAID_PIXEL_RATIO)
   })
 })

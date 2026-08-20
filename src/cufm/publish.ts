@@ -63,8 +63,8 @@ export async function compileForTask(opts: {
       mermaidCache.set(source, {
         url: entry.url ?? '',
         width: rendered.width,
-        naturalWidth: rendered.width,
-        naturalHeight: rendered.height,
+        naturalWidth: rendered.pixelWidth,
+        naturalHeight: rendered.pixelHeight,
       })
     } catch {
       /* compile will warn */
