@@ -443,9 +443,29 @@ function compileToggle(
   ops.push(newlineOp(titleAttrs))
   const bodyCtx: Ctx = { ...ctx, indent: ctx.indent + 1 }
   const body = compileBlocks(tokens, start, close, bodyCtx)
+  convertNestedCodeBlocksToInlineCode(body)
   markToggleBody(body, ctx.indent + 1)
   ops.push(...body)
   return ops
+}
+
+function convertNestedCodeBlocksToInlineCode(ops: DeltaOp[]): void {
+  let lineStart = 0
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i]
+    if (op?.insert !== '\n') continue
+    if (op.attributes?.['code-block']) {
+      for (let j = lineStart; j < i; j++) {
+        const text = ops[j]
+        if (typeof text?.insert !== 'string') continue
+        text.attributes = { ...(text.attributes ?? {}), code: true }
+      }
+      const attrs = { ...op.attributes }
+      delete attrs['code-block']
+      op.attributes = Object.keys(attrs).length > 0 ? attrs : undefined
+    }
+    lineStart = i + 1
+  }
 }
 
 function markToggleBody(ops: DeltaOp[], indent: number): void {

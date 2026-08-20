@@ -81,6 +81,26 @@ flowchart body
     })
   })
 
+  it('converts fenced code inside toggles to hidden inline-code list items', () => {
+    const { ops } = compile(`::toggle{title="Details"}
+\`\`\`json
+{"one": 1}
+{"two": 2}
+\`\`\`
+::
+`)
+    expect(ops.filter(op => op.attributes?.code === true).map(op => op.insert)).toEqual([
+      '{"one": 1}',
+      '{"two": 2}',
+    ])
+    const bodyLines = newlines(ops).slice(1)
+    expect(bodyLines).toHaveLength(2)
+    for (const line of bodyLines) {
+      expect(line.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
+      expect(line.attributes).not.toHaveProperty('code-block')
+    }
+  })
+
   it('compiles GFM tables as table-embed with estimated widths', () => {
     const { ops } = compile(`| A | Longer column |
 | --- | --- |
