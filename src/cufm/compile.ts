@@ -345,10 +345,13 @@ function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx):
   if (ctx.indent > 0) titleAttrs.indent = ctx.indent
   ops.push(newlineOp(titleAttrs))
   const bodyAttrs: Record<string, unknown> = {
-    indent: ctx.indent + 1,
-    ...listAttr('none'),
+    'code-block': {
+      'code-block': 'mermaid',
+      'in-list': 'none',
+      'wrapper-indent': String(ctx.indent + 1),
+    },
   }
-  ops.push(...compileCodeLines(source, bodyAttrs, { code: true }))
+  ops.push(...compileCodeLines(source, bodyAttrs))
   return ops
 }
 
@@ -443,29 +446,9 @@ function compileToggle(
   ops.push(newlineOp(titleAttrs))
   const bodyCtx: Ctx = { ...ctx, indent: ctx.indent + 1 }
   const body = compileBlocks(tokens, start, close, bodyCtx)
-  convertNestedCodeBlocksToInlineCode(body)
   markToggleBody(body, ctx.indent + 1)
   ops.push(...body)
   return ops
-}
-
-function convertNestedCodeBlocksToInlineCode(ops: DeltaOp[]): void {
-  let lineStart = 0
-  for (let i = 0; i < ops.length; i++) {
-    const op = ops[i]
-    if (op?.insert !== '\n') continue
-    if (op.attributes?.['code-block']) {
-      for (let j = lineStart; j < i; j++) {
-        const text = ops[j]
-        if (typeof text?.insert !== 'string') continue
-        text.attributes = { ...(text.attributes ?? {}), code: true }
-      }
-      const attrs = { ...op.attributes }
-      delete attrs['code-block']
-      op.attributes = Object.keys(attrs).length > 0 ? attrs : undefined
-    }
-    lineStart = i + 1
-  }
 }
 
 function markToggleBody(ops: DeltaOp[], indent: number): void {
@@ -474,8 +457,17 @@ function markToggleBody(ops: DeltaOp[], indent: number): void {
     const attrs = { ...(op.attributes ?? {}) }
     const existingIndent = attrs.indent
     attrs.indent = typeof existingIndent === 'number' ? existingIndent : indent
+    const codeBlock = attrs['code-block']
+    if (typeof codeBlock === 'object' && codeBlock !== null) {
+      attrs['code-block'] = {
+        ...codeBlock,
+        'in-list': 'none',
+        'wrapper-indent': String(indent),
+      }
+      delete attrs.indent
+    }
     const list = attrs.list as { list?: string } | undefined
-    if (!list) {
+    if (!list && !attrs['code-block']) {
       attrs.list = { list: 'none' }
     }
     op.attributes = attrs

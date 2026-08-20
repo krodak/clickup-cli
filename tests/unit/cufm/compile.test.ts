@@ -81,7 +81,7 @@ flowchart body
     })
   })
 
-  it('converts fenced code inside toggles to hidden inline-code list items', () => {
+  it('keeps multiline fenced code as one indented native block inside a toggle', () => {
     const { ops } = compile(`::toggle{title="Details"}
 \`\`\`json
 {"one": 1}
@@ -89,15 +89,16 @@ flowchart body
 \`\`\`
 ::
 `)
-    expect(ops.filter(op => op.attributes?.code === true).map(op => op.insert)).toEqual([
-      '{"one": 1}',
-      '{"two": 2}',
-    ])
     const bodyLines = newlines(ops).slice(1)
     expect(bodyLines).toHaveLength(2)
     for (const line of bodyLines) {
-      expect(line.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
-      expect(line.attributes).not.toHaveProperty('code-block')
+      expect(line.attributes).toEqual({
+        'code-block': {
+          'code-block': 'json',
+          'in-list': 'none',
+          'wrapper-indent': '1',
+        },
+      })
     }
   })
 
@@ -168,30 +169,33 @@ flowchart body
       op => (op.attributes?.list as { list?: string } | undefined)?.list === 'toggled',
     )
     expect(toggle).toBeTruthy()
-    const body = newlines(ops).find(
-      op => (op.attributes?.list as { list?: string } | undefined)?.list === 'none',
-    )
-    expect(body?.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
-    expect(ops.some(op => op.insert === 'flowchart LR' && op.attributes?.code === true)).toBe(true)
+    const body = newlines(ops).find(op => op.attributes?.['code-block'])
+    expect(body?.attributes).toMatchObject({
+      'code-block': {
+        'code-block': 'mermaid',
+        'in-list': 'none',
+        'wrapper-indent': '1',
+      },
+    })
+    expect(ops.some(op => op.insert === 'flowchart LR')).toBe(true)
   })
 
-  it('keeps every mermaid source line as inline code inside the toggle', () => {
+  it('keeps the complete Mermaid source in one indented native code block', () => {
     const { ops } = compileCufm('```mermaid\nflowchart LR\n  A --> B\n```\n', {
       ids: sequentialIdFactory(),
       renderMermaid: () => ({ url: 'https://example.com/cup-abc.png', width: 640 }),
     })
-    const sourceLines = newlines(ops).filter(
-      op => (op.attributes?.list as { list?: string } | undefined)?.list === 'none',
-    )
+    const sourceLines = newlines(ops).filter(op => op.attributes?.['code-block'])
     expect(sourceLines).toHaveLength(2)
     for (const line of sourceLines) {
-      expect(line.attributes).toMatchObject({ indent: 1, list: { list: 'none' } })
-      expect(line.attributes).not.toHaveProperty('code-block')
+      expect(line.attributes).toEqual({
+        'code-block': {
+          'code-block': 'mermaid',
+          'in-list': 'none',
+          'wrapper-indent': '1',
+        },
+      })
     }
-    expect(ops.filter(op => op.attributes?.code === true).map(op => op.insert)).toEqual([
-      'flowchart LR',
-      '  A --> B',
-    ])
   })
 
   it('applies code-block attributes to every line of a multiline fence', () => {
