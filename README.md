@@ -102,7 +102,7 @@ After installing `cup`, run:
 cup skill
 ```
 
-This detects which agents you have (Claude Code, Codex, OpenCode) and installs the [skill file](https://agentskills.io) to the right locations. Run it again after updating `cup` to refresh the skill.
+This detects which agents you have (Claude Code, Codex, OpenCode) and installs the [skill](https://agentskills.io) (including `references/cufm.md`) to the right locations. Run it again after updating `cup` to refresh the skill. Agents must read that CUFM reference before authoring a rich task description.
 
 <details>
 <summary>Manual install options</summary>

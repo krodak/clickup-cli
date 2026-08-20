@@ -1,4 +1,4 @@
-import { readFileSync, realpathSync, mkdirSync, copyFileSync, existsSync } from 'fs'
+import { readFileSync, realpathSync, mkdirSync, copyFileSync, existsSync, cpSync } from 'fs'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
 import chalk from 'chalk'
@@ -64,9 +64,8 @@ export async function installSkillInteractive(): Promise<string[]> {
     for (const name of selected) {
       const target = targets.find(t => t.name === name)
       if (!target) continue
-      if (!existsSync(target.dir)) mkdirSync(target.dir, { recursive: true })
       const dest = join(target.dir, 'SKILL.md')
-      copyFileSync(source, dest)
+      copySkillFiles(source, dest)
       installed.push(`${target.name}: ${dest}`)
     }
   } else {
@@ -77,9 +76,8 @@ export async function installSkillInteractive(): Promise<string[]> {
       )
     }
     for (const target of detected) {
-      if (!existsSync(target.dir)) mkdirSync(target.dir, { recursive: true })
       const dest = join(target.dir, 'SKILL.md')
-      copyFileSync(source, dest)
+      copySkillFiles(source, dest)
       installed.push(`${target.name}: ${dest}`)
     }
   }
@@ -88,9 +86,16 @@ export async function installSkillInteractive(): Promise<string[]> {
 }
 
 export function installSkillTo(path: string): string {
-  const source = skillPath()
-  const dir = dirname(path)
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-  copyFileSync(source, path)
-  return path
+  return copySkillFiles(skillPath(), path)
+}
+
+export function copySkillFiles(sourceSkillMd: string, destSkillMd: string): string {
+  const destDir = dirname(destSkillMd)
+  if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true })
+  copyFileSync(sourceSkillMd, destSkillMd)
+  const srcRefs = join(dirname(sourceSkillMd), 'references')
+  if (existsSync(srcRefs)) {
+    cpSync(srcRefs, join(destDir, 'references'), { recursive: true })
+  }
+  return destSkillMd
 }

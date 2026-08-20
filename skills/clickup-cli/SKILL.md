@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results, saved filters, favorites.'
+description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup` CLI tool. Use when authoring or updating a rich ClickUp task description (CUFM, markdown, mermaid, banners, toggles, tables, task-sync). Before writing a description, read references/cufm.md. Triggers: task queries, status updates, sprint tracking, creating subtasks, posting comments, threaded replies, standup summaries, searching tasks, checking overdue items, assigning tasks, listing spaces and lists, opening tasks in browser, checking auth or config, setting custom fields, deleting tasks, managing tags, managing checklists, editing comments, task links, time tracking, attachments, file uploads, listing members, listing fields, duplicating tasks, bulk operations, goals, key results, saved filters, favorites.'
 ---
 
 # ClickUp CLI (`cup`) - skill version 1.43.0
@@ -8,6 +8,18 @@ description: 'Use when managing ClickUp tasks, sprints, or comments via the `cup
 Reference for AI agents using the `cup` CLI tool. Covers task management, sprint tracking, comments, time tracking, custom fields, goals, docs, and project workflows.
 
 > **Version check:** Run `cup --version`. If your installed version is older than 1.43.0, update with `npm install -g @krodak/clickup-cli` and refresh this skill with `cup skill`.
+
+## Rich task descriptions (required)
+
+Before writing or updating a ClickUp **task description**, read **[references/cufm.md](references/cufm.md)** and write ClickUp Flavored Markdown (CUFM). `cup create`, `cup update`, and `cup task-sync push` compile it to native editor ops.
+
+```bash
+cup create -n "Title" -l <listId> --description-file /tmp/desc.md
+cup update <taskId> --description-file /tmp/desc.md
+cup task-sync push notes.md
+```
+
+Do **not** put rich markdown in inline `-d`. Do **not** use CUFM in comments (`cup comment` / `reply`) — those use a different converter.
 
 ## Install & Configure
 
@@ -428,7 +440,7 @@ EOF
 
 Do **not** use `$'…team'\''s…\n\n## Goals'` — after the `'\''` apostrophe break the string is in normal single quotes, so `\n` is passed literally and headings/bullets render as `\n\n` text in ClickUp.
 
-`cup create` / `cup update` compile markdown as ClickUp Flavored Markdown (CUFM) so headings do not pick up extra empty paragraphs. For a file that lives next to a task, use `cup task-sync`. Dialect spec: write `::toggle`, `::banner`, `::table{widths="…"}`, `:badge[Red]{color="red"}`, and fenced mermaid; see the repo `docs/cufm.md`.
+`cup create` / `cup update` / `cup task-sync` compile task descriptions as ClickUp Flavored Markdown (CUFM). **Read [references/cufm.md](references/cufm.md) before writing a description** (`::toggle`, `::banner`, `::table`, `:badge`, mermaid, columns). Comments are not CUFM.
 
 ### Docs
 

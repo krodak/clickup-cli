@@ -2,7 +2,7 @@
 
 CUFM is GitHub-flavored Markdown plus a small [Comark/MDC](https://comark.dev/syntax/markdown) component set. `cup task-sync push` (and `cup create` / `cup update`) compile it to ClickUp’s native editor document so headings stay tight, tables keep column widths, and mermaid becomes an image plus a toggle with the source.
 
-AIs should write this dialect natively. Unknown `::components` are preserved as a fenced `cufm` code block rather than dropped.
+AIs should write this dialect natively. The copy shipped with the agent skill (load this whenever authoring a task description) is [skills/clickup-cli/references/cufm.md](../skills/clickup-cli/references/cufm.md). Unknown `::components` are preserved as a fenced `cufm` code block rather than dropped.
 
 ## Standard Markdown
 
