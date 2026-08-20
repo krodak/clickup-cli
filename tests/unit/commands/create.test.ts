@@ -38,16 +38,28 @@ describe('createTask', () => {
     expect(result.id).toBe('t_new')
   })
 
-  it('sends description as markdown_content', async () => {
+  it('sends description as compiled CUFM delta ops', async () => {
     const { createTask } = await import('../../../src/commands/create.js')
     await createTask(
       { apiToken: 'pk_t', teamId: 'tm_1' },
       { list: 'l1', name: 'Task', description: '# Heading\n\nSome **bold** text' },
     )
-    expect(mockCreateTask).toHaveBeenCalledWith('l1', {
-      name: 'Task',
-      markdown_content: '# Heading\n\nSome **bold** text',
-    })
+    const payload = mockCreateTask.mock.calls[0]?.[1] as { description?: { ops: unknown[] } }
+    expect(payload.description).toBeDefined()
+    expect(Array.isArray(payload.description?.ops)).toBe(true)
+    expect(payload.description?.ops).toEqual(
+      expect.arrayContaining([
+        { insert: 'Heading' },
+        expect.objectContaining({
+          insert: '\n',
+          attributes: expect.objectContaining({ header: 1 }),
+        }),
+        expect.objectContaining({
+          insert: 'bold',
+          attributes: expect.objectContaining({ bold: true }),
+        }),
+      ]),
+    )
   })
 
   it('creates a task with parent initiative', async () => {

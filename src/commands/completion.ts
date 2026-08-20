@@ -11,6 +11,7 @@ const bashSpecialCaseCommands = new Set([
   'profile',
   'completion',
   'chat',
+  'task-sync',
 ])
 
 function escapeSingleQuotes(value: string): string {
@@ -164,6 +165,11 @@ ${renderBashCommandCases()}
     chat)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete" -- "$cur"))
+      fi
+      ;;
+    task-sync)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "init push pull status doctor" -- "$cur"))
       fi
       ;;
     completion)

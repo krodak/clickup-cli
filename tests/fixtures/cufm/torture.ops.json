@@ -1,0 +1,1886 @@
+{
+  "ops": [
+    {
+      "insert": "This is a torture test."
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-rR794KH6fF"
+      }
+    },
+    {
+      "insert": "Here is an embedded table of contents:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-HbL0otraQq"
+      }
+    },
+    {
+      "insert": {
+        "table_content": true
+      },
+      "attributes": {
+        "block-id": "block-gQefZqUewk"
+      }
+    },
+    {
+      "insert": "Text"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-pxxbXW750r",
+        "header": 1
+      }
+    },
+    {
+      "insert": "First line with "
+    },
+    {
+      "insert": "bold",
+      "attributes": {
+        "bold": true
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "italics",
+      "attributes": {
+        "italic": true
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "underline",
+      "attributes": {
+        "underline": true
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "strikethrough",
+      "attributes": {
+        "strike": true
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "code",
+      "attributes": {
+        "code": true
+      }
+    },
+    {
+      "insert": " , "
+    },
+    {
+      "insert": "link",
+      "attributes": {
+        "link": "https://shipstream.io"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-75QoSdYmPz"
+      }
+    },
+    {
+      "insert": "Highlighted text: "
+    },
+    {
+      "insert": "Red",
+      "attributes": {
+        "background-class": "red"
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "Grey,",
+      "attributes": {
+        "background-class": "grey"
+      }
+    },
+    {
+      "insert": " "
+    },
+    {
+      "insert": "Blue",
+      "attributes": {
+        "background-class": "blue"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-5VlkCUIjfi"
+      }
+    },
+    {
+      "insert": "Badges: "
+    },
+    {
+      "insert": "Red",
+      "attributes": {
+        "badge-class": "red"
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "Grey",
+      "attributes": {
+        "badge-class": "grey"
+      }
+    },
+    {
+      "insert": ", "
+    },
+    {
+      "insert": "Blue",
+      "attributes": {
+        "badge-class": "blue"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-632uJj7cLJ"
+      }
+    },
+    {
+      "insert": "This is a pull quote",
+      "attributes": {
+        "italic": true
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "blockquote-size": "large",
+        "blockquote": {
+          "blockquote-id": "quote-ju721p"
+        },
+        "block-id": "block-1ciDg-m2PU"
+      }
+    },
+    {
+      "insert": "This is a block quote",
+      "attributes": {
+        "italic": true
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "blockquote": {
+          "blockquote-id": "quote-1kd8cs"
+        },
+        "block-id": "block-1Y0XNxGxxZ"
+      }
+    },
+    {
+      "insert": "This is right aligned"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-zDIAxiTDg-",
+        "align": "right"
+      }
+    },
+    {
+      "insert": "This is centered H1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "header": 2,
+        "block-id": "block-dPcUoR0WkC",
+        "align": "center"
+      }
+    },
+    {
+      "insert": {
+        "sync-block": {
+          "id": "478b49f3-26d0-4fa7-ba04-801f850b732e"
+        }
+      }
+    },
+    {
+      "insert": "This block has pink text...",
+      "attributes": {
+        "color-class": "pink"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-H4zaQl345G"
+      }
+    },
+    {
+      "insert": "And green",
+      "attributes": {
+        "color-class": "green"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-JlZB2XJMJv"
+      }
+    },
+    {
+      "insert": "Green background with green text",
+      "attributes": {
+        "color-class": "green"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-vzBd-gYeZm",
+        "block-color": "green"
+      }
+    },
+    {
+      "insert": "Lists"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-GSV8oAkBTY",
+        "header": 4
+      }
+    },
+    {
+      "insert": "List item 1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-TOpOOGY4CY",
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "Item 1-1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-2AnO4NhIuS",
+        "indent": 1,
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "Item 1-1-1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-l5FGBLL7Ok",
+        "indent": 2,
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "Item 1-1-1-1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-aAEQgffeOt",
+        "indent": 3,
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "Item 1-1-1-1-1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "indent": 4,
+        "block-id": "block-qSCWLCLtNI",
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "List item 2"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-tJj2s2TiKt",
+        "list": {
+          "list": "bullet"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-X6O65m8YnB"
+      }
+    },
+    {
+      "insert": "Numbered list item 1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-U08z6DEX5S",
+        "list": {
+          "list": "ordered"
+        }
+      }
+    },
+    {
+      "insert": "Item 1a"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "indent": 1,
+        "list": {
+          "list": "ordered"
+        },
+        "block-id": "block-aAXJg95sdq"
+      }
+    },
+    {
+      "insert": "Item 1ai"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-VYVe_CM6cb",
+        "indent": 2,
+        "list": {
+          "list": "ordered"
+        }
+      }
+    },
+    {
+      "insert": "Item 1ai1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "indent": 3,
+        "block-id": "block-HX1uDLj353",
+        "list": {
+          "list": "ordered"
+        }
+      }
+    },
+    {
+      "insert": "Numbered list item 2"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-XRkaLUrtFc",
+        "list": {
+          "list": "ordered",
+          "counters": "{\"0\":1,\"1\":0,\"2\":0,\"3\":0,\"4\":0,\"5\":0,\"6\":0,\"7\":0,\"8\":0}"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-mi0mdAS3Fq"
+      }
+    },
+    {
+      "insert": "Toggle list item one"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-ZuyNJQrr6E",
+        "list": {
+          "list": "toggled",
+          "toggle-id": "list-ht5r44"
+        }
+      }
+    },
+    {
+      "insert": "This is the content that toggles"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-UYib6GHPaw",
+        "indent": 1,
+        "list": {
+          "list": "none"
+        }
+      }
+    },
+    {
+      "insert": "Toggle list item two"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-c-tqotxzAR",
+        "list": {
+          "list": "toggled",
+          "toggle-id": "list-nfhbo8"
+        }
+      }
+    },
+    {
+      "insert": "Oh fun, nested toggles"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-gCdgon-izb",
+        "indent": 1,
+        "list": {
+          "list": "toggled",
+          "toggle-id": "list-4hm82u"
+        }
+      }
+    },
+    {
+      "insert": "Content of nested toggle"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-aSr1O8Kzlx",
+        "indent": 2,
+        "list": {
+          "list": "none"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-cKAxPi5RiB"
+      }
+    },
+    {
+      "insert": "Checklist 1, unchecked"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-Pw1xkrOXpM"
+      }
+    },
+    {
+      "insert": "Checklist 2 - checked"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "checked"
+        },
+        "block-id": "block-i5qtNZwhHi"
+      }
+    },
+    {
+      "insert": "Checklist 2.1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "indent": 1,
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-i5qtNZwhHi"
+      }
+    },
+    {
+      "insert": "Checklist 2.1.1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "indent": 2,
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-sZn0eS-QmG"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-zajWXTWf10"
+      }
+    },
+    {
+      "insert": "Divider below:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-h2BchBru8X"
+      }
+    },
+    {
+      "insert": {
+        "divider": true
+      }
+    },
+    {
+      "insert": "Two dividers:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "header": 4,
+        "block-id": "block-t0RabaRf4o"
+      }
+    },
+    {
+      "insert": {
+        "divider": true
+      }
+    },
+    {
+      "insert": {
+        "divider": true
+      }
+    },
+    {
+      "insert": "Blocks"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-uIbyuxDsEm",
+        "header": 3
+      }
+    },
+    {
+      "insert": "{\"key\":\"This is a JSON code block with line numbers enabled\"}"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "code-block": {
+          "code-block": "json",
+          "code-block-line-numbers": "true"
+        },
+        "block-id": "block-tBMZYrmHhn"
+      }
+    },
+    {
+      "insert": "print 'This is a Javascript code block'"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "code-block": {
+          "code-block": "json"
+        },
+        "block-id": "block-I1l9Nd4eBj"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-YjOG31CTFn",
+        "indent": 1
+      }
+    },
+    {
+      "insert": "This is a *markdown* block"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-RRuUCNDJmR",
+        "code-block": {
+          "code-block": "markdown"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-xoblhAAEmu"
+      }
+    },
+    {
+      "insert": "Below is a link to the above JSON block:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-xWSef3zgyk"
+      }
+    },
+    {
+      "insert": {
+        "block_mention": {
+          "url": "https://app.clickup.com/t/2304761/86bbhau05?block=block-tBMZYrmHhn",
+          "blockId": "tBMZYrmHhn",
+          "location": "task",
+          "teamId": "2304761",
+          "taskId": "86bbhau05"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-iPl-k__nnc"
+      }
+    },
+    {
+      "insert": "This is H1, no space above or below"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-QC6hSQjBX1",
+        "header": 1
+      }
+    },
+    {
+      "insert": "Paragraph after H1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-OQUQvckkEY"
+      }
+    },
+    {
+      "insert": "This is H2, no space above or below"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-oBsxij8dZr",
+        "header": 2
+      }
+    },
+    {
+      "insert": "Paragraph after H2"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-LAuLOSnTkr"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-tiZHcTUIDa"
+      }
+    },
+    {
+      "insert": "Image embed below (half width):"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-GY0ouqX3-Y"
+      }
+    },
+    {
+      "insert": {
+        "image": "https://t2304761.p.clickup-attachments.com/t2304761/f8949d53-6a1c-460f-8a7d-f22f91332675/avatar_-_Copy.jpg"
+      },
+      "attributes": {
+        "width": "364",
+        "data-natural-width": "698",
+        "data-natural-height": "698",
+        "data-id": "f8949d53-6a1c-460f-8a7d-f22f91332675.jpg",
+        "data-session-id": "g46dn0mu0"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-wTylf7sv4O"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-JvwUOXhdG9"
+      }
+    },
+    {
+      "insert": "This is a magenta colored banner"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "advanced-banner-color": "pink-strong",
+        "advanced-banner": "b6b4dc38-0ab8-447b-8227-56896f81ccce",
+        "block-id": "block-p4cnBtNzZj"
+      }
+    },
+    {
+      "insert": "with two lines for fun"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "advanced-banner-color": "pink-strong",
+        "advanced-banner": "b6b4dc38-0ab8-447b-8227-56896f81ccce",
+        "block-id": "block-bG8KfadMda"
+      }
+    },
+    {
+      "insert": "And below another banner:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-gLBqVuKoWU"
+      }
+    },
+    {
+      "insert": "This time with an icon"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "advanced-banner-icon": "{\"value\":\"emoji::\ud83d\ude31\",\"newAvatar\":\"remove\",\"changeType\":\"emoji\"}",
+        "advanced-banner-color": "blue",
+        "advanced-banner": "5cb0f548-47b2-4a37-ab83-f29289e7c3bf",
+        "block-id": "block-9DdIycE5Wl"
+      }
+    },
+    {
+      "insert": "Synced Content"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-_GVyufV3WT",
+        "header": 1
+      }
+    },
+    {
+      "insert": "Below is a link to the \"Synced Content\" block above:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-Z9PJ-acNnJ"
+      }
+    },
+    {
+      "insert": {
+        "sync-block": {
+          "id": "478b49f3-26d0-4fa7-ba04-801f850b732e"
+        }
+      }
+    },
+    {
+      "insert": "More"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "header": 1,
+        "block-id": "block-arxIZAKa59"
+      }
+    },
+    {
+      "insert": {
+        "button": {
+          "title": "Why buttons? Oh well.. click it",
+          "url": "https://bloodraven.dev",
+          "color": "#646464",
+          "align": "left"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-Xiuur5Aigg"
+      }
+    },
+    {
+      "insert": "Columns"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-RaPyyWUhCO",
+        "header": 3
+      }
+    },
+    {
+      "insert": "Column 1 "
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-bzffzfYgpi",
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_2d3cc306-e73b-4d19-9482-b319b1be3f6c",
+        "layout-width": "0.33"
+      }
+    },
+    {
+      "insert": "Column 2"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-As-O6A1_G8",
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_56422ba6-3daf-4f14-871c-d4b43c090c66",
+        "layout-width": "0.33"
+      }
+    },
+    {
+      "insert": "Column 3!!"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-EMXNL6X-jc"
+      }
+    },
+    {
+      "insert": "That's pretty cool, I never even tried this before.."
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-NU_L4UaERo"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-u6Od3pLess"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-rf9RqIz37o"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-XfNe5URqZf"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-ObuEnj54Aw"
+      }
+    },
+    {
+      "insert": "Blank lines above in the third column"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "layout": "e6a53a90-b567-4e36-aca2-0b14c05aa8e5_8844bff1-d10c-447f-8ae8-1b3a20f8707e",
+        "layout-width": "0.33",
+        "block-id": "block-qIm4U7b_Lb"
+      }
+    },
+    {
+      "insert": "Mentions"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "header": 1,
+        "block-id": "block-tzuqjXJuBm"
+      }
+    },
+    {
+      "insert": {
+        "user_mention": {
+          "id": "2685610",
+          "name": "Colin",
+          "notify": true,
+          "tag_id": "d6987e30-4547-42ed-98bc-a5858236de55"
+        }
+      }
+    },
+    {
+      "insert": "\u2190Here I mentioned Colin"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-T6Ewimju6s"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-bSr-erQyu9"
+      }
+    },
+    {
+      "insert": {
+        "task_mention": {
+          "task_id": "86bbhau05"
+        }
+      }
+    },
+    {
+      "insert": " \u2190 Here I mentioned this task"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-Vd2x8DOBhd"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-fBy7AqqRGy"
+      }
+    },
+    {
+      "insert": {
+        "doc_mention": {
+          "teamId": "2304761",
+          "viewId": "26aqt-259",
+          "pageId": "26aqt-84"
+        }
+      }
+    },
+    {
+      "insert": " \u2190 Here I mentioned a page"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-w3avpT9wlR"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-GlUiLRRGhB"
+      }
+    },
+    {
+      "insert": "This is the \"Delivery ER Diagram\" diagram"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-hGAxb0YRf0"
+      }
+    },
+    {
+      "insert": {
+        "embed_plugin": {
+          "pluginName": "whiteboard",
+          "viewId": "26aqt-3614",
+          "teamId": "2304761"
+        }
+      }
+    },
+    {
+      "insert": " "
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-2KN9_y6KQQ"
+      }
+    },
+    {
+      "insert": "An embedded website.."
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-mnjdhDZe4V"
+      }
+    },
+    {
+      "insert": {
+        "frame": {
+          "id": "https://bloodraven.dev",
+          "service": "custom",
+          "url": "bloodraven.dev",
+          "src": "https://bloodraven.dev"
+        }
+      },
+      "attributes": {
+        "block-id": "block-mUD5FcvFXt",
+        "height": "594",
+        "data-size": "large"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-DkzvLatyde"
+      }
+    },
+    {
+      "insert": "Here is a file attachment (.diff extension)"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-QTH5MZpSdx"
+      }
+    },
+    {
+      "insert": {
+        "attachment": {
+          "name": "OPA-August 19 updates.diff",
+          "source": 1,
+          "date": 1787194088894,
+          "url": "https://t2304761.p.clickup-attachments.com/t2304761/a6e288af-134e-4e07-bbb5-81f1d5c6abfe/OPA-August%2019%20updates.diff",
+          "temp": true,
+          "url_w_host": "https://t2304761.p.clickup-attachments.com/t2304761/a6e288af-134e-4e07-bbb5-81f1d5c6abfe/OPA-August%2019%20updates.diff",
+          "url_w_query": "https://t2304761.p.clickup-attachments.com/t2304761/a6e288af-134e-4e07-bbb5-81f1d5c6abfe/OPA-August%2019%20updates.diff?view=open",
+          "id": "a6e288af-134e-4e07-bbb5-81f1d5c6abfe.diff",
+          "type": "diff",
+          "extension": "diff"
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-_X9HuJriWr"
+      }
+    },
+    {
+      "insert": "Tables"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-7LsTGvW1d5",
+        "header": 1
+      }
+    },
+    {
+      "insert": {
+        "table-embed": {
+          "rows": [
+            {
+              "insert": {
+                "id": "row-5d2n01"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-pan2cd"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-zyoxxj"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-s8gfnu"
+              }
+            }
+          ],
+          "columns": [
+            {
+              "insert": {
+                "id": "column-u0cnvg"
+              },
+              "attributes": {
+                "width": "288"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-nabnl7"
+              },
+              "attributes": {
+                "width": "288"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-w2ywgl"
+              },
+              "attributes": {
+                "width": "288"
+              }
+            }
+          ],
+          "cells": {
+            "1:1": {
+              "content": [
+                {
+                  "insert": "Foo"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-ioc_sqxurm"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:2": {
+              "content": [
+                {
+                  "insert": "Bar",
+                  "attributes": {
+                    "bold": true
+                  }
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-ZjuChuv9sX"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:3": {
+              "content": [
+                {
+                  "insert": "Baz",
+                  "attributes": {
+                    "underline": true
+                  }
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-BgIw4RVtpA"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:1": {
+              "content": [
+                {
+                  "insert": "Hello"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-9sWJ4BI-p7"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:2": {
+              "content": [
+                {
+                  "insert": "there"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-B9WMcf3H2W"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:3": {
+              "content": [
+                {
+                  "insert": "fine sir."
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-VUMiH0YtgQ"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:1": {
+              "content": [
+                {
+                  "insert": "This is struck through content inside a table cell.",
+                  "attributes": {
+                    "strike": true
+                  }
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-EwwOpfsFjN"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:2": {
+              "content": [
+                {
+                  "insert": "Big text!"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "header": 2,
+                    "block-id": "block-_S_PJlr3W4"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:3": {
+              "content": [
+                {
+                  "insert": "Mention Colin: "
+                },
+                {
+                  "insert": {
+                    "user_mention": {
+                      "id": "2685610",
+                      "name": "Colin",
+                      "email": "colin@bss-llc.com",
+                      "notify": true,
+                      "tag_id": "f03e949d-210f-4298-a7a1-6cd78549e8b1"
+                    }
+                  }
+                },
+                {
+                  "insert": " "
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-QTOcXc9RYf"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "4:1": {
+              "content": [
+                {
+                  "insert": "A checkbox"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "list": {
+                      "list": "unchecked"
+                    },
+                    "block-id": "block-qYlH6WJGSl"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "4:2": {
+              "content": [
+                {
+                  "insert": "A blue banner"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "advanced-banner-color": "blue-strong",
+                    "advanced-banner": "3e2f9626-cfb2-4c20-a2d4-4f67347ea6d5",
+                    "block-id": "block-3Ea7DWOIWe"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "4:3": {
+              "content": [
+                {
+                  "insert": "A code block inside a table cell.. why?"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "code-block": {
+                      "code-block": "auto"
+                    },
+                    "block-id": "block-GXVXqfqBj8"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            }
+          },
+          "attributes": {
+            "block-id": "block-WlJfsUyq0i"
+          }
+        }
+      }
+    },
+    {
+      "insert": "Narrow Widths:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-f5upMAzKUD"
+      }
+    },
+    {
+      "insert": {
+        "table-embed": {
+          "rows": [
+            {
+              "insert": {
+                "id": "row-8n66fa"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-zrnnj2"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-6w4r7p"
+              }
+            }
+          ],
+          "columns": [
+            {
+              "insert": {
+                "id": "column-jlvwo3"
+              },
+              "attributes": {
+                "width": "75"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-vru7nv"
+              },
+              "attributes": {
+                "width": "75"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-pi298f"
+              },
+              "attributes": {
+                "width": "75"
+              }
+            }
+          ],
+          "cells": {
+            "1:1": {
+              "content": [
+                {
+                  "insert": "A"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-K0WG5oLPSo"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:2": {
+              "content": [
+                {
+                  "insert": "B"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-gNnIQdSkot"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:3": {
+              "content": [
+                {
+                  "insert": "C"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-Sq36UaiFU7"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:1": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-xSPy6dTSY0"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:2": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-ue0xL6pG_j"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:3": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-PG9S9gZNKD"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:1": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-bz3OlrNc1b"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:2": {
+              "content": [
+                {
+                  "insert": "asd"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-9oxRKi2yWC"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:3": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-Hk6QFKiRlM"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            }
+          },
+          "attributes": {
+            "block-id": "block-7aW_4frcVb"
+          }
+        }
+      }
+    },
+    {
+      "insert": "90-10-10:"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-qrhxM_4w3u"
+      }
+    },
+    {
+      "insert": {
+        "table-embed": {
+          "rows": [
+            {
+              "insert": {
+                "id": "row-2vidch"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-pp4odg"
+              }
+            },
+            {
+              "insert": {
+                "id": "row-1s3itn"
+              }
+            }
+          ],
+          "columns": [
+            {
+              "insert": {
+                "id": "column-ugeuyc"
+              },
+              "attributes": {
+                "width": "708"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-tgwfr4"
+              },
+              "attributes": {
+                "width": "75"
+              }
+            },
+            {
+              "insert": {
+                "id": "column-92icwu"
+              },
+              "attributes": {
+                "width": "75"
+              }
+            }
+          ],
+          "cells": {
+            "1:1": {
+              "content": [
+                {
+                  "insert": "90"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-mols3jE14c"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:2": {
+              "content": [
+                {
+                  "insert": "10"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block--n0Stpt8j6"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "1:3": {
+              "content": [
+                {
+                  "insert": "10"
+                },
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-p4msoURhCZ"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:1": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-AlLr4KMWaO"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:2": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-5-B6IS5iUX"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "2:3": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-rcIcQrmLX8"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:1": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-cYSpQhiQXw"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:2": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-GV9cn8VmWo"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            },
+            "3:3": {
+              "content": [
+                {
+                  "insert": "\n",
+                  "attributes": {
+                    "block-id": "block-fSNPS9pIiz"
+                  }
+                }
+              ],
+              "attributes": {
+                "colspan": "1",
+                "rowspan": "1"
+              }
+            }
+          },
+          "attributes": {
+            "block-id": "block-iC4zl0UQ_f"
+          }
+        }
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-cFCtREghjv"
+      }
+    },
+    {
+      "insert": "Complete checklist item 1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-f37a5d40-a9bc-4796-b444-62c02cf880d3"
+      }
+    },
+    {
+      "insert": "Complete checklist 2.1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-c2d82385-13e0-4929-ba91-b01f3078a7cc"
+      }
+    },
+    {
+      "insert": "Complete checklist 2.1.1"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-60d0807e-6711-43be-af10-94610585fb89"
+      }
+    },
+    {
+      "insert": "Review embedded table content"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-56950092-a4f7-4e33-ba05-06b805650b2a"
+      }
+    },
+    {
+      "insert": "Test column layout functionality"
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "list": {
+          "list": "unchecked"
+        },
+        "block-id": "block-829ba677-f75f-4ecf-af08-f5e02c12c724"
+      }
+    },
+    {
+      "insert": "\n",
+      "attributes": {
+        "block-id": "block-u3jHRvGBNZ"
+      }
+    }
+  ]
+}

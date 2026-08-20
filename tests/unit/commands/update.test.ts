@@ -332,11 +332,21 @@ describe('parseTimeEstimate', () => {
 })
 
 describe('buildUpdatePayload', () => {
-  it('maps description to markdown_content', async () => {
+  it('maps description to compiled CUFM delta ops', async () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ description: '# Heading\n\nSome **bold** text' })
-    expect(payload.markdown_content).toBe('# Heading\n\nSome **bold** text')
-    expect(payload.description).toBeUndefined()
+    expect(payload.markdown_content).toBeUndefined()
+    expect(payload.description).toEqual(
+      expect.objectContaining({
+        ops: expect.arrayContaining([
+          { insert: 'Heading' },
+          expect.objectContaining({
+            insert: '\n',
+            attributes: expect.objectContaining({ header: 1 }),
+          }),
+        ]),
+      }),
+    )
   })
 
   it('builds payload with priority', async () => {

@@ -5,6 +5,7 @@ export default defineConfig({
   format: ['esm'],
   target: 'node22',
   clean: true,
+  external: ['@resvg/resvg-js'],
   banner: {
     js: '#!/usr/bin/env node',
   },

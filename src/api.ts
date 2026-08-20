@@ -1,4 +1,5 @@
 import type { CommentBlock } from './commands/comment-format.js'
+import type { DeltaOp } from './rich-text/delta.js'
 import { isRecord } from './util/guards.js'
 
 const BASE_URL = 'https://api.clickup.com/api/v2'
@@ -65,9 +66,11 @@ export interface TaskFilters {
 
 export type Priority = 1 | 2 | 3 | 4
 
+export type TaskDescription = string | { ops: DeltaOp[] }
+
 export interface UpdateTaskOptions {
   name?: string
-  description?: string
+  description?: TaskDescription
   markdown_content?: string
   status?: string
   priority?: Priority | null
@@ -85,7 +88,7 @@ export interface UpdateTaskOptions {
 
 export interface CreateTaskOptions {
   name: string
-  description?: string
+  description?: TaskDescription
   markdown_content?: string
   parent?: string
   status?: string
@@ -1337,11 +1340,22 @@ export class ClickUpClient {
     })
   }
 
-  async createTaskAttachment(taskId: string, filePath: string): Promise<Attachment> {
+  async listTaskAttachmentsV3(taskId: string): Promise<TaskAttachment[]> {
+    const data = await this.requestV3<{ data?: TaskAttachment[] }>(
+      `/workspaces/${this.teamId}/tasks/${taskId}/attachments`,
+    )
+    return Array.isArray(data.data) ? data.data : []
+  }
+
+  async createTaskAttachment(
+    taskId: string,
+    filePath: string,
+    fileNameOverride?: string,
+  ): Promise<Attachment> {
     const { readFile } = await import('node:fs/promises')
     const { basename } = await import('node:path')
     const fileBuffer = await readFile(filePath)
-    const fileName = basename(filePath)
+    const fileName = fileNameOverride ?? basename(filePath)
     const formData = new FormData()
     formData.append('attachment', new Blob([fileBuffer]), fileName)
     const res = await fetch(`${BASE_URL}${this.taskPath(taskId, '/attachment')}`, {

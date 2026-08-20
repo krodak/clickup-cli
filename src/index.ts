@@ -39,6 +39,7 @@ import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
 import { formatTaskDetail } from './interactive.js'
 import { isTTY, shouldOutputJson } from './output.js'
+import { formatDoctorReport } from './task-sync/doctor.js'
 import {
   formatTaskDetailMarkdown,
   formatUpdateConfirmation,
@@ -106,6 +107,13 @@ import {
 } from './commands/replies.js'
 import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
+import {
+  runTaskSyncDoctor,
+  runTaskSyncInit,
+  runTaskSyncPull,
+  runTaskSyncPush,
+  runTaskSyncStatus,
+} from './commands/task-sync.js'
 import { attachGet } from './commands/attach-get.js'
 import type { AttachGetOptions } from './commands/attach-get.js'
 import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
@@ -1375,6 +1383,199 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           console.log(`  ${result.url}`)
         }
       }),
+    )
+
+  const taskSyncCmd = program
+    .command('task-sync')
+    .description('Sync a local CUFM markdown file or directory of tasks/subtasks with ClickUp')
+
+  taskSyncCmd
+    .command('init <taskId> [file]')
+    .description('Pull a task (and subtasks if dest is a directory) into local markdown')
+    .option('--force', 'Overwrite an existing file without confirming')
+    .option('--dry-run', 'Show what would happen without writing')
+    .option('--no-input', 'Never prompt; fail on conflict')
+    .option('--session-token <token>', 'Optional ClickUp session JWT for lossless Quill pull')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          taskId: string,
+          file: string | undefined,
+          opts: {
+            force?: boolean
+            dryRun?: boolean
+            noInput?: boolean
+            sessionToken?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await runTaskSyncInit(config, taskId, file, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else if ('children' in result) {
+            console.log(`${result.root.action} ${result.root.file} <- ${result.root.taskId}`)
+            for (const child of result.children) {
+              console.log(`  ${child.action} ${child.file} <- ${child.taskId}`)
+            }
+            for (const w of result.warnings) console.error(w)
+          } else {
+            console.log(
+              `${result.action} ${result.file} <- ${result.taskId}${result.lossless ? ' (lossless)' : ''}`,
+            )
+          }
+        },
+      ),
+    )
+
+  taskSyncCmd
+    .command('push [file]')
+    .description('Push a CUFM file or directory of tasks/subtasks to ClickUp')
+    .option('--force', 'Overwrite a remotely-edited task without confirming')
+    .option('--dry-run', 'Show what would happen without writing')
+    .option('--no-input', 'Never prompt; fail on conflict')
+    .option('--list <listId>', 'List ID when creating a new task')
+    .option('--create', 'Create the task if clickup_id is missing')
+    .option('--title <name>', 'Override the task title')
+    .option('--mermaid-theme <name>', 'beautiful-mermaid theme (default github-light)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          file: string | undefined,
+          opts: {
+            force?: boolean
+            dryRun?: boolean
+            noInput?: boolean
+            list?: string
+            create?: boolean
+            title?: string
+            mermaidTheme?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await runTaskSyncPush(config, file, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else if ('results' in result) {
+            for (const row of result.results) {
+              console.log(`${row.action} ${row.taskId}${row.url ? ` ${row.url}` : ''}`)
+              for (const w of row.warnings) console.error(w)
+            }
+            for (const w of result.warnings) console.error(w)
+          } else {
+            console.log(`${result.action} ${result.taskId}${result.url ? ` ${result.url}` : ''}`)
+            for (const w of result.warnings) console.error(w)
+          }
+        },
+      ),
+    )
+
+  taskSyncCmd
+    .command('pull [file]')
+    .description('Pull a CUFM file or directory of tasks/subtasks from ClickUp')
+    .option('--force', 'Overwrite a dirty local file without confirming')
+    .option('--dry-run', 'Show what would happen without writing')
+    .option('--no-input', 'Never prompt; fail on conflict')
+    .option('--session-token <token>', 'Optional ClickUp session JWT for lossless Quill pull')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          file: string | undefined,
+          opts: {
+            force?: boolean
+            dryRun?: boolean
+            noInput?: boolean
+            sessionToken?: string
+            json?: boolean
+          },
+        ) => {
+          const config = loadConfig(getProfileName())
+          const result = await runTaskSyncPull(config, file, opts)
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else if ('children' in result) {
+            console.log(`${result.root.action} ${result.root.file} <- ${result.root.taskId}`)
+            for (const child of result.children) {
+              console.log(`  ${child.action} ${child.file} <- ${child.taskId}`)
+            }
+            for (const w of result.warnings) console.error(w)
+          } else {
+            console.log(
+              `${result.action} ${result.file} <- ${result.taskId}${result.lossless ? ' (lossless)' : ''}`,
+            )
+          }
+        },
+      ),
+    )
+
+  taskSyncCmd
+    .command('status [file]')
+    .description('Show local vs remote sync state')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(async (file: string | undefined, opts: { json?: boolean }) => {
+        const config = loadConfig(getProfileName())
+        const result = await runTaskSyncStatus(config, file)
+        if (shouldOutputJson(opts.json ?? false)) {
+          console.log(JSON.stringify(result, null, 2))
+        } else if (Array.isArray(result)) {
+          for (const row of result) {
+            console.log(
+              `${row.file}  task ${row.taskId ?? '(none)'}  localDirty=${row.localDirty} remoteNewer=${row.remoteNewer}`,
+            )
+          }
+        } else {
+          console.log(
+            `${result.file}\n  task ${result.taskId ?? '(none)'}\n  localDirty=${result.localDirty} remoteNewer=${result.remoteNewer}`,
+          )
+        }
+      }),
+    )
+
+  taskSyncCmd
+    .command('doctor')
+    .description('Create a CUFM torture-test task covering every known formatting token')
+    .requiredOption('--list <listId>', 'List to create the doctor task in')
+    .option('-o, --file <path>', 'Also write the generated CUFM markdown to this path')
+    .option('--delete', 'Delete the task after the report (default: keep for visual inspection)')
+    .option('--dry-run', 'Do not create a task')
+    .option('--session-token <token>', 'Optional ClickUp session JWT for lossless Quill audit')
+    .option('--mermaid-theme <name>', 'beautiful-mermaid theme (default github-light)')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (opts: {
+          list: string
+          file?: string
+          delete?: boolean
+          dryRun?: boolean
+          sessionToken?: string
+          mermaidTheme?: string
+          json?: boolean
+        }) => {
+          const config = loadConfig(getProfileName())
+          const result = await runTaskSyncDoctor(config, {
+            list: opts.list,
+            file: opts.file,
+            deleteAfter: opts.delete,
+            dryRun: opts.dryRun,
+            sessionToken: opts.sessionToken,
+            mermaidTheme: opts.mermaidTheme,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(formatDoctorReport(result))
+          }
+          if (result.checks.some(c => !c.ok && !c.skipped)) {
+            process.exitCode = 1
+          }
+        },
+      ),
     )
 
   program

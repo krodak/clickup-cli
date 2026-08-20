@@ -372,6 +372,37 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'task-sync',
+    description: 'Sync a local CUFM markdown file or directory of tasks/subtasks with ClickUp',
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'task-sync init <taskId> [file]',
+        description: 'Pull a task (or tree, if dest is a directory) into local CUFM markdown',
+      },
+      {
+        section: 'write',
+        usage: 'task-sync push [file]',
+        description: 'Push a CUFM file or directory of tasks/subtasks to ClickUp',
+      },
+      {
+        section: 'write',
+        usage: 'task-sync pull [file]',
+        description: 'Pull a CUFM file or directory of tasks/subtasks from ClickUp',
+      },
+      {
+        section: 'write',
+        usage: 'task-sync status [file]',
+        description: 'Show local vs remote sync state',
+      },
+      {
+        section: 'write',
+        usage: 'task-sync doctor',
+        description: 'Create a CUFM torture-test task for visual sanity checks',
+      },
+    ],
+  },
+  {
     name: 'move',
     description: 'Add or remove a task from a list',
     flags: ['--to', '--remove', '--json'],

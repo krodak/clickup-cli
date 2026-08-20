@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { UpdateTaskOptions, Priority } from '../api.js'
 import type { Config } from '../config.js'
+import { compilePlain } from '../cufm/publish.js'
 import { matchStatus } from '../status.js'
 
 const PRIORITY_MAP = {
@@ -193,7 +194,9 @@ export function buildUpdatePayload(
     if (!opts.name.trim()) throw new Error('Task name cannot be empty')
     payload.name = opts.name
   }
-  if (opts.description !== undefined) payload.markdown_content = opts.description
+  if (opts.description !== undefined) {
+    payload.description = opts.description === '' ? '' : { ops: compilePlain(opts.description).ops }
+  }
   if (opts.status !== undefined) payload.status = opts.status
   if (opts.priority !== undefined) payload.priority = parsePriority(opts.priority)
   if (opts.dueDate !== undefined) {
