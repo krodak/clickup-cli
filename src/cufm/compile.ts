@@ -103,7 +103,9 @@ function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): D
         break
       }
       case 'fence': {
-        ops.push(...compileFence(token, ctx))
+        const fence = compileFence(token, ctx)
+        if (endsWithCodeBlock(ops) && containsCodeBlock(fence)) ops.push(newlineOp())
+        ops.push(...fence)
         i += 1
         break
       }
@@ -135,6 +137,14 @@ function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): D
     }
   }
   return ops
+}
+
+function endsWithCodeBlock(ops: DeltaOp[]): boolean {
+  return Boolean(ops.at(-1)?.attributes?.['code-block'])
+}
+
+function containsCodeBlock(ops: DeltaOp[]): boolean {
+  return ops.some(op => Boolean(op.attributes?.['code-block']))
 }
 
 function compileList(

@@ -180,6 +180,20 @@ flowchart body
     expect(codeLines).toHaveLength(2)
   })
 
+  it('separates adjacent fences so ClickUp keeps their languages and line numbers distinct', () => {
+    const { ops } = compile(
+      '```json {lineNumbers}\n{"ok": true}\n```\n\n```javascript\nconsole.log("ok")\n```\n',
+    )
+    const codeLines = newlines(ops).filter(op => op.attributes?.['code-block'])
+    expect(codeLines[0]?.attributes?.['code-block']).toEqual({
+      'code-block': 'json',
+      'code-block-line-numbers': 'true',
+    })
+    expect(codeLines[1]?.attributes?.['code-block']).toEqual({ 'code-block': 'javascript' })
+    const firstCodeLine = ops.indexOf(codeLines[0]!)
+    expect(ops[firstCodeLine + 1]).toEqual({ insert: '\n' })
+  })
+
   it('embeds images with width from attributes', () => {
     const { ops } = compile('![x](https://cdn.example/a.png){width="240"}\n')
     const img = ops.find(op => embedType(op.insert) === 'image')
