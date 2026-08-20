@@ -4,10 +4,11 @@ import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { BADGE_COLORS, BANNER_COLORS, HIGHLIGHT_COLORS, TEXT_COLORS } from '../cufm/colors.js'
 import { generateDoctorDocument } from '../cufm/doctor-document.js'
+import { decompileCufm } from '../cufm/decompile.js'
 import { compileForTask } from '../cufm/publish.js'
 import type { DeltaOp } from '../rich-text/delta.js'
 import { stringifyMarkdownFile } from './frontmatter.js'
-import { fetchTaskOps } from './frontdoor.js'
+import { fetchTaskOps, updateSyncBlockContents } from './frontdoor.js'
 import { contentHash } from './hash.js'
 
 export interface DoctorCheck {
@@ -93,10 +94,20 @@ export async function runTaskSyncDoctor(
     : await client.createTask(String(opts.list), {
         name: `cup task-sync doctor ${new Date().toISOString().slice(0, 19)}`,
       })
+  const previous = opts.task ? await fetchTaskOps(config, created.id, opts.sessionToken) : undefined
+  const previousSyncBlock = previous?.syncBlocks[0]
   const withTask = generateDoctorDocument({
     userId: me.id,
     username: me.username,
     taskId: created.id,
+    ...(previousSyncBlock
+      ? {
+          syncedContent: {
+            id: previousSyncBlock.id,
+            body: decompileCufm(previousSyncBlock.ops).trimEnd(),
+          },
+        }
+      : {}),
   })
 
   const compiled = await compileForTask({
@@ -107,6 +118,7 @@ export async function runTaskSyncDoctor(
     media: {},
     mermaidTheme: opts.mermaidTheme,
   })
+  await updateSyncBlockContents(config, compiled.syncBlocks, opts.sessionToken)
   await client.updateTask(created.id, { description: { ops: compiled.ops } })
   const task = await client.getTask(created.id)
   const md = task.markdown_description ?? task.description ?? ''

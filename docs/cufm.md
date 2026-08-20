@@ -93,6 +93,13 @@ Click me
 flowchart LR
   A --> B
 ::
+
+::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
+This is shared by every clone of this Synced Content block.
+::
+
+::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
+::
 ````
 
 GitHub alerts become banners:
@@ -115,9 +122,26 @@ GitHub alerts become banners:
 
 `<@userId>` also becomes a real ClickUp mention.
 
+## Synced Content
+
+Synced Content uses the same ClickUp block ID for the original and every clone. On a lossless pull, cup writes the backing content into the first occurrence and emits later occurrences as empty references:
+
+```mdc
+::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
+This is a synced content block.
+::
+
+Below is a clone of the above block:
+
+::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
+::
+```
+
+Create the initial Synced Content block in ClickUp, then pull with `CU_SESSION_TOKEN` (or `--session-token`) to capture its ID and backing Delta. An empty component adds another clone. A component body updates the shared backing content for every clone and therefore requires `CU_SESSION_TOKEN`; `task-sync push` also accepts `--session-token`. Define content only once per ID.
+
 ## Mermaid
 
-A fenced ` ```mermaid ` block (or `::mermaid`) is rendered to PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source as inline-code lines. ClickUp does not preserve block-code attributes inside toggle list items. Theme default is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
+A fenced ` ```mermaid ` block (or `::mermaid`) is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source in one native code block. Theme default is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
 
 If rendering fails, the source toggle is still kept.
 

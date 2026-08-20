@@ -66,4 +66,19 @@ describe('doctor document', () => {
       insert: 'This paragraph must sit directly under the H1 with no extra blank block.',
     })
   })
+
+  it('can include a synced content definition and clone when an existing block is supplied', () => {
+    const withSync = generateDoctorDocument({
+      syncedContent: { id: 'sync-1', body: 'This is a synced content block' },
+    })
+    const { ops, syncBlocks } = compileCufm(withSync)
+    expect(withSync.match(/::sync-block\{id="sync-1"\}/g)).toHaveLength(2)
+    expect(syncBlocks).toEqual([
+      {
+        id: 'sync-1',
+        ops: [{ insert: 'This is a synced content block' }, { insert: '\n' }],
+      },
+    ])
+    expect(ops.filter(op => embedType(op.insert) === 'sync-block')).toHaveLength(2)
+  })
 })

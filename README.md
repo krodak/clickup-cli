@@ -196,7 +196,7 @@ Full CRUD for the core ClickUp workflow:
 | 🔗 **Webhooks**      | List, create, update, delete webhooks; scope to space, folder, list, or task                                                                                                                                  |
 | 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template; subfolder parent IDs in JSON), members, user groups, task types, templates, plan, shared hierarchy                                                |
 | 📎 **Attachments**   | Upload files to tasks, list task attachments, shown in detail views                                                                                                                                           |
-| 🔄 **Task sync**     | `cup task-sync push/pull` syncs a CUFM markdown file or a directory of parent/subtasks (frontmatter `parent`/`subtasks`/`depends_on`) to ClickUp; `task-sync doctor` creates a full torture-test task         |
+| 🔄 **Task sync**     | `cup task-sync push/pull` syncs CUFM files or parent/subtask graphs, including native Synced Content definitions and clones; `task-sync doctor` creates a full torture-test task                              |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md) | [ClickUp Flavored Markdown](docs/cufm.md)
 
