@@ -28,11 +28,11 @@ Green on green {color="green" background="green"}
 
 ````
 
-Color tokens (text, highlight, badge, block background, and banners):
+Base color tokens (text, highlight, badge, block background, and banners):
 
-`grey`, `red`, `orange`, `yellow`, `green`, `mint`, `teal`, `blue`, `indigo`, `purple`, `violet`, `pink`, `brown`
+`grey`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`
 
-Each also has a `-strong` variant (`pink-strong`, `blue-strong`, …). Banners in the ClickUp UI use both. `cup task-sync doctor --list <id>` paints every token in every channel so you can see which chips the editor actually keeps.
+Banners also support a `-strong` variant of each base (`pink-strong`, `blue-strong`, …). Text, highlight, badge, and block background channels do not. `cup task-sync doctor --list <id>` paints every supported channel/token combination.
 
 ## Components
 

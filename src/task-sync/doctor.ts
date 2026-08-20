@@ -2,13 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import {
-  BADGE_COLORS,
-  BANNER_COLORS,
-  HIGHLIGHT_COLORS,
-  TEXT_COLORS,
-  colorTokens,
-} from '../cufm/colors.js'
+import { BADGE_COLORS, BANNER_COLORS, HIGHLIGHT_COLORS, TEXT_COLORS } from '../cufm/colors.js'
 import { generateDoctorDocument } from '../cufm/doctor-document.js'
 import { compileForTask } from '../cufm/publish.js'
 import type { DeltaOp } from '../rich-text/delta.js'
@@ -63,6 +57,8 @@ export async function runTaskSyncDoctor(
   const client = new ClickUpClient(config)
   const me = await client.getMe()
   const body = generateDoctorDocument({ userId: me.id, username: me.username })
+  const colorChannelCases =
+    TEXT_COLORS.length * 2 + HIGHLIGHT_COLORS.length + BADGE_COLORS.length + BANNER_COLORS.length
 
   if (opts.dryRun) {
     let file: string | undefined
@@ -83,8 +79,8 @@ export async function runTaskSyncDoctor(
           id: 'dry-run',
           ok: true,
           detail: opts.task
-            ? `Would overwrite task ${opts.task} (${String(colorTokens().length)} color tokens × 5 channels)`
-            : `Would create a doctor task in list ${String(opts.list)} (${String(colorTokens().length)} color tokens × 5 channels)`,
+            ? `Would overwrite task ${opts.task} (${String(colorChannelCases)} supported color/channel combinations)`
+            : `Would create a doctor task in list ${String(opts.list)} (${String(colorChannelCases)} supported color/channel combinations)`,
         },
       ],
       colors: [],

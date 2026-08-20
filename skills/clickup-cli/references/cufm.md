@@ -44,11 +44,11 @@ Green on green {color="green" background="green"}
 ```
 ````
 
-Color tokens (text, highlight, badge, block background, banners):
+Base color tokens (text, highlight, badge, block background, banners):
 
-`grey`, `red`, `orange`, `yellow`, `green`, `mint`, `teal`, `blue`, `indigo`, `purple`, `violet`, `pink`, `brown`
+`grey`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`
 
-Each also has a `-strong` variant (`pink-strong`, `blue-strong`, …). Prefer a base token unless you need the stronger chip.
+Banners also support a `-strong` variant of each base (`pink-strong`, `blue-strong`, …). Text, highlight, badge, and block background channels use only base colors.
 
 ## Block components
 

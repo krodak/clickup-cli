@@ -2,11 +2,11 @@
  * ClickUp editor color tokens observed in native Quill (`background-class`,
  * `badge-class`, `color-class`, `block-color`, `advanced-banner-color`).
  *
- * Bases are the text / highlight / badge chips. Banners also use `-strong`
- * variants (confirmed: `pink-strong`, `blue-strong` on 86bbhau05).
+ * Bases are supported by text, highlight, badge, block background, and banner
+ * channels. Banners also support `-strong` variants.
  *
- * `cup task-sync doctor` writes every token in every channel so a visual pass
- * can catch chips this catalog is missing.
+ * `cup task-sync doctor` writes every supported channel/token combination so a
+ * visual pass can catch changes in ClickUp's editor behavior.
  */
 export const COLOR_BASES = [
   'grey',
@@ -14,14 +14,9 @@ export const COLOR_BASES = [
   'orange',
   'yellow',
   'green',
-  'mint',
-  'teal',
   'blue',
-  'indigo',
   'purple',
-  'violet',
   'pink',
-  'brown',
 ] as const
 
 export type ColorBase = (typeof COLOR_BASES)[number]
@@ -32,8 +27,8 @@ export function colorTokens(): string[] {
 
 export const BANNER_COLORS = colorTokens()
 
-export const TEXT_COLORS = colorTokens()
+export const TEXT_COLORS = [...COLOR_BASES]
 
-export const HIGHLIGHT_COLORS = colorTokens()
+export const HIGHLIGHT_COLORS = [...COLOR_BASES]
 
-export const BADGE_COLORS = colorTokens()
+export const BADGE_COLORS = [...COLOR_BASES]

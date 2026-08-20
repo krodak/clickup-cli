@@ -100,7 +100,7 @@ cup task-sync doctor --list <listId> --delete  # create, audit, delete (CI)
 cup task-sync doctor --task <taskId>           # overwrite an existing task's description instead
 ```
 
-Doctor writes every known text/highlight/badge/banner color (base + `-strong`) plus lists, nested toggles, tables, mermaid, columns, quotes, and alerts. It prints a pass/fail report. Keep the task and inspect it in the UI; set `CU_SESSION_TOKEN` to also audit stored Quill color tokens.
+Doctor writes every supported text/highlight/badge/block/banner color combination, plus lists, nested toggles, tables, mermaid, columns, quotes, and alerts. Banners include `-strong` variants; other color channels use base colors. It prints a pass/fail report. Keep the task and inspect it in the UI; set `CU_SESSION_TOKEN` to also audit stored Quill color tokens.
 
 ## Mentions
 

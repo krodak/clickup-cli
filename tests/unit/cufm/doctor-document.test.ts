@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { colorTokens } from '../../../src/cufm/colors.js'
+import {
+  BADGE_COLORS,
+  BANNER_COLORS,
+  HIGHLIGHT_COLORS,
+  TEXT_COLORS,
+} from '../../../src/cufm/colors.js'
 import { compileCufm } from '../../../src/cufm/compile.js'
 import { generateDoctorDocument } from '../../../src/cufm/doctor-document.js'
 import { embedType } from '../../../src/rich-text/delta.js'
@@ -7,13 +12,19 @@ import { embedType } from '../../../src/rich-text/delta.js'
 describe('doctor document', () => {
   const doc = generateDoctorDocument({ userId: 1, username: 'Colin', taskId: 'abc' })
 
-  it('covers every catalog color in all channels', () => {
-    for (const token of colorTokens()) {
+  it('covers every supported color in its channel', () => {
+    for (const token of TEXT_COLORS) {
       expect(doc).toContain(`[${token}]{color="${token}"}`)
-      expect(doc).toContain(`[${token}]{highlight="${token}"}`)
-      expect(doc).toContain(`:badge[${token}]{color="${token}"}`)
-      expect(doc).toContain(`::banner{color="${token}"}`)
       expect(doc).toContain(`background="${token}"`)
+    }
+    for (const token of HIGHLIGHT_COLORS) {
+      expect(doc).toContain(`[${token}]{highlight="${token}"}`)
+    }
+    for (const token of BADGE_COLORS) {
+      expect(doc).toContain(`:badge[${token}]{color="${token}"}`)
+    }
+    for (const token of BANNER_COLORS) {
+      expect(doc).toContain(`::banner{color="${token}"}`)
     }
   })
 
