@@ -9,6 +9,7 @@ import { inspectGit } from './git.js'
 import { isPathRef } from './graph.js'
 import { contentHash, localAssetHashes, remoteDescriptionHash } from './hash.js'
 import { loadMediaIndex, saveMediaIndex } from './media.js'
+import { updateSyncBlockContents } from './frontdoor.js'
 
 export interface PushOptions {
   force?: boolean
@@ -18,6 +19,7 @@ export interface PushOptions {
   create?: boolean
   title?: string
   mermaidTheme?: string
+  sessionToken?: string
   parentId?: string | null
 }
 
@@ -111,6 +113,7 @@ export async function pushTaskFile(
     : compilePlain(parsed.body)
 
   const name = opts.title ?? parsed.frontmatter.title
+  await updateSyncBlockContents(config, compiled.syncBlocks, opts.sessionToken)
   const updated = await client.updateTask(taskId, {
     description: { ops: compiled.ops },
     ...(name && name !== remote.name ? { name } : {}),

@@ -1447,6 +1447,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--create', 'Create the task if clickup_id is missing')
     .option('--title <name>', 'Override the task title')
     .option('--mermaid-theme <name>', 'beautiful-mermaid theme (default github-light)')
+    .option('--session-token <token>', 'Optional ClickUp session JWT for Synced Content updates')
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1460,6 +1461,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             create?: boolean
             title?: string
             mermaidTheme?: string
+            sessionToken?: string
             json?: boolean
           },
         ) => {

@@ -1,6 +1,7 @@
 import { ClickUpClient } from '../api.js'
 import type { UpdateTaskOptions, Priority } from '../api.js'
 import type { Config } from '../config.js'
+import { updateSyncBlockContents } from '../task-sync/frontdoor.js'
 import { compileForTask, compilePlain, descriptionNeedsAssets } from '../cufm/publish.js'
 import { matchStatus } from '../status.js'
 
@@ -334,6 +335,7 @@ export async function updateTask(
       media: {},
     })
     for (const w of compiled.warnings) console.error(`warning: ${w}`)
+    await updateSyncBlockContents(config, compiled.syncBlocks)
     resolved.description = { ops: compiled.ops }
   }
   if (resolved.status !== undefined) {

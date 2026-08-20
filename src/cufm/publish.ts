@@ -1,6 +1,5 @@
 import { access } from 'node:fs/promises'
 import type { ClickUpClient } from '../api.js'
-import type { DeltaOp } from '../rich-text/delta.js'
 import { DEFAULT_MERMAID_THEME, renderMermaidPng } from '../rich-text/mermaid.js'
 import { compileCufm } from './compile.js'
 import type { CompileResult } from './compile.js'
@@ -12,6 +11,7 @@ const HTML_IMG_RE = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
 
 export function descriptionNeedsAssets(markdown: string): boolean {
   if (/```\s*mermaid\b/i.test(markdown) || /::mermaid\b/.test(markdown)) return true
+  if (/^::sync-block\b/m.test(markdown)) return true
   IMAGE_RE.lastIndex = 0
   let m: RegExpExecArray | null
   while ((m = IMAGE_RE.exec(markdown)) !== null) {

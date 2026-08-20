@@ -59,7 +59,7 @@ export async function pullTaskToFile(
 
   const doc = await fetchTaskOps(config, task.id, opts.sessionToken)
   let body = doc
-    ? decompileCufm(doc.ops)
+    ? decompileCufm(doc.ops, { syncBlocks: doc.syncBlocks })
     : (task.markdown_description ?? task.description ?? '').replace(/\n*$/, '\n')
 
   const media = await loadMediaIndex(abs)
