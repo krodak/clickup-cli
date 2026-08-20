@@ -56,9 +56,8 @@ describe('task-sync change detection', () => {
     const { mkdtemp, readdir, readFile } = await import('node:fs/promises')
     const { tmpdir } = await import('node:os')
     const { join } = await import('node:path')
-    const { writeMarkdownFileAtomic, parseMarkdownFile } = await import(
-      '../../../src/task-sync/frontmatter.js'
-    )
+    const { writeMarkdownFileAtomic, parseMarkdownFile } =
+      await import('../../../src/task-sync/frontmatter.js')
     const dir = await mkdtemp(join(tmpdir(), 'cup-atomic-'))
     const file = join(dir, 't.md')
     await writeMarkdownFileAtomic(file, { title: 'x' }, '\n# H\n')

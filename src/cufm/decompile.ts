@@ -27,7 +27,8 @@ export function splitMultilineInserts(ops: DeltaOp[]): DeltaOp[] {
     }
     const parts = op.insert.split('\n')
     parts.forEach((part, idx) => {
-      if (part !== '') out.push(op.attributes ? { insert: part, attributes: op.attributes } : { insert: part })
+      if (part !== '')
+        out.push(op.attributes ? { insert: part, attributes: op.attributes } : { insert: part })
       if (idx < parts.length - 1) out.push({ insert: '\n' })
     })
   }
