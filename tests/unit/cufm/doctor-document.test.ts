@@ -34,6 +34,7 @@ describe('doctor document', () => {
     expect(doc).toContain('::toggle{title="Nested parent"}')
     expect(doc).toContain('::columns')
     expect(doc).toContain('::table{widths="120,240,360"}')
+    expect(doc).toContain('**bold** and ~~strike~~')
     expect(doc).toContain('```mermaid')
     expect(doc).toContain('::quote{size="large"}')
     expect(doc).toContain('::button')

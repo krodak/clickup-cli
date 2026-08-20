@@ -123,7 +123,9 @@ flowchart body
   })
 
   it('preserves inline formatting inside table cells', () => {
-    const { ops } = compile('| A | B |\n| --- | --- |\n| `code` | **bold** |\n')
+    const { ops } = compile(
+      '| A | B | C |\n| --- | --- | --- |\n| `code` | **bold** | ~~strike~~ |\n',
+    )
     const table = ops.find(op => embedType(op.insert) === 'table-embed')
     const embed = (
       table!.insert as {
@@ -132,6 +134,10 @@ flowchart body
     )['table-embed']
     expect(embed.cells['2:1']?.content[0]).toEqual({ insert: 'code', attributes: { code: true } })
     expect(embed.cells['2:2']?.content[0]).toEqual({ insert: 'bold', attributes: { bold: true } })
+    expect(embed.cells['2:3']?.content[0]).toEqual({
+      insert: 'strike',
+      attributes: { strike: true },
+    })
   })
 
   it('does not append blank paragraph ops after native block embeds', () => {

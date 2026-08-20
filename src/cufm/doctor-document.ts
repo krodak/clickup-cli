@@ -142,7 +142,7 @@ console.log('no line numbers')
 ::table{widths="120,240,360"}
 | Narrow | Medium | Wide explicit |
 | --- | --- | --- |
-| a | **bold** | [pink]{color="pink"} |
+| a | **bold** and ~~strike~~ | [pink]{color="pink"} |
 ::
 
 ::table{widths="75,75,75"}
