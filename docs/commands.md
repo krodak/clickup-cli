@@ -12,7 +12,7 @@ Commands behave differently based on how they're invoked:
 | **Piped**          | Clean markdown output, no colors, no prompts. Suitable for agents and scripts.                                                                                                                        |
 | **`--json` flag**  | Structured JSON output. No prompts. Overrides both TTY and piped modes.                                                                                                                               |
 
-Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), agent selection (`cup skill`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
+Interactive prompts also appear for: sprint disambiguation (multiple matches), workspace selection (`cup init`), skill install (`cup skill`, via `npx skills add`), and destructive confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
 
 ## Multiline markdown for descriptions and comments
 
@@ -168,7 +168,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | Command                                                  | Description                                                            |
 | -------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `cup init`                                               | First-time setup (interactive, or use --token --team for agents)       |
-| `cup skill`                                              | Install skill for your agents                                          |
+| `cup skill`                                              | Install skill via npx skills add                                       |
 | `cup filter save <name> [args...]`                       | Save a command shortcut                                                |
 | **Read**                                                 |                                                                        |
 | `cup auth`                                               | Check authentication status                                            |
@@ -338,18 +338,28 @@ cup init --token pk_abc123 --team 12345678
 
 ### `cup skill`
 
-Install the agent skill file for your coding agents. Auto-detects installed agents (Claude Code, Codex, OpenCode) and writes the skill to each detected location. Run it again after updating `cup` to refresh the skill content.
+Install the agent skill bundled with your installed `cup` version. Default install runs `npx skills add` against the local `skills/clickup-cli` directory (SKILL.md plus `references/`), so the [skills CLI](https://github.com/vercel-labs/skills) picker includes Universal `.agents/skills` (Amp, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp, Zed, and others). Run it again after updating `cup` to refresh the skill.
+
+Non-interactive runs pass `--yes` so the installer cannot hang. `--print` and `--path` stay local and do not call `npx`.
 
 ```bash
-cup skill                                            # install to detected agents
-cup skill --print                                    # preview the skill content
-cup skill --path ~/.claude/skills/clickup/SKILL.md   # install to a specific path
+cup skill                                            # interactive npx skills add
+cup skill -g                                         # install globally (user-level)
+cup skill -y                                         # skip prompts (project default)
+cup skill --print                                    # preview SKILL.md
+cup skill --path ~/.agents/skills/clickup/SKILL.md   # copy SKILL.md + references/
 ```
 
-| Flag            | Description                                                   |
-| --------------- | ------------------------------------------------------------- |
-| `--print`       | Print the skill content to stdout instead of installing       |
-| `--path <path>` | Install to a specific path instead of auto-detected locations |
+| Flag                   | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `--print`              | Print the skill content to stdout instead of installing         |
+| `--path <path>`        | Copy SKILL.md and `references/` to a specific path              |
+| `-g, --global`         | Install globally (user-level) instead of project-level          |
+| `-y, --yes`            | Skip confirmation prompts                                       |
+| `--copy`               | Copy files instead of symlinking                                |
+| `--all`                | Install to all agents without prompts                           |
+| `-a, --agent <agents>` | Target specific agents (for example `claude-code`, `universal`) |
+| `-l, --list`           | List the shipped skill without installing                       |
 
 ### `cup tasks`
 

@@ -1,88 +1,106 @@
-import { readFileSync, realpathSync, mkdirSync, copyFileSync, existsSync, cpSync } from 'fs'
-import { join, dirname } from 'path'
-import { homedir } from 'os'
-import chalk from 'chalk'
+import { spawnSync, type SpawnSyncReturns } from 'node:child_process'
+import { readFileSync, realpathSync, mkdirSync, copyFileSync, existsSync, cpSync } from 'node:fs'
+import { join, dirname } from 'node:path'
 import { isTTY } from '../output.js'
 
-function skillPath(): string {
+export interface SkillInstallOptions {
+  print?: boolean
+  path?: string
+  global?: boolean
+  yes?: boolean
+  copy?: boolean
+  all?: boolean
+  agent?: string[]
+  list?: boolean
+}
+
+export type SkillsSpawn = (
+  command: string,
+  args: readonly string[],
+  options: { stdio: 'inherit' },
+) => Pick<SpawnSyncReturns<Buffer>, 'status' | 'error' | 'signal'>
+
+function skillDir(): string {
   if (!process.argv[1]) {
     throw new Error('Cannot determine install path. Run with: cup skill')
   }
   const entryPoint = realpathSync(process.argv[1])
   const packageRoot = dirname(dirname(entryPoint))
-  const candidate = join(packageRoot, 'skills', 'clickup-cli', 'SKILL.md')
-  if (existsSync(candidate)) return candidate
-  const altCandidate = join(dirname(entryPoint), '..', 'skills', 'clickup-cli', 'SKILL.md')
-  if (existsSync(altCandidate)) return altCandidate
+  const candidates = [
+    join(packageRoot, 'skills', 'clickup-cli'),
+    join(dirname(entryPoint), '..', 'skills', 'clickup-cli'),
+  ]
+  for (const dir of candidates) {
+    if (existsSync(join(dir, 'SKILL.md'))) return dir
+  }
   throw new Error('SKILL.md not found. Reinstall with: npm install -g @krodak/clickup-cli')
+}
+
+function skillPath(): string {
+  return join(skillDir(), 'SKILL.md')
 }
 
 export function printSkill(): string {
   return readFileSync(skillPath(), 'utf-8')
 }
 
-interface AgentTarget {
-  name: string
-  dir: string
-  detected: boolean
+function hasSkipPromptFlag(args: readonly string[]): boolean {
+  return args.includes('--yes') || args.includes('-y') || args.includes('--all')
 }
 
-function getAgentTargets(): AgentTarget[] {
-  const home = homedir()
-  const targets = [
-    { name: 'Claude Code', dir: join(home, '.claude', 'skills', 'clickup') },
-    { name: 'Codex', dir: join(home, '.agents', 'skills', 'clickup') },
-    { name: 'OpenCode', dir: join(home, '.config', 'opencode', 'skills', 'clickup') },
-  ]
-  return targets.map(t => ({
-    ...t,
-    detected: existsSync(dirname(t.dir)),
-  }))
-}
-
-export async function installSkillInteractive(): Promise<string[]> {
-  const targets = getAgentTargets()
-  const source = skillPath()
-  const installed: string[] = []
-
-  if (isTTY()) {
-    const { checkbox } = await import('@inquirer/prompts')
-    const selected = await checkbox<string>({
-      message: 'Install skill for which agents?',
-      choices: targets.map(t => ({
-        name: `${t.name}${t.detected ? chalk.dim(' (detected)') : ''}`,
-        value: t.name,
-        checked: t.detected,
-      })),
-      theme: { keybindings: ['vim'] as const },
-    })
-
-    if (selected.length === 0) {
-      throw new Error('No agents selected')
-    }
-
-    for (const name of selected) {
-      const target = targets.find(t => t.name === name)
-      if (!target) continue
-      const dest = join(target.dir, 'SKILL.md')
-      copySkillFiles(source, dest)
-      installed.push(`${target.name}: ${dest}`)
-    }
-  } else {
-    const detected = targets.filter(t => t.detected)
-    if (detected.length === 0) {
-      throw new Error(
-        'No agents detected. Use --path to specify install location:\n  cup skill --path ~/.claude/skills/clickup/SKILL.md',
-      )
-    }
-    for (const target of detected) {
-      const dest = join(target.dir, 'SKILL.md')
-      copySkillFiles(source, dest)
-      installed.push(`${target.name}: ${dest}`)
-    }
+export function skillsAddNpxArgs(
+  skillDirectory: string,
+  opts: SkillInstallOptions,
+  extra: readonly string[],
+  tty: boolean,
+): string[] {
+  const forwarded: string[] = []
+  if (opts.global) forwarded.push('--global')
+  if (opts.yes) forwarded.push('--yes')
+  if (opts.copy) forwarded.push('--copy')
+  if (opts.all) forwarded.push('--all')
+  if (opts.list) forwarded.push('--list')
+  for (const agent of opts.agent ?? []) {
+    forwarded.push('--agent', agent)
   }
+  forwarded.push(...extra)
+  if (!tty && !hasSkipPromptFlag(forwarded)) {
+    forwarded.push('--yes')
+  }
+  return ['--yes', 'skills', 'add', skillDirectory, ...forwarded]
+}
 
-  return installed
+function isEnoent(error: unknown): boolean {
+  return Boolean(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')
+}
+
+export function runSkillsAdd(
+  skillDirectory: string,
+  opts: SkillInstallOptions,
+  extra: readonly string[] = [],
+  options: { tty: boolean; spawn?: SkillsSpawn },
+): void {
+  const spawn = options.spawn ?? spawnSync
+  const args = skillsAddNpxArgs(skillDirectory, opts, extra, options.tty)
+  const result = spawn('npx', args, { stdio: 'inherit' })
+  if (result.error) {
+    const reason = isEnoent(result.error) ? 'npx was not found' : result.error.message
+    throw new Error(
+      `Could not run \`npx skills add\`: ${reason}\n\n` +
+        'Fix: install Node.js (includes npx), or copy the skill with:\n' +
+        '  cup skill --path ~/.agents/skills/clickup/SKILL.md',
+    )
+  }
+  if (result.status !== null && result.status !== 0) {
+    process.exitCode = result.status
+  }
+}
+
+export function installSkillViaSkillsCli(
+  opts: SkillInstallOptions,
+  extra: readonly string[] = [],
+): void {
+  runSkillsAdd(skillDir(), opts, extra, { tty: isTTY() })
 }
 
 export function installSkillTo(path: string): string {

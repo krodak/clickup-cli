@@ -102,7 +102,7 @@ After installing `cup`, run:
 cup skill
 ```
 
-This detects which agents you have (Claude Code, Codex, OpenCode) and installs the [skill](https://agentskills.io) (including `references/cufm.md`) to the right locations. Run it again after updating `cup` to refresh the skill. Agents must read that CUFM reference before authoring a rich task description.
+This runs `npx skills add` against the [skill](https://agentskills.io) bundled with your installed `cup` version (SKILL.md plus `references/cufm.md`). Universal `.agents/skills` is always included (Amp, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Warp, Zed, and others). Run it again after updating `cup` to refresh the skill. Agents must read that CUFM reference before authoring a rich task description.
 
 <details>
 <summary>Manual install options</summary>
@@ -142,6 +142,14 @@ cup skill --path .agents/skills/clickup/SKILL.md
 <details>
 <summary>&nbsp;<img src="https://img.shields.io/badge/OpenCode-24292e?logoColor=white" height="18" align="center">&nbsp;<strong>OpenCode</strong></summary>
 
+OpenCode reads the Universal project path. Prefer:
+
+```bash
+cup skill --path .agents/skills/clickup/SKILL.md
+```
+
+Global OpenCode-only path:
+
 ```bash
 cup skill --path ~/.config/opencode/skills/clickup/SKILL.md
 ```
@@ -157,7 +165,7 @@ Without installing globally, you can use `npx`:
 npx @krodak/clickup-cli skill --print > SKILL.md
 ```
 
-Or install the skill directly from GitHub via the [skills CLI](https://github.com/vercel-labs/skills):
+`cup skill` is a wrapper around the [skills CLI](https://github.com/vercel-labs/skills) that installs the skill shipped with this `cup` version. To install from GitHub instead (latest on the default branch, no `cup` install required):
 
 ```bash
 npx skills add https://github.com/krodak/clickup-cli

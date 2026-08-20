@@ -328,7 +328,7 @@ When running in a terminal (not piped), task-listing commands (`cup tasks`, `cup
 - **Enter** to confirm and view details of selected tasks
 - After viewing details, prompted to open tasks in browser
 
-Other interactive prompts: sprint selection (when multiple match), workspace selection (`cup init`), agent selection (`cup skill`), destructive action confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
+Other interactive prompts: sprint selection (when multiple match), workspace selection (`cup init`), skill install (`cup skill`, via `npx skills add`), destructive action confirmations (`cup delete`, `cup list-delete`, `cup folder-delete`, `cup space-delete`, `cup archive`, `cup view-delete`, `cup merge`, `cup webhook delete`).
 
 When piped or called with `--json`, all commands output non-interactive markdown or JSON. Agents should always use `--json` for structured data or pipe for markdown.
 

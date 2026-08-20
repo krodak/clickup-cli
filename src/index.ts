@@ -1,5 +1,5 @@
 import { realpathSync } from 'fs'
-import { basename, resolve } from 'path'
+import { basename, dirname, resolve } from 'path'
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
@@ -62,7 +62,12 @@ import { assignTask } from './commands/assign.js'
 import { fetchActivity, printActivity } from './commands/activity.js'
 import { fetchTimeInStatus, printTimeInStatus } from './commands/time-in-status.js'
 import { generateCompletion } from './commands/completion.js'
-import { printSkill, installSkillInteractive, installSkillTo } from './commands/skill.js'
+import {
+  printSkill,
+  installSkillViaSkillsCli,
+  installSkillTo,
+  type SkillInstallOptions,
+} from './commands/skill.js'
 import { checkAuth } from './commands/auth.js'
 import { searchTasks, resolveSpaceNameToId } from './commands/search.js'
 import { manageDependency } from './commands/depend.js'
@@ -4266,25 +4271,29 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
 
   program
     .command('skill')
-    .description('Install the agent skill file for your coding agents')
+    .description('Install the agent skill for your coding agents via npx skills add')
     .option('--print', 'Print the skill file content instead of installing')
-    .option('--path <path>', 'Install to a specific path')
+    .option('--path <path>', 'Copy SKILL.md and references/ to a specific path')
+    .option('-g, --global', 'Install globally (user-level) instead of project-level')
+    .option('-y, --yes', 'Skip confirmation prompts')
+    .option('--copy', 'Copy files instead of symlinking')
+    .option('--all', 'Install to all agents without prompts')
+    .option('-a, --agent <agents...>', 'Target specific agents')
+    .option('-l, --list', 'List the shipped skill without installing')
+    .allowUnknownOption()
+    .allowExcessArguments()
     .action(
-      wrapAction(async (opts: { print?: boolean; path?: string }) => {
+      wrapAction(async (opts: SkillInstallOptions, command: Command) => {
         if (opts.print) {
           process.stdout.write(printSkill())
           return
         }
         if (opts.path) {
           const dest = installSkillTo(opts.path)
-          console.log(`Installed to ${dest}`)
+          console.log(`Installed SKILL.md and references/ to ${dirname(dest)}`)
           return
         }
-        const installed = await installSkillInteractive()
-        console.log('')
-        for (const entry of installed) {
-          console.log(`  Installed: ${entry}`)
-        }
+        installSkillViaSkillsCli(opts, command.args)
       }),
     )
 
