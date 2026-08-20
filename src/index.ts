@@ -1548,7 +1548,8 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
   taskSyncCmd
     .command('doctor')
     .description('Create a CUFM torture-test task covering every known formatting token')
-    .requiredOption('--list <listId>', 'List to create the doctor task in')
+    .option('--list <listId>', 'List to create the doctor task in')
+    .option('--task <taskId>', 'Overwrite this existing task instead of creating a new one')
     .option('-o, --file <path>', 'Also write the generated CUFM markdown to this path')
     .option('--delete', 'Delete the task after the report (default: keep for visual inspection)')
     .option('--dry-run', 'Do not create a task')
@@ -1558,7 +1559,8 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .action(
       wrapAction(
         async (opts: {
-          list: string
+          list?: string
+          task?: string
           file?: string
           delete?: boolean
           dryRun?: boolean
@@ -1566,9 +1568,18 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           mermaidTheme?: string
           json?: boolean
         }) => {
+          if (!opts.list && !opts.task) {
+            throw new Error(
+              'Provide --list <listId> to create a task or --task <taskId> to overwrite one',
+            )
+          }
+          if (opts.list && opts.task) {
+            throw new Error('--list and --task are mutually exclusive')
+          }
           const config = loadConfig(getProfileName())
           const result = await runTaskSyncDoctor(config, {
             list: opts.list,
+            task: opts.task,
             file: opts.file,
             deleteAfter: opts.delete,
             dryRun: opts.dryRun,

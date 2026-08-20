@@ -42,7 +42,10 @@ export interface DoctorResult {
 }
 
 export interface DoctorOptions {
-  list: string
+  /** List to create a new doctor task in. Ignored when `task` is given. */
+  list?: string
+  /** Overwrite this existing task's description instead of creating a new one. */
+  task?: string
   file?: string
   deleteAfter?: boolean
   dryRun?: boolean
@@ -54,6 +57,9 @@ export async function runTaskSyncDoctor(
   config: Config,
   opts: DoctorOptions,
 ): Promise<DoctorResult> {
+  if (!opts.task && !opts.list) {
+    throw new Error('task-sync doctor requires --list <listId> or --task <taskId>')
+  }
   const client = new ClickUpClient(config)
   const me = await client.getMe()
   const body = generateDoctorDocument({ userId: me.id, username: me.username })
@@ -67,7 +73,7 @@ export async function runTaskSyncDoctor(
       file = abs
     }
     return {
-      taskId: '(dry-run)',
+      taskId: opts.task ?? '(dry-run)',
       url: '',
       file,
       deleted: false,
@@ -76,7 +82,9 @@ export async function runTaskSyncDoctor(
         {
           id: 'dry-run',
           ok: true,
-          detail: `Would create a doctor task in list ${opts.list} (${String(colorTokens().length)} color tokens × 5 channels)`,
+          detail: opts.task
+            ? `Would overwrite task ${opts.task} (${String(colorTokens().length)} color tokens × 5 channels)`
+            : `Would create a doctor task in list ${String(opts.list)} (${String(colorTokens().length)} color tokens × 5 channels)`,
         },
       ],
       colors: [],
@@ -84,9 +92,11 @@ export async function runTaskSyncDoctor(
     }
   }
 
-  const created = await client.createTask(opts.list, {
-    name: `cup task-sync doctor ${new Date().toISOString().slice(0, 19)}`,
-  })
+  const created = opts.task
+    ? await client.getTask(opts.task)
+    : await client.createTask(String(opts.list), {
+        name: `cup task-sync doctor ${new Date().toISOString().slice(0, 19)}`,
+      })
   const withTask = generateDoctorDocument({
     userId: me.id,
     username: me.username,
@@ -129,7 +139,7 @@ export async function runTaskSyncDoctor(
           clickup_id: created.id,
           clickup_url: task.url,
           title: task.name,
-          list_id: opts.list,
+          list_id: opts.list ?? task.list.id,
           last_sync_at: new Date().toISOString(),
           last_remote_date_updated: task.date_updated,
           content_hash: contentHash(withTask, []),

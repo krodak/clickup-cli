@@ -6,7 +6,7 @@ import {
   looksLikeDirectoryTarget,
   pathIsDirectory,
 } from '../task-sync/discover.js'
-import { runTaskSyncDoctor as runDoctor } from '../task-sync/doctor.js'
+import { runTaskSyncDoctor as runDoctor, type DoctorOptions } from '../task-sync/doctor.js'
 import { parseMarkdownFile } from '../task-sync/frontmatter.js'
 import { buildSyncGraph } from '../task-sync/graph.js'
 import { pullTaskToFile } from '../task-sync/pull.js'
@@ -126,16 +126,6 @@ export async function runTaskSyncStatus(config: Config, file: string | undefined
   return taskSyncStatus(config, dest)
 }
 
-export async function runTaskSyncDoctor(
-  config: Config,
-  opts: {
-    list: string
-    file?: string
-    deleteAfter?: boolean
-    dryRun?: boolean
-    sessionToken?: string
-    mermaidTheme?: string
-  },
-) {
+export async function runTaskSyncDoctor(config: Config, opts: DoctorOptions) {
   return runDoctor(config, opts)
 }

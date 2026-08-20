@@ -97,6 +97,7 @@ Images are uploaded as `cup-{sha1}.ext` and reused. Fenced ` ```mermaid ` blocks
 cup task-sync doctor --list <listId>           # create a full CUFM torture-test task
 cup task-sync doctor --list <listId> -o doctor.md
 cup task-sync doctor --list <listId> --delete  # create, audit, delete (CI)
+cup task-sync doctor --task <taskId>           # overwrite an existing task's description instead
 ```
 
 Doctor writes every known text/highlight/badge/banner color (base + `-strong`) plus lists, nested toggles, tables, mermaid, columns, quotes, and alerts. It prints a pass/fail report. Keep the task and inspect it in the UI; set `CU_SESSION_TOKEN` to also audit stored Quill color tokens.
