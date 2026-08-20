@@ -89,7 +89,7 @@ blocks:
 
 Paths are relative to the file. ClickUp ids are also allowed. Push creates missing tasks parents-first, then descriptions, then adds missing dependency edges. Pull of a directory writes one file per task and rewrites `parent` / `subtasks` / `depends_on` as relative paths.
 
-Frontmatter also stores `last_sync_at`, `last_sync_sha`, `last_remote_date_updated`, and `content_hash`. Git is optional. `--force` skips clobber confirmation; `--no-input` fails instead of prompting; `--dry-run` prints the plan.
+Frontmatter also stores `last_sync_at`, `last_sync_sha`, `last_remote_date_updated`, `last_remote_hash` (fingerprint of the remote description, so status/assignee-only changes in ClickUp do not count as conflicts), and `content_hash` (body plus any referenced local images). Git is optional and only informational: `status` reports `gitDirty` but uncommitted files do not block push or pull. `--force` skips clobber confirmation; `--no-input` fails instead of prompting; `--dry-run` prints the plan.
 
 Images are uploaded as `cup-{sha1}.ext` and reused. Fenced ` ```mermaid ` blocks become an embedded PNG plus a toggle titled `mermaid source`.
 

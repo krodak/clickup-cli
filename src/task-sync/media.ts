@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, extname, isAbsolute, join, resolve } from 'node:path'
 import type { ClickUpClient } from '../api.js'
 import { sha1Buffer, sha1File } from './hash.js'
@@ -133,18 +133,4 @@ async function findExistingAttachment(
 export function resolveLocalPath(src: string, baseDir: string): string {
   if (isAbsolute(src)) return src
   return resolve(baseDir, src)
-}
-
-export async function downloadToAssets(
-  url: string,
-  assetsDir: string,
-  filename: string,
-): Promise<string> {
-  await mkdir(assetsDir, { recursive: true })
-  const dest = join(assetsDir, filename)
-  const res = await fetch(url, { signal: AbortSignal.timeout(60_000) })
-  if (!res.ok) throw new Error(`Failed to download ${url}: HTTP ${res.status}`)
-  const buf = Buffer.from(await res.arrayBuffer())
-  await writeFile(dest, buf)
-  return dest
 }

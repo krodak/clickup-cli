@@ -1,9 +1,9 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { ClickUpClient, type Task } from '../api.js'
 import type { Config } from '../config.js'
 import { discoverTaskFiles, slugTitle } from './discover.js'
-import { parseMarkdownFile, stringifyMarkdownFile } from './frontmatter.js'
+import { parseMarkdownFile, writeMarkdownFileAtomic } from './frontmatter.js'
 import type { TaskSyncFrontmatter } from './frontmatter.js'
 import { buildSyncGraph, createOrder, relativeRef, resolveNodeRef } from './graph.js'
 import type { SyncGraph } from './graph.js'
@@ -152,7 +152,7 @@ async function pullTaskAndChildren(
   if (childFiles.length > 0) {
     const again = parseMarkdownFile(await readFile(dest, 'utf8'))
     again.frontmatter.subtasks = childFiles
-    await writeFile(dest, stringifyMarkdownFile(again.frontmatter, again.body))
+    await writeMarkdownFileAtomic(dest, again.frontmatter, again.body)
   }
   return result
 }
@@ -271,7 +271,7 @@ export async function rewriteLinkFrontmatter(graph: SyncGraph): Promise<void> {
     if (blocking.length > 0) parsed.frontmatter.blocks = blocking
     else delete parsed.frontmatter.blocks
 
-    await writeFile(node.file, stringifyMarkdownFile(parsed.frontmatter, parsed.body))
+    await writeMarkdownFileAtomic(node.file, parsed.frontmatter, parsed.body)
   }
 }
 

@@ -140,6 +140,7 @@ blocks:
 last_sync_at: 2026-08-20T15:04:05Z
 last_sync_sha: null
 last_remote_date_updated: '1787192906231'
+last_remote_hash: '…'
 content_hash: '…'
 ---
 ```

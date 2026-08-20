@@ -4,10 +4,10 @@ import { ClickUpClient, type Task } from '../api.js'
 import type { Config } from '../config.js'
 import { decompileCufm } from '../cufm/decompile.js'
 import { classifyConflict, confirmClobber } from './conflict.js'
-import { parseMarkdownFile, stringifyMarkdownFile } from './frontmatter.js'
+import { parseMarkdownFile, writeMarkdownFileAtomic } from './frontmatter.js'
 import { fetchTaskOps } from './frontdoor.js'
 import { inspectGit } from './git.js'
-import { contentHash, sha1Buffer } from './hash.js'
+import { contentHash, localAssetHashes, remoteDescriptionHash, sha1Buffer } from './hash.js'
 import { cupFilename, loadMediaIndex, saveMediaIndex } from './media.js'
 import type { MediaIndex } from './media.js'
 
@@ -40,13 +40,12 @@ export async function pullTaskToFile(
   try {
     const current = await readFile(abs, 'utf8')
     const parsed = parseMarkdownFile(current)
-    const hash = contentHash(parsed.body, [])
-    const git = await inspectGit([abs])
-    const localDirty = hash !== parsed.frontmatter.content_hash || git.dirty
+    const hash = contentHash(parsed.body, await localAssetHashes(parsed.body, dirname(abs)))
+    const localDirty = hash !== parsed.frontmatter.content_hash
     const kind = classifyConflict({ localDirty, remoteNewer: true })
     if (kind === 'local' || kind === 'both') {
       await confirmClobber(
-        `Local file ${abs} has uncommitted or unsynced changes. Pull will overwrite it.`,
+        `Local file ${abs} has unsynced local changes. Pull will overwrite it.`,
         opts,
       )
     }
@@ -81,11 +80,12 @@ export async function pullTaskToFile(
     last_sync_at: new Date().toISOString(),
     last_sync_sha: git.head,
     last_remote_date_updated: task.date_updated,
-    content_hash: contentHash(body, []),
+    last_remote_hash: remoteDescriptionHash(task),
+    content_hash: contentHash(body, await localAssetHashes(body, dirname(abs))),
   }
   await mkdir(dirname(abs), { recursive: true })
-  await writeFile(abs, stringifyMarkdownFile(frontmatter, body))
   await saveMediaIndex(abs, media)
+  await writeMarkdownFileAtomic(abs, frontmatter, body)
   return { action: 'written', taskId: task.id, file: abs, lossless: doc !== undefined }
 }
 

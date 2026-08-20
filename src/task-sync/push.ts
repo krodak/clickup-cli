@@ -1,13 +1,13 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { compileForTask, compilePlain, descriptionNeedsAssets } from '../cufm/publish.js'
-import { classifyConflict, confirmClobber } from './conflict.js'
-import { parseMarkdownFile, stringifyMarkdownFile } from './frontmatter.js'
+import { classifyConflict, confirmClobber, isRemoteNewer } from './conflict.js'
+import { parseMarkdownFile, writeMarkdownFileAtomic } from './frontmatter.js'
 import { inspectGit } from './git.js'
 import { isPathRef } from './graph.js'
-import { contentHash } from './hash.js'
+import { contentHash, localAssetHashes, remoteDescriptionHash } from './hash.js'
 import { loadMediaIndex, saveMediaIndex } from './media.js'
 
 export interface PushOptions {
@@ -37,9 +37,9 @@ export async function pushTaskFile(
   const source = await readFile(abs, 'utf8')
   const parsed = parseMarkdownFile(source)
   const client = new ClickUpClient(config)
-  const hash = contentHash(parsed.body, [])
+  const hash = contentHash(parsed.body, await localAssetHashes(parsed.body, dirname(abs)))
   const git = await inspectGit([abs])
-  const localDirty = hash !== parsed.frontmatter.content_hash || git.dirty
+  const localDirty = hash !== parsed.frontmatter.content_hash
   const parentId =
     opts.parentId !== undefined
       ? opts.parentId
@@ -67,13 +67,13 @@ export async function pushTaskFile(
     parsed.frontmatter.clickup_url = createdTask.url
     parsed.frontmatter.list_id = listId
     parsed.frontmatter.title = name
+    // Record the id immediately so a failure while compiling/uploading the
+    // description cannot leave an orphan task that a re-run would duplicate.
+    await writeMarkdownFileAtomic(abs, parsed.frontmatter, parsed.body)
   }
 
   const remote = await client.getTask(taskId)
-  const remoteNewer =
-    parsed.frontmatter.last_remote_date_updated !== undefined &&
-    remote.date_updated !== undefined &&
-    Number(remote.date_updated) > Number(parsed.frontmatter.last_remote_date_updated)
+  const remoteNewer = isRemoteNewer(parsed.frontmatter, remote)
 
   const parentChanged = parentId !== undefined && (remote.parent ?? null) !== parentId
   const unchanged =
@@ -119,10 +119,13 @@ export async function pushTaskFile(
   parsed.frontmatter.last_sync_at = new Date().toISOString()
   parsed.frontmatter.last_sync_sha = git.head
   parsed.frontmatter.last_remote_date_updated = updated.date_updated
+  parsed.frontmatter.last_remote_hash = remoteDescriptionHash(updated)
   parsed.frontmatter.content_hash = hash
   parsed.frontmatter.clickup_url = updated.url
-  await writeFile(abs, stringifyMarkdownFile(parsed.frontmatter, parsed.body))
+  // Media index first: it is additive, so a crash between the two writes
+  // leaves the markdown still marked dirty rather than the index stale.
   await saveMediaIndex(abs, media)
+  await writeMarkdownFileAtomic(abs, parsed.frontmatter, parsed.body)
   return {
     action: created ? 'created' : 'updated',
     taskId,

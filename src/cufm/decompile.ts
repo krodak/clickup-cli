@@ -12,7 +12,30 @@ function attrStr(value: unknown): string {
   return ''
 }
 
-export function decompileCufm(ops: DeltaOp[]): string {
+/**
+ * Quill allows a single text insert to span several lines (`"a\nb\n"`). The
+ * decompiler's run collector treats each `\n` as its own op, so normalise
+ * those inserts into text / newline pieces first (inline attributes stay on
+ * the text pieces; the embedded newlines carry no line attributes).
+ */
+export function splitMultilineInserts(ops: DeltaOp[]): DeltaOp[] {
+  const out: DeltaOp[] = []
+  for (const op of ops) {
+    if (typeof op.insert !== 'string' || op.insert === '\n' || !op.insert.includes('\n')) {
+      out.push(op)
+      continue
+    }
+    const parts = op.insert.split('\n')
+    parts.forEach((part, idx) => {
+      if (part !== '') out.push(op.attributes ? { insert: part, attributes: op.attributes } : { insert: part })
+      if (idx < parts.length - 1) out.push({ insert: '\n' })
+    })
+  }
+  return out
+}
+
+export function decompileCufm(rawOps: DeltaOp[]): string {
+  const ops = splitMultilineInserts(rawOps)
   const lines: string[] = []
   let i = 0
   while (i < ops.length) {

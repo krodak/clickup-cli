@@ -1,4 +1,16 @@
+import { rename, writeFile } from 'node:fs/promises'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
+
+/** Write via a sibling temp file + rename so a crash never leaves a truncated markdown file. */
+export async function writeMarkdownFileAtomic(
+  path: string,
+  frontmatter: TaskSyncFrontmatter,
+  body: string,
+): Promise<void> {
+  const tmp = `${path}.${process.pid}.tmp`
+  await writeFile(tmp, stringifyMarkdownFile(frontmatter, body))
+  await rename(tmp, path)
+}
 
 export interface TaskSyncFrontmatter {
   clickup_id?: string
@@ -12,6 +24,8 @@ export interface TaskSyncFrontmatter {
   last_sync_at?: string
   last_sync_sha?: string | null
   last_remote_date_updated?: string
+  /** Fingerprint of the remote description at last sync (see remoteDescriptionHash). */
+  last_remote_hash?: string
   content_hash?: string
   [key: string]: unknown
 }

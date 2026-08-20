@@ -1534,12 +1534,12 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         } else if (Array.isArray(result)) {
           for (const row of result) {
             console.log(
-              `${row.file}  task ${row.taskId ?? '(none)'}  localDirty=${row.localDirty} remoteNewer=${row.remoteNewer}`,
+              `${row.file}  task ${row.taskId ?? '(none)'}  localDirty=${row.localDirty} remoteNewer=${row.remoteNewer} gitDirty=${row.gitDirty}`,
             )
           }
         } else {
           console.log(
-            `${result.file}\n  task ${result.taskId ?? '(none)'}\n  localDirty=${result.localDirty} remoteNewer=${result.remoteNewer}`,
+            `${result.file}\n  task ${result.taskId ?? '(none)'}\n  localDirty=${result.localDirty} remoteNewer=${result.remoteNewer} gitDirty=${result.gitDirty}`,
           )
         }
       }),

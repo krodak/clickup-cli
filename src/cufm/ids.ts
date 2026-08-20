@@ -1,15 +1,6 @@
-import { randomBytes, randomUUID } from 'node:crypto'
-
 export interface IdFactory {
   short: (prefix: string) => string
   uuid: () => string
-}
-
-export function randomIdFactory(): IdFactory {
-  return {
-    short: prefix => `${prefix}-${randomBytes(3).toString('hex')}`,
-    uuid: () => randomUUID(),
-  }
 }
 
 export function sequentialIdFactory(): IdFactory {
