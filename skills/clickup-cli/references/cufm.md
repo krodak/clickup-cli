@@ -2,7 +2,7 @@
 
 **Read this file before writing or updating a ClickUp task description.**
 
-`cup create`, `cup update`, and `cup task-sync push` compile CUFM to ClickUp’s native editor document. That is how headings stay tight, tables keep column widths, and mermaid becomes an image plus a toggle with the source.
+`cup create`, `cup update`, and `cup task-sync push` compile CUFM to ClickUp’s native editor document. That is how headings stay tight, tables keep column widths, and Mermaid/tldraw diagrams become images plus toggles with their source.
 
 This dialect is **task descriptions only**. Do not use CUFM in `cup comment` / `reply` / `comment-edit` — comments use a different converter.
 
@@ -108,6 +108,10 @@ flowchart LR
   A --> B
 ::
 
+::tldraw{width="640"}
+<complete .tldr JSON>
+::
+
 ::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
 This is shared by every clone of this Synced Content block.
 ::
@@ -163,6 +167,12 @@ flowchart LR
 ````
 
 If rendering fails, the source toggle is still kept.
+
+## tldraw
+
+A fenced `tldraw` block (or `::tldraw`) must contain a complete `.tldr` JSON document. `cup` renders it to a 2× PNG, uploads and embeds the image, then adds a **tldraw source** toggle containing the original JSON in one native code block. Set the displayed width with `::tldraw{width="640"}` or a fenced attribute.
+
+tldraw rendering uses the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept.
 
 ## Tables
 

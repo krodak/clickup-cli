@@ -17,6 +17,7 @@ export const BLOCK_COMPONENTS = [
   'button',
   'frame',
   'mermaid',
+  'tldraw',
   'attachment',
   'sync-block',
   'whiteboard',

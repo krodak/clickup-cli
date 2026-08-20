@@ -11,13 +11,15 @@ import {
   isInlineComponent,
 } from './schema.js'
 
-export interface MermaidRenderResult {
+export interface DiagramRenderResult {
   url: string
   width?: number
   naturalWidth?: number
   naturalHeight?: number
   dataId?: string
 }
+
+export type MermaidRenderResult = DiagramRenderResult
 
 export interface ResolvedImage {
   url: string
@@ -30,7 +32,8 @@ export interface ResolvedImage {
 export interface CompileOptions {
   ids?: IdFactory
   resolveImage?: (src: string, width?: number) => ResolvedImage | undefined
-  renderMermaid?: (source: string, meta: Record<string, string>) => MermaidRenderResult | undefined
+  renderMermaid?: (source: string, meta: Record<string, string>) => DiagramRenderResult | undefined
+  renderTldraw?: (source: string, meta: Record<string, string>) => DiagramRenderResult | undefined
   warnings?: string[]
 }
 
@@ -321,6 +324,9 @@ function compileFence(token: Token, ctx: Ctx): DeltaOp[] {
   if (lang === 'mermaid') {
     return compileMermaid(body, meta, ctx)
   }
+  if (lang === 'tldraw') {
+    return compileTldraw(body, meta, ctx)
+  }
   const codeBlock: Record<string, unknown> = { 'code-block': lang || true }
   if (meta.lineNumbers === 'true' || meta.lineNumbers === '' || 'lineNumbers' in meta) {
     codeBlock['code-block-line-numbers'] = 'true'
@@ -332,6 +338,22 @@ function compileFence(token: Token, ctx: Ctx): DeltaOp[] {
 
 function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx): DeltaOp[] {
   const rendered = ctx.options.renderMermaid?.(source, meta)
+  return compileDiagram(source, meta, 'mermaid', rendered, Boolean(ctx.options.renderMermaid), ctx)
+}
+
+function compileTldraw(source: string, meta: Record<string, string>, ctx: Ctx): DeltaOp[] {
+  const rendered = ctx.options.renderTldraw?.(source, meta)
+  return compileDiagram(source, meta, 'tldraw', rendered, Boolean(ctx.options.renderTldraw), ctx)
+}
+
+function compileDiagram(
+  source: string,
+  meta: Record<string, string>,
+  language: 'mermaid' | 'tldraw',
+  rendered: DiagramRenderResult | undefined,
+  rendererConfigured: boolean,
+  ctx: Ctx,
+): DeltaOp[] {
   const ops: DeltaOp[] = []
   if (rendered) {
     const imgAttrs: Record<string, unknown> = {}
@@ -346,19 +368,19 @@ function compileMermaid(source: string, meta: Record<string, string>, ctx: Ctx):
       embedOp({ image: rendered.url }, Object.keys(imgAttrs).length > 0 ? imgAttrs : undefined),
     )
     ops.push(newlineOp())
-  } else if (!ctx.options.renderMermaid) {
-    ctx.warnings.push('mermaid fence compiled without renderer; emitting source toggle only')
+  } else if (!rendererConfigured) {
+    ctx.warnings.push(`${language} fence compiled without renderer; emitting source toggle only`)
   } else {
-    ctx.warnings.push('mermaid render failed; keeping source as inline code inside a toggle')
+    ctx.warnings.push(`${language} render failed; keeping source as inline code inside a toggle`)
   }
   const toggleId = ctx.ids.short('list')
-  ops.push(textOp('mermaid source'))
+  ops.push(textOp(`${language} source`))
   const titleAttrs: Record<string, unknown> = { ...listAttr('toggled', { 'toggle-id': toggleId }) }
   if (ctx.indent > 0) titleAttrs.indent = ctx.indent
   ops.push(newlineOp(titleAttrs))
   const bodyAttrs: Record<string, unknown> = {
     'code-block': {
-      'code-block': 'mermaid',
+      'code-block': language,
       'in-list': 'none',
       'wrapper-indent': String(ctx.indent + 1),
     },
@@ -404,7 +426,9 @@ function compileComponent(
     case 'frame':
       return compileFrame(props)
     case 'mermaid':
-      return compileMermaid(tokensToPlain(tokens, start, close).trimEnd(), props, ctx)
+      return compileMermaid(tokensToSource(tokens, start, close).trimEnd(), props, ctx)
+    case 'tldraw':
+      return compileTldraw(tokensToSource(tokens, start, close).trimEnd(), props, ctx)
     case 'attachment':
       return [
         embedOp({
@@ -1112,6 +1136,16 @@ function tokensToPlain(tokens: Token[], start: number, end: number): string {
     if (t.type === 'inline') parts.push(inlinePlain(t))
     else if (t.type === 'fence') parts.push(t.content)
     else if (t.type === 'text') parts.push(t.content)
+  }
+  return parts.join('\n')
+}
+
+function tokensToSource(tokens: Token[], start: number, end: number): string {
+  const parts: string[] = []
+  for (let i = start; i < end; i++) {
+    const t = tokens[i]
+    if (!t) continue
+    if (t.type === 'inline' || t.type === 'fence' || t.type === 'text') parts.push(t.content)
   }
   return parts.join('\n')
 }

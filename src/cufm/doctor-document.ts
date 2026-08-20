@@ -7,6 +7,144 @@ export interface DoctorDocumentOptions {
   syncedContent?: { id: string; body: string }
 }
 
+const TLDRAW_DOCTOR_SOURCE = JSON.stringify(
+  {
+    tldrawFileFormatVersion: 1,
+    schema: {
+      schemaVersion: 1,
+      storeVersion: 4,
+      recordVersions: {
+        asset: {
+          version: 1,
+          subTypeKey: 'type',
+          subTypeVersions: { image: 2, video: 2, bookmark: 0 },
+        },
+        camera: { version: 1 },
+        document: { version: 2 },
+        instance: { version: 17 },
+        instance_page_state: { version: 3 },
+        page: { version: 1 },
+        shape: {
+          version: 3,
+          subTypeKey: 'type',
+          subTypeVersions: {
+            group: 0,
+            embed: 4,
+            bookmark: 1,
+            image: 2,
+            text: 1,
+            draw: 1,
+            geo: 7,
+            line: 0,
+            note: 4,
+            frame: 0,
+            arrow: 1,
+            highlight: 0,
+            video: 1,
+          },
+        },
+        instance_presence: { version: 4 },
+        pointer: { version: 1 },
+      },
+    },
+    records: [
+      {
+        id: 'document:document',
+        typeName: 'document',
+        gridSize: 10,
+        name: '',
+        meta: {},
+      },
+      {
+        id: 'page:page1',
+        typeName: 'page',
+        name: 'Page 1',
+        index: 'a1',
+        meta: {},
+      },
+      doctorGeoShape('shape:source', 'a1', 100, 'CUFM', 'blue'),
+      doctorGeoShape('shape:renderer', 'a2', 500, 'tldraw CLI', 'orange'),
+      doctorGeoShape('shape:clickup', 'a3', 900, 'ClickUp PNG', 'green'),
+      doctorArrowShape('shape:arrow1', 'a4', 'shape:source', 'shape:renderer'),
+      doctorArrowShape('shape:arrow2', 'a5', 'shape:renderer', 'shape:clickup'),
+    ],
+  },
+  null,
+  2,
+)
+
+function doctorGeoShape(id: string, index: string, x: number, text: string, color: string) {
+  return {
+    id,
+    typeName: 'shape',
+    type: 'geo',
+    parentId: 'page:page1',
+    index,
+    x,
+    y: 100,
+    rotation: 0,
+    isLocked: false,
+    opacity: 1,
+    meta: {},
+    props: {
+      w: 200,
+      h: 60,
+      geo: 'rectangle',
+      color,
+      labelColor: 'black',
+      fill: 'semi',
+      dash: 'draw',
+      size: 'm',
+      font: 'draw',
+      text,
+      align: 'middle',
+      verticalAlign: 'middle',
+      growY: 0,
+      url: '',
+    },
+  }
+}
+
+function doctorArrowShape(id: string, index: string, from: string, to: string) {
+  return {
+    id,
+    typeName: 'shape',
+    type: 'arrow',
+    parentId: 'page:page1',
+    index,
+    x: 0,
+    y: 0,
+    rotation: 0,
+    isLocked: false,
+    opacity: 1,
+    meta: {},
+    props: {
+      dash: 'draw',
+      size: 'm',
+      fill: 'none',
+      color: 'black',
+      labelColor: 'black',
+      bend: 0,
+      start: {
+        type: 'binding',
+        boundShapeId: from,
+        normalizedAnchor: { x: 1, y: 0.5 },
+        isExact: false,
+      },
+      end: {
+        type: 'binding',
+        boundShapeId: to,
+        normalizedAnchor: { x: 0, y: 0.5 },
+        isExact: false,
+      },
+      arrowheadStart: 'none',
+      arrowheadEnd: 'arrow',
+      text: '',
+      font: 'draw',
+    },
+  }
+}
+
 export function generateDoctorDocument(opts: DoctorDocumentOptions = {}): string {
   const user = opts.username ?? 'me'
   const userId = opts.userId !== undefined ? String(opts.userId) : '0'
@@ -182,6 +320,11 @@ flowchart LR
   Local[CUFM] --> Compile[compileCufm]
   Compile --> Delta[Quill ops]
   Delta --> ClickUp
+\`\`\`
+
+## tldraw
+\`\`\`tldraw {width="640"}
+${TLDRAW_DOCTOR_SOURCE}
 \`\`\`
 
 ## Button and frame

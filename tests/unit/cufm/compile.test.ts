@@ -238,6 +238,71 @@ Content
     }
   })
 
+  it.each([
+    ['fence', '```tldraw\n{"tldrawFileFormatVersion":1,"records":[]}\n```\n'],
+    ['component', '::tldraw{width="480"}\n{"tldrawFileFormatVersion":1,"records":[]}\n::\n'],
+  ])('compiles a tldraw %s to an image and source toggle', (_kind, source) => {
+    const { ops } = compileCufm(source, {
+      ids: sequentialIdFactory(),
+      renderTldraw: () => ({
+        url: 'https://example.com/cup-tldraw.png',
+        width: 640,
+        naturalWidth: 1280,
+        naturalHeight: 720,
+      }),
+    })
+    expect(ops[0]).toMatchObject({ insert: { image: 'https://example.com/cup-tldraw.png' } })
+    expect(ops[0]?.attributes).toMatchObject({
+      width: source.startsWith('::') ? '480' : '640',
+      'data-natural-width': '1280',
+      'data-natural-height': '720',
+    })
+    expect(ops.some(op => op.insert === 'tldraw source')).toBe(true)
+    const sourceLines = newlines(ops).filter(op => op.attributes?.['code-block'])
+    expect(sourceLines).toHaveLength(1)
+    expect(sourceLines[0]?.attributes).toEqual({
+      'code-block': {
+        'code-block': 'tldraw',
+        'in-list': 'none',
+        'wrapper-indent': '1',
+      },
+    })
+    expect(ops.some(op => op.insert === '{"tldrawFileFormatVersion":1,"records":[]}')).toBe(true)
+  })
+
+  it('keeps tldraw source when no renderer is configured', () => {
+    const { ops, warnings } = compile('```tldraw\n{"records":[]}\n```\n')
+    expect(ops.some(op => embedType(op.insert) === 'image')).toBe(false)
+    expect(ops.some(op => op.insert === 'tldraw source')).toBe(true)
+    expect(warnings).toEqual([
+      'tldraw fence compiled without renderer; emitting source toggle only',
+    ])
+  })
+
+  it('preserves multiline JSON in a tldraw component', () => {
+    const json = `{
+  "tldrawFileFormatVersion": 1,
+  "records": []
+}`
+    let renderedSource = ''
+    const { ops } = compileCufm(
+      `::tldraw
+${json}
+::
+`,
+      {
+        ids: sequentialIdFactory(),
+        renderTldraw: source => {
+          renderedSource = source
+          return { url: 'https://example.com/tldraw.png' }
+        },
+      },
+    )
+    expect(renderedSource).toBe(json)
+    const sourceLines = newlines(ops).filter(op => op.attributes?.['code-block'])
+    expect(sourceLines).toHaveLength(4)
+  })
+
   it('applies code-block attributes to every line of a multiline fence', () => {
     const { ops } = compile('```text\none\ntwo\n```\n')
     const codeLines = newlines(ops).filter(op => op.attributes?.['code-block'])

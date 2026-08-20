@@ -36,6 +36,9 @@ describe('doctor document', () => {
     expect(doc).toContain('::table{widths="120,240,360"}')
     expect(doc).toContain('**bold** and ~~strike~~')
     expect(doc).toContain('```mermaid')
+    expect(doc).toContain('```tldraw {width="640"}')
+    expect(doc).toContain('"tldrawFileFormatVersion": 1')
+    expect(doc).toContain('"text": "tldraw CLI"')
     expect(doc).toContain('::quote{size="large"}')
     expect(doc).toContain('::button')
     expect(doc).toContain('::frame')
@@ -60,6 +63,7 @@ describe('doctor document', () => {
     expect(
       ops.some(op => (op.attributes?.list as { list?: string } | undefined)?.list === 'toggled'),
     ).toBe(true)
+    expect(ops.some(op => op.insert === 'tldraw source')).toBe(true)
     expect(ops[0]).toEqual({ insert: 'Tight H1' })
     expect(ops[1]?.attributes).toMatchObject({ header: 1 })
     expect(ops[2]).toEqual({

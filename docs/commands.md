@@ -64,7 +64,7 @@ Keep a task's description as a local markdown file and push/pull without an LLM 
 ```bash
 cup task-sync init 86bbhau05 notes.md     # pull into notes.md
 cup task-sync init 86bbhau05 ./tasks/     # pull parent + subtasks into a directory
-cup task-sync push notes.md               # upload images, render mermaid, PUT native delta
+cup task-sync push notes.md               # upload images, render Mermaid/tldraw, PUT native delta
 cup task-sync push notes.md --session-token <jwt> # update Synced Content backing blocks
 cup task-sync push ./tasks                # push a directory of tasks/subtasks
 cup task-sync pull ./tasks                # pull the tree (root = the file with no parent:)
@@ -92,7 +92,7 @@ Paths are relative to the file. ClickUp ids are also allowed. Push creates missi
 
 Frontmatter also stores `last_sync_at`, `last_sync_sha`, `last_remote_date_updated`, `last_remote_hash` (fingerprint of the remote description, so status/assignee-only changes in ClickUp do not count as conflicts), and `content_hash` (body plus any referenced local images). Git is optional and only informational: `status` reports `gitDirty` but uncommitted files do not block push or pull. `--force` skips clobber confirmation; `--no-input` fails instead of prompting; `--dry-run` prints the plan.
 
-Images are uploaded as `cup-{sha1}.ext` and reused. Fenced ` ```mermaid ` blocks become an embedded 2× PNG plus a toggle titled `mermaid source`. Synced Content bodies require `CU_SESSION_TOKEN` or `--session-token`; empty `::sync-block{id="…"}` components clone an existing block.
+Images are uploaded as `cup-{sha1}.ext` and reused. Fenced ` ```mermaid ` and ` ```tldraw ` blocks become embedded 2× PNGs plus toggles containing their source. tldraw blocks contain complete `.tldr` JSON and require the external `tldraw` CLI (`npm install --global @kitschpatrol/tldraw-cli`). Synced Content bodies require `CU_SESSION_TOKEN` or `--session-token`; empty `::sync-block{id="…"}` components clone an existing block.
 
 ```bash
 cup task-sync doctor --list <listId>           # create a full CUFM torture-test task
@@ -101,7 +101,7 @@ cup task-sync doctor --list <listId> --delete  # create, audit, delete (CI)
 cup task-sync doctor --task <taskId>           # overwrite an existing task's description instead
 ```
 
-Doctor writes every supported text/highlight/badge/block/banner color combination, plus lists, nested toggles, tables, mermaid, columns, quotes, and alerts. Banners include `-strong` variants; other color channels use base colors. It prints a pass/fail report. Keep the task and inspect it in the UI; set `CU_SESSION_TOKEN` to also audit stored Quill color tokens.
+Doctor writes every supported text/highlight/badge/block/banner color combination, plus lists, nested toggles, tables, Mermaid, tldraw, columns, quotes, and alerts. Banners include `-strong` variants; other color channels use base colors. It prints a pass/fail report. Keep the task and inspect it in the UI; set `CU_SESSION_TOKEN` to also audit stored Quill color tokens.
 
 ## Mentions
 

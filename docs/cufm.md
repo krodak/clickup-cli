@@ -1,6 +1,6 @@
 # ClickUp Flavored Markdown (CUFM)
 
-CUFM is GitHub-flavored Markdown plus a small [Comark/MDC](https://comark.dev/syntax/markdown) component set. `cup task-sync push` (and `cup create` / `cup update`) compile it to ClickUp’s native editor document so headings stay tight, tables keep column widths, and mermaid becomes an image plus a toggle with the source.
+CUFM is GitHub-flavored Markdown plus a small [Comark/MDC](https://comark.dev/syntax/markdown) component set. `cup task-sync push` (and `cup create` / `cup update`) compile it to ClickUp’s native editor document so headings stay tight, tables keep column widths, and Mermaid/tldraw diagrams become images plus toggles with their source.
 
 AIs should write this dialect natively. The copy shipped with the agent skill (load this whenever authoring a task description) is [skills/clickup-cli/references/cufm.md](../skills/clickup-cli/references/cufm.md). Unknown `::components` are preserved as a fenced `cufm` code block rather than dropped.
 
@@ -94,6 +94,10 @@ flowchart LR
   A --> B
 ::
 
+::tldraw{width="640"}
+<complete .tldr JSON>
+::
+
 ::sync-block{id="aa751cde-1335-4328-8359-2774c6cc77d5"}
 This is shared by every clone of this Synced Content block.
 ::
@@ -144,6 +148,12 @@ Create the initial Synced Content block in ClickUp, then pull with `CU_SESSION_T
 A fenced ` ```mermaid ` block (or `::mermaid`) is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source in one native code block. Theme default is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
 
 If rendering fails, the source toggle is still kept.
+
+## tldraw
+
+A fenced ` ```tldraw ` block (or `::tldraw`) containing a complete `.tldr` JSON document is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **tldraw source** containing the original JSON in one native code block. Set the displayed width with `::tldraw{width="640"}` or a fenced attribute.
+
+tldraw rendering is loaded on demand through the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept.
 
 ## Tables
 

@@ -214,8 +214,13 @@ function auditMarkdown(md: string): DoctorCheck[] {
       detail: 'Mermaid rendered as an image or kept as a fence',
     },
     {
+      id: 'tldraw-source',
+      ok: /tldraw source|tldrawFileFormatVersion|```tldraw/i.test(md),
+      detail: 'tldraw source toggle or fallback fence present',
+    },
+    {
       id: 'toggle',
-      ok: /Simple toggle|mermaid source/i.test(md),
+      ok: /Simple toggle|mermaid source|tldraw source/i.test(md),
       detail: 'Toggle title present (markdown exports toggles as lists)',
     },
     {
