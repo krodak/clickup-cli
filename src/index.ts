@@ -1405,13 +1405,16 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           opts: {
             force?: boolean
             dryRun?: boolean
-            noInput?: boolean
+            input?: boolean
             sessionToken?: string
             json?: boolean
           },
         ) => {
           const config = loadConfig(getProfileName())
-          const result = await runTaskSyncInit(config, taskId, file, opts)
+          const result = await runTaskSyncInit(config, taskId, file, {
+            ...opts,
+            noInput: opts.input === false,
+          })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else if ('children' in result) {
@@ -1447,7 +1450,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           opts: {
             force?: boolean
             dryRun?: boolean
-            noInput?: boolean
+            input?: boolean
             list?: string
             create?: boolean
             title?: string
@@ -1456,7 +1459,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           },
         ) => {
           const config = loadConfig(getProfileName())
-          const result = await runTaskSyncPush(config, file, opts)
+          const result = await runTaskSyncPush(config, file, {
+            ...opts,
+            noInput: opts.input === false,
+          })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else if ('results' in result) {
@@ -1488,13 +1494,16 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           opts: {
             force?: boolean
             dryRun?: boolean
-            noInput?: boolean
+            input?: boolean
             sessionToken?: string
             json?: boolean
           },
         ) => {
           const config = loadConfig(getProfileName())
-          const result = await runTaskSyncPull(config, file, opts)
+          const result = await runTaskSyncPull(config, file, {
+            ...opts,
+            noInput: opts.input === false,
+          })
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else if ('children' in result) {

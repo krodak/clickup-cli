@@ -67,8 +67,12 @@ export async function createTask(
     options.description !== '' &&
     descriptionNeedsAssets(options.description)
   if (options.description !== undefined && !needsAssets) {
-    payload.description =
-      options.description === '' ? '' : { ops: compilePlain(options.description).ops }
+    if (options.description === '') payload.description = ''
+    else {
+      const compiled = compilePlain(options.description)
+      for (const w of compiled.warnings) console.error(`warning: ${w}`)
+      payload.description = { ops: compiled.ops }
+    }
   }
 
   if (options.priority !== undefined) {
@@ -115,6 +119,7 @@ export async function createTask(
       baseDir: process.cwd(),
       media: {},
     })
+    for (const w of compiled.warnings) console.error(`warning: ${w}`)
     await client.updateTask(task.id, { description: { ops: compiled.ops } })
   }
   return { id: task.id, name: task.name, url: task.url }

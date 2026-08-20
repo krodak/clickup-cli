@@ -25,14 +25,21 @@ export async function fetchTaskOps(
       },
       signal: AbortSignal.timeout(15_000),
     })
-    if (!res.ok) return undefined
+    if (!res.ok) return fail(`HTTP ${res.status}`)
     const json = (await res.json()) as { task?: { content?: string } }
     const raw = json.task?.content
-    if (!raw) return undefined
+    if (!raw) return fail('response had no task content')
     const parsed = JSON.parse(raw) as { ops?: DeltaOp[] }
-    if (!Array.isArray(parsed.ops)) return undefined
+    if (!Array.isArray(parsed.ops)) return fail('task content is not a Quill delta')
     return { ops: parsed.ops }
-  } catch {
-    return undefined
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : String(err))
   }
+}
+
+// A token was supplied, so the user expects a lossless pull; say why it degraded
+// rather than silently falling back to markdown_description.
+function fail(reason: string): undefined {
+  console.error(`warning: lossless pull failed (${reason}); falling back to markdown export`)
+  return undefined
 }

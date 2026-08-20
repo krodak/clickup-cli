@@ -101,9 +101,11 @@ export function orderedFrontmatter(fm: TaskSyncFrontmatter): TaskSyncFrontmatter
 
 export function stringifyMarkdownFile(frontmatter: TaskSyncFrontmatter, body: string): string {
   const yaml = stringifyYaml(orderedFrontmatter(frontmatter)).trimEnd()
-  const normalized = body.startsWith('\n') ? body : `\n${body}`
-  const withNl = normalized.endsWith('\n') ? normalized : `${normalized}\n`
-  return `---\n${yaml}\n---${withNl.startsWith('\n') ? withNl : `\n${withNl}`}`
+  // Emit the body verbatim after the closing fence so that
+  // parseMarkdownFile(stringifyMarkdownFile(fm, body)).body === body; otherwise a
+  // body with a leading blank line re-parses differently and content_hash never matches.
+  const withNl = body === '' || body.endsWith('\n') ? body : `${body}\n`
+  return `---\n${yaml}\n---\n${withNl}`
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

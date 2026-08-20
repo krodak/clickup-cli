@@ -111,12 +111,11 @@ export async function pushTaskFile(
     : compilePlain(parsed.body)
 
   const name = opts.title ?? parsed.frontmatter.title
-  await client.updateTask(taskId, {
+  const updated = await client.updateTask(taskId, {
     description: { ops: compiled.ops },
     ...(name && name !== remote.name ? { name } : {}),
     ...(parentChanged ? { parent: parentId } : {}),
   })
-  const updated = await client.getTask(taskId)
   parsed.frontmatter.last_sync_at = new Date().toISOString()
   parsed.frontmatter.last_sync_sha = git.head
   parsed.frontmatter.last_remote_date_updated = updated.date_updated

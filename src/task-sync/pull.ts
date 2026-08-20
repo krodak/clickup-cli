@@ -16,6 +16,8 @@ export interface PullOptions {
   dryRun?: boolean
   noInput?: boolean
   sessionToken?: string
+  /** Already-fetched task (avoids a second GET when the caller has it). */
+  task?: Task
 }
 
 export interface PullResult {
@@ -33,7 +35,7 @@ export async function pullTaskToFile(
 ): Promise<PullResult> {
   const abs = resolve(filePath)
   const client = new ClickUpClient(config)
-  const task = await client.getTask(taskId)
+  const task = opts.task?.id === taskId ? opts.task : await client.getTask(taskId)
 
   try {
     const current = await readFile(abs, 'utf8')

@@ -71,6 +71,8 @@ export type TaskDescription = string | { ops: DeltaOp[] }
 export interface UpdateTaskOptions {
   name?: string
   description?: TaskDescription
+  /** CLI-only: raw CUFM markdown needing asset uploads; compiled by commands/update.ts before the request. */
+  description_markdown?: string
   markdown_content?: string
   status?: string
   priority?: Priority | null

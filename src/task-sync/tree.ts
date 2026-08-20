@@ -121,7 +121,7 @@ async function pullTaskAndChildren(
 
   const task = await client.getTask(taskId)
   const dest = await destForTask(task, dir, existing, claimed)
-  const result = await pullTaskToFile(config, task.id, dest, opts)
+  const result = await pullTaskToFile(config, task.id, dest, { ...opts, task })
   existing.set(task.id, dest)
   claimed.add(dest)
 

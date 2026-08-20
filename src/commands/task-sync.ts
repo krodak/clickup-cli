@@ -62,15 +62,21 @@ export async function runTaskSyncPush(
     mermaidTheme?: string
   },
 ) {
-  if (file && (await pathIsDirectory(file))) {
-    return pushSyncDir(config, file, opts)
+  const pushDir = (dir: string) => {
+    if (opts.title !== undefined) {
+      throw new Error(
+        '--title applies to a single file; it cannot be used when pushing a directory',
+      )
+    }
+    return pushSyncDir(config, dir, opts)
   }
+  if (file && (await pathIsDirectory(file))) return pushDir(file)
   if (!file) {
     const discovered = await discoverTaskFiles(process.cwd())
-    if (discovered.length > 1) return pushSyncDir(config, process.cwd(), opts)
+    if (discovered.length > 1) return pushDir(process.cwd())
   }
   const dest = await resolveSyncFile(file)
-  if (await pathIsDirectory(dest)) return pushSyncDir(config, dest, opts)
+  if (await pathIsDirectory(dest)) return pushDir(dest)
   return pushTaskFile(config, dest, opts)
 }
 

@@ -1,9 +1,9 @@
-import { renderMermaid, THEMES } from 'beautiful-mermaid'
-import { Resvg } from '@resvg/resvg-js'
+// beautiful-mermaid (+elkjs) and the native resvg addon cost >100ms to load; import
+// them only when a diagram is actually rendered so plain commands start fast.
 
 export const DEFAULT_MERMAID_THEME = 'github-light'
 
-export function mermaidThemeColors(name: string): {
+export async function mermaidThemeColors(name: string): Promise<{
   bg: string
   fg: string
   line?: string
@@ -11,7 +11,8 @@ export function mermaidThemeColors(name: string): {
   muted?: string
   surface?: string
   border?: string
-} {
+}> {
+  const { THEMES } = await import('beautiful-mermaid')
   const themes: Record<string, { bg: string; fg: string }> = THEMES
   return themes[name] ?? themes[DEFAULT_MERMAID_THEME] ?? { bg: '#ffffff', fg: '#27272A' }
 }
@@ -20,7 +21,11 @@ export async function renderMermaidPng(
   source: string,
   themeName = DEFAULT_MERMAID_THEME,
 ): Promise<{ png: Buffer; svg: string; width: number; height: number }> {
-  const colors = mermaidThemeColors(themeName)
+  const [{ renderMermaid }, { Resvg }] = await Promise.all([
+    import('beautiful-mermaid'),
+    import('@resvg/resvg-js'),
+  ])
+  const colors = await mermaidThemeColors(themeName)
   const svg = await renderMermaid(source, { ...colors, transparent: false })
   const inlined = inlineSvgColors(svg, colors)
   const resvg = new Resvg(inlined, { fitTo: { mode: 'original' } })

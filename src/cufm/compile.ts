@@ -198,7 +198,12 @@ function compileList(
         j = nestedClose + 1
         continue
       }
-      j += 1
+      // Any other block (fence, blockquote, table, heading, hr, html) nested in the
+      // item: compile it with the generic block compiler instead of dropping it.
+      const closeType = child.type.endsWith('_open') ? child.type.replace(/_open$/, '_close') : null
+      const childEnd = closeType ? findClose(tokens, j, closeType) : j
+      ops.push(...compileBlocks(tokens, j, childEnd + 1, { ...ctx, indent: ctx.indent + 1 }))
+      j = childEnd + 1
     }
     if (!emittedItemLine) {
       const attrs: Record<string, unknown> = { ...listAttr(itemKind) }
@@ -682,6 +687,11 @@ function compileInline(children: Token[] | undefined, ctx: Ctx): DeltaOp[] {
         i += 1
         break
       case 'softbreak':
+        // breaks:false -> a soft break is intra-paragraph whitespace. Emitting a bare
+        // "\n" op would terminate the Quill line and strip its block attributes.
+        flushText(' ')
+        i += 1
+        break
       case 'hardbreak':
         flushText('\n')
         i += 1
@@ -969,13 +979,17 @@ function innerInline(tokens: Token[], openIndex: number, closeIndex: number): To
   return inline?.children ?? []
 }
 
+function plainOf(c: Token): string {
+  return c.type === 'softbreak' || c.type === 'hardbreak' ? '\n' : c.content
+}
+
 function inlinePlain(token: Token): string {
-  if (token.children) return token.children.map(c => c.content).join('')
+  if (token.children) return inlinePlainFromChildren(token.children)
   return token.content
 }
 
 function inlinePlainFromChildren(children: Token[]): string {
-  return children.map(c => c.content).join('')
+  return children.map(plainOf).join('')
 }
 
 function tokensToPlain(tokens: Token[], start: number, end: number): string {
