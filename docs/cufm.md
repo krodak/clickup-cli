@@ -10,6 +10,15 @@ Headings (`#`–`####`), **bold**, _italic_, ~~strike~~, `code`, [links](https:/
 
 Relative image paths are uploaded on push (`cup-{sha1}.ext`) and embedded.
 
+### Line breaks and list indentation
+
+ClickUp stores one block per line, so a few ordinary markdown habits do not mean what they look like:
+
+- **Separate every block with a blank line.** A single newline inside a paragraph is a markdown soft break, which collapses to a space: `Line one\nline two` becomes `Line one line two`. Do not hard-wrap prose.
+- **Nest ordered items by three spaces**, not two — the indent must clear the `1. ` marker. Two spaces makes the child a sibling and renumbers it. Bullets and `- [ ]` items nest by two.
+- **Do not rely on lazy continuation lines inside a list item.** An unmarked line indented under `- item` is folded onto the item's own line.
+- Trailing-double-space hard breaks become separate blocks; use a blank line instead.
+
 ## Attributes
 
 Comark `{...}` after an element:
@@ -45,7 +54,8 @@ ClickUp keeps a block background but resets inline text color in the same paragr
 ::
 
 ::toggle{title="Details"}
-Hidden body. Nested toggles use extra colons:
+Hidden body. Nested toggles may use extra colons for readability, but
+plain `::` nests correctly too — a lossless pull always writes the `::` form:
 
   :::toggle{title="Nested"}
   Inner body
@@ -106,6 +116,10 @@ This is shared by every clone of this Synced Content block.
 ::
 ````
 
+### What a toggle can hold
+
+Toggle membership is recorded as an indent on each line, and the block embeds have no line to carry it. Text, headings, lists, code fences, images, and banners nest inside `::toggle` and stay there. **Tables, dividers, `::button`, and `::frame` do not** — they render after the toggle, not inside it, so keep the toggle and the table as siblings rather than nesting them.
+
 GitHub alerts become banners:
 
 ```mdc
@@ -146,6 +160,10 @@ Create the initial Synced Content block in ClickUp, then pull with `CU_SESSION_T
 ## Mermaid
 
 A fenced ` ```mermaid ` block (or `::mermaid`) is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source in one native code block. Theme default is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
+
+A lossless pull collapses that image-plus-source-toggle pair back to a plain fence, so the fenced form is what a synced file always contains. Edit the fence and push; do not hand-edit the rendered image or the source toggle.
+
+Only the diagram source is stored in the document — `theme` and `width` are render inputs, so a pull drops them and the next push re-renders with the defaults. For a theme you want to keep, use `cup task-sync push --mermaid-theme` rather than a per-diagram `::mermaid{theme="…"}` override.
 
 If rendering fails, the source toggle is still kept and the reason is reported as a compile warning.
 

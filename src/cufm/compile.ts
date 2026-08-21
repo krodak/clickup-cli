@@ -908,7 +908,10 @@ function compileInline(children: Token[] | undefined, ctx: Ctx): DeltaOp[] {
       }
       case 'mdc_inline_component': {
         if (token.nesting === 1 || token.nesting === 0) {
-          const innerEnd = findInlineClose(children, i, 'mdc_inline_component')
+          // A leaf component (`:doc{...}`) has no closing token, so it ends at
+          // itself; searching for a close would swallow the rest of the line.
+          const innerEnd =
+            token.nesting === 0 ? i : findInlineClose(children, i, 'mdc_inline_component')
           const innerText = children
             .slice(i + 1, innerEnd)
             .filter(c => c.type === 'text')

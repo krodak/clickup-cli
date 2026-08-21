@@ -28,6 +28,20 @@ describe('doctor document', () => {
     }
   })
 
+  it('covers the round-trip traps that a decompile can flatten', () => {
+    // Every code block used to be one line long, which is why a decompiler that
+    // emitted one fence per line looked fine here.
+    const multiLineFence = /```json \{lineNumbers\}\n(?:.*\n){3,}```/.test(doc)
+    expect(multiLineFence).toBe(true)
+    expect(doc).toContain('**`SDR` is the consumed value**')
+    expect(doc).toContain('this trailing text must stay on the same line as the mentions')
+    expect(doc).toContain('Second paragraph must stay inside the same banner')
+    expect(doc).toContain('Second pull-quote paragraph stays in the same quote block')
+    expect(doc).toContain('3. Ordered 3')
+    expect(doc).toContain('   2. Ordered 1.b')
+    expect(doc).toMatch(/^\| `code` \| \*italic\*/m)
+  })
+
   it('covers structural CUFM features', () => {
     expect(doc).toContain('# Tight H1')
     expect(doc).toContain('::toc')

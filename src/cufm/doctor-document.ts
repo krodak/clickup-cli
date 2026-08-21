@@ -183,6 +183,12 @@ ${syncedContent}
 ## Inline marks
 **bold**, *italic*, ~~strikethrough~~, \`inline code\`, [link](https://example.com), [underline]{underline}, ${mention}, ${taskMention}
 
+Adjacent spans sharing an emphasis must emit one delimiter pair: **\`SDR\` is the consumed value**: not four asterisks.
+
+*(A fully italic line quoting \`D_max\` inline, so the italic run survives the code span.)*
+
+Mentions stay inline: ${mention} filed ${taskMention} — this trailing text must stay on the same line as the mentions.
+
 ## Text colors
 ${textRow}
 
@@ -208,6 +214,12 @@ ${banners}
 Banner with an icon
 ::
 
+::banner{color="green" icon="🧩"}
+Multi-paragraph banner, first line.
+
+Second paragraph must stay inside the same banner, not fall out below it.
+::
+
 > [!NOTE]
 > GitHub NOTE alert → blue banner
 
@@ -220,6 +232,8 @@ Banner with an icon
 ## Quotes
 ::quote{size="large"}
 This is a pull quote (large)
+
+Second pull-quote paragraph stays in the same quote block.
 ::
 
 > This is a normal block quote
@@ -243,7 +257,9 @@ Para after H4
 
 1. Ordered 1
    1. Ordered 1.a
+   2. Ordered 1.b
 2. Ordered 2
+3. Ordered 3 — numbering must read 1, 2, 3 and not restart
 
 - [ ] Unchecked
 - [x] Checked
@@ -262,17 +278,34 @@ Toggle body paragraph.
 
 ::toggle{title="Toggle with code"}
 \`\`\`json
-{"inside": "toggle"}
+{
+  "inside": "toggle",
+  "lines": "must stay in one fence"
+}
 \`\`\`
 ::
 
 ## Code
+A multi-line body must come back as ONE fence, not one fence per line.
+
 \`\`\`json {lineNumbers}
-{"lineNumbers": true, "ok": true}
+{
+  "lineNumbers": true,
+  "ok": true,
+  "note": "three body lines, one block"
+}
 \`\`\`
+
+Two fences in a row must stay separate blocks with their own languages:
 
 \`\`\`javascript
 console.log('no line numbers')
+console.log('second line of the same block')
+\`\`\`
+
+\`\`\`sql
+SELECT 1
+FROM dual
 \`\`\`
 
 ## Divider
@@ -296,6 +329,7 @@ console.log('no line numbers')
 | Narrow | Medium | Wide explicit |
 | --- | --- | --- |
 | a | **bold** and ~~strike~~ | [pink]{color="pink"} |
+| \`code\` | *italic* and [link](https://example.com) | ${mention} |
 ::
 
 ::table{widths="75,75,75"}

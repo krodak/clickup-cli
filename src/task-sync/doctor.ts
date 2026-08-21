@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { BADGE_COLORS, BANNER_COLORS, HIGHLIGHT_COLORS, TEXT_COLORS } from '../cufm/colors.js'
+import { compileCufm } from '../cufm/compile.js'
 import { generateDoctorDocument } from '../cufm/doctor-document.js'
 import { decompileCufm } from '../cufm/decompile.js'
 import { compileForTask } from '../cufm/publish.js'
@@ -125,8 +126,13 @@ export async function runTaskSyncDoctor(
   const stored = await fetchTaskOps(config, created.id, opts.sessionToken)
   const ops = stored?.ops
   const checks = auditMarkdown(md)
-  if (ops) checks.push(...auditOps(ops, compiled.ops))
-  else {
+  checks.push(...auditLocalRoundTrip(withTask))
+  if (ops) {
+    checks.push(...auditOps(ops, compiled.ops))
+    // The same structural assertions against what ClickUp actually stored, so a
+    // server-side normalisation shows up as a different failure than a local bug.
+    checks.push(...auditStructure(decompileCufm(ops), 'stored'))
+  } else {
     checks.push({
       id: 'quill-roundtrip',
       ok: true,
@@ -243,6 +249,168 @@ function auditOps(stored: DeltaOp[], sent: DeltaOp[]): DoctorCheck[] {
         missing.length === 0
           ? `Stored embeds: ${[...gotTypes].sort().join(', ')}`
           : `Missing embeds after round-trip: ${missing.join(', ')}`,
+    },
+  ]
+}
+
+/** One entry per fenced code block, so a shredded block shows up as many 1-line entries. */
+function fences(md: string): Array<{ lang: string; lines: string[] }> {
+  const out: Array<{ lang: string; lines: string[] }> = []
+  let current: { lang: string; lines: string[] } | undefined
+  for (const line of md.split('\n')) {
+    const open = /^\s*```(\S*)/.exec(line)
+    if (open) {
+      if (current) {
+        out.push(current)
+        current = undefined
+      } else {
+        current = { lang: open[1] ?? '', lines: [] }
+      }
+      continue
+    }
+    current?.lines.push(line)
+  }
+  return out
+}
+
+/** Bodies of each `::name` … `::` block, so a component's contents can be asserted. */
+function componentBodies(md: string, name: string): string[] {
+  const bodies: string[] = []
+  const lines = md.split('\n')
+  for (let i = 0; i < lines.length; i++) {
+    if (!new RegExp(`^ *::${name}\\b`).test(lines[i] ?? '')) continue
+    const body: string[] = []
+    for (let j = i + 1; j < lines.length && !/^ *::$/.test(lines[j] ?? ''); j++) {
+      body.push(lines[j] ?? '')
+    }
+    bodies.push(body.join('\n'))
+  }
+  return bodies
+}
+
+/**
+ * Structural properties the doctor document is written to exercise. Each one
+ * corresponds to a way a decompile used to lose or mangle content, and each is
+ * checked both locally and against what ClickUp actually stored.
+ */
+const STRUCTURE_ASSERTIONS: Array<{
+  id: string
+  detail: string
+  test: (md: string) => boolean
+}> = [
+  {
+    id: 'code-block-whole',
+    detail: 'Multi-line code block returns as one fence, not one fence per line',
+    // Pinned to the marker line so that shredding this block cannot be masked by
+    // some other multi-line fence elsewhere in the document.
+    test: md =>
+      fences(md).some(
+        fence =>
+          fence.lines.length >= 3 &&
+          fence.lines.some(line => line.includes('three body lines, one block')),
+      ),
+  },
+  {
+    id: 'code-fences-balanced',
+    detail: 'Every code fence is closed',
+    test: md => (md.match(/^\s*```/gm) ?? []).length % 2 === 0,
+  },
+  {
+    id: 'components-balanced',
+    detail: 'Every ::component that opens also closes',
+    test: md =>
+      (md.match(/^ *:{2,}[a-z][a-z-]*/gm) ?? []).length === (md.match(/^ *:{2,}$/gm) ?? []).length,
+  },
+  {
+    id: 'mentions-inline',
+    detail: 'Mentions stay inside their sentence instead of breaking onto their own lines',
+    test: md =>
+      md
+        .split('\n')
+        .some(
+          line =>
+            line.includes('Mentions stay inline:') &&
+            line.includes('this trailing text must stay on the same line'),
+        ),
+  },
+  {
+    id: 'adjacent-emphasis',
+    detail: 'Adjacent spans sharing an emphasis emit one delimiter pair',
+    test: md => md.includes('**`SDR` is the consumed value**'),
+  },
+  {
+    id: 'banner-grouped',
+    detail: 'Every line of a multi-paragraph banner stays inside one banner',
+    test: md =>
+      componentBodies(md, 'banner').some(
+        body =>
+          body.includes('Multi-paragraph banner') &&
+          body.includes('Second paragraph must stay inside the same banner'),
+      ),
+  },
+  {
+    id: 'quote-grouped',
+    detail: 'Every line of a multi-paragraph pull quote stays inside one quote',
+    test: md =>
+      componentBodies(md, 'quote').some(
+        body =>
+          body.includes('This is a pull quote') &&
+          body.includes('Second pull-quote paragraph stays in the same quote block'),
+      ),
+  },
+  {
+    id: 'ordered-numbering',
+    detail: 'Ordered lists count up instead of repeating 1.',
+    test: md =>
+      /^1\. Ordered 1$/m.test(md) && /^2\. Ordered 2$/m.test(md) && /^3\. Ordered 3/m.test(md),
+  },
+  {
+    id: 'ordered-nesting',
+    detail: 'Nested ordered items indent past the parent marker',
+    test: md => /^ {3}1\. Ordered 1\.a$/m.test(md) && /^ {3}2\. Ordered 1\.b$/m.test(md),
+  },
+  {
+    id: 'table-cell-marks',
+    detail: 'Inline formatting survives inside table cells',
+    test: md => /^\|.*`code`.*\*italic\*.*\|$/m.test(md),
+  },
+  {
+    id: 'columns-kept',
+    detail: 'Column layout is rebuilt rather than flattened to paragraphs',
+    test: md => md.includes('::columns') && md.includes(':::column'),
+  },
+  {
+    id: 'diagram-fence',
+    detail: 'Rendered diagram collapses to one source fence with no leftover source toggle',
+    test: md =>
+      !/mermaid source|tldraw source/i.test(md) &&
+      fences(md).filter(f => f.lang === 'mermaid').length === 1 &&
+      (fences(md).find(f => f.lang === 'mermaid')?.lines.length ?? 0) >= 3,
+  },
+]
+
+export function auditStructure(md: string, prefix: string): DoctorCheck[] {
+  return STRUCTURE_ASSERTIONS.map(a => ({
+    id: `${prefix}:${a.id}`,
+    ok: a.test(md),
+    detail: a.detail,
+  }))
+}
+
+/**
+ * Compile and decompile the doctor document without touching the network, so a
+ * regression in the CUFM converters is reported even when ClickUp is healthy
+ * (or when there is no session token to read the stored document back).
+ */
+export function auditLocalRoundTrip(source: string): DoctorCheck[] {
+  const once = decompileCufm(compileCufm(source).ops)
+  const twice = decompileCufm(compileCufm(once).ops)
+  return [
+    ...auditStructure(once, 'local'),
+    {
+      id: 'local:fixed-point',
+      ok: once === twice,
+      detail: 'A second pull produces no further changes, so sync does not drift',
     },
   ]
 }
