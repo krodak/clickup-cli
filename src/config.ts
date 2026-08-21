@@ -33,12 +33,15 @@ export interface Config {
   apiToken: string
   teamId: string
   sprintFolderId?: string
+  /** ClickUp web session JWT from `cup auth session`; env/flag override it at use time. */
+  sessionToken?: string
 }
 
 export interface ProfileData {
   apiToken?: string
   teamId?: string
   sprintFolderId?: string
+  sessionToken?: string
   filters?: FiltersMap
   favorites?: FavoritesMap
 }
@@ -140,11 +143,13 @@ function parseConfigFile(
   const apiToken = readConfigString(parsed, 'apiToken', path, strictFields)
   const teamId = readConfigString(parsed, 'teamId', path, strictFields)
   const sprintFolderId = readConfigString(parsed, 'sprintFolderId', path, strictFields)
+  const sessionToken = readConfigString(parsed, 'sessionToken', path, strictFields)
 
   return {
     ...(apiToken ? { apiToken } : {}),
     ...(teamId ? { teamId } : {}),
     ...(sprintFolderId ? { sprintFolderId } : {}),
+    ...(sessionToken ? { sessionToken } : {}),
   }
 }
 
@@ -195,6 +200,9 @@ function migrateToMultiProfile(
     const sprint =
       typeof parsed.sprintFolderId === 'string' ? trimConfigValue(parsed.sprintFolderId) : undefined
     if (sprint) profile.sprintFolderId = sprint
+    const session =
+      typeof parsed.sessionToken === 'string' ? trimConfigValue(parsed.sessionToken) : undefined
+    if (session) profile.sessionToken = session
     const migrated: MultiProfileConfig = {
       defaultProfile: 'default',
       profiles: { default: profile },
@@ -220,6 +228,8 @@ function migrateToMultiProfile(
         if (typeof value.teamId === 'string' && value.teamId.trim()) p.teamId = value.teamId.trim()
         if (typeof value.sprintFolderId === 'string' && value.sprintFolderId.trim())
           p.sprintFolderId = value.sprintFolderId.trim()
+        if (typeof value.sessionToken === 'string' && value.sessionToken.trim())
+          p.sessionToken = value.sessionToken.trim()
         if (value.filters !== undefined) p.filters = parseFiltersMap(value.filters)
         if (value.favorites !== undefined) p.favorites = parseFavoritesMap(value.favorites)
         profiles[name] = p
@@ -303,6 +313,7 @@ export function loadConfig(profileName?: string): Config {
       apiToken,
       teamId,
       ...(fileConfig.sprintFolderId ? { sprintFolderId: fileConfig.sprintFolderId } : {}),
+      ...(fileConfig.sessionToken ? { sessionToken: fileConfig.sessionToken } : {}),
     }
   }
 
@@ -343,6 +354,7 @@ export function loadConfig(profileName?: string): Config {
     apiToken,
     teamId,
     ...(profile.sprintFolderId ? { sprintFolderId: profile.sprintFolderId } : {}),
+    ...(profile.sessionToken ? { sessionToken: profile.sessionToken } : {}),
   }
 }
 
@@ -464,6 +476,25 @@ export function saveFilter(name: string, entry: FilterEntry, profileName?: strin
   multi.profiles[pName] = { ...profile, filters }
   if (!multi.defaultProfile) multi.defaultProfile = pName
   saveMultiProfileConfig(multi)
+}
+
+/** Persist the session JWT on a profile. Stored beside apiToken in the 0600 config file. */
+export function saveSessionToken(token: string, profileName?: string): void {
+  const multi = loadMultiProfileConfig()
+  const name = profileName || process.env.CU_PROFILE?.trim() || multi.defaultProfile || 'default'
+  multi.profiles[name] = { ...(multi.profiles[name] ?? {}), sessionToken: token }
+  if (!multi.defaultProfile) multi.defaultProfile = name
+  saveMultiProfileConfig(multi)
+}
+
+export function clearSessionToken(profileName?: string): boolean {
+  const multi = loadMultiProfileConfig()
+  const name = profileName || process.env.CU_PROFILE?.trim() || multi.defaultProfile || 'default'
+  const profile = multi.profiles[name]
+  if (!profile?.sessionToken) return false
+  delete profile.sessionToken
+  saveMultiProfileConfig(multi)
+  return true
 }
 
 export function deleteFilter(name: string, profileName?: string): void {

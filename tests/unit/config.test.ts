@@ -438,6 +438,77 @@ describe('loadRawConfig', () => {
   })
 })
 
+describe('session token storage', () => {
+  beforeEach(() => {
+    vi.mocked(fs.existsSync).mockReset()
+    vi.mocked(fs.readFileSync).mockReset()
+    vi.mocked(fs.writeFileSync).mockReset()
+    vi.mocked(fs.mkdirSync).mockReset()
+    vi.resetModules()
+    clearConfigEnv()
+  })
+
+  afterEach(() => {
+    restoreConfigEnv()
+  })
+
+  it('survives a config read/normalize round trip', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        { work: { apiToken: 'pk_work', teamId: 'team_w', sessionToken: 'eyJ.a.b' } },
+        'work',
+      ),
+    )
+    const { loadConfig, loadRawConfig } = await import('../../src/config.js')
+    expect(loadConfig().sessionToken).toBe('eyJ.a.b')
+    expect(loadRawConfig().sessionToken).toBe('eyJ.a.b')
+  })
+
+  it('saves onto the default profile and leaves other fields alone', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    const { saveSessionToken } = await import('../../src/config.js')
+    saveSessionToken('eyJ.new.token')
+    const written = parseWrittenConfig(vi.mocked(fs.writeFileSync).mock.calls[0] as unknown[])
+    expect(written.profiles.work).toEqual({
+      apiToken: 'pk_work',
+      teamId: 'team_w',
+      sessionToken: 'eyJ.new.token',
+    })
+  })
+
+  it('falls back to a "default" profile when none is configured yet', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const { saveSessionToken } = await import('../../src/config.js')
+    saveSessionToken('eyJ.new.token')
+    const written = parseWrittenConfig(vi.mocked(fs.writeFileSync).mock.calls[0] as unknown[])
+    expect(written.defaultProfile).toBe('default')
+    expect(written.profiles.default?.sessionToken).toBe('eyJ.new.token')
+  })
+
+  it('clears only when something was stored', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig(
+        { work: { apiToken: 'pk_work', teamId: 'team_w', sessionToken: 'eyJ.a.b' } },
+        'work',
+      ),
+    )
+    const { clearSessionToken } = await import('../../src/config.js')
+    expect(clearSessionToken()).toBe(true)
+    const written = parseWrittenConfig(vi.mocked(fs.writeFileSync).mock.calls[0] as unknown[])
+    expect(written.profiles.work?.sessionToken).toBeUndefined()
+
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      multiProfileConfig({ work: { apiToken: 'pk_work', teamId: 'team_w' } }, 'work'),
+    )
+    expect(clearSessionToken()).toBe(false)
+  })
+})
+
 describe('writeConfig', () => {
   beforeEach(() => {
     vi.mocked(fs.existsSync).mockReset()

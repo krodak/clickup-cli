@@ -40,7 +40,13 @@ export async function runTaskSyncInit(
   config: Config,
   taskId: string,
   file: string | undefined,
-  opts: { force?: boolean; dryRun?: boolean; noInput?: boolean; sessionToken?: string },
+  opts: {
+    force?: boolean
+    dryRun?: boolean
+    noInput?: boolean
+    lossy?: boolean
+    sessionToken?: string
+  },
 ) {
   const dest = file ?? `${taskId}.md`
   if (await looksLikeDirectoryTarget(dest)) {
@@ -83,7 +89,13 @@ export async function runTaskSyncPush(
 export async function runTaskSyncPull(
   config: Config,
   file: string | undefined,
-  opts: { force?: boolean; dryRun?: boolean; noInput?: boolean; sessionToken?: string },
+  opts: {
+    force?: boolean
+    dryRun?: boolean
+    noInput?: boolean
+    lossy?: boolean
+    sessionToken?: string
+  },
 ) {
   if (file && (await pathIsDirectory(file))) {
     const files = await discoverTaskFiles(file)

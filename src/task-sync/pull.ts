@@ -15,6 +15,8 @@ export interface PullOptions {
   force?: boolean
   dryRun?: boolean
   noInput?: boolean
+  /** Accept a flattened-markdown pull that would drop CUFM structure from the local file. */
+  lossy?: boolean
   sessionToken?: string
   /** Already-fetched task (avoids a second GET when the caller has it). */
   task?: Task
@@ -37,9 +39,11 @@ export async function pullTaskToFile(
   const client = new ClickUpClient(config)
   const task = opts.task?.id === taskId ? opts.task : await client.getTask(taskId)
 
+  let existingBody: string | undefined
   try {
     const current = await readFile(abs, 'utf8')
     const parsed = parseMarkdownFile(current)
+    existingBody = parsed.body
     const hash = contentHash(parsed.body, await localAssetHashes(parsed.body, dirname(abs)))
     const localDirty = hash !== parsed.frontmatter.content_hash
     const kind = classifyConflict({ localDirty, remoteNewer: true })
@@ -58,6 +62,16 @@ export async function pullTaskToFile(
   }
 
   const doc = await fetchTaskOps(config, task.id, opts.sessionToken)
+  // Without a session token the body below is ClickUp's flattened markdown export: banners,
+  // toggles, columns, table widths and sync-block ids do not survive it. Refuse to overwrite
+  // hand-authored CUFM with that unless the caller says so.
+  if (!doc && existingBody !== undefined && hasCufmConstructs(existingBody)) {
+    await confirmClobber(
+      `Pull without a session token would replace the CUFM in ${abs} with ClickUp's flattened markdown (banners, toggles, columns and diagram sources are lost).`,
+      { force: opts.lossy, noInput: opts.noInput },
+      '--lossy',
+    )
+  }
   let body = doc
     ? decompileCufm(doc.ops, { syncBlocks: doc.syncBlocks })
     : (task.markdown_description ?? task.description ?? '').replace(/\n*$/, '\n')
@@ -87,6 +101,14 @@ export async function pullTaskToFile(
   await saveMediaIndex(abs, media)
   await writeMarkdownFileAtomic(abs, frontmatter, body)
   return { action: 'written', taskId: task.id, file: abs, lossless: doc !== undefined }
+}
+
+const CUFM_COMPONENT_RE = /^\s*::[a-z][a-z-]*/m
+const CUFM_DIAGRAM_FENCE_RE = /^\s*```(?:mermaid|tldraw)\b/im
+
+/** True when the file uses CUFM that a flattened markdown pull cannot round-trip. */
+export function hasCufmConstructs(body: string): boolean {
+  return CUFM_COMPONENT_RE.test(body) || CUFM_DIAGRAM_FENCE_RE.test(body)
 }
 
 async function localizeImages(body: string, assetsDir: string, media: MediaIndex): Promise<string> {

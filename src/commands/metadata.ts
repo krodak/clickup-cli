@@ -38,6 +38,11 @@ export const commandMetadata = [
     flags: ['--json'],
     quickReference: [
       { section: 'read', usage: 'auth', description: 'Check authentication status' },
+      {
+        section: 'setup',
+        usage: 'auth session [token]',
+        description: 'Store the ClickUp session JWT used for lossless pulls and Synced Content',
+      },
     ],
   },
   {

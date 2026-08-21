@@ -153,7 +153,11 @@ Below is a clone of the above block:
 ::
 ```
 
-Create the initial block in ClickUp, then pull with `CU_SESSION_TOKEN` (or `--session-token`) to capture its ID and backing content. An empty component adds a clone. A component body updates every clone and requires `CU_SESSION_TOKEN`; `task-sync push` also accepts `--session-token`. Define content only once per ID.
+Create the initial block in ClickUp, then pull with a session token (`cup auth session`, or `CU_SESSION_TOKEN` / `--session-token`) to capture its ID and backing content. An empty component adds a clone. A component body updates every clone and requires `CU_SESSION_TOKEN`; `task-sync push` also accepts `--session-token`. Define content only once per ID.
+
+## Session token and lossless pull
+
+`cup auth session` stores the ClickUp web session JWT (DevTools > Network > any `clickup.com` request > `authorization: Bearer eyJ…`). A `pk_` API token cannot be used — ClickUp's editor endpoints reject it. Without a valid session token `task-sync pull` can only fetch ClickUp's flattened markdown, so it refuses to overwrite a file containing CUFM unless you pass `--lossy`; pull output is labelled `(lossless)` or `(lossy)`.
 
 ## Mermaid
 

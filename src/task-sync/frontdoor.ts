@@ -1,4 +1,5 @@
 import type { Config } from '../config.js'
+import { describeSessionToken, resolveSessionToken, SESSION_TOKEN_HELP } from '../session-token.js'
 import type { CompiledSyncBlock } from '../cufm/compile.js'
 import type { SyncedContentBlock } from '../cufm/decompile.js'
 import type { DeltaOp } from '../rich-text/delta.js'
@@ -10,8 +11,10 @@ export async function fetchTaskOps(
   taskId: string,
   sessionToken?: string,
 ): Promise<{ ops: DeltaOp[]; syncBlocks: SyncedContentBlock[] } | undefined> {
-  const token = sessionToken ?? process.env.CU_SESSION_TOKEN
-  if (!token) return undefined
+  const resolved = resolveSessionToken(config, sessionToken)
+  if (!resolved) return undefined
+  if (resolved.expired) return fail(describeSessionToken(resolved))
+  const token = resolved.token
   const host = process.env.CU_FRONTDOOR_HOST ?? DEFAULT_HOST
   const url =
     `https://${host}/task-v3/experience/${config.teamId}/tasks/${taskId}` +
@@ -48,12 +51,18 @@ export async function updateSyncBlockContents(
   sessionToken?: string,
 ): Promise<void> {
   if (blocks.length === 0) return
-  const token = sessionToken ?? process.env.CU_SESSION_TOKEN
-  if (!token) {
+  const resolved = resolveSessionToken(config, sessionToken)
+  if (!resolved) {
     throw new Error(
-      'Updating Synced Content requires CU_SESSION_TOKEN (or task-sync push --session-token)',
+      `Updating Synced Content requires a ClickUp session token (cup auth session, CU_SESSION_TOKEN, or --session-token).\n${SESSION_TOKEN_HELP}`,
     )
   }
+  if (resolved.expired) {
+    throw new Error(
+      `Updating Synced Content requires a valid session token (${describeSessionToken(resolved)}).\nRefresh it with: cup auth session`,
+    )
+  }
+  const token = resolved.token
   const host = process.env.CU_FRONTDOOR_HOST ?? DEFAULT_HOST
   for (const block of blocks) {
     const res = await fetch(

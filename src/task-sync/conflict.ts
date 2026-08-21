@@ -35,10 +35,11 @@ export function classifyConflict(opts: {
 export async function confirmClobber(
   message: string,
   opts: { force?: boolean; noInput?: boolean },
+  overrideFlag = '--force',
 ): Promise<void> {
   if (opts.force) return
   if (opts.noInput || !isTTY()) {
-    throw new Error(`${message} Re-run with --force to override.`)
+    throw new Error(`${message} Re-run with ${overrideFlag} to override.`)
   }
   const { confirm } = await import('@inquirer/prompts')
   const ok = await confirm({ message, default: false })

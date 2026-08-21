@@ -6,6 +6,9 @@ import { fileURLToPath } from 'url'
 import { ClickUpClient } from './api.js'
 import {
   loadConfig,
+  loadRawConfig,
+  saveSessionToken,
+  clearSessionToken,
   addProfile,
   removeProfile,
   setDefaultProfile,
@@ -39,6 +42,14 @@ import { fetchComments, printComments } from './commands/comments.js'
 import { fetchLists, printLists } from './commands/lists.js'
 import { formatTaskDetail } from './interactive.js'
 import { isTTY, shouldOutputJson } from './output.js'
+import {
+  assertSessionTokenShape,
+  describeSessionToken,
+  formatRelativeExpiry,
+  resolveSessionToken,
+  sessionTokenExpiry,
+  SESSION_TOKEN_HELP,
+} from './session-token.js'
 import { formatDoctorReport } from './task-sync/doctor.js'
 import {
   formatTaskDetailMarkdown,
@@ -391,6 +402,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     return program.opts<{ profile?: string }>().profile
   }
 
+  // A lossy pull overwrites CUFM with ClickUp's flattened markdown, so always say which happened.
+  function fidelity(lossless: boolean): string {
+    return lossless ? ' (lossless)' : ' (lossy)'
+  }
+
   program
     .command('init')
     .description(
@@ -404,7 +420,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       }),
     )
 
-  program
+  const authCmd = program
     .command('auth')
     .description('Validate API token and show current user')
     .option('--json', 'Force JSON output even in terminal')
@@ -421,6 +437,93 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         }
       }),
     )
+
+  authCmd
+    .command('session [token]')
+    .description(
+      'Store the ClickUp session JWT used for lossless task-sync pulls and Synced Content',
+    )
+    .option('--status', 'Show where the session token comes from and when it expires')
+    .option('--clear', 'Remove the stored session token')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (
+          token: string | undefined,
+          opts: { status?: boolean; clear?: boolean; json?: boolean },
+          // `auth` also declares --json, and commander binds a repeated flag to the parent.
+          command: Command,
+        ) => {
+          const profileName = getProfileName()
+          const json = shouldOutputJson(
+            Boolean(command.optsWithGlobals<{ json?: boolean }>().json ?? opts.json),
+          )
+
+          if (opts.clear) {
+            const removed = clearSessionToken(profileName)
+            if (json) {
+              console.log(JSON.stringify({ cleared: removed }, null, 2))
+            } else {
+              console.log(
+                removed ? 'Removed the stored session token.' : 'No stored session token.',
+              )
+            }
+            return
+          }
+
+          if (opts.status) {
+            printSessionStatus(profileName, json)
+            return
+          }
+
+          const supplied = token ?? (await readSessionTokenInput())
+          const trimmed = supplied.trim()
+          if (!trimmed) throw new Error(`No session token provided.\n${SESSION_TOKEN_HELP}`)
+          assertSessionTokenShape(trimmed)
+          const expiresAt = sessionTokenExpiry(trimmed)
+          if (expiresAt && expiresAt.getTime() <= Date.now()) {
+            throw new Error(
+              `That session token is already expired (${formatRelativeExpiry(expiresAt)}). Copy a fresh one.\n${SESSION_TOKEN_HELP}`,
+            )
+          }
+          saveSessionToken(trimmed, profileName)
+          printSessionStatus(profileName, json)
+        },
+      ),
+    )
+
+  function printSessionStatus(profileName: string | undefined, json: boolean): void {
+    const raw = loadRawConfig(profileName)
+    const resolved = resolveSessionToken(raw)
+    if (json) {
+      console.log(
+        JSON.stringify(
+          {
+            source: resolved?.source ?? null,
+            expiresAt: resolved?.expiresAt?.toISOString() ?? null,
+            expired: resolved?.expired ?? null,
+          },
+          null,
+          2,
+        ),
+      )
+      return
+    }
+    console.log(describeSessionToken(resolved, profileName))
+  }
+
+  // Piped stdin keeps the token out of shell history and argv; a terminal gets a masked prompt.
+  async function readSessionTokenInput(): Promise<string> {
+    if (!process.stdin.isTTY) {
+      let raw = ''
+      process.stdin.setEncoding('utf8')
+      for await (const chunk of process.stdin) raw += chunk as string
+      return raw
+    }
+    const { password } = await import('@inquirer/prompts')
+    console.error(SESSION_TOKEN_HELP)
+    return password({ message: 'Paste the ClickUp session JWT:', mask: true })
+  }
 
   program
     .command('tasks')
@@ -1401,6 +1504,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--dry-run', 'Show what would happen without writing')
     .option('--no-input', 'Never prompt; fail on conflict')
     .option('--session-token <token>', 'Optional ClickUp session JWT for lossless Quill pull')
+    .option('--lossy', "Accept ClickUp's flattened markdown when no session token is available")
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1411,6 +1515,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             force?: boolean
             dryRun?: boolean
             input?: boolean
+            lossy?: boolean
             sessionToken?: string
             json?: boolean
           },
@@ -1423,14 +1528,18 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else if ('children' in result) {
-            console.log(`${result.root.action} ${result.root.file} <- ${result.root.taskId}`)
+            console.log(
+              `${result.root.action} ${result.root.file} <- ${result.root.taskId}${fidelity(result.root.lossless)}`,
+            )
             for (const child of result.children) {
-              console.log(`  ${child.action} ${child.file} <- ${child.taskId}`)
+              console.log(
+                `  ${child.action} ${child.file} <- ${child.taskId}${fidelity(child.lossless)}`,
+              )
             }
             for (const w of result.warnings) console.error(w)
           } else {
             console.log(
-              `${result.action} ${result.file} <- ${result.taskId}${result.lossless ? ' (lossless)' : ''}`,
+              `${result.action} ${result.file} <- ${result.taskId}${fidelity(result.lossless)}`,
             )
           }
         },
@@ -1493,6 +1602,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .option('--dry-run', 'Show what would happen without writing')
     .option('--no-input', 'Never prompt; fail on conflict')
     .option('--session-token <token>', 'Optional ClickUp session JWT for lossless Quill pull')
+    .option('--lossy', "Accept ClickUp's flattened markdown when no session token is available")
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
@@ -1502,6 +1612,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
             force?: boolean
             dryRun?: boolean
             input?: boolean
+            lossy?: boolean
             sessionToken?: string
             json?: boolean
           },
@@ -1514,14 +1625,18 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
           if (shouldOutputJson(opts.json ?? false)) {
             console.log(JSON.stringify(result, null, 2))
           } else if ('children' in result) {
-            console.log(`${result.root.action} ${result.root.file} <- ${result.root.taskId}`)
+            console.log(
+              `${result.root.action} ${result.root.file} <- ${result.root.taskId}${fidelity(result.root.lossless)}`,
+            )
             for (const child of result.children) {
-              console.log(`  ${child.action} ${child.file} <- ${child.taskId}`)
+              console.log(
+                `  ${child.action} ${child.file} <- ${child.taskId}${fidelity(child.lossless)}`,
+              )
             }
             for (const w of result.warnings) console.error(w)
           } else {
             console.log(
-              `${result.action} ${result.file} <- ${result.taskId}${result.lossless ? ' (lossless)' : ''}`,
+              `${result.action} ${result.file} <- ${result.taskId}${fidelity(result.lossless)}`,
             )
           }
         },
