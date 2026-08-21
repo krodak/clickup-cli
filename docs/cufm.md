@@ -147,13 +147,13 @@ Create the initial Synced Content block in ClickUp, then pull with `CU_SESSION_T
 
 A fenced ` ```mermaid ` block (or `::mermaid`) is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **mermaid source** containing the original source in one native code block. Theme default is `github-light`. Override with `::mermaid{theme="tokyo-night"}` or `cup task-sync push --mermaid-theme`.
 
-If rendering fails, the source toggle is still kept.
+If rendering fails, the source toggle is still kept and the reason is reported as a compile warning.
 
 ## tldraw
 
 A fenced ` ```tldraw ` block (or `::tldraw`) containing a complete `.tldr` JSON document is rendered to a 2× PNG, uploaded, embedded, then followed by a toggle titled **tldraw source** containing the original JSON in one native code block. Set the displayed width with `::tldraw{width="640"}` or a fenced attribute.
 
-tldraw rendering is loaded on demand through the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept.
+tldraw rendering is loaded on demand through the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept and the reason is reported as a compile warning. Bodies are read verbatim, so pretty-printed `.tldr` JSON with blank lines is fine.
 
 ## Tables
 

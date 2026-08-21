@@ -2,7 +2,7 @@ import { access } from 'node:fs/promises'
 import type { ClickUpClient } from '../api.js'
 import { DEFAULT_MERMAID_THEME, renderMermaidPng } from '../rich-text/mermaid.js'
 import { renderTldrawPng } from '../rich-text/tldraw.js'
-import { compileCufm } from './compile.js'
+import { collectDiagramSources, compileCufm } from './compile.js'
 import type { CompileResult } from './compile.js'
 import type { MediaIndex } from '../task-sync/media.js'
 import { isRemoteSrc, resolveLocalPath, uploadBytes, uploadLocalImage } from '../task-sync/media.js'
@@ -47,31 +47,36 @@ export async function compileForTask(opts: {
     }
   }
 
+  const warnings: string[] = []
+  const diagrams = collectDiagramSources(opts.markdown)
+
   const mermaidCache = new Map<
     string,
     { url: string; width?: number; naturalWidth?: number; naturalHeight?: number }
   >()
-  const sources = collectMermaidSources(opts.markdown)
-  for (const { source, themeOverride } of sources) {
-    if (mermaidCache.has(source)) continue
+  for (const diagram of diagrams) {
+    if (diagram.language !== 'mermaid') continue
+    const diagramTheme = diagram.meta.theme ?? theme
+    const key = mermaidCacheKey(diagram.source, diagramTheme)
+    if (mermaidCache.has(key)) continue
     try {
-      const rendered = await renderMermaidPng(source, themeOverride ?? theme)
+      const rendered = await renderMermaidPng(diagram.source, diagramTheme)
       const entry = await uploadBytes(
         opts.client,
         opts.taskId,
         rendered.png,
         'png',
         opts.media,
-        `mermaid:${source.slice(0, 24)}`,
+        `mermaid:${diagram.source.slice(0, 24)}`,
       )
-      mermaidCache.set(source, {
+      mermaidCache.set(key, {
         url: entry.url ?? '',
         width: rendered.width,
         naturalWidth: rendered.pixelWidth,
         naturalHeight: rendered.pixelHeight,
       })
-    } catch {
-      /* compile will warn */
+    } catch (err) {
+      warnings.push(`mermaid render failed: ${errorMessage(err)}`)
     }
   }
 
@@ -79,18 +84,19 @@ export async function compileForTask(opts: {
     string,
     { url: string; width?: number; naturalWidth?: number; naturalHeight?: number }
   >()
-  for (const source of collectTldrawSources(opts.markdown)) {
-    const key = tldrawCacheKey(source)
+  for (const diagram of diagrams) {
+    if (diagram.language !== 'tldraw') continue
+    const key = tldrawCacheKey(diagram.source)
     if (tldrawCache.has(key)) continue
     try {
-      const rendered = await renderTldrawPng(source)
+      const rendered = await renderTldrawPng(diagram.source)
       const entry = await uploadBytes(
         opts.client,
         opts.taskId,
         rendered.png,
         'png',
         opts.media,
-        `tldraw:${source.slice(0, 24)}`,
+        `tldraw:${diagram.source.slice(0, 24)}`,
       )
       tldrawCache.set(key, {
         url: entry.url ?? '',
@@ -98,12 +104,13 @@ export async function compileForTask(opts: {
         naturalWidth: rendered.pixelWidth,
         naturalHeight: rendered.pixelHeight,
       })
-    } catch {
-      /* compile will warn */
+    } catch (err) {
+      warnings.push(`tldraw render failed: ${errorMessage(err)}`)
     }
   }
 
   return compileCufm(opts.markdown, {
+    warnings,
     resolveImage: (src, width) => {
       if (isRemoteSrc(src)) return { url: src, width }
       const hit = uploaded.get(src)
@@ -111,7 +118,7 @@ export async function compileForTask(opts: {
       return { url: src, width }
     },
     renderMermaid: (source, meta) => {
-      const hit = mermaidCache.get(source)
+      const hit = mermaidCache.get(mermaidCacheKey(source, meta.theme ?? theme))
       if (!hit) return undefined
       const width = meta.width ? Number(meta.width) : hit.width
       return { ...hit, width }
@@ -129,36 +136,12 @@ export function compilePlain(markdown: string): CompileResult {
   return compileCufm(markdown)
 }
 
-function collectMermaidSources(
-  markdown: string,
-): Array<{ source: string; themeOverride?: string }> {
-  const out: Array<{ source: string; themeOverride?: string }> = []
-  const fence = /```mermaid([^\n]*)\n([\s\S]*?)```/g
-  let m: RegExpExecArray | null
-  while ((m = fence.exec(markdown)) !== null) {
-    out.push({ source: m[2]!.replace(/\n$/, '') })
-  }
-  const block = /::mermaid(?:\{([^}]*)\})?\n([\s\S]*?)::/g
-  while ((m = block.exec(markdown)) !== null) {
-    const props = m[1] ?? ''
-    const themeMatch = /theme="([^"]+)"/.exec(props)
-    out.push({ source: m[2]!.trimEnd(), themeOverride: themeMatch?.[1] })
-  }
-  return out
+function mermaidCacheKey(source: string, theme: string): string {
+  return `${theme}\n${source}`
 }
 
-function collectTldrawSources(markdown: string): string[] {
-  const out: string[] = []
-  const fence = /```tldraw(?:[^\n]*)\n([\s\S]*?)```/gi
-  let m: RegExpExecArray | null
-  while ((m = fence.exec(markdown)) !== null) {
-    out.push(m[1]!.replace(/\n$/, ''))
-  }
-  const block = /::tldraw(?:\{[^}]*\})?\n([\s\S]*?)::/g
-  while ((m = block.exec(markdown)) !== null) {
-    out.push(m[1]!.trimEnd())
-  }
-  return out
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
 function tldrawCacheKey(source: string): string {

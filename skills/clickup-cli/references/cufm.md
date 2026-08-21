@@ -166,13 +166,13 @@ flowchart LR
 ```
 ````
 
-If rendering fails, the source toggle is still kept.
+If rendering fails, the source toggle is still kept and the reason is reported as a compile warning.
 
 ## tldraw
 
 A fenced `tldraw` block (or `::tldraw`) must contain a complete `.tldr` JSON document. `cup` renders it to a 2× PNG, uploads and embeds the image, then adds a **tldraw source** toggle containing the original JSON in one native code block. Set the displayed width with `::tldraw{width="640"}` or a fenced attribute.
 
-tldraw rendering uses the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept.
+tldraw rendering uses the external CLI. Install it once with `npm install --global @kitschpatrol/tldraw-cli`. If the CLI is missing or rendering fails, the source toggle is still kept and the reason is reported as a compile warning. Bodies are read verbatim, so pretty-printed `.tldr` JSON with blank lines is fine.
 
 ## Tables
 

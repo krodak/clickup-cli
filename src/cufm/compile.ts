@@ -55,7 +55,14 @@ export function compileCufm(source: string, options: CompileOptions = {}): Compi
   const ids = options.ids ?? sequentialIdFactory()
   const tokens = parseCufm(source)
   const syncBlocks = new Map<string, DeltaOp[]>()
-  const ctx: Ctx = { ids, options, warnings, syncBlocks, indent: 0 }
+  const ctx: Ctx = {
+    ids,
+    options,
+    warnings,
+    syncBlocks,
+    indent: 0,
+    sourceLines: sourceLines(source),
+  }
   const ops = compileBlocks(tokens, 0, tokens.length, ctx)
   ensureTrailingNewline(ops)
   return {
@@ -65,12 +72,51 @@ export function compileCufm(source: string, options: CompileOptions = {}): Compi
   }
 }
 
+export interface DiagramSource {
+  language: 'mermaid' | 'tldraw'
+  source: string
+  meta: Record<string, string>
+}
+
+/**
+ * Every mermaid/tldraw block in a document, with the exact source `compileCufm` will hand to the
+ * matching renderer. Pre-rendering (see `compileForTask`) keys its cache off these strings, so it
+ * has to see the same bytes the compiler does — hence one parser-backed extractor, not a regex.
+ */
+export function collectDiagramSources(markdown: string): DiagramSource[] {
+  const tokens = parseCufm(markdown)
+  const lines = sourceLines(markdown)
+  const out: DiagramSource[] = []
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+    if (!token) continue
+    if (token.type === 'fence') {
+      const { lang, meta } = parseFenceInfo(token.info)
+      if (lang === 'mermaid' || lang === 'tldraw') {
+        out.push({ language: lang, source: token.content.replace(/\n$/, ''), meta })
+      }
+      continue
+    }
+    if (token.type !== 'mdc_block_open') continue
+    const name = token.info || token.tag
+    if (name !== 'mermaid' && name !== 'tldraw') continue
+    const close = findClose(tokens, i, 'mdc_block_close')
+    out.push({
+      language: name,
+      source: componentBody(token, tokens, i + 1, close, lines),
+      meta: tokenAttrMap(token),
+    })
+  }
+  return out
+}
+
 interface Ctx {
   ids: IdFactory
   options: CompileOptions
   warnings: string[]
   syncBlocks: Map<string, DeltaOp[]>
   indent: number
+  sourceLines: string[]
 }
 
 function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): DeltaOp[] {
@@ -426,9 +472,9 @@ function compileComponent(
     case 'frame':
       return compileFrame(props)
     case 'mermaid':
-      return compileMermaid(tokensToSource(tokens, start, close).trimEnd(), props, ctx)
+      return compileMermaid(componentBody(open, tokens, start, close, ctx.sourceLines), props, ctx)
     case 'tldraw':
-      return compileTldraw(tokensToSource(tokens, start, close).trimEnd(), props, ctx)
+      return compileTldraw(componentBody(open, tokens, start, close, ctx.sourceLines), props, ctx)
     case 'attachment':
       return [
         embedOp({
@@ -1138,6 +1184,57 @@ function tokensToPlain(tokens: Token[], start: number, end: number): string {
     else if (t.type === 'text') parts.push(t.content)
   }
   return parts.join('\n')
+}
+
+function sourceLines(source: string): string[] {
+  return source.split(/\r?\n/)
+}
+
+/**
+ * Body of a `::name` component exactly as it was written.
+ *
+ * Diagram bodies (mermaid, tldraw) are not markdown: re-serialising their tokens loses blank
+ * lines, indentation, and any run of indented lines markdown-it turned into a code block. Slice
+ * the original lines instead so the source compiled here is byte-identical to the source the
+ * renderer was handed.
+ */
+function componentBody(
+  open: Token,
+  tokens: Token[],
+  start: number,
+  end: number,
+  lines: string[],
+): string {
+  const raw = rawComponentBody(open, lines)
+  return (raw ?? tokensToSource(tokens, start, end)).trimEnd()
+}
+
+function rawComponentBody(open: Token, lines: string[]): string | undefined {
+  if (!open.map) return undefined
+  const [openLine, closeLine] = open.map
+  if (openLine === undefined || closeLine === undefined) return undefined
+  if (closeLine <= openLine + 1) return ''
+  const prefix = /^[\s>]*/.exec(lines[openLine] ?? '')?.[0] ?? ''
+  return lines
+    .slice(openLine + 1, closeLine)
+    .map(line => stripBodyPrefix(line, prefix))
+    .join('\n')
+}
+
+/** Drop the container's own indentation or blockquote marker from one body line. */
+function stripBodyPrefix(line: string, prefix: string): string {
+  let i = 0
+  while (i < prefix.length && i < line.length) {
+    const a = line[i]!
+    const b = prefix[i]!
+    if (a !== b && !(isBodySpace(a) && isBodySpace(b))) break
+    i += 1
+  }
+  return line.slice(i)
+}
+
+function isBodySpace(ch: string): boolean {
+  return ch === ' ' || ch === '\t'
 }
 
 function tokensToSource(tokens: Token[], start: number, end: number): string {

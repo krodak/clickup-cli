@@ -303,6 +303,55 @@ ${json}
     expect(sourceLines).toHaveLength(4)
   })
 
+  it('keeps blank lines and indentation in a tldraw component body', () => {
+    const json = `{
+  "tldrawFileFormatVersion": 1,
+
+  "records": [
+
+    { "id": "shape:a", "type": "geo" }
+  ]
+}`
+    let renderedSource = ''
+    const { warnings } = compileCufm(`::tldraw{width="480"}\n${json}\n::\n`, {
+      ids: sequentialIdFactory(),
+      renderTldraw: source => {
+        renderedSource = source
+        return { url: 'https://example.com/tldraw.png' }
+      },
+    })
+    expect(renderedSource).toBe(json)
+    expect(warnings).toEqual([])
+  })
+
+  it('keeps a mermaid component body verbatim across blank lines', () => {
+    const diagram = `flowchart LR
+  A --> B
+
+  B --> C`
+    let renderedSource = ''
+    compileCufm(`::mermaid\n${diagram}\n::\n`, {
+      ids: sequentialIdFactory(),
+      renderMermaid: source => {
+        renderedSource = source
+        return { url: 'https://example.com/mermaid.png' }
+      },
+    })
+    expect(renderedSource).toBe(diagram)
+  })
+
+  it('strips the container indentation from a nested diagram body', () => {
+    let renderedSource = ''
+    compileCufm('- item\n  ::tldraw\n  {\n    "records": []\n  }\n  ::\n', {
+      ids: sequentialIdFactory(),
+      renderTldraw: source => {
+        renderedSource = source
+        return { url: 'https://example.com/tldraw.png' }
+      },
+    })
+    expect(renderedSource).toBe('{\n  "records": []\n}')
+  })
+
   it('applies code-block attributes to every line of a multiline fence', () => {
     const { ops } = compile('```text\none\ntwo\n```\n')
     const codeLines = newlines(ops).filter(op => op.attributes?.['code-block'])
