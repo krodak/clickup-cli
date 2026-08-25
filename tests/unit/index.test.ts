@@ -20,6 +20,8 @@ const mockFormatTaskDetailMarkdown = vi.fn()
 const mockBulkUpdateStatus = vi.fn()
 const mockSetCustomField = vi.fn()
 const mockBulkField = vi.fn()
+const mockCreateDocPage = vi.fn()
+const mockEditDocPage = vi.fn()
 
 async function loadCli() {
   vi.resetModules()
@@ -49,6 +51,15 @@ async function loadCli() {
     return {
       ...actual,
       editChecklistItem: mockEditChecklistItem,
+    }
+  })
+
+  vi.doMock('../../src/commands/doc.js', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../src/commands/doc.js')>()
+    return {
+      ...actual,
+      createDocPage: mockCreateDocPage,
+      editDocPage: mockEditDocPage,
     }
   })
 
@@ -383,6 +394,105 @@ describe('global option collisions', () => {
 })
 
 describe('binary smoke test', () => {
+  describe('cup doc-page-create / doc-page-edit --content-file', () => {
+    const tmpFile = join(tmpdir(), `cup-content-file-test-${process.pid}.md`)
+
+    beforeEach(() => {
+      vi.restoreAllMocks()
+      mockLoadConfig.mockClear().mockReturnValue(config)
+      mockCreateDocPage.mockReset().mockResolvedValue({ id: 'p9', doc_id: 'd1', name: 'Page' })
+      mockEditDocPage.mockReset().mockResolvedValue({ id: 'p9', doc_id: 'd1', name: 'Page' })
+      mockIsTTY.mockReset().mockReturnValue(false)
+      mockShouldOutputJson.mockReset().mockReturnValue(false)
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      process.exitCode = undefined
+      writeFileSync(tmpFile, '# Heading\n\nBody with $vars and [links](https://example.com).\n')
+    })
+
+    afterEach(() => {
+      process.exitCode = undefined
+      if (existsSync(tmpFile)) rmSync(tmpFile)
+    })
+
+    it('doc-page-create reads content from a file, stripping one trailing newline', async () => {
+      const { buildProgram } = await loadCli()
+      const program = buildProgram('cup')
+
+      await program.parseAsync(
+        ['doc-page-create', 'd1', 'Release Notes', '--content-file', tmpFile],
+        {
+          from: 'user',
+        },
+      )
+
+      expect(mockCreateDocPage).toHaveBeenCalledWith(
+        config,
+        'd1',
+        'Release Notes',
+        '# Heading\n\nBody with $vars and [links](https://example.com).',
+        undefined,
+      )
+    })
+
+    it('doc-page-edit reads content from a file', async () => {
+      const { buildProgram } = await loadCli()
+      const program = buildProgram('cup')
+
+      await program.parseAsync(['doc-page-edit', 'd1', 'p9', '--content-file', tmpFile], {
+        from: 'user',
+      })
+
+      expect(mockEditDocPage).toHaveBeenCalledWith(config, 'd1', 'p9', {
+        name: undefined,
+        content: '# Heading\n\nBody with $vars and [links](https://example.com).',
+      })
+    })
+
+    it('still accepts inline content (backward compatible)', async () => {
+      const { buildProgram } = await loadCli()
+      const program = buildProgram('cup')
+
+      await program.parseAsync(['doc-page-create', 'd1', 'Page', '-c', '# Inline'], {
+        from: 'user',
+      })
+
+      expect(mockCreateDocPage).toHaveBeenCalledWith(config, 'd1', 'Page', '# Inline', undefined)
+    })
+
+    it('rejects -c combined with --content-file on doc-page-create', async () => {
+      const { buildProgram } = await loadCli()
+      const program = buildProgram('cup')
+
+      await program.parseAsync(
+        ['doc-page-create', 'd1', 'Page', '-c', '# Inline', '--content-file', tmpFile],
+        { from: 'user' },
+      )
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use -c and --content-file together'),
+      )
+      expect(process.exitCode).toBe(1)
+      expect(mockCreateDocPage).not.toHaveBeenCalled()
+    })
+
+    it('rejects -c combined with --content-file on doc-page-edit', async () => {
+      const { buildProgram } = await loadCli()
+      const program = buildProgram('cup')
+
+      await program.parseAsync(
+        ['doc-page-edit', 'd1', 'p9', '-c', '# Inline', '--content-file', tmpFile],
+        { from: 'user' },
+      )
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use -c and --content-file together'),
+      )
+      expect(process.exitCode).toBe(1)
+      expect(mockEditDocPage).not.toHaveBeenCalled()
+    })
+  })
+
   it('node dist/index.js --version outputs a valid semver', async () => {
     const { stdout } = await execFileAsync('node', ['dist/index.js', '--version'])
     expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/)

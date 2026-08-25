@@ -18,16 +18,17 @@ Interactive prompts also appear for: sprint disambiguation (multiple matches), w
 
 Agents and scripts frequently pass multiline markdown to `-d` / `-m`. Shell quoting is the main failure point (natural-language apostrophes, bullet lists, code blocks). In order of preference:
 
-**1. File input — most robust, no shell quoting at all.** Use `--description-file` / `--message-file`; `-` reads stdin:
+**1. File input — most robust, no shell quoting at all.** Use `--description-file` / `--message-file` / `--content-file`; `-` reads stdin:
 
 ```bash
 cup create -n "Task" -l <listId> --description-file /tmp/desc.md
 cup update <taskId> --description-file /tmp/desc.md
 cup comment <taskId> --message-file /tmp/comment.md
+cup doc-page-edit <docId> <pageId> --content-file /tmp/page.md
 cup update <taskId> --description-file - < desc.md          # stdin
 ```
 
-`--description-file` works on `cup create` / `cup update`; `--message-file` works on `cup comment`, `cup comment-edit`, `cup reply`, `cup list-comment`, `cup view-comment`, and chat `send` / `reply` / `message-update`. It is mutually exclusive with the inline `-d` / `-m` flag.
+`--description-file` works on `cup create` / `cup update`; `--message-file` works on `cup comment`, `cup comment-edit`, `cup reply`, `cup list-comment`, `cup view-comment`, and chat `send` / `reply` / `message-update`; `--content-file` works on `cup doc-page-create` / `cup doc-page-edit`. Each is mutually exclusive with its inline `-d` / `-m` / `-c` flag.
 
 **2. Quoted heredoc for inline multiline** — preserves backticks, newlines, **and** apostrophes:
 
@@ -1423,32 +1424,36 @@ Create a page in a doc. Optionally nest under a parent page.
 ```bash
 cup doc-page-create abc123 "Getting Started"
 cup doc-page-create abc123 "Setup" -c "# Setup guide"
+cup doc-page-create abc123 "Release Notes" --content-file notes.md
 cup doc-page-create abc123 "Sub Section" --parent-page page456
 cup doc-page-create abc123 "Page" --json
 ```
 
-| Flag                     | Required | Description                |
-| ------------------------ | -------- | -------------------------- |
-| `-c, --content`          | no       | Page content (markdown)    |
-| `--parent-page <pageId>` | no       | Parent page ID for nesting |
-| `--json`                 | no       | Force JSON output          |
+| Flag                     | Required | Description                                                                 |
+| ------------------------ | -------- | --------------------------------------------------------------------------- |
+| `-c, --content`          | no       | Page content (markdown)                                                     |
+| `--content-file <path>`  | no       | Read page content from a file (`-` for stdin). Mutually exclusive with `-c` |
+| `--parent-page <pageId>` | no       | Parent page ID for nesting                                                  |
+| `--json`                 | no       | Force JSON output                                                           |
 
 ### `cup doc-page-edit <docId> <pageId>`
 
-Edit a doc page name or content. Provide at least `--name` or `--content`.
+Edit a doc page name or content. Provide at least `--name`, `--content`, or `--content-file`.
 
 ```bash
 cup doc-page-edit abc123 page456 --name "Renamed Section"
 cup doc-page-edit abc123 page456 -c "# Updated content"
+cup doc-page-edit abc123 page456 --content-file notes.md
 cup doc-page-edit abc123 page456 --name "New Name" -c "# New body"
 cup doc-page-edit abc123 page456 --name "Renamed" --json
 ```
 
-| Flag            | Required   | Description                 |
-| --------------- | ---------- | --------------------------- |
-| `--name <text>` | one of two | New page name               |
-| `-c, --content` | one of two | New page content (markdown) |
-| `--json`        | no         | Force JSON output           |
+| Flag                    | Required     | Description                                                                     |
+| ----------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `--name <text>`         | at least one | New page name                                                                   |
+| `-c, --content`         | at least one | New page content (markdown)                                                     |
+| `--content-file <path>` | at least one | Read new page content from a file (`-` for stdin). Mutually exclusive with `-c` |
+| `--json`                | no           | Force JSON output                                                               |
 
 ### `cup tag-create <spaceId> <name>`
 

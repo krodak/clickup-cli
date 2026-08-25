@@ -603,7 +603,7 @@ export const commandMetadata = [
   {
     name: 'doc-page-create',
     description: 'Create a page in a doc',
-    flags: ['-c', '--content', '--parent-page', '--json'],
+    flags: ['-c', '--content', '--content-file', '--parent-page', '--json'],
     quickReference: [
       {
         section: 'write',
@@ -615,7 +615,7 @@ export const commandMetadata = [
   {
     name: 'doc-page-edit',
     description: 'Edit a doc page',
-    flags: ['--name', '-c', '--content', '--json'],
+    flags: ['--name', '-c', '--content', '--content-file', '--json'],
     quickReference: [
       {
         section: 'write',
