@@ -7,6 +7,7 @@ const mockRemoveTagFromTask = vi.fn().mockResolvedValue(undefined)
 const mockGetTask = vi.fn()
 const mockSetCustomFieldValue = vi.fn().mockResolvedValue(undefined)
 const mockMoveTaskToList = vi.fn().mockResolvedValue(undefined)
+const mockResolveTaskId = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -18,6 +19,7 @@ vi.mock('../../../src/api.js', () => ({
       getTask: mockGetTask,
       setCustomFieldValue: mockSetCustomFieldValue,
       moveTaskToList: mockMoveTaskToList,
+      resolveTaskId: mockResolveTaskId,
       getUserTimezone: vi.fn().mockResolvedValue(undefined),
     }
   }),
@@ -285,6 +287,7 @@ describe('bulkField', () => {
     custom_fields: [
       { id: 'f-notes', name: 'Notes', type: 'text', value: null, type_config: {} },
       { id: 'f-score', name: 'Score', type: 'number', value: null, type_config: {} },
+      { id: 'f-epic', name: 'Epic', type: 'tasks', value: null, type_config: {} },
       {
         id: 'f-stage',
         name: 'Stage',
@@ -304,6 +307,19 @@ describe('bulkField', () => {
     vi.clearAllMocks()
     mockGetTask.mockResolvedValue(taskWithFields)
     mockSetCustomFieldValue.mockResolvedValue(undefined)
+    mockResolveTaskId.mockImplementation(async (id: string) => id)
+  })
+
+  it('resolves custom task IDs in a tasks relationship field once for the whole batch', async () => {
+    mockResolveTaskId.mockImplementation(async (id: string) => (id === 'PROD-123' ? 'native1' : id))
+    const { bulkField } = await import('../../../src/commands/bulk.js')
+    const result = await bulkField(mockConfig, 'Epic', 'PROD-123', ['t1', 't2', 't3'])
+
+    expect(mockResolveTaskId).toHaveBeenCalledTimes(1)
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t1', 'f-epic', { add: ['native1'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t2', 'f-epic', { add: ['native1'] })
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('t3', 'f-epic', { add: ['native1'] })
+    expect(result).toEqual({ updated: 3, failed: [] })
   })
 
   it('fetches the first task to resolve the field ID', async () => {

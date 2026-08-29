@@ -171,6 +171,23 @@ export function parseFieldValue(field: FieldDescriptor, rawValue: string): unkno
   }
 }
 
+/**
+ * Resolve task references inside a parsed `tasks`-relationship value to native
+ * task IDs. Users pass custom IDs (PROD-123) and task URLs anywhere a task is
+ * referenced; ClickUp's custom-field endpoints accept only native IDs, and
+ * reject anything else with a misleading "not authorized" error.
+ * Non-relationship values pass through untouched.
+ */
+export async function resolveTaskFieldValue(
+  client: Pick<ClickUpClient, 'resolveTaskId'>,
+  field: FieldDescriptor,
+  parsed: unknown,
+): Promise<unknown> {
+  if (field.type !== 'tasks') return parsed
+  const { add } = parsed as { add: string[] }
+  return { add: await Promise.all(add.map(id => client.resolveTaskId(id))) }
+}
+
 export async function setCustomField(
   config: Config,
   taskId: string,
@@ -188,7 +205,7 @@ export async function setCustomField(
   if (opts.set) {
     const [fieldName, rawValue] = opts.set
     const field = findFieldByName(fields, fieldName)
-    const parsed = parseFieldValue(field, rawValue)
+    const parsed = await resolveTaskFieldValue(client, field, parseFieldValue(field, rawValue))
     await client.setCustomFieldValue(taskId, field.id, parsed)
     results.push({ taskId, field: field.name, action: 'set', value: parsed })
   }
