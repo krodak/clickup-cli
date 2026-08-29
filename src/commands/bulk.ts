@@ -2,7 +2,7 @@ import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
 import { runInBatches, type BatchOutcome } from '../util/batch.js'
 import { resolveAssigneeId, parseDueDate, parsePriority } from './update.js'
-import { findFieldByName, parseFieldValue } from './field.js'
+import { findFieldByName, parseFieldValue, resolveTaskFieldValue } from './field.js'
 
 export type BulkResult = { updated: number; failed: Array<{ id: string; reason: string }> }
 
@@ -103,7 +103,7 @@ export async function bulkField(
   const firstTask = await client.getTask(taskIds[0]!)
   const fields = firstTask.custom_fields ?? []
   const field = findFieldByName(fields, fieldName)
-  const parsed = parseFieldValue(field, rawValue)
+  const parsed = await resolveTaskFieldValue(client, field, parseFieldValue(field, rawValue))
   const outcomes = await runInBatches(taskIds, BULK_CONCURRENCY, id =>
     client.setCustomFieldValue(id, field.id, parsed),
   )

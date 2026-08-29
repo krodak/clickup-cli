@@ -103,6 +103,8 @@ cup task PROJ-123
 cup update DEV-42 --status done
 cup comment PROJ-456 -m "Fixed in latest commit"
 cup subtasks DEV-100
+cup field abc123 --set "Epic" PROJ-123          # task-relationship field values too
+cup create -n "Task" -l <listId> --field "Epic" PROJ-123
 ```
 
 Custom ID resolution uses the `teamId` from your config, which is required (`cup init` sets it up).

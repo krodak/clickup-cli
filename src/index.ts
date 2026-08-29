@@ -68,7 +68,12 @@ import { manageDependency } from './commands/depend.js'
 import type { DependOptions } from './commands/depend.js'
 import { moveTask } from './commands/move.js'
 import type { MoveOptions } from './commands/move.js'
-import { setCustomField, findFieldByName, parseFieldValue } from './commands/field.js'
+import {
+  setCustomField,
+  findFieldByName,
+  parseFieldValue,
+  resolveTaskFieldValue,
+} from './commands/field.js'
 import { deleteTaskCommand } from './commands/delete.js'
 import { deleteListCommand } from './commands/list-delete.js'
 import { deleteFolderCommand } from './commands/folder-delete.js'
@@ -735,7 +740,11 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
               const fieldName = opts.field[i]!
               const rawValue = opts.field[i + 1]!
               const field = findFieldByName(fields, fieldName)
-              const value = parseFieldValue(field, rawValue)
+              const value = await resolveTaskFieldValue(
+                client,
+                field,
+                parseFieldValue(field, rawValue),
+              )
               customFields.push({ id: field.id, value })
             }
             opts.customFields = customFields

@@ -360,6 +360,71 @@ describe('cup field --value-file', () => {
   })
 })
 
+describe('cup create --field with task-relationship values', () => {
+  const mockGetListCustomFields = vi.fn()
+  const mockResolveTaskId = vi.fn()
+  const mockCreateTaskApi = vi.fn()
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    mockLoadConfig.mockClear().mockReturnValue(config)
+    mockIsTTY.mockReset().mockReturnValue(false)
+    mockShouldOutputJson.mockReset().mockReturnValue(false)
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    process.exitCode = undefined
+    mockGetListCustomFields
+      .mockReset()
+      .mockResolvedValue([
+        { id: 'f-epic', name: 'Epic', type: 'tasks', value: null, type_config: {} },
+      ])
+    mockResolveTaskId
+      .mockReset()
+      .mockImplementation(async (id: string) => (id === 'PROD-123' ? 'native1' : id))
+    mockCreateTaskApi
+      .mockReset()
+      .mockResolvedValue({ id: 't-new', name: 'Task', url: 'https://app.clickup.com/t/t-new' })
+    vi.doMock('../../src/api.js', async importOriginal => {
+      const actual = await importOriginal<typeof import('../../src/api.js')>()
+      return {
+        ...actual,
+        ClickUpClient: vi.fn().mockImplementation(function () {
+          return {
+            getListCustomFields: mockGetListCustomFields,
+            resolveTaskId: mockResolveTaskId,
+            createTask: mockCreateTaskApi,
+            getUserTimezone: vi.fn().mockResolvedValue(undefined),
+          }
+        }),
+      }
+    })
+  })
+
+  afterEach(() => {
+    vi.doUnmock('../../src/api.js')
+    process.exitCode = undefined
+  })
+
+  it('resolves custom task IDs in --field task-relationship values before creating', async () => {
+    const { buildProgram } = await loadCli()
+    const program = buildProgram('cup')
+
+    await program.parseAsync(
+      ['create', '-n', 'Task', '-l', 'list-1', '--field', 'Epic', 'PROD-123'],
+      { from: 'user' },
+    )
+
+    expect(process.exitCode).toBeUndefined()
+    expect(mockResolveTaskId).toHaveBeenCalledWith('PROD-123')
+    expect(mockCreateTaskApi).toHaveBeenCalledWith(
+      'list-1',
+      expect.objectContaining({
+        custom_fields: [{ id: 'f-epic', value: { add: ['native1'] } }],
+      }),
+    )
+  })
+})
+
 describe('global option collisions', () => {
   it('no subcommand declares a short flag that a global option already uses', async () => {
     // Commander resolves a shared short flag to the global option, so a

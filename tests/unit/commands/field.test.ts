@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetTask = vi.fn()
 const mockSetCustomFieldValue = vi.fn().mockResolvedValue(undefined)
 const mockRemoveCustomFieldValue = vi.fn().mockResolvedValue(undefined)
+const mockResolveTaskId = vi.fn()
 
 vi.mock('../../../src/api.js', () => ({
   ClickUpClient: vi.fn().mockImplementation(function () {
@@ -10,6 +11,7 @@ vi.mock('../../../src/api.js', () => ({
       getTask: mockGetTask,
       setCustomFieldValue: mockSetCustomFieldValue,
       removeCustomFieldValue: mockRemoveCustomFieldValue,
+      resolveTaskId: mockResolveTaskId,
     }
   }),
 }))
@@ -67,6 +69,7 @@ describe('setCustomField', () => {
     mockGetTask.mockReset().mockResolvedValue(taskWithFields)
     mockSetCustomFieldValue.mockReset().mockResolvedValue(undefined)
     mockRemoveCustomFieldValue.mockReset().mockResolvedValue(undefined)
+    mockResolveTaskId.mockReset().mockImplementation(async (id: string) => id)
   })
 
   it('sets a text field by name', async () => {
@@ -242,6 +245,32 @@ describe('setCustomField', () => {
       add: ['task1', 'task2'],
     })
     expect(results[0]!.value).toEqual({ add: ['task1', 'task2'] })
+  })
+
+  it('resolves custom task IDs and URLs in a tasks relationship field', async () => {
+    mockResolveTaskId.mockImplementation(async (id: string) => {
+      if (id === 'PROD-123') return 'native1'
+      if (id === 'https://app.clickup.com/t/abc999') return 'abc999'
+      return id
+    })
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    const { results } = await setCustomField(config, 'task1', {
+      set: ['Related Tasks', 'PROD-123, https://app.clickup.com/t/abc999, plain1'],
+    })
+    expect(mockResolveTaskId).toHaveBeenCalledWith('PROD-123')
+    expect(mockResolveTaskId).toHaveBeenCalledWith('https://app.clickup.com/t/abc999')
+    expect(mockResolveTaskId).toHaveBeenCalledWith('plain1')
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'cf_tasks', {
+      add: ['native1', 'abc999', 'plain1'],
+    })
+    expect(results[0]!.value).toEqual({ add: ['native1', 'abc999', 'plain1'] })
+  })
+
+  it('does not resolve task IDs for non-relationship fields', async () => {
+    const { setCustomField } = await import('../../../src/commands/field.js')
+    await setCustomField(config, 'task1', { set: ['Notes', 'PROD-123'] })
+    expect(mockResolveTaskId).not.toHaveBeenCalled()
+    expect(mockSetCustomFieldValue).toHaveBeenCalledWith('task1', 'uuid-text', 'PROD-123')
   })
 
   it('sets users (people) field', async () => {
