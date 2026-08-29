@@ -2689,6 +2689,10 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .command('doc-page-create <docId> <name>')
     .description('Create a page in a doc')
     .option('-c, --content <text>', 'Page content (markdown)')
+    .option(
+      '--content-file <path>',
+      'Read page content from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -c',
+    )
     .option('--parent-page <pageId>', 'Parent page ID for nesting')
     .option('--json', 'Force JSON output even in terminal')
     .action(
@@ -2696,8 +2700,14 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         async (
           docId: string,
           name: string,
-          opts: { content?: string; parentPage?: string; json?: boolean },
+          opts: { content?: string; contentFile?: string; parentPage?: string; json?: boolean },
         ) => {
+          opts.content = resolveTextInput({
+            inline: opts.content,
+            file: opts.contentFile,
+            inlineFlag: '-c',
+            fileFlag: '--content-file',
+          })
           const config = loadConfig(getProfileName())
           const page = await createDocPage(config, docId, name, opts.content, opts.parentPage)
           if (shouldOutputJson(opts.json ?? false)) {
@@ -2714,14 +2724,24 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     .description('Edit a doc page')
     .option('--name <text>', 'New page name')
     .option('-c, --content <text>', 'New page content (markdown)')
+    .option(
+      '--content-file <path>',
+      'Read new page content from a file ("-" for stdin); avoids shell quoting. Mutually exclusive with -c',
+    )
     .option('--json', 'Force JSON output even in terminal')
     .action(
       wrapAction(
         async (
           docId: string,
           pageId: string,
-          opts: { name?: string; content?: string; json?: boolean },
+          opts: { name?: string; content?: string; contentFile?: string; json?: boolean },
         ) => {
+          opts.content = resolveTextInput({
+            inline: opts.content,
+            file: opts.contentFile,
+            inlineFlag: '-c',
+            fileFlag: '--content-file',
+          })
           const config = loadConfig(getProfileName())
           const page = await editDocPage(config, docId, pageId, {
             name: opts.name,
