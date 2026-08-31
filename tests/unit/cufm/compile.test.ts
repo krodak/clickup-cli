@@ -425,4 +425,30 @@ ${json}
     const { ops } = compile('see <@2685610> please\n')
     expect(ops.filter(op => embedType(op.insert) === 'user_mention')).toHaveLength(1)
   })
+
+  it('compiles a mention-only line as a task mention embed', () => {
+    const { ops } = compile(':task[86bbhau05]\n')
+    expect(ops).toEqual([{ insert: { task_mention: { task_id: '86bbhau05' } } }, { insert: '\n' }])
+  })
+
+  it('compiles standalone user, doc, and badge shorthands', () => {
+    const { ops } = compile(
+      ':user[Colin]{id="2685610"}\n\n:doc{view="26aqt-259" page="26aqt-84"}\n\n:badge[Red]{color="red"}\n',
+    )
+    expect(ops.find(op => embedType(op.insert) === 'user_mention')).toEqual({
+      insert: { user_mention: { id: 2685610, name: 'Colin', notify: true } },
+    })
+    expect(ops.find(op => embedType(op.insert) === 'doc_mention')?.insert).toMatchObject({
+      doc_mention: { viewId: '26aqt-259', pageId: '26aqt-84' },
+    })
+    expect(ops).toContainEqual({ insert: 'Red', attributes: { 'badge-class': 'red' } })
+  })
+
+  it('compiles a list item that is only a task mention', () => {
+    const { ops } = compile('- :task[86x]\n')
+    expect(ops.filter(op => embedType(op.insert) === 'task_mention')).toEqual([
+      { insert: { task_mention: { task_id: '86x' } } },
+    ])
+    expect(newlines(ops)[0]?.attributes).toMatchObject({ list: { list: 'bullet' } })
+  })
 })

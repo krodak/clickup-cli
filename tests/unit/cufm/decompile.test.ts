@@ -80,6 +80,11 @@ describe('decompileCufm block structure', () => {
     expect(await decompile(ops)).toBe('Depends on :task[86bbceuh3] and :task[86bbceuhv].\n')
   })
 
+  it('renders a mention-only line as a block shorthand', async () => {
+    const ops: DeltaOp[] = [{ insert: { task_mention: { task_id: '86x' } } }, { insert: '\n' }]
+    expect(await decompile(ops)).toBe(':task[86x]\n')
+  })
+
   it('wraps every line of one banner in a single component', async () => {
     const banner = {
       'advanced-banner': 'banner-1',

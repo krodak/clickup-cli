@@ -77,6 +77,16 @@ describe('CUFM round trip', () => {
     expect(pull(push(source))).toBe(source)
   })
 
+  it('does not drop a task mention that occupies its own line', () => {
+    const ops: DeltaOp[] = [{ insert: { task_mention: { task_id: '86x' } } }, { insert: '\n' }]
+    const markdown = pull(ops)
+    expect(markdown).toBe(':task[86x]\n')
+    expect(push(markdown)).toEqual([
+      { insert: { task_mention: { task_id: '86x' } } },
+      { insert: '\n' },
+    ])
+  })
+
   it('survives a push/pull cycle for a document of banners, tables and diagrams', () => {
     const source = [
       '::banner{color="blue" icon="🧩"}',

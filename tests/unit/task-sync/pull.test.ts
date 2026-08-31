@@ -2,6 +2,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { stringifyMarkdownFile } from '../../../src/task-sync/frontmatter.js'
+import { contentHash } from '../../../src/task-sync/hash.js'
 import { hasCufmConstructs, pullTaskToFile } from '../../../src/task-sync/pull.js'
 
 const config = { apiToken: 'pk_test', teamId: '2304761' }
@@ -11,10 +13,21 @@ afterEach(() => {
   delete process.env.CU_SESSION_TOKEN
 })
 
-async function fixture(body: string): Promise<string> {
+async function fixture(body: string, opts?: { contentHash?: string }): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'cup-pull-'))
   const file = join(dir, 'task.md')
-  await writeFile(file, `---\nclickup_id: abc123\ntitle: Task\nlist_id: '901'\n---\n\n${body}`)
+  await writeFile(
+    file,
+    stringifyMarkdownFile(
+      {
+        clickup_id: 'abc123',
+        title: 'Task',
+        list_id: '901',
+        content_hash: opts?.contentHash ?? contentHash(body, []),
+      },
+      body,
+    ),
+  )
   return file
 }
 
@@ -78,5 +91,40 @@ describe('pullTaskToFile without a session token', () => {
 
     expect(result.action).toBe('written')
     expect(result.lossless).toBe(false)
+  })
+
+  it('refuses to overwrite unsynced local edits when the user declines', async () => {
+    stubTaskFetch()
+    const file = await fixture('Local edits that have not been pushed.\n', {
+      contentHash: 'not-the-body-hash',
+    })
+    const before = await readFile(file, 'utf8')
+
+    await expect(pullTaskToFile(config, 'abc123', file, { noInput: true })).rejects.toThrow(
+      /unsynced local changes.*--force/s,
+    )
+    expect(await readFile(file, 'utf8')).toBe(before)
+  })
+
+  it('overwrites unsynced local edits when --force is given', async () => {
+    stubTaskFetch()
+    const file = await fixture('Local edits that have not been pushed.\n', {
+      contentHash: 'not-the-body-hash',
+    })
+
+    const result = await pullTaskToFile(config, 'abc123', file, { noInput: true, force: true })
+
+    expect(result.action).toBe('written')
+    expect(await readFile(file, 'utf8')).toContain('Flattened body from ClickUp')
+  })
+
+  it('writes a new file without treating missing as dirty', async () => {
+    stubTaskFetch()
+    const file = join(await mkdtemp(join(tmpdir(), 'cup-pull-')), 'new.md')
+
+    const result = await pullTaskToFile(config, 'abc123', file, { noInput: true })
+
+    expect(result.action).toBe('written')
+    expect(await readFile(file, 'utf8')).toContain('Flattened body from ClickUp')
   })
 })

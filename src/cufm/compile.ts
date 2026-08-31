@@ -187,6 +187,14 @@ function compileBlocks(tokens: Token[], start: number, end: number, ctx: Ctx): D
         i = close + 1
         break
       }
+      case 'mdc_block_shorthand': {
+        const compiled = compileBlockShorthand(tokens, i, ctx)
+        const extra = liftLineAttrs(compiled.ops)
+        ops.push(...compiled.ops)
+        ops.push(newlineOp(Object.keys(extra).length > 0 ? extra : undefined))
+        i = compiled.next
+        break
+      }
       case 'html_block': {
         ops.push(...compileHtmlBlock(token.content, ctx))
         i += 1
@@ -275,6 +283,16 @@ function compileList(
           }),
         )
         j = nestedClose + 1
+        continue
+      }
+      if (child.type === 'mdc_block_shorthand') {
+        const compiled = compileBlockShorthand(tokens, j, ctx)
+        ops.push(...compiled.ops)
+        const attrs: Record<string, unknown> = { ...listAttr(itemKind) }
+        if (ctx.indent > 0) attrs.indent = ctx.indent
+        ops.push(newlineOp(attrs))
+        emittedItemLine = true
+        j = compiled.next
         continue
       }
       // Any other block (fence, blockquote, table, heading, hr, html) nested in the
@@ -946,6 +964,28 @@ function compileInline(children: Token[] | undefined, ctx: Ctx): DeltaOp[] {
     }
   }
   return ops
+}
+
+/**
+ * A whole-line `:task[id]` / `:user[...]{id}` / `:doc{...}` is a block token, not
+ * an inline one. Compile it with the same embed as the in-sentence form.
+ */
+function compileBlockShorthand(
+  tokens: Token[],
+  index: number,
+  ctx: Ctx,
+): { ops: DeltaOp[]; next: number } {
+  const token = tokens[index]
+  if (!token || token.nesting === -1) return { ops: [], next: index + 1 }
+  const name = token.tag || token.info || token.content
+  const props = tokenAttrMap(token)
+  if (token.nesting === 0) {
+    return { ops: compileInlineComponent(name, '', props, ctx), next: index + 1 }
+  }
+  const close = findInlineClose(tokens, index, 'mdc_block_shorthand')
+  const inner = tokens.slice(index + 1, close).find(t => t.type === 'inline')
+  const text = inner ? inlinePlain(inner) : ''
+  return { ops: compileInlineComponent(name, text, props, ctx), next: close + 1 }
 }
 
 function compileInlineComponent(

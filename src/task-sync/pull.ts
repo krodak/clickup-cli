@@ -53,8 +53,8 @@ export async function pullTaskToFile(
         opts,
       )
     }
-  } catch {
-    /* new file */
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
   }
 
   if (opts.dryRun) {
