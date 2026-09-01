@@ -1,5 +1,6 @@
 import { access } from 'node:fs/promises'
-import type { ClickUpClient } from '../api.js'
+import type { ClickUpClient, TaskDescription } from '../api.js'
+import type { DeltaOp } from '../rich-text/delta.js'
 import { DEFAULT_MERMAID_THEME, renderMermaidPng } from '../rich-text/mermaid.js'
 import { renderTldrawPng } from '../rich-text/tldraw.js'
 import { collectDiagramSources, compileCufm } from './compile.js'
@@ -134,6 +135,29 @@ export async function compileForTask(opts: {
 
 export function compilePlain(markdown: string): CompileResult {
   return compileCufm(markdown)
+}
+
+/**
+ * `{ ops }` on the public v2 task endpoints is web-app behavior, not the
+ * documented contract (`markdown_content`). Try native ops first, then fall
+ * back so a routine ClickUp deploy cannot break `cup create -d` / `cup update -d`.
+ */
+export async function writeDescriptionWithFallback<T>(
+  write: (fields: { description?: TaskDescription; markdown_content?: string }) => Promise<T>,
+  markdown: string,
+  ops: DeltaOp[],
+): Promise<T> {
+  try {
+    return await write({ description: { ops } })
+  } catch (error) {
+    if (!isOpsRejected(error)) throw error
+    console.error('warning: ClickUp rejected native editor ops; falling back to markdown_content')
+    return await write({ markdown_content: markdown })
+  }
+}
+
+function isOpsRejected(error: unknown): boolean {
+  return error instanceof Error && /ClickUp API error (400|422)\b/.test(error.message)
 }
 
 function mermaidCacheKey(source: string, theme: string): string {

@@ -1,7 +1,12 @@
 import { ClickUpClient } from '../api.js'
 import type { CreateTaskOptions } from '../api.js'
 import type { Config } from '../config.js'
-import { compileForTask, compilePlain, descriptionNeedsAssets } from '../cufm/publish.js'
+import {
+  compileForTask,
+  compilePlain,
+  descriptionNeedsAssets,
+  writeDescriptionWithFallback,
+} from '../cufm/publish.js'
 import { updateSyncBlockContents } from '../task-sync/frontdoor.js'
 import { parsePriority, parseDueDate, parseAssigneeId, parseTimeEstimate } from './update.js'
 
@@ -67,13 +72,14 @@ export async function createTask(
     options.description !== undefined &&
     options.description !== '' &&
     descriptionNeedsAssets(options.description)
-  if (options.description !== undefined && !needsAssets) {
-    if (options.description === '') payload.description = ''
-    else {
-      const compiled = compilePlain(options.description)
-      for (const w of compiled.warnings) console.error(`warning: ${w}`)
-      payload.description = { ops: compiled.ops }
-    }
+  if (options.description === '') payload.description = ''
+
+  const compiledPlain =
+    options.description !== undefined && options.description !== '' && !needsAssets
+      ? compilePlain(options.description)
+      : undefined
+  if (compiledPlain) {
+    for (const w of compiledPlain.warnings) console.error(`warning: ${w}`)
   }
 
   if (options.priority !== undefined) {
@@ -111,7 +117,14 @@ export async function createTask(
     payload.custom_fields = options.customFields
   }
 
-  const task = await client.createTask(listId, payload)
+  const task =
+    compiledPlain && options.description
+      ? await writeDescriptionWithFallback(
+          fields => client.createTask(listId, { ...payload, ...fields }),
+          options.description,
+          compiledPlain.ops,
+        )
+      : await client.createTask(listId, payload)
   if (needsAssets && options.description) {
     const compiled = await compileForTask({
       markdown: options.description,
@@ -122,7 +135,11 @@ export async function createTask(
     })
     for (const w of compiled.warnings) console.error(`warning: ${w}`)
     await updateSyncBlockContents(config, compiled.syncBlocks)
-    await client.updateTask(task.id, { description: { ops: compiled.ops } })
+    await writeDescriptionWithFallback(
+      fields => client.updateTask(task.id, fields),
+      options.description,
+      compiled.ops,
+    )
   }
   return { id: task.id, name: task.name, url: task.url }
 }

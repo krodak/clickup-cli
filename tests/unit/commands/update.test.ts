@@ -133,6 +133,31 @@ describe('updateTask', () => {
     )
   })
 
+  it('falls back to markdown_content when native editor ops are rejected', async () => {
+    mockUpdateTask
+      .mockRejectedValueOnce(new Error('ClickUp API error 422: Unprocessable Entity'))
+      .mockResolvedValueOnce({
+        id: 't1',
+        name: 'Task',
+        status: { status: 'done', color: '' },
+        list: { id: 'l1', name: 'L1' },
+        assignees: [],
+        url: '',
+      })
+    const errors: string[] = []
+    const spy = vi.spyOn(console, 'error').mockImplementation(msg => errors.push(String(msg)))
+    const { updateTask, buildUpdatePayload } = await import('../../../src/commands/update.js')
+    await updateTask(
+      { apiToken: 'pk_t', teamId: 'team1' },
+      't1',
+      buildUpdatePayload({ description: '# Heading\n' }),
+    )
+    spy.mockRestore()
+    expect(mockUpdateTask).toHaveBeenCalledTimes(2)
+    expect(mockUpdateTask.mock.calls[1]?.[1]).toEqual({ markdown_content: '# Heading\n' })
+    expect(errors.join('\n')).toMatch(/falling back to markdown_content/)
+  })
+
   it('allows empty markdown_content to clear the field', async () => {
     const { updateTask } = await import('../../../src/commands/update.js')
     const result = await updateTask({ apiToken: 'pk_t', teamId: 'team1' }, 't1', {
@@ -336,6 +361,7 @@ describe('buildUpdatePayload', () => {
     const { buildUpdatePayload } = await import('../../../src/commands/update.js')
     const payload = buildUpdatePayload({ description: '# Heading\n\nSome **bold** text' })
     expect(payload.markdown_content).toBeUndefined()
+    expect(payload.description_source).toBe('# Heading\n\nSome **bold** text')
     expect(payload.description).toEqual(
       expect.objectContaining({
         ops: expect.arrayContaining([

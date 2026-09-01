@@ -3,8 +3,80 @@ import { describeSessionToken, resolveSessionToken, SESSION_TOKEN_HELP } from '.
 import type { CompiledSyncBlock } from '../cufm/compile.js'
 import type { SyncedContentBlock } from '../cufm/decompile.js'
 import type { DeltaOp } from '../rich-text/delta.js'
+import { isRecord } from '../util/guards.js'
 
-const DEFAULT_HOST = 'frontdoor-prod-us-east-2-2.clickup.com'
+const HANDSHAKE_URL = 'https://id.app.clickup.com/shard/v1/handshake'
+const SHARD_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+const hostCache = new Map<string, Promise<string>>()
+
+/** Test hook: drop the in-process handshake cache. */
+export function clearFrontdoorHostCache(): void {
+  hostCache.clear()
+}
+
+/**
+ * The web app does not hardcode a regional frontdoor host. It asks
+ * `id.app.clickup.com/shard/v1/handshake/{workspaceId}` (no auth) and uses
+ * `appEnvironment.apiUrlBase`. `CU_FRONTDOOR_HOST` still wins when set.
+ */
+export async function resolveFrontdoorHost(teamId: string): Promise<string> {
+  const override = process.env.CU_FRONTDOOR_HOST?.trim()
+  if (override) return override
+  const cached = hostCache.get(teamId)
+  if (cached) return cached
+  const pending = handshakeHost(teamId)
+  hostCache.set(teamId, pending)
+  try {
+    return await pending
+  } catch (error) {
+    hostCache.delete(teamId)
+    throw error
+  }
+}
+
+async function handshakeHost(teamId: string): Promise<string> {
+  const res = await fetch(`${HANDSHAKE_URL}/${encodeURIComponent(teamId)}`, {
+    headers: {
+      accept: 'application/json',
+      origin: 'https://app.clickup.com',
+      'x-csrf': '1',
+      'x-workspace-id': teamId,
+    },
+    signal: AbortSignal.timeout(15_000),
+  })
+  if (!res.ok) {
+    throw new Error(`workspace handshake failed: HTTP ${res.status}`)
+  }
+  const json: unknown = await res.json()
+  const host = hostFromHandshake(json)
+  if (!host) throw new Error('workspace handshake did not include a ClickUp editor host')
+  return host
+}
+
+function hostFromHandshake(json: unknown): string | undefined {
+  if (!isRecord(json)) return undefined
+  const env = json.appEnvironment
+  if (isRecord(env) && typeof env.apiUrlBase === 'string') {
+    const host = httpsClickupHost(env.apiUrlBase)
+    if (host) return host
+  }
+  if (typeof json.shardId === 'string' && SHARD_ID_RE.test(json.shardId)) {
+    return `frontdoor-${json.shardId}.clickup.com`
+  }
+  return undefined
+}
+
+function httpsClickupHost(url: string): string | undefined {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return undefined
+    if (!parsed.hostname.endsWith('.clickup.com')) return undefined
+    return parsed.hostname
+  } catch {
+    return undefined
+  }
+}
 
 export async function fetchTaskOps(
   config: Config,
@@ -15,7 +87,12 @@ export async function fetchTaskOps(
   if (!resolved) return undefined
   if (resolved.expired) return fail(describeSessionToken(resolved))
   const token = resolved.token
-  const host = process.env.CU_FRONTDOOR_HOST ?? DEFAULT_HOST
+  let host: string
+  try {
+    host = await resolveFrontdoorHost(config.teamId)
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : String(err))
+  }
   const url =
     `https://${host}/task-v3/experience/${config.teamId}/tasks/${taskId}` +
     `?fields%5B%5D=core&fields%5B%5D=sync_blocks&filterOmit=task(lower_text_content)`
@@ -63,7 +140,7 @@ export async function updateSyncBlockContents(
     )
   }
   const token = resolved.token
-  const host = process.env.CU_FRONTDOOR_HOST ?? DEFAULT_HOST
+  const host = await resolveFrontdoorHost(config.teamId)
   for (const block of blocks) {
     const res = await fetch(
       `https://${host}/docs-service-v3/core/workspaces/${config.teamId}/syncBlocks/${block.id}`,

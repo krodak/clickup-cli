@@ -73,6 +73,8 @@ export interface UpdateTaskOptions {
   description?: TaskDescription
   /** CLI-only: raw CUFM markdown needing asset uploads; compiled by commands/update.ts before the request. */
   description_markdown?: string
+  /** CLI-only: original markdown so a rejected `{ ops }` payload can fall back to markdown_content. */
+  description_source?: string
   markdown_content?: string
   status?: string
   priority?: Priority | null
