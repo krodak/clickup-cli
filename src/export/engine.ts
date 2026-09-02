@@ -18,12 +18,23 @@ export interface SliceSpec {
   scope: string
 }
 
+export interface SpaceHierarchy {
+  space: { id: string; name: string }
+  folders: Array<{ id: string; name: string; lists: Array<{ id: string; name: string }> }>
+  /** Folderless lists. */
+  lists: Array<{ id: string; name: string }>
+}
+
 export interface ExportPlan {
   slice: SliceSpec
   tasks: DiscoveredTask[]
   workspace: { id: string; name: string }
   /** Full task objects from discovery, when the list endpoint returned them. */
   tasksById?: Record<string, Task>
+  /** Set by team discovery: the space's folder/list structure. */
+  hierarchy?: SpaceHierarchy
+  /** Set by list discovery (roadmap / initiatives). */
+  list?: { id: string; name: string }
 }
 
 export interface RunOptions {

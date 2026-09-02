@@ -26,6 +26,9 @@ export interface WriteResult {
  * and anything that is awkward across filesystems.
  */
 export function safeAttachmentFilename(id: string, title: string): string {
+  // ClickUp attachment ids look like "<uuid>.<ext>"; keep only the uuid so the
+  // extension appears once, at the end.
+  const idStem = id.replace(/\.[A-Za-z0-9]+$/, '')
   const base = title.split(/[\\/]/).pop() ?? title
   const dot = base.lastIndexOf('.')
   const stem = dot > 0 ? base.slice(0, dot) : base
@@ -37,7 +40,7 @@ export function safeAttachmentFilename(id: string, title: string): string {
       .slice(0, 120)
   const stemClean = clean(stem) || 'file'
   const extClean = clean(ext)
-  return extClean ? `${id}-${stemClean}.${extClean}` : `${id}-${stemClean}`
+  return extClean ? `${idStem}-${stemClean}.${extClean}` : `${idStem}-${stemClean}`
 }
 
 async function defaultDownload(url: string): Promise<Buffer> {

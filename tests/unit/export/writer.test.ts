@@ -47,6 +47,8 @@ describe('safeAttachmentFilename', () => {
   it('prefixes with the attachment id and strips path separators and unsafe chars', () => {
     expect(safeAttachmentFilename('a2', '../evil name?.pdf')).toBe('a2-evil-name.pdf')
     expect(safeAttachmentFilename('a1', 'shot.png')).toBe('a1-shot.png')
+    // real ClickUp ids carry the extension: strip it from the prefix
+    expect(safeAttachmentFilename('76e7e855-0ea0.txt', 'notes.txt')).toBe('76e7e855-0ea0-notes.txt')
   })
 })
 

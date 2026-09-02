@@ -442,6 +442,21 @@ export const commandMetadata = [
         usage: 'export user <userRef>',
         description: 'Export all tasks assigned to a user (me, id, email; incl. closed, archived)',
       },
+      {
+        section: 'read',
+        usage: 'export team <spaceRef>',
+        description: 'Export every list in a space (id or name), incl. archived',
+      },
+      {
+        section: 'read',
+        usage: 'export roadmap <listId>',
+        description: 'Export a list with initiatives grouped (--item-id) and subtask trees',
+      },
+      {
+        section: 'read',
+        usage: 'export initiatives <listId>',
+        description: 'Export only initiative-typed tasks (--item-id) plus their subtask trees',
+      },
     ],
   },
   {

@@ -113,8 +113,14 @@ import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
 import { attachGet } from './commands/attach-get.js'
 import type { AttachGetOptions } from './commands/attach-get.js'
-import { exportUser, formatExportSummary } from './commands/export.js'
-import type { ExportOptions } from './commands/export.js'
+import {
+  exportInitiatives,
+  exportRoadmap,
+  exportTeam,
+  exportUser,
+  formatExportSummary,
+} from './commands/export.js'
+import type { ExportOptions, ExportSummary } from './commands/export.js'
 import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
 import {
   getDocInfo,
@@ -774,6 +780,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     rpm: string
     yes?: boolean
     json?: boolean
+    itemId?: string
   }
 
   function withExportOptions(cmd: Command): Command {
@@ -788,12 +795,23 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       .option('--dry-run', 'Discover and print the plan without fetching or writing')
       .option('--rpm <n>', 'Request throttle per minute (ClickUp Business limit is 100)', '90')
       .option('--yes', 'Skip confirmation prompts (required for non-interactive `export all`)')
+      .option(
+        '--item-id <n>',
+        'custom_item_id that marks an initiative in your workspace (see `cup task-types`)',
+      )
       .option('--json', 'Force JSON output even in terminal')
   }
 
   function toExportOptions(opts: ExportCliOpts): ExportOptions {
     const rpm = Number(opts.rpm)
     if (!Number.isFinite(rpm) || rpm <= 0) throw new Error('--rpm must be a positive number')
+    let initiativeItemId: number | undefined
+    if (opts.itemId !== undefined) {
+      initiativeItemId = Number(opts.itemId)
+      if (!Number.isInteger(initiativeItemId) || initiativeItemId <= 0) {
+        throw new Error('--item-id must be a positive integer')
+      }
+    }
     return {
       out: opts.out,
       refresh: opts.refresh ?? false,
@@ -801,7 +819,17 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       dryRun: opts.dryRun ?? false,
       rpm,
       log: line => process.stderr.write(line + '\n'),
+      ...(initiativeItemId !== undefined ? { initiativeItemId } : {}),
     }
+  }
+
+  function printExportSummary(summary: ExportSummary, json: boolean): void {
+    if (shouldOutputJson(json)) {
+      console.log(JSON.stringify(summary, null, 2))
+    } else {
+      console.log(formatExportSummary(summary))
+    }
+    if (summary.failed.length > 0) process.exitCode = 1
   }
 
   withExportOptions(
@@ -814,12 +842,47 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
     wrapAction(async (userRef: string, opts: ExportCliOpts) => {
       const config = loadConfig(getProfileName())
       const summary = await exportUser(config, userRef, toExportOptions(opts))
-      if (shouldOutputJson(opts.json ?? false)) {
-        console.log(JSON.stringify(summary, null, 2))
-      } else {
-        console.log(formatExportSummary(summary))
-      }
-      if (summary.failed.length > 0) process.exitCode = 1
+      printExportSummary(summary, opts.json ?? false)
+    }),
+  )
+
+  withExportOptions(
+    exportCmd
+      .command('team <spaceRef>')
+      .description('Export every list in a space (by id or name), incl. archived lists and tasks'),
+  ).action(
+    wrapAction(async (spaceRef: string, opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportTeam(config, spaceRef, toExportOptions(opts))
+      printExportSummary(summary, opts.json ?? false)
+    }),
+  )
+
+  withExportOptions(
+    exportCmd
+      .command('roadmap <listId>')
+      .description(
+        'Export a list with initiatives grouped and their subtask trees (use --item-id)',
+      ),
+  ).action(
+    wrapAction(async (listId: string, opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportRoadmap(config, listId, toExportOptions(opts))
+      printExportSummary(summary, opts.json ?? false)
+    }),
+  )
+
+  withExportOptions(
+    exportCmd
+      .command('initiatives <listId>')
+      .description(
+        'Export only initiative-typed tasks in a list plus their subtask trees (requires --item-id)',
+      ),
+  ).action(
+    wrapAction(async (listId: string, opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportInitiatives(config, listId, toExportOptions(opts))
+      printExportSummary(summary, opts.json ?? false)
     }),
   )
 

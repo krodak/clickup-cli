@@ -2,8 +2,14 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
-import { discoverUserTasks, resolveUserRef } from '../export/discover.js'
+import {
+  discoverListTasks,
+  discoverTeamTasks,
+  discoverUserTasks,
+  resolveUserRef,
+} from '../export/discover.js'
 import { runExport, type ExportPlan, type RunSummary } from '../export/engine.js'
+import { renderRoadmapIndex, renderTeamIndex } from '../export/index-team.js'
 import { renderUserIndex } from '../export/index-user.js'
 import { loadManifest } from '../export/manifest.js'
 import { writeRootReadme } from '../export/root-readme.js'
@@ -16,6 +22,8 @@ export interface ExportOptions {
   dryRun: boolean
   rpm: number
   log: (line: string) => void
+  /** custom_item_id marking an initiative; team convention, not discoverable. */
+  initiativeItemId?: number
 }
 
 export interface ExportSummary extends RunSummary {
@@ -119,4 +127,116 @@ export function formatExportSummary(s: ExportSummary): string {
   for (const f of s.failed.slice(0, 10)) lines.push(`  failed ${f.id}: ${f.error}`)
   if (s.failed.length > 10) lines.push(`  ... and ${s.failed.length - 10} more`)
   return lines.join('\n')
+}
+
+function writeSliceFiles(root: string, sliceName: string, readme: string, meta: unknown): void {
+  const dir = join(root, 'slices', sliceName)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'README.md'), readme)
+  writeFileSync(join(dir, 'tasks.json'), JSON.stringify(meta, null, 2) + '\n')
+}
+
+export async function exportTeam(
+  config: Config,
+  spaceRef: string,
+  opts: ExportOptions,
+): Promise<ExportSummary> {
+  const teamId = requireTeam(config)
+  const client = makeClient(config, opts.rpm)
+  const plan = await discoverTeamTasks(client, teamId, spaceRef)
+
+  return execute(client, teamId, plan, opts, async root => {
+    const manifest = loadManifest(root)
+    const relatedSlices = Object.entries(manifest.slices)
+      .filter(([, s]) => s.kind === 'roadmap' || s.kind === 'initiatives')
+      .map(([name, s]) => ({ name, listId: s.scope }))
+    const tasks = Object.values(plan.tasksById ?? {})
+    writeSliceFiles(
+      root,
+      plan.slice.name,
+      renderTeamIndex(plan.hierarchy!, tasks, {
+        exportedAt: new Date().toISOString(),
+        relatedSlices,
+        initiativeItemId: opts.initiativeItemId,
+      }),
+      { hierarchy: plan.hierarchy, taskIds: plan.tasks.map(t => t.id) },
+    )
+  })
+}
+
+export async function exportRoadmap(
+  config: Config,
+  listId: string,
+  opts: ExportOptions,
+): Promise<ExportSummary> {
+  const teamId = requireTeam(config)
+  const client = makeClient(config, opts.rpm)
+  const plan = await discoverListTasks(client, teamId, listId, { kind: 'roadmap' })
+
+  return execute(client, teamId, plan, opts, async root => {
+    const tasks = Object.values(plan.tasksById ?? {})
+    writeSliceFiles(
+      root,
+      plan.slice.name,
+      renderRoadmapIndex(plan.list!, tasks, {
+        exportedAt: new Date().toISOString(),
+        initiativeItemId: opts.initiativeItemId,
+      }),
+      {
+        list: plan.list,
+        initiativeItemId: opts.initiativeItemId ?? null,
+        taskIds: plan.tasks.map(t => t.id),
+      },
+    )
+  })
+}
+
+export async function exportInitiatives(
+  config: Config,
+  listId: string,
+  opts: ExportOptions,
+): Promise<ExportSummary> {
+  const teamId = requireTeam(config)
+  if (opts.initiativeItemId === undefined) {
+    throw new Error(
+      'initiatives export needs --item-id <n>: the custom_item_id your workspace uses for initiatives (see `cup task-types`)',
+    )
+  }
+  const client = makeClient(config, opts.rpm)
+  const plan = await discoverListTasks(client, teamId, listId, {
+    kind: 'initiatives',
+    initiativeItemId: opts.initiativeItemId,
+  })
+
+  return execute(client, teamId, plan, opts, async root => {
+    // The roadmap renderer needs the subtask trees, which the engine fetched;
+    // reload them from the archive rather than re-querying the API.
+    const { readBundleData } = await import('../export/writer.js')
+    const manifest = loadManifest(root)
+    const wanted = new Set<string>()
+    const queue = plan.tasks.map(t => t.id)
+    while (queue.length > 0) {
+      const id = queue.pop()!
+      if (wanted.has(id) || !manifest.tasks[id]) continue
+      wanted.add(id)
+      const b = await readBundleData(root, id)
+      queue.push(...b.subtaskIds)
+    }
+    const tasks = await Promise.all(
+      [...wanted].map(id => readBundleData(root, id).then(b => b.task)),
+    )
+    writeSliceFiles(
+      root,
+      plan.slice.name,
+      renderRoadmapIndex(plan.list!, tasks, {
+        exportedAt: new Date().toISOString(),
+        initiativeItemId: opts.initiativeItemId,
+      }),
+      {
+        list: plan.list,
+        initiativeItemId: opts.initiativeItemId,
+        taskIds: plan.tasks.map(t => t.id),
+      },
+    )
+  })
 }
