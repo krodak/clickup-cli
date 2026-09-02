@@ -150,6 +150,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup export roadmap <listId>`                            | Export a list with initiatives grouped (--item-id) and subtask trees        |
 | `cup export initiatives <listId>`                        | Export only initiative-typed tasks (--item-id) plus their subtask trees     |
 | `cup export docs`                                        | Export every workspace doc as markdown page trees                           |
+| `cup export all`                                         | Export the whole workspace (plans, confirms; --yes for non-interactive)     |
 | `cup attach-get <taskId> [selector]`                     | Download task attachment(s)                                                 |
 | `cup task-members <taskId>`                              | List members with access to a task                                          |
 | `cup plan`                                               | Show workspace plan                                                         |

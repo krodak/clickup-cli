@@ -462,6 +462,11 @@ export const commandMetadata = [
         usage: 'export docs',
         description: 'Export every workspace doc as markdown page trees',
       },
+      {
+        section: 'read',
+        usage: 'export all',
+        description: 'Export the whole workspace (plans, confirms; --yes for non-interactive)',
+      },
     ],
   },
   {

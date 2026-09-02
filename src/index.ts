@@ -114,11 +114,13 @@ import { attachFile } from './commands/attach.js'
 import { attachGet } from './commands/attach-get.js'
 import type { AttachGetOptions } from './commands/attach-get.js'
 import {
+  exportAll,
   exportDocs,
   exportInitiatives,
   exportRoadmap,
   exportTeam,
   exportUser,
+  formatAllSummary,
   formatDocsSummary,
   formatExportSummary,
 } from './commands/export.js'
@@ -822,6 +824,7 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       rpm,
       log: line => process.stderr.write(line + '\n'),
       ...(initiativeItemId !== undefined ? { initiativeItemId } : {}),
+      yes: opts.yes ?? false,
     }
   }
 
@@ -890,6 +893,25 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         console.log(formatDocsSummary(summary))
       }
       if (summary.failed.length > 0) process.exitCode = 1
+    }),
+  )
+
+  withExportOptions(
+    exportCmd
+      .command('all')
+      .description(
+        'Export the whole workspace: every space as a team slice, plus all docs. Plans first and asks for confirmation',
+      ),
+  ).action(
+    wrapAction(async (opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportAll(config, toExportOptions(opts))
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(summary, null, 2))
+      } else {
+        console.log(formatAllSummary(summary))
+      }
+      if (summary.failed.length > 0 || summary.docs.failed.length > 0) process.exitCode = 1
     }),
   )
 

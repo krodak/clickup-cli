@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { ClickUpClient } from '../api.js'
 import type { Config } from '../config.js'
+import { isTTY } from '../output.js'
 import {
   discoverListTasks,
   discoverTeamTasks,
@@ -25,6 +26,8 @@ export interface ExportOptions {
   log: (line: string) => void
   /** custom_item_id marking an initiative; team convention, not discoverable. */
   initiativeItemId?: number
+  /** Skip the confirmation prompt (required for `all` when not a TTY). */
+  yes?: boolean
 }
 
 export interface ExportSummary extends RunSummary {
@@ -281,5 +284,143 @@ export function formatDocsSummary(s: DocsSummary): string {
     `  docs: ${s.docs} fetched (${s.pages} pages), ${s.skipped} already present, ${s.failed.length} failed`,
   ]
   for (const f of s.failed.slice(0, 10)) lines.push(`  failed ${f.id}: ${f.error}`)
+  return lines.join('\n')
+}
+
+export interface AllSummary {
+  slice: 'all'
+  out: string
+  dryRun: boolean
+  spaces: string[]
+  planned: number
+  fetched: number
+  skipped: number
+  failed: Array<{ id: string; error: string }>
+  attachmentsDownloaded: number
+  attachmentsFailed: number
+  docs: DocsExportSummary
+}
+
+/** Rough per-task request cost: task + comments + attachments list. */
+const REQUESTS_PER_TASK = 3
+
+/**
+ * Whole workspace: every space as a team slice, then every doc. Always plans
+ * first and requires confirmation (or --yes) because a large workspace is a
+ * multi-hour run.
+ */
+export async function exportAll(config: Config, opts: ExportOptions): Promise<AllSummary> {
+  const teamId = requireTeam(config)
+  const client = makeClient(config, opts.rpm)
+  const root = resolve(opts.out)
+
+  const [spaces, docs, teams] = await Promise.all([
+    client.getSpaces(teamId),
+    client.getAllDocs(teamId),
+    client.getTeams(),
+  ])
+  const workspaceName = teams.find(t => t.id === teamId)?.name ?? teamId
+
+  // Discovery per space (cheap: list endpoints, 100 tasks per request).
+  const plans: ExportPlan[] = []
+  for (const space of spaces) plans.push(await discoverTeamTasks(client, teamId, space.id))
+  const manifest = loadManifest(root)
+  const allTaskIds = new Set(plans.flatMap(p => p.tasks.map(t => t.id)))
+  const alreadyExported = [...allTaskIds].filter(id => manifest.tasks[id]).length
+  const toFetch = allTaskIds.size - alreadyExported
+  const listCount = plans.reduce(
+    (n, p) =>
+      n +
+      (p.hierarchy?.lists.length ?? 0) +
+      (p.hierarchy?.folders.reduce((m, f) => m + f.lists.length, 0) ?? 0),
+    0,
+  )
+  const estRequests = toFetch * REQUESTS_PER_TASK + docs.length
+  const estMinutes = Math.ceil(estRequests / opts.rpm)
+
+  opts.log(`Workspace export plan for "${workspaceName}":`)
+  opts.log(
+    `  ${spaces.length} spaces, ${listCount} lists, ${allTaskIds.size} tasks, ${docs.length} docs`,
+  )
+  opts.log(`  Already exported: ${alreadyExported} tasks (will be skipped)`)
+  opts.log(`  Estimated requests: ~${estRequests}`)
+  opts.log(
+    `  Estimated time at ${opts.rpm} req/min: ~${estMinutes < 60 ? `${estMinutes}m` : `${Math.floor(estMinutes / 60)}h ${estMinutes % 60}m`}`,
+  )
+  if (opts.attachments) opts.log('  Attachments: downloaded (size unknown until fetched)')
+
+  const empty: AllSummary = {
+    slice: 'all',
+    out: root,
+    dryRun: opts.dryRun,
+    spaces: plans.map(p => p.slice.name),
+    planned: allTaskIds.size,
+    fetched: 0,
+    skipped: 0,
+    failed: [],
+    attachmentsDownloaded: 0,
+    attachmentsFailed: 0,
+    docs: { docs: docs.length, pages: 0, skipped: 0, failed: [] },
+  }
+  if (opts.dryRun) return empty
+
+  if (!opts.yes) {
+    if (!isTTY()) {
+      throw new Error(
+        'This is a long-running operation. Re-run with --yes to confirm in non-interactive mode.',
+      )
+    }
+    const { confirm } = await import('@inquirer/prompts')
+    const ok = await confirm({
+      message: `Export the whole workspace to ${root}?`,
+      default: false,
+    })
+    if (!ok) throw new Error('Cancelled')
+  }
+
+  const spaceNames = Object.fromEntries(spaces.map(s => [s.id, s.name]))
+  const summary = { ...empty }
+  for (const plan of plans) {
+    const run = await runExport(client, plan, {
+      root,
+      refresh: opts.refresh,
+      downloadAttachments: opts.attachments,
+      concurrency: CONCURRENCY,
+      log: opts.log,
+      spaceNames,
+    })
+    summary.fetched += run.fetched
+    summary.skipped += run.skipped
+    summary.failed.push(...run.failed)
+    summary.attachmentsDownloaded += run.attachmentsDownloaded
+    summary.attachmentsFailed += run.attachmentsFailed
+    const tasks = Object.values(plan.tasksById ?? {})
+    writeSliceFiles(
+      root,
+      plan.slice.name,
+      renderTeamIndex(plan.hierarchy!, tasks, {
+        exportedAt: new Date().toISOString(),
+        initiativeItemId: opts.initiativeItemId,
+      }),
+      { hierarchy: plan.hierarchy, taskIds: plan.tasks.map(t => t.id) },
+    )
+  }
+  summary.docs = await runDocsExport(client, teamId, { root, refresh: opts.refresh, log: opts.log })
+  writeRootReadme(root, loadManifest(root))
+  return summary
+}
+
+export function formatAllSummary(s: AllSummary): string {
+  if (s.dryRun)
+    return `Dry run: ${s.planned} tasks across ${s.spaces.length} spaces would be exported to ${s.out}`
+  const lines = [
+    `Exported workspace to ${s.out}`,
+    `  spaces: ${s.spaces.length} (${s.spaces.join(', ')})`,
+    `  tasks: ${s.fetched} fetched, ${s.skipped} already present, ${s.failed.length} failed`,
+    `  attachments: ${s.attachmentsDownloaded} downloaded, ${s.attachmentsFailed} failed`,
+    `  docs: ${s.docs.docs} fetched (${s.docs.pages} pages), ${s.docs.skipped} already present, ${s.docs.failed.length} failed`,
+  ]
+  for (const f of s.failed.slice(0, 10)) lines.push(`  failed ${f.id}: ${f.error}`)
+  if (s.failed.length > 10) lines.push(`  ... and ${s.failed.length - 10} more`)
   return lines.join('\n')
 }
