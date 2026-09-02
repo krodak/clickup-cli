@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ClickUpClient } from '../../src/api.js'
 import {
+  exportDocs,
   exportInitiatives,
   exportRoadmap,
   exportTeam,
@@ -135,5 +136,16 @@ describe.skipIf(!TOKEN)('Export e2e (personal workspace fixture)', () => {
     const root = readFileSync(join(out, 'README.md'), 'utf8')
     expect(root).toContain('[team-e2e-export](slices/team-e2e-export/README.md)')
     expect(root).toContain('[roadmap-export-roadmap](slices/roadmap-export-roadmap/README.md)')
+  }, 300_000)
+
+  it('docs: exports every workspace doc as page trees and links from the root README', async () => {
+    const config = { apiToken: TOKEN!, teamId: fx.teamId }
+    const summary = await exportDocs(config, opts())
+    expect(summary.failed).toEqual([])
+    expect(summary.docs).toBeGreaterThan(0)
+    expect(existsSync(join(out, 'docs', 'README.md'))).toBe(true)
+    const root = readFileSync(join(out, 'README.md'), 'utf8')
+    expect(root).toContain('Docs: [docs/](docs/README.md)')
+    expect(root).not.toContain('slices/docs/')
   }, 300_000)
 })

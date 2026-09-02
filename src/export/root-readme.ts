@@ -23,7 +23,10 @@ export function renderRootReadme(manifest: Manifest): string {
     '| Slice | Kind | Scope | Tasks | Exported |',
     '| --- | --- | --- | --- | --- |',
   ]
-  const slices = Object.entries(manifest.slices).sort((a, b) => a[0].localeCompare(b[0]))
+  // Docs live at docs/, not slices/; linked separately below.
+  const slices = Object.entries(manifest.slices)
+    .filter(([, s]) => s.kind !== 'docs')
+    .sort((a, b) => a[0].localeCompare(b[0]))
   for (const [name, s] of slices) {
     lines.push(
       `| [${name}](slices/${name}/README.md) | ${s.kind} | ${s.scope} | ${s.taskCount} | ${s.exportedAt.slice(0, 10)} |`,

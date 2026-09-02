@@ -9,6 +9,7 @@ import {
   resolveUserRef,
 } from '../export/discover.js'
 import { runExport, type ExportPlan, type RunSummary } from '../export/engine.js'
+import { exportDocs as runDocsExport, type DocsExportSummary } from '../export/docs.js'
 import { renderRoadmapIndex, renderTeamIndex } from '../export/index-team.js'
 import { renderUserIndex } from '../export/index-user.js'
 import { loadManifest } from '../export/manifest.js'
@@ -239,4 +240,46 @@ export async function exportInitiatives(
       },
     )
   })
+}
+
+export interface DocsSummary extends DocsExportSummary {
+  slice: 'docs'
+  out: string
+  dryRun: boolean
+}
+
+export async function exportDocs(config: Config, opts: ExportOptions): Promise<DocsSummary> {
+  const teamId = requireTeam(config)
+  const client = makeClient(config, opts.rpm)
+  const root = resolve(opts.out)
+  if (opts.dryRun) {
+    const docs = await client.getAllDocs(teamId)
+    opts.log(`Plan [docs]: ${docs.length} docs`)
+    return {
+      slice: 'docs',
+      out: root,
+      dryRun: true,
+      docs: docs.length,
+      pages: 0,
+      skipped: 0,
+      failed: [],
+    }
+  }
+  const summary = await runDocsExport(client, teamId, {
+    root,
+    refresh: opts.refresh,
+    log: opts.log,
+  })
+  writeRootReadme(root, loadManifest(root))
+  return { slice: 'docs', out: root, dryRun: false, ...summary }
+}
+
+export function formatDocsSummary(s: DocsSummary): string {
+  if (s.dryRun) return `Dry run: ${s.docs} docs would be exported to ${s.out}`
+  const lines = [
+    `Exported docs to ${s.out}/docs`,
+    `  docs: ${s.docs} fetched (${s.pages} pages), ${s.skipped} already present, ${s.failed.length} failed`,
+  ]
+  for (const f of s.failed.slice(0, 10)) lines.push(`  failed ${f.id}: ${f.error}`)
+  return lines.join('\n')
 }

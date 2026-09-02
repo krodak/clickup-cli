@@ -114,10 +114,12 @@ import { attachFile } from './commands/attach.js'
 import { attachGet } from './commands/attach-get.js'
 import type { AttachGetOptions } from './commands/attach-get.js'
 import {
+  exportDocs,
   exportInitiatives,
   exportRoadmap,
   exportTeam,
   exportUser,
+  formatDocsSummary,
   formatExportSummary,
 } from './commands/export.js'
 import type { ExportOptions, ExportSummary } from './commands/export.js'
@@ -869,6 +871,25 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
       const config = loadConfig(getProfileName())
       const summary = await exportRoadmap(config, listId, toExportOptions(opts))
       printExportSummary(summary, opts.json ?? false)
+    }),
+  )
+
+  withExportOptions(
+    exportCmd
+      .command('docs')
+      .description(
+        'Export every workspace doc as markdown page trees (ClickUp has no bulk doc export)',
+      ),
+  ).action(
+    wrapAction(async (opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportDocs(config, toExportOptions(opts))
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(summary, null, 2))
+      } else {
+        console.log(formatDocsSummary(summary))
+      }
+      if (summary.failed.length > 0) process.exitCode = 1
     }),
   )
 

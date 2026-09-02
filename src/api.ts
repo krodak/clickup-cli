@@ -333,9 +333,14 @@ export interface Doc {
   id: string
   name: string
   workspace_id: number
-  date_created?: string
-  date_updated?: string
+  date_created?: string | number
+  date_updated?: string | number
   pages?: DocPage[]
+  /** Where the doc lives. type: 7 workspace, 4 space, 6 folder, 5 list, 1 task (observed). */
+  parent?: { id: string; type: number }
+  creator?: number
+  deleted?: boolean
+  public?: boolean
 }
 
 export interface DocPage {

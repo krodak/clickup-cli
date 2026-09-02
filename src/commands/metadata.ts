@@ -457,6 +457,11 @@ export const commandMetadata = [
         usage: 'export initiatives <listId>',
         description: 'Export only initiative-typed tasks (--item-id) plus their subtask trees',
       },
+      {
+        section: 'read',
+        usage: 'export docs',
+        description: 'Export every workspace doc as markdown page trees',
+      },
     ],
   },
   {
