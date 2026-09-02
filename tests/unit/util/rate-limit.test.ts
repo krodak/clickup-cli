@@ -10,8 +10,8 @@ describe('createRateLimiter', () => {
     vi.useRealTimers()
   })
 
-  it('lets a burst up to the per-minute budget through without waiting', async () => {
-    const limiter = createRateLimiter(3)
+  it('lets a small burst through without waiting', async () => {
+    const limiter = createRateLimiter(60) // burst capacity = max(5, 6) = 6
     const order: number[] = []
     await Promise.all([
       limiter.acquire().then(() => order.push(1)),
@@ -22,25 +22,24 @@ describe('createRateLimiter', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
-  it('delays the request that exceeds the budget until a slot frees', async () => {
-    const limiter = createRateLimiter(2)
-    await limiter.acquire()
-    await limiter.acquire()
+  it('delays the request that exceeds the burst until a token refills', async () => {
+    const limiter = createRateLimiter(60) // 1 token per second, burst 6
+    for (let i = 0; i < 6; i++) await limiter.acquire()
 
     let released = false
-    const third = limiter.acquire().then(() => {
+    const next = limiter.acquire().then(() => {
       released = true
     })
-    await vi.advanceTimersByTimeAsync(29_000)
+    await vi.advanceTimersByTimeAsync(900)
     expect(released).toBe(false)
-    await vi.advanceTimersByTimeAsync(1_000)
-    await third
+    await vi.advanceTimersByTimeAsync(100)
+    await next
     expect(released).toBe(true)
   })
 
   it('refills continuously rather than in fixed windows', async () => {
     const limiter = createRateLimiter(60) // one per second
-    for (let i = 0; i < 60; i++) await limiter.acquire()
+    for (let i = 0; i < 6; i++) await limiter.acquire()
 
     let released = 0
     const a = limiter.acquire().then(() => released++)
@@ -56,5 +55,43 @@ describe('createRateLimiter', () => {
   it('rejects a non-positive rate', () => {
     expect(() => createRateLimiter(0)).toThrow('requestsPerMinute must be a positive number')
     expect(() => createRateLimiter(-5)).toThrow('requestsPerMinute must be a positive number')
+  })
+})
+
+describe('createRateLimiter burst and backoff', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('caps the initial burst well below the per-minute budget', async () => {
+    const limiter = createRateLimiter(90)
+    let released = 0
+    const pending = Array.from({ length: 30 }, () => limiter.acquire().then(() => released++))
+    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+    // Default burst is 10% of the budget (min 5), not the whole minute's worth.
+    expect(released).toBe(9)
+    await vi.advanceTimersByTimeAsync(60_000)
+    await Promise.all(pending)
+    expect(released).toBe(30)
+  })
+
+  it('penalize() empties the bucket so the next request waits a full slot', async () => {
+    const limiter = createRateLimiter(60)
+    await limiter.acquire()
+    limiter.penalize()
+    let released = false
+    const p = limiter.acquire().then(() => {
+      released = true
+    })
+    await vi.advanceTimersByTimeAsync(900)
+    expect(released).toBe(false)
+    await vi.advanceTimersByTimeAsync(200)
+    await p
+    expect(released).toBe(true)
   })
 })

@@ -145,6 +145,7 @@ export async function renderBundleMarkdown(
   root: string,
   bundle: TaskBundle,
   hasTask: (id: string) => boolean,
+  spaceName?: (id: string) => string | undefined,
 ): Promise<void> {
   const dir = taskDir(root, bundle.task.id)
   const attachments = JSON.parse(await readFile(join(dir, 'attachments.json'), 'utf8')) as Array<{
@@ -155,6 +156,7 @@ export async function renderBundleMarkdown(
   const ctx = {
     hasTask: (id: string) => hasTask(id),
     attachmentPath: (id: string) => localPaths.get(id),
+    ...(spaceName ? { spaceName: (id: string) => spaceName(id) } : {}),
   }
   await Promise.all([
     writeFile(join(dir, 'task.md'), renderTaskMarkdown(bundle, ctx)),

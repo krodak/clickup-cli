@@ -1,4 +1,4 @@
-import type { ClickUpClient } from '../api.js'
+import type { ClickUpClient, Task } from '../api.js'
 import { runInBatches } from '../util/batch.js'
 import { fetchTaskBundle } from './bundle.js'
 import { loadManifest, saveManifest, type Manifest, type SliceKind } from './manifest.js'
@@ -22,6 +22,8 @@ export interface ExportPlan {
   slice: SliceSpec
   tasks: DiscoveredTask[]
   workspace: { id: string; name: string }
+  /** Full task objects from discovery, when the list endpoint returned them. */
+  tasksById?: Record<string, Task>
 }
 
 export interface RunOptions {
@@ -33,6 +35,8 @@ export interface RunOptions {
   download?: Downloader
   /** Save the manifest every N fetched tasks (crash resume granularity). */
   checkpointEvery?: number
+  /** Space id -> display name, for rendering. */
+  spaceNames?: Record<string, string>
 }
 
 export interface RunSummary {
@@ -87,7 +91,6 @@ export async function runExport(
   }
   const touched = new Set<string>()
   let sinceCheckpoint = 0
-  let total = queue.length
 
   while (queue.length > 0) {
     const batch = queue.splice(0, opts.concurrency)
@@ -101,7 +104,6 @@ export async function runExport(
         try {
           const cached = await readBundleData(opts.root, id)
           for (const s of cached.subtaskIds) enqueue(s)
-          total = touched.size + queue.length
         } catch {
           // bundle data missing on disk: treat as not exported
           delete manifest.tasks[id]
@@ -143,7 +145,7 @@ export async function runExport(
       sinceCheckpoint++
     }
 
-    total = touched.size + queue.length
+    const total = touched.size + queue.length
     const done = summary.fetched + summary.skipped + summary.failed.length
     opts.log(
       `[${sliceName}] ${done}/${total} tasks (${summary.fetched} fetched, ${summary.skipped} cached, ${summary.failed.length} failed)`,
@@ -159,9 +161,11 @@ export async function runExport(
   // final membership, including tasks exported by earlier slices.
   const known = new Set(Object.keys(manifest.tasks))
   const hasTask = (id: string) => known.has(id)
+  const spaceNames = opts.spaceNames
+  const spaceName = spaceNames ? (id: string) => spaceNames[id] : undefined
   const renderOutcomes = await runInBatches([...known], opts.concurrency * 2, async id => {
     const bundle = await readBundleData(opts.root, id)
-    await renderBundleMarkdown(opts.root, bundle, hasTask)
+    await renderBundleMarkdown(opts.root, bundle, hasTask, spaceName)
   })
   for (const o of renderOutcomes) {
     if (!o.ok) opts.log(`warning: could not render ${o.item}: ${o.error.message}`)

@@ -565,6 +565,7 @@ export class ClickUpClient {
       const retryable =
         res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504
       if (!retryable || attempt >= maxRetries) return res
+      if (res.status === 429) this.rateLimiter?.penalize()
       attempt++
       const delayMs = this.retryDelayMs(res, attempt)
       process.stderr.write(

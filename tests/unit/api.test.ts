@@ -2522,7 +2522,7 @@ describe('rate limiter integration', () => {
     const client = new ClickUpClient({
       apiToken: 'pk_test',
       teamId: 'team1',
-      rateLimiter: { acquire },
+      rateLimiter: { acquire, penalize: vi.fn() },
     })
     mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'T' }))
 
@@ -2535,10 +2535,11 @@ describe('rate limiter integration', () => {
     )
   })
 
-  it('acquires a slot again for each retry after a 429', async () => {
+  it('acquires a slot again for each retry after a 429, and penalizes the limiter', async () => {
     const acquire = vi.fn().mockResolvedValue(undefined)
+    const penalize = vi.fn()
     const { ClickUpClient } = await import('../../src/api.js')
-    const client = new ClickUpClient({ apiToken: 'pk_test', rateLimiter: { acquire } })
+    const client = new ClickUpClient({ apiToken: 'pk_test', rateLimiter: { acquire, penalize } })
     vi.spyOn(client as unknown as { sleep: () => Promise<void> }, 'sleep').mockResolvedValue()
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     mockFetch
@@ -2557,6 +2558,7 @@ describe('rate limiter integration', () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(2)
     expect(acquire).toHaveBeenCalledTimes(2)
+    expect(penalize).toHaveBeenCalledTimes(1)
   })
 
   it('works without a limiter (default)', async () => {

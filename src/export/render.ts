@@ -10,6 +10,8 @@ export interface RenderContext {
   hasTask: (id: string) => boolean
   /** Path relative to the task dir of the downloaded file, if any. */
   attachmentPath: (attachmentId: string) => string | undefined
+  /** Display name for a space id, when known. */
+  spaceName?: (spaceId: string) => string | undefined
 }
 
 const TASK_URL = (id: string) => `https://app.clickup.com/t/${id}`
@@ -65,7 +67,9 @@ function renderFieldValue(field: CustomField, ctx: RenderContext): string {
         ? `${String(v.current)}%`
         : JSON.stringify(v)
     default:
-      return typeof v === 'object' ? JSON.stringify(v) : String(v)
+      if (typeof v === 'string') return v
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+      return JSON.stringify(v)
   }
 }
 
@@ -86,7 +90,7 @@ export function renderTaskMarkdown(bundle: TaskBundle, ctx: RenderContext): stri
     ['Archived', task.archived ? 'yes' : undefined],
     ['List', task.list.name],
     ['Folder', task.folder?.name],
-    ['Space', task.space?.id],
+    ['Space', task.space?.id ? (ctx.spaceName?.(task.space.id) ?? task.space.id) : undefined],
     ['Parent', task.parent ? taskLink(task.parent, undefined, ctx) : undefined],
     ['Assignees', task.assignees.map(a => a.username).join(', ') || undefined],
     ['Creator', task.creator?.username],

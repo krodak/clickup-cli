@@ -113,6 +113,8 @@ import { manageTaskLink } from './commands/link.js'
 import { attachFile } from './commands/attach.js'
 import { attachGet } from './commands/attach-get.js'
 import type { AttachGetOptions } from './commands/attach-get.js'
+import { exportUser, formatExportSummary } from './commands/export.js'
+import type { ExportOptions } from './commands/export.js'
 import { listDocs, formatDocs, formatDocsMarkdown } from './commands/docs.js'
 import {
   getDocInfo,
@@ -758,6 +760,68 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
         },
       ),
     )
+
+  // ---- export -------------------------------------------------------------
+  const exportCmd = program
+    .command('export')
+    .description('Export tasks and docs to a local archive (lossless JSON + rendered markdown)')
+
+  type ExportCliOpts = {
+    out: string
+    refresh?: boolean
+    attachments: boolean
+    dryRun?: boolean
+    rpm: string
+    yes?: boolean
+    json?: boolean
+  }
+
+  function withExportOptions(cmd: Command): Command {
+    return cmd
+      .option(
+        '--out <dir>',
+        'Archive directory (slices compose into the same dir)',
+        './clickup-export',
+      )
+      .option('--refresh', 'Re-fetch tasks already present in the archive')
+      .option('--no-attachments', 'Skip downloading attachment binaries (metadata still written)')
+      .option('--dry-run', 'Discover and print the plan without fetching or writing')
+      .option('--rpm <n>', 'Request throttle per minute (ClickUp Business limit is 100)', '90')
+      .option('--yes', 'Skip confirmation prompts (required for non-interactive `export all`)')
+      .option('--json', 'Force JSON output even in terminal')
+  }
+
+  function toExportOptions(opts: ExportCliOpts): ExportOptions {
+    const rpm = Number(opts.rpm)
+    if (!Number.isFinite(rpm) || rpm <= 0) throw new Error('--rpm must be a positive number')
+    return {
+      out: opts.out,
+      refresh: opts.refresh ?? false,
+      attachments: opts.attachments,
+      dryRun: opts.dryRun ?? false,
+      rpm,
+      log: line => process.stderr.write(line + '\n'),
+    }
+  }
+
+  withExportOptions(
+    exportCmd
+      .command('user <userRef>')
+      .description(
+        'Export every task assigned to a user (me, id, email, or username), incl. closed and archived',
+      ),
+  ).action(
+    wrapAction(async (userRef: string, opts: ExportCliOpts) => {
+      const config = loadConfig(getProfileName())
+      const summary = await exportUser(config, userRef, toExportOptions(opts))
+      if (shouldOutputJson(opts.json ?? false)) {
+        console.log(JSON.stringify(summary, null, 2))
+      } else {
+        console.log(formatExportSummary(summary))
+      }
+      if (summary.failed.length > 0) process.exitCode = 1
+    }),
+  )
 
   program
     .command('sprint')

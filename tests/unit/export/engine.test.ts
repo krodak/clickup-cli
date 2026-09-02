@@ -58,7 +58,7 @@ describe('runExport', () => {
 
   it('fetches every planned task, writes bundles, and records them in the manifest', async () => {
     const client = makeClient({ t1: task('t1'), t2: task('t2') })
-    const summary = await runExport(client as never, plan(['t1', 't2']), baseOpts())
+    const summary = await runExport(client, plan(['t1', 't2']), baseOpts())
 
     expect(summary.fetched).toBe(2)
     expect(summary.skipped).toBe(0)
@@ -76,13 +76,13 @@ describe('runExport', () => {
     // A previous slice exported t1.
     const first = makeClient({ t1: task('t1') })
     await runExport(
-      first as never,
+      first,
       { ...plan(['t1']), slice: { name: 'team-x', kind: 'team', scope: 'x' } },
       baseOpts(),
     )
 
     const client = makeClient({ t1: task('t1'), t2: task('t2') })
-    const summary = await runExport(client as never, plan(['t1', 't2']), baseOpts())
+    const summary = await runExport(client, plan(['t1', 't2']), baseOpts())
 
     expect(summary.skipped).toBe(1)
     expect(summary.fetched).toBe(1)
@@ -95,7 +95,7 @@ describe('runExport', () => {
     m.tasks['t1'] = { fetchedAt: '2026-01-01T00:00:00.000Z', slices: ['user-me'] }
     saveManifest(root, m)
     const client = makeClient({ t1: task('t1') })
-    const summary = await runExport(client as never, plan(['t1']), { ...baseOpts(), refresh: true })
+    const summary = await runExport(client, plan(['t1']), { ...baseOpts(), refresh: true })
     expect(summary.fetched).toBe(1)
     expect(client.getTaskForExport).toHaveBeenCalledWith('t1')
   })
@@ -106,7 +106,7 @@ describe('runExport', () => {
       s1: task('s1', { parent: 't1', subtasks: [{ id: 's2', name: 'Deep' }] }),
       s2: task('s2', { parent: 's1' }),
     })
-    const summary = await runExport(client as never, plan(['t1']), baseOpts())
+    const summary = await runExport(client, plan(['t1']), baseOpts())
     expect(summary.fetched).toBe(3)
     expect(existsSync(join(root, 'tasks', 's2', 'task.md'))).toBe(true)
     // parent's task.md links to the exported subtask relatively
@@ -115,7 +115,7 @@ describe('runExport', () => {
 
   it('records per-task failures and continues instead of aborting the run', async () => {
     const client = makeClient({ t1: task('t1'), t3: task('t3') })
-    const summary = await runExport(client as never, plan(['t1', 't2', 't3']), baseOpts())
+    const summary = await runExport(client, plan(['t1', 't2', 't3']), baseOpts())
     expect(summary.fetched).toBe(2)
     expect(summary.failed).toEqual([{ id: 't2', error: 'no such task t2' }])
     expect(loadManifest(root).tasks['t2']).toBeUndefined()
@@ -124,7 +124,7 @@ describe('runExport', () => {
 
   it('reports progress to the log', async () => {
     const client = makeClient({ t1: task('t1'), t2: task('t2') })
-    await runExport(client as never, plan(['t1', 't2']), baseOpts())
+    await runExport(client, plan(['t1', 't2']), baseOpts())
     expect(stderr.some(l => /2\/2/.test(l))).toBe(true)
   })
 })
@@ -143,7 +143,7 @@ describe('runExport resilience', () => {
     m.tasks['t1'] = { fetchedAt: '2026-01-01T00:00:00.000Z', slices: ['old'] }
     saveManifest(root, m)
     const client = makeClient({ t1: task('t1') })
-    const summary = await runExport(client as never, plan(['t1']), {
+    const summary = await runExport(client, plan(['t1']), {
       root,
       refresh: false,
       downloadAttachments: false,

@@ -1,19 +1,22 @@
 export interface RateLimiter {
   /** Resolves when the caller may send one request. */
   acquire(): Promise<void>
+  /** Called after a 429: empty the bucket so the next request waits a full slot. */
+  penalize(): void
 }
 
 /**
- * Token-bucket limiter: a burst up to `requestsPerMinute` passes immediately,
- * then tokens refill continuously at that rate. Callers are released in FIFO
- * order. Used to stay under ClickUp's per-token budget during bulk crawls,
- * where reactive 429 backoff alone wastes a whole minute per trip.
+ * Token-bucket limiter with a small burst: tokens refill continuously at
+ * `requestsPerMinute`, but the bucket only holds ~10% of a minute's worth, so
+ * a cold start cannot fire a minute of requests at once. ClickUp's limit is
+ * enforced on a rolling window, and a full-capacity burst on start reliably
+ * tripped it even at 90/min. Callers are released in FIFO order.
  */
 export function createRateLimiter(requestsPerMinute: number): RateLimiter {
   if (!(requestsPerMinute > 0)) {
     throw new Error(`requestsPerMinute must be a positive number, got ${requestsPerMinute}`)
   }
-  const capacity = requestsPerMinute
+  const capacity = Math.max(5, Math.floor(requestsPerMinute / 10))
   const refillPerMs = requestsPerMinute / 60_000
   let tokens = capacity
   let lastRefill = Date.now()
@@ -35,6 +38,8 @@ export function createRateLimiter(requestsPerMinute: number): RateLimiter {
     }
     if (queue.length > 0) {
       const waitMs = Math.ceil((1 - tokens) / refillPerMs)
+      // Deliberately ref'd: a pending throttle IS pending work. The callback
+      // always clears `timer`, so nothing lingers once the queue is empty.
       timer = setTimeout(drain, waitMs)
     }
   }
@@ -45,6 +50,10 @@ export function createRateLimiter(requestsPerMinute: number): RateLimiter {
         queue.push(resolve)
         if (!timer) drain()
       })
+    },
+    penalize(): void {
+      refill()
+      tokens = 0
     },
   }
 }

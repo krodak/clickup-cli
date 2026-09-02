@@ -434,6 +434,17 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'export',
+    description: 'Export tasks and docs to a local archive (lossless JSON + rendered markdown)',
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'export user <userRef>',
+        description: 'Export all tasks assigned to a user (me, id, email; incl. closed, archived)',
+      },
+    ],
+  },
+  {
     name: 'attach-get',
     description: 'Download task attachment(s) by ID or title',
     flags: ['-o', '--output', '--dir', '--all', '--force', '--json'],
