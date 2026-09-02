@@ -2505,3 +2505,209 @@ describe('rate limit retry', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('rate limiter integration', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('waits on the configured limiter before every request', async () => {
+    const acquire = vi.fn().mockResolvedValue(undefined)
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({
+      apiToken: 'pk_test',
+      teamId: 'team1',
+      rateLimiter: { acquire, penalize: vi.fn() },
+    })
+    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'T' }))
+
+    await client.getTask('t1')
+    await client.getTask('t2')
+
+    expect(acquire).toHaveBeenCalledTimes(2)
+    expect(acquire.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockFetch.mock.invocationCallOrder[0]!,
+    )
+  })
+
+  it('acquires a slot again for each retry after a 429, and penalizes the limiter', async () => {
+    const acquire = vi.fn().mockResolvedValue(undefined)
+    const penalize = vi.fn()
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test', rateLimiter: { acquire, penalize } })
+    vi.spyOn(client as unknown as { sleep: () => Promise<void> }, 'sleep').mockResolvedValue()
+    vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    mockFetch
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 429,
+          statusText: 'Too Many',
+          headers: new Headers({ 'content-length': '1' }),
+          json: () => Promise.resolve({ err: 'slow down' }),
+        }),
+      )
+      .mockReturnValueOnce(mockResponse({ id: 't1', name: 'T' }))
+
+    await client.getTask('t1')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(acquire).toHaveBeenCalledTimes(2)
+    expect(penalize).toHaveBeenCalledTimes(1)
+  })
+
+  it('works without a limiter (default)', async () => {
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'T' }))
+    await expect(client.getTask('t1')).resolves.toMatchObject({ id: 't1' })
+  })
+})
+
+describe('getAllTaskComments pagination', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function comment(i: number) {
+    return {
+      id: `c${i}`,
+      comment_text: `comment ${i}`,
+      user: { username: 'u' },
+      date: String(1000 - i),
+    }
+  }
+
+  it('follows start/start_id cursors until a short page and dedupes the overlap', async () => {
+    const page1 = Array.from({ length: 25 }, (_, i) => comment(i))
+    // ClickUp includes the cursor comment again on the next page.
+    const page2 = [comment(24), ...Array.from({ length: 10 }, (_, i) => comment(25 + i))]
+    mockFetch
+      .mockReturnValueOnce(mockResponse({ comments: page1 }))
+      .mockReturnValueOnce(mockResponse({ comments: page2 }))
+
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    const all = await client.getAllTaskComments('t1')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    const secondUrl = String(mockFetch.mock.calls[1]![0])
+    expect(secondUrl).toContain('start=' + encodeURIComponent('976'))
+    expect(secondUrl).toContain('start_id=c24')
+    expect(all.map(c => c.id)).toEqual([...page1, ...page2.slice(1)].map(c => c.id))
+  })
+
+  it('returns a single short page without a second request', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ comments: [comment(0), comment(1)] }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    const all = await client.getAllTaskComments('t1')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(all).toHaveLength(2)
+  })
+
+  it('stops when a full page yields no new comments', async () => {
+    const page = Array.from({ length: 25 }, (_, i) => comment(i))
+    mockFetch.mockReturnValue(mockResponse({ comments: page }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    const all = await client.getAllTaskComments('t1')
+    expect(all).toHaveLength(25)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('export-oriented task fetches', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('getMyTasks passes archived=true when requested', async () => {
+    mockFetch.mockReturnValue(mockResponse({ tasks: [], last_page: true }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team1' })
+    await client.getMyTasks('team1', { all: true, archived: true })
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('archived=true')
+  })
+
+  it('getMyTasks omits archived by default', async () => {
+    mockFetch.mockReturnValue(mockResponse({ tasks: [], last_page: true }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team1' })
+    await client.getMyTasks('team1', { all: true })
+    expect(String(mockFetch.mock.calls[0]![0])).not.toContain('archived')
+  })
+
+  it('getTaskForExport requests markdown description and subtasks', async () => {
+    mockFetch.mockReturnValue(mockResponse({ id: 't1', name: 'T', subtasks: [{ id: 's1' }] }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team1' })
+    const task = await client.getTaskForExport('t1')
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('include_markdown_description=true')
+    expect(url).toContain('include_subtasks=true')
+    expect(task.subtasks?.[0]?.id).toBe('s1')
+  })
+
+  it('getTasksFromList passes archived=true when requested', async () => {
+    mockFetch.mockReturnValue(mockResponse({ tasks: [], last_page: true }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test', teamId: 'team1' })
+    await client.getTasksFromList('l1', {}, { includeClosed: true, archived: true })
+    const url = String(mockFetch.mock.calls[0]![0])
+    expect(url).toContain('archived=true')
+    expect(url).toContain('include_closed=true')
+  })
+})
+
+describe('getAllDocs cursor pagination', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetch)
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('follows next_cursor until it is absent', async () => {
+    mockFetch
+      .mockReturnValueOnce(
+        mockResponse({ docs: [{ id: 'd1', name: 'A', workspace_id: 1 }], next_cursor: 'abc' }),
+      )
+      .mockReturnValueOnce(
+        mockResponse({ docs: [{ id: 'd2', name: 'B', workspace_id: 1 }], next_cursor: null }),
+      )
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    const docs = await client.getAllDocs('ws1')
+    expect(docs.map(d => d.id)).toEqual(['d1', 'd2'])
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    const second = String(mockFetch.mock.calls[1]![0])
+    expect(second).toContain('next_cursor=abc')
+    expect(second).toContain('limit=50')
+  })
+
+  it('includes archived docs when asked', async () => {
+    mockFetch.mockReturnValueOnce(mockResponse({ docs: [] }))
+    const { ClickUpClient } = await import('../../src/api.js')
+    const client = new ClickUpClient({ apiToken: 'pk_test' })
+    await client.getAllDocs('ws1', { archived: true })
+    expect(String(mockFetch.mock.calls[0]![0])).toContain('archived=true')
+  })
+})

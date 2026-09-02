@@ -434,6 +434,42 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'export',
+    description: 'Export tasks and docs to a local archive (lossless JSON + rendered markdown)',
+    quickReference: [
+      {
+        section: 'read',
+        usage: 'export user <userRef>',
+        description: 'Export all tasks assigned to a user (me, id, email; incl. closed, archived)',
+      },
+      {
+        section: 'read',
+        usage: 'export team <spaceRef>',
+        description: 'Export every list in a space (id or name), incl. archived',
+      },
+      {
+        section: 'read',
+        usage: 'export roadmap <listId>',
+        description: 'Export a list with initiatives grouped (--item-id) and subtask trees',
+      },
+      {
+        section: 'read',
+        usage: 'export initiatives <listId>',
+        description: 'Export only initiative-typed tasks (--item-id) plus their subtask trees',
+      },
+      {
+        section: 'read',
+        usage: 'export docs',
+        description: 'Export every workspace doc as markdown page trees',
+      },
+      {
+        section: 'read',
+        usage: 'export all',
+        description: 'Export the whole workspace (plans, confirms; --yes for non-interactive)',
+      },
+    ],
+  },
+  {
     name: 'attach-get',
     description: 'Download task attachment(s) by ID or title',
     flags: ['-o', '--output', '--dir', '--all', '--force', '--json'],

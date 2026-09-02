@@ -158,6 +158,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup chat followers <channelId>`                                                                                                                                                                                                | List channel followers                                                                                                                                       |
 | `cup chat replies <messageId>`                                                                                                                                                                                                  | List message replies                                                                                                                                         |
 | `cup chat reactions <messageId>`                                                                                                                                                                                                | List reactions on a message                                                                                                                                  |
+| `cup export user\|team\|roadmap\|initiatives\|docs\|all ... [--out dir] [--dry-run] [--item-id n] [--yes]`                                                                                                                      | Export tasks/docs to a local archive (lossless JSON + markdown). See Export below                                                                            |
 
 ### Write
 
@@ -426,6 +427,23 @@ cup doc-create "Architecture Notes" -c "# Draft"
 cup doc-page-create <docId> "Section" --parent-page <pageId>
 cup doc-page-edit <docId> <pageId> -c "# Updated"
 ```
+
+### Export (knowledge transfer / off-boarding)
+
+Every task stored once (`tasks/<id>/task.json` + `task.md` + comments + attachments); each scope adds an index. Slices compose into one `--out` dir; shared tasks are fetched once. Re-runs skip what is already there.
+
+```bash
+cup export user me --out ./archive                    # my tasks, incl. closed + archived
+cup export team "Atlas" --out ./archive             # every list in a space
+cup export roadmap <listId> --item-id 1004 --out ./archive   # initiatives grouped with subtask trees
+cup export docs --out ./archive                       # every doc as markdown page trees
+cup export all --dry-run                              # plan: counts, estimated time
+cup export all --yes --out ./archive                  # whole workspace (long-running; confirms)
+```
+
+- `--item-id` is the initiative `custom_item_id` (team convention; `cup task-types` lists them).
+- `all` refuses to run non-interactively without `--yes`; always `--dry-run` first to see the estimate.
+- Whiteboards, dashboards, automations have no API: export those from the UI by hand.
 
 ### Workspace structure
 

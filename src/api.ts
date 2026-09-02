@@ -1,5 +1,6 @@
 import type { CommentBlock } from './commands/comment-format.js'
 import { isRecord } from './util/guards.js'
+import type { RateLimiter } from './util/rate-limit.js'
 
 const BASE_URL = 'https://api.clickup.com/api/v2'
 const BASE_URL_V3 = 'https://api.clickup.com/api/v3'
@@ -43,6 +44,15 @@ export interface Task {
   attachments?: Attachment[]
   dependencies?: Array<{ task_id: string; depends_on: string; type: number }>
   linked_tasks?: Array<{ task_id: string; link_id: string; date_created: string }>
+  /** Present only when fetched with include_subtasks=true. */
+  subtasks?: Array<{ id: string; name?: string; status?: { status: string } }>
+  archived?: boolean
+  date_closed?: string | null
+  date_done?: string | null
+  creator?: { id: number; username: string; email?: string }
+  watchers?: Array<{ id: number; username: string }>
+  folder?: { id: string; name: string }
+  team_id?: string
 }
 
 export interface TaskFilters {
@@ -51,6 +61,8 @@ export interface TaskFilters {
   spaceIds?: string[]
   subtasks?: boolean
   includeClosed?: boolean
+  /** Include archived tasks (ClickUp hides them by default). */
+  archived?: boolean
   all?: boolean
   assignees?: number[]
   tags?: string[]
@@ -321,9 +333,14 @@ export interface Doc {
   id: string
   name: string
   workspace_id: number
-  date_created?: string
-  date_updated?: string
+  date_created?: string | number
+  date_updated?: string | number
   pages?: DocPage[]
+  /** Where the doc lives. type: 7 workspace, 4 space, 6 folder, 5 list, 1 task (observed). */
+  parent?: { id: string; type: number }
+  creator?: number
+  deleted?: boolean
+  public?: boolean
 }
 
 export interface DocPage {
@@ -415,6 +432,8 @@ export interface SharedHierarchy {
 interface ClientConfig {
   apiToken: string
   teamId?: string
+  /** Optional throttle applied before every request (including retries). */
+  rateLimiter?: RateLimiter
 }
 
 function expectRecord(value: unknown, context: string): Record<string, unknown> {
@@ -501,11 +520,13 @@ export function normalizeViewId(input: string): string {
 export class ClickUpClient {
   private apiToken: string
   private teamId: string | undefined
+  private rateLimiter: RateLimiter | undefined
   private meCache: { id: number; username: string; timezone?: string } | null = null
 
   constructor(config: ClientConfig) {
     this.apiToken = config.apiToken
     this.teamId = config.teamId
+    this.rateLimiter = config.rateLimiter
   }
 
   private taskPath(taskId: string, suffix = ''): string {
@@ -544,10 +565,12 @@ export class ClickUpClient {
     const maxRetries = 3
     let attempt = 0
     for (;;) {
+      await this.rateLimiter?.acquire()
       const res = await fetch(url, { ...init, signal: AbortSignal.timeout(30_000) })
       const retryable =
         res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504
       if (!retryable || attempt >= maxRetries) return res
+      if (res.status === 429) this.rateLimiter?.penalize()
       attempt++
       const delayMs = this.retryDelayMs(res, attempt)
       process.stderr.write(
@@ -672,6 +695,7 @@ export class ClickUpClient {
       subtasks: String(filters.subtasks ?? true),
     })
     if (filters.includeClosed) baseParams.set('include_closed', 'true')
+    if (filters.archived) baseParams.set('archived', 'true')
     if (!filters.all) {
       const me = await this.getMe()
       baseParams.append('assignees[]', String(me.id))
@@ -728,14 +752,47 @@ export class ClickUpClient {
     return readCollectionField<Comment>(data, 'comments', 'task comments')
   }
 
+  /**
+   * Every comment on a task. ClickUp returns 25 per call and pages with
+   * `start` (the oldest returned comment's date) + `start_id`; the cursor
+   * comment is repeated on the next page, so results are deduped by id.
+   */
+  async getAllTaskComments(taskId: string): Promise<Comment[]> {
+    const PAGE_SIZE = 25
+    const seen = new Set<string>()
+    const all: Comment[] = []
+    let cursor: { start: string; startId: string } | undefined
+    for (;;) {
+      const qs = cursor
+        ? `?start=${encodeURIComponent(cursor.start)}&start_id=${encodeURIComponent(cursor.startId)}`
+        : ''
+      const data = await this.request<{ comments: Comment[] }>(
+        this.taskPath(taskId, `/comment${qs}`),
+      )
+      const page = readCollectionField<Comment>(data, 'comments', 'task comments')
+      let added = 0
+      for (const c of page) {
+        if (seen.has(c.id)) continue
+        seen.add(c.id)
+        all.push(c)
+        added++
+      }
+      if (page.length < PAGE_SIZE || added === 0) break
+      const last = page[page.length - 1]!
+      cursor = { start: last.date, startId: last.id }
+    }
+    return all
+  }
+
   async getTasksFromList(
     listId: string,
     params: Record<string, string> = {},
-    options: { includeClosed?: boolean } = {},
+    options: { includeClosed?: boolean; archived?: boolean } = {},
   ): Promise<Task[]> {
     return this.paginate(page => {
       const base: Record<string, string> = { subtasks: 'true', page: String(page), ...params }
       if (options.includeClosed) base['include_closed'] = 'true'
+      if (options.archived) base['archived'] = 'true'
       const qs = new URLSearchParams(base).toString()
       return `/list/${listId}/task?${qs}`
     })
@@ -743,6 +800,13 @@ export class ClickUpClient {
 
   async getTask(taskId: string): Promise<Task> {
     return this.request<Task>(this.taskPath(taskId, '?include_markdown_description=true'))
+  }
+
+  /** Full task for archival: markdown description plus the direct subtask list. */
+  async getTaskForExport(taskId: string): Promise<Task> {
+    return this.request<Task>(
+      this.taskPath(taskId, '?include_markdown_description=true&include_subtasks=true'),
+    )
   }
 
   /**
@@ -1372,6 +1436,24 @@ export class ClickUpClient {
   async getDocs(workspaceId: string): Promise<Doc[]> {
     const data = await this.requestV3<{ docs: Doc[] }>(`/workspaces/${workspaceId}/docs`)
     return readCollectionField<Doc>(data, 'docs', 'docs')
+  }
+
+  /** Every doc in the workspace, following v3 `next_cursor` pagination. */
+  async getAllDocs(workspaceId: string, options: { archived?: boolean } = {}): Promise<Doc[]> {
+    const all: Doc[] = []
+    let cursor: string | undefined
+    for (;;) {
+      const params = new URLSearchParams({ limit: '50' })
+      if (options.archived) params.set('archived', 'true')
+      if (cursor) params.set('next_cursor', cursor)
+      const data = await this.requestV3<{ docs: Doc[]; next_cursor?: string | null }>(
+        `/workspaces/${workspaceId}/docs?${params.toString()}`,
+      )
+      all.push(...readCollectionField<Doc>(data, 'docs', 'docs'))
+      if (!data.next_cursor) break
+      cursor = data.next_cursor
+    }
+    return all
   }
 
   async getDocPage(workspaceId: string, docId: string, pageId: string): Promise<DocPage> {
