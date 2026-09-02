@@ -188,6 +188,7 @@ Full CRUD for the core ClickUp workflow:
 | 🔗 **Webhooks**      | List, create, update, delete webhooks; scope to space, folder, list, or task                                                                                                                                  |
 | 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template; subfolder parent IDs in JSON), members, user groups, task types, templates, plan, shared hierarchy                                                |
 | 📎 **Attachments**   | Upload files to tasks, list task attachments, shown in detail views                                                                                                                                           |
+| 📦 **Export**        | Archive tasks and docs as lossless JSON + markdown: by user, space, roadmap list (initiatives grouped), or whole workspace; comment threads, subtask trees, custom fields, attachment binaries                |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
 

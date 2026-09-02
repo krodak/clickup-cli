@@ -583,66 +583,41 @@ cup attachments abc123 --json
 
 ### `cup export <subcommand>`
 
-Export tasks and docs to a local archive for knowledge transfer or off-boarding. Every task is stored once as lossless JSON plus rendered markdown; each export scope ("slice") adds a navigable index over the shared store. Slices compose: run several into the same `--out` directory and shared tasks are fetched once.
-
-ClickUp's native exports are spreadsheets (task CSV, per-view CSV/XLSX), one-doc-at-a-time PDF/HTML/MD, and per-task attachment zips. None preserve comment threads, subtask trees, custom fields, downloaded attachments, or docs in bulk. This does.
+Export tasks and docs to a local archive for knowledge transfer or off-boarding. Each task is stored once as lossless JSON plus rendered markdown; each export scope ("slice") writes a navigable index over that shared store. Slices compose: run several into the same `--out` directory and shared tasks are fetched once. Re-runs skip what is already there.
 
 ```bash
 cup export user me                              # everything ever assigned to me
-cup export user alice@example.com --out ./archive
 cup export team "Kayenta"                       # every list in a space, by id or name
-cup export roadmap 901403023648 --item-id 1004  # a list, initiatives grouped with subtask trees
-cup export initiatives 901403023648 --item-id 1004
-cup export docs                                 # every workspace doc as markdown page trees
-cup export all --dry-run                        # plan only: counts, estimated requests and time
+cup export roadmap <listId> --item-id 1004      # initiatives grouped with subtask trees
+cup export initiatives <listId> --item-id 1004  # only initiatives and their trees
+cup export docs                                 # every doc as markdown page trees
+cup export all --dry-run                        # plan: counts, estimated requests and time
 cup export all --yes                            # whole workspace, non-interactive
 ```
 
-| Subcommand             | Scope                                                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `user <userRef>`       | Tasks assigned to a user: `me`, numeric id, email, or username. Closed and archived included                                   |
-| `team <spaceRef>`      | Every list in a space (id or case-insensitive name), incl. archived lists and folders                                          |
-| `roadmap <listId>`     | One list. With `--item-id`, initiatives are grouped with nested subtask checklists                                             |
-| `initiatives <listId>` | Only initiative-typed tasks in a list plus their subtask trees. Requires `--item-id`                                           |
-| `docs`                 | Every workspace doc, one directory per doc, one markdown file per page                                                         |
-| `all`                  | Every space as a team slice, then docs. Prints a plan and asks for confirmation; `--yes` in non-interactive mode, else exits 1 |
+| Subcommand             | Description                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `user <userRef>`       | Tasks assigned to `me`, an id, email, or username. Closed and archived included                 |
+| `team <spaceRef>`      | Every list in a space (id or name), including archived lists and folders                        |
+| `roadmap <listId>`     | One list; with `--item-id`, initiatives grouped with nested subtask checklists                  |
+| `initiatives <listId>` | Only initiative-typed tasks in a list plus their subtask trees. Requires `--item-id`            |
+| `docs`                 | Every workspace doc, one directory per doc, one markdown file per page                          |
+| `all`                  | Every space as a team slice, then docs. Prints a plan and asks to confirm; `--yes` if not a TTY |
 
 | Flag               | Default            | Description                                                                    |
 | ------------------ | ------------------ | ------------------------------------------------------------------------------ |
-| `--out <dir>`      | `./clickup-export` | Archive root. All slices compose into the same directory                       |
-| `--refresh`        | off                | Re-fetch tasks already in the archive (default: skip via `manifest.json`)      |
-| `--no-attachments` | off                | Skip attachment binaries; metadata is still written                            |
-| `--dry-run`        | off                | Discover and print the plan without fetching or writing                        |
-| `--rpm <n>`        | `90`               | Request throttle per minute. ClickUp Business limit is 100; leave headroom     |
+| `--out <dir>`      | `./clickup-export` | Archive root; all slices compose into it                                       |
+| `--refresh`        | off                | Re-fetch tasks already in the archive                                          |
+| `--no-attachments` | off                | Skip attachment binaries (metadata still written)                              |
+| `--dry-run`        | off                | Discover and print the plan, fetch nothing                                     |
+| `--rpm <n>`        | `90`               | Request throttle per minute (ClickUp Business limit is 100)                    |
 | `--item-id <n>`    |                    | `custom_item_id` that marks an initiative in your workspace (`cup task-types`) |
 | `--yes`            | off                | Skip the confirmation prompt (required for `all` when not a TTY)               |
-| `--json`           | no                 | Machine-readable summary on completion                                         |
+| `--json`           | no                 | Machine-readable summary                                                       |
 
-**Archive layout:**
+Archive layout: `tasks/<id>/` holds `task.json`, `task.md`, `comments.json`/`.md`, `attachments.json` and `attachments/`; `slices/<kind>-<slug>/README.md` is the index for one scope; `docs/<slug>-<id>/` holds `doc.json`, a README, and one `.md` per page (children nested); `manifest.json` records what was exported and drives incremental re-runs. Task ids match ClickUp URLs, links between exported tasks are relative, and links to tasks outside the archive point at ClickUp marked `(not exported)`.
 
-```
-<out>/
-  README.md                    front page: every slice present, how to navigate
-  manifest.json                what was exported and when; drives incremental re-runs
-  tasks/<taskId>/
-    task.json                  lossless API payload (markdown description, custom fields, subtask ids)
-    task.md                    rendered: header, custom fields (dropdown ids resolved), description,
-                               checklists, subtasks, dependencies, attachments (local links)
-    comments.json / .md        every comment, paginated, with reply threads
-    attachments.json           metadata; attachments/ holds the downloaded files
-  slices/<kind>-<slug>/
-    README.md                  index for that scope: user = by status then month; team = lists and
-                               folders like the sidebar; roadmap = initiatives with subtask trees
-    tasks.json                 task ids in the slice
-  docs/<docSlug>-<id>/
-    README.md, doc.json, <page>.md, <page>/<child>.md
-```
-
-Task ids match ClickUp URLs: `https://app.clickup.com/t/<id>` → `tasks/<id>/`. Links between exported tasks are relative; links to tasks outside the archive point at ClickUp and are marked `(not exported)`.
-
-**Cost and resumability.** A task bundle is 3+ requests (task, comments, attachment list) plus one per attachment download. At 90 req/min, a 5,000-task workspace is roughly 3 hours. The manifest is checkpointed every 25 tasks, so a crashed or interrupted run resumes where it stopped: re-run the same command. Discovery (which tasks exist) is cheap and always re-done.
-
-**Not exportable via the public API:** whiteboards, dashboards, automations, form submissions. Export those manually from the ClickUp UI before closing a workspace.
+A task costs 3+ requests plus one per attachment; at 90 req/min a 5,000-task workspace takes about 3 hours. The manifest is checkpointed every 25 tasks, so an interrupted run resumes when re-run. Whiteboards, dashboards, and automations have no public API: export those from the ClickUp UI.
 
 ### `cup task-members <taskId>`
 
