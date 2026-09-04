@@ -22,7 +22,7 @@ describe('renderRootReadme', () => {
     }
     const md = renderRootReadme(m)
     expect(md).toContain('# ClickUp export: krodak')
-    expect(md).toContain('1 tasks · 1 docs')
+    expect(md).toContain('1 task · 1 doc ·')
     expect(md).toContain(
       '| [user-chris](slices/user-chris/README.md) | user | 1 | 1 | 2026-08-30 |',
     )

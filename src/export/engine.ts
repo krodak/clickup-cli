@@ -2,7 +2,14 @@ import type { ClickUpClient, Task } from '../api.js'
 import { runInBatches } from '../util/batch.js'
 import { fetchTaskBundle } from './bundle.js'
 import { loadManifest, saveManifest, type Manifest, type SliceKind } from './manifest.js'
-import { readBundleData, renderBundleMarkdown, writeBundleData, type Downloader } from './writer.js'
+import {
+  backfillAttachments,
+  readBundleData,
+  renderBundleMarkdown,
+  writeBundleData,
+  type Downloader,
+} from './writer.js'
+import { plural } from '../util/plural.js'
 
 export interface DiscoveredTask {
   id: string
@@ -111,10 +118,16 @@ export async function runExport(
       if (!opts.refresh && manifest.tasks[id]) {
         summary.skipped++
         addSlice(manifest, id, sliceName)
-        // Still walk its subtasks so a partially exported tree completes.
+        // Still walk its subtasks so a partially exported tree completes, and
+        // fetch any attachments an earlier --no-attachments run left behind.
         try {
           const cached = await readBundleData(opts.root, id)
           for (const s of cached.subtaskIds) enqueue(s)
+          if (opts.downloadAttachments && cached.attachments.length > 0) {
+            const bf = await backfillAttachments(opts.root, id, opts.download)
+            summary.attachmentsDownloaded += bf.downloaded
+            summary.attachmentsFailed += bf.failed.length
+          }
         } catch {
           // bundle data missing on disk: treat as not exported
           delete manifest.tasks[id]
@@ -159,7 +172,7 @@ export async function runExport(
     const total = touched.size + queue.length
     const done = summary.fetched + summary.skipped + summary.failed.length
     opts.log(
-      `[${sliceName}] ${done}/${total} tasks (${summary.fetched} fetched, ${summary.skipped} cached, ${summary.failed.length} failed)`,
+      `[${sliceName}] ${done}/${plural(total, 'task')} (${summary.fetched} fetched, ${summary.skipped} cached, ${summary.failed.length} failed)`,
     )
 
     if (sinceCheckpoint >= checkpointEvery) {

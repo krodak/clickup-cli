@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import type { Attachment } from '../api.js'
 import type { TaskBundle } from './bundle.js'
 import { renderCommentsMarkdown, renderTaskMarkdown } from './render.js'
 
@@ -116,6 +117,43 @@ export async function writeBundleData(
   ])
 
   return { dir, contentHash, attachmentsDownloaded: downloaded, attachmentsFailed: failed }
+}
+
+/**
+ * Download any attachment recorded in attachments.json without a local copy.
+ * Covers an archive first built with --no-attachments and later re-run with
+ * attachments on: the task is cached, but its binaries are not.
+ */
+export async function backfillAttachments(
+  root: string,
+  taskId: string,
+  download: Downloader = defaultDownload,
+): Promise<{ downloaded: number; failed: Array<{ id: string; title: string; error: string }> }> {
+  const dir = taskDir(root, taskId)
+  const file = join(dir, 'attachments.json')
+  const entries = JSON.parse(await readFile(file, 'utf8')) as Array<
+    Attachment & { local: string | null }
+  >
+  const pending = entries.filter(a => !a.local)
+  if (pending.length === 0) return { downloaded: 0, failed: [] }
+
+  const attDir = join(dir, 'attachments')
+  await mkdir(attDir, { recursive: true })
+  const failed: Array<{ id: string; title: string; error: string }> = []
+  let downloaded = 0
+  for (const att of pending) {
+    const name = safeAttachmentFilename(att.id, att.title)
+    const target = join(attDir, name)
+    try {
+      if (!existsSync(target)) await writeFile(target, await download(att.url))
+      att.local = `attachments/${name}`
+      downloaded++
+    } catch (err) {
+      failed.push({ id: att.id, title: att.title, error: (err as Error).message })
+    }
+  }
+  await writeFile(file, JSON.stringify(entries, null, 2) + '\n')
+  return { downloaded, failed }
 }
 
 /** Reload a bundle from the JSON written by writeBundleData. */

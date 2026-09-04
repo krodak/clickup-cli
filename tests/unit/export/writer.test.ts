@@ -143,3 +143,63 @@ describe('writeTaskBundle', () => {
     expect(downloader).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('backfillAttachments', () => {
+  let root: string
+  const downloader = vi.fn()
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'cup-backfill-'))
+    downloader.mockReset().mockImplementation(async (url: string) => Buffer.from(`file:${url}`))
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('downloads attachments recorded as not-local and updates attachments.json', async () => {
+    const { backfillAttachments, writeBundleData } = await import('../../../src/export/writer.js')
+    const b = bundle()
+    b.attachments = b.task.attachments!
+    await writeBundleData(root, b, { downloadAttachments: false, download: downloader })
+    expect(downloader).not.toHaveBeenCalled()
+
+    const result = await backfillAttachments(root, 't1', downloader)
+    expect(result.downloaded).toBe(2)
+    expect(result.failed).toEqual([])
+    expect(downloader).toHaveBeenCalledTimes(2)
+    expect(existsSync(join(root, 'tasks', 't1', 'attachments', 'a1-shot.png'))).toBe(true)
+    const meta = JSON.parse(readFileSync(join(root, 'tasks', 't1', 'attachments.json'), 'utf8'))
+    expect(meta.map((a: { local: string | null }) => a.local)).toEqual([
+      'attachments/a1-shot.png',
+      'attachments/a2-evil-name.pdf',
+    ])
+  })
+
+  it('is a no-op when everything is already local', async () => {
+    const { backfillAttachments, writeBundleData } = await import('../../../src/export/writer.js')
+    const b = bundle()
+    b.attachments = b.task.attachments!
+    await writeBundleData(root, b, { downloadAttachments: true, download: downloader })
+    downloader.mockClear()
+    const result = await backfillAttachments(root, 't1', downloader)
+    expect(result.downloaded).toBe(0)
+    expect(downloader).not.toHaveBeenCalled()
+  })
+
+  it('records failures and keeps the CDN link for those', async () => {
+    const { backfillAttachments, writeBundleData } = await import('../../../src/export/writer.js')
+    const b = bundle()
+    b.attachments = b.task.attachments!
+    await writeBundleData(root, b, { downloadAttachments: false, download: downloader })
+    downloader.mockImplementation(async (url: string) => {
+      if (url.endsWith('a2')) throw new Error('HTTP 410')
+      return Buffer.from('ok')
+    })
+    const result = await backfillAttachments(root, 't1', downloader)
+    expect(result.downloaded).toBe(1)
+    expect(result.failed).toEqual([{ id: 'a2', title: '../evil name?.pdf', error: 'HTTP 410' }])
+    const meta = JSON.parse(readFileSync(join(root, 'tasks', 't1', 'attachments.json'), 'utf8'))
+    expect(meta[1].local).toBeNull()
+  })
+})

@@ -43,6 +43,11 @@ describe('renderUserIndex', () => {
   it('leads with a title and counts', () => {
     expect(md).toMatch(/^# chris — tasks\n/)
     expect(md).toContain('5 tasks assigned')
+    const one = renderUserIndex({ username: 'x', id: 1 }, [tasks[0]!], {
+      exportedAt: '2026-08-30T10:00:00.000Z',
+      spaceNames: {},
+    })
+    expect(one).toContain('1 task assigned')
     expect(md).toContain('Exported 2026-08-30')
   })
 
