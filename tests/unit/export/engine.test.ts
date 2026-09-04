@@ -155,3 +155,52 @@ describe('runExport resilience', () => {
     expect(existsSync(join(root, 'tasks', 't1', 'task.json'))).toBe(true)
   })
 })
+
+describe('runExport attachment backfill', () => {
+  let root: string
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'cup-engine-bf-'))
+  })
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('downloads missing attachments for cached tasks when attachments are enabled', async () => {
+    const download = vi.fn(async (url: string) => Buffer.from(`file:${url}`))
+    const client = makeClient({
+      t1: task('t1', {
+        attachments: [
+          {
+            id: 'a1',
+            version: '1',
+            date: 1,
+            title: 'x.png',
+            extension: 'png',
+            url: 'https://cdn/a1',
+          },
+        ],
+      }),
+    })
+    const base = { root, refresh: false, concurrency: 2, log: () => {}, download }
+
+    const first = await runExport(client as never, plan(['t1']), {
+      ...base,
+      downloadAttachments: false,
+    })
+    expect(first.attachmentsDownloaded).toBe(0)
+    expect(existsSync(join(root, 'tasks', 't1', 'attachments', 'a1-x.png'))).toBe(false)
+
+    const second = await runExport(client as never, plan(['t1']), {
+      ...base,
+      downloadAttachments: true,
+    })
+    expect(second.skipped).toBe(1)
+    expect(second.fetched).toBe(0)
+    expect(second.attachmentsDownloaded).toBe(1)
+    expect(existsSync(join(root, 'tasks', 't1', 'attachments', 'a1-x.png'))).toBe(true)
+    // re-rendered markdown now links locally
+    expect(readFileSync(join(root, 'tasks', 't1', 'task.md'), 'utf8')).toContain(
+      '(attachments/a1-x.png)',
+    )
+  })
+})

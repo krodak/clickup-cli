@@ -2,6 +2,7 @@ import type { Task } from '../api.js'
 import { isDoneStatus } from '../commands/tasks.js'
 import { formatDateISO } from '../date.js'
 import type { SpaceHierarchy } from './engine.js'
+import { plural } from '../util/plural.js'
 
 function link(task: Task): string {
   return `[${task.name.replace(/\|/g, '\\|')}](../../tasks/${task.id}/task.md)`
@@ -11,27 +12,31 @@ function assignees(task: Task): string {
   return task.assignees.map(a => a.username).join(', ')
 }
 
-function typeOf(task: Task, initiativeItemId?: number): string {
-  const id = task.custom_item_id ?? 0
-  if (id === 0) return 'task'
-  return initiativeItemId !== undefined && id === initiativeItemId ? 'initiative' : `type ${id}`
+interface TypeLabelOptions {
+  initiativeItemId?: number
+  /** custom_item_id -> workspace type name (from `cup task-types`). */
+  typeNames?: Record<number, string>
 }
 
-function taskTable(tasks: Task[], initiativeItemId?: number): string[] {
+function typeOf(task: Task, opts: TypeLabelOptions): string {
+  const id = task.custom_item_id ?? 0
+  if (id === 0) return 'task'
+  if (opts.initiativeItemId !== undefined && id === opts.initiativeItemId) return 'initiative'
+  return opts.typeNames?.[id] ?? `type ${id}`
+}
+
+function taskTable(tasks: Task[], opts: TypeLabelOptions): string[] {
   const lines = ['| Task | Status | Assignees | Type |', '| --- | --- | --- | --- |']
   for (const t of tasks) {
-    lines.push(
-      `| ${link(t)} | ${t.status.status} | ${assignees(t)} | ${typeOf(t, initiativeItemId)} |`,
-    )
+    lines.push(`| ${link(t)} | ${t.status.status} | ${assignees(t)} | ${typeOf(t, opts)} |`)
   }
   return lines
 }
 
-export interface TeamIndexOptions {
+export interface TeamIndexOptions extends TypeLabelOptions {
   exportedAt: string
   /** Other slices in the archive that cover one of this space's lists. */
   relatedSlices?: Array<{ name: string; listId: string }>
-  initiativeItemId?: number
 }
 
 /**
@@ -50,23 +55,22 @@ export function renderTeamIndex(
 
   const listCount =
     hierarchy.lists.length + hierarchy.folders.reduce((n, f) => n + f.lists.length, 0)
-  const folderWord = hierarchy.folders.length === 1 ? 'folder' : 'folders'
   const lines: string[] = [
     `# ${hierarchy.space.name} (space)`,
     '',
-    `Exported ${opts.exportedAt.slice(0, 10)} · ${listCount} lists · ${hierarchy.folders.length} ${folderWord} · ${tasks.length} tasks`,
+    `Exported ${opts.exportedAt.slice(0, 10)} · ${plural(listCount, 'list')} · ${plural(hierarchy.folders.length, 'folder')} · ${plural(tasks.length, 'task')}`,
     '',
   ]
 
   const renderList = (list: { id: string; name: string }, level: number) => {
     const group = byList.get(list.id) ?? []
     const h = '#'.repeat(level)
-    lines.push(`${h} ${list.name} — ${group.length} tasks`, '')
+    lines.push(`${h} ${list.name} — ${plural(group.length, 'task')}`, '')
     const related = opts.relatedSlices?.filter(s => s.listId === list.id) ?? []
     for (const r of related) {
       lines.push(`→ see also [${r.name}](../${r.name}/README.md)`, '')
     }
-    if (group.length > 0) lines.push(...taskTable(group, opts.initiativeItemId), '')
+    if (group.length > 0) lines.push(...taskTable(group, opts), '')
   }
 
   for (const list of hierarchy.lists) renderList(list, 2)
@@ -109,7 +113,7 @@ export function renderRoadmapIndex(
   const lines: string[] = [
     `# ${list.name}`,
     '',
-    `Exported ${opts.exportedAt.slice(0, 10)} · ${initiatives.length} initiatives · ${tasks.length} tasks`,
+    `Exported ${opts.exportedAt.slice(0, 10)} · ${plural(initiatives.length, 'initiative')} · ${plural(tasks.length, 'task')}`,
     '',
   ]
 

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import type { ClickUpClient, Doc, DocPage } from '../api.js'
 import { slug } from './discover.js'
 import { loadManifest, saveManifest } from './manifest.js'
+import { plural } from '../util/plural.js'
 
 type DocsClient = Pick<ClickUpClient, 'getAllDocs' | 'getDocPages' | 'getTeams' | 'getSpaces'>
 
@@ -98,7 +99,7 @@ function renderDocReadme(doc: Doc, written: WrittenPage[], location: string): st
   const lines = [
     `# ${docTitle(doc)}`,
     '',
-    `Doc id: ${doc.id} · Location: ${location} · ${written.length} pages`,
+    `Doc id: ${doc.id} · Location: ${location} · ${plural(written.length, 'page')}`,
     ...(doc.date_updated
       ? [`Last updated: ${new Date(Number(doc.date_updated)).toISOString()}`]
       : []),
@@ -121,7 +122,7 @@ function renderDocsIndex(
   const lines = [
     '# Docs',
     '',
-    `${entries.length} docs`,
+    plural(entries.length, 'doc'),
     '',
     '| Doc | Location | Pages |',
     '| --- | --- | --- |',
@@ -163,7 +164,7 @@ export async function exportDocs(
 
   const summary: DocsExportSummary = { docs: 0, pages: 0, skipped: 0, failed: [] }
   const entries: Array<{ doc: Doc; dir: string; pages: number; location: string }> = []
-  opts.log(`Plan [docs]: ${docs.length} docs in workspace "${teamName}"`)
+  opts.log(`Plan [docs]: ${plural(docs.length, 'doc')} in workspace "${teamName}"`)
 
   for (const doc of docs) {
     const dir = docDirName(doc)
@@ -191,7 +192,7 @@ export async function exportDocs(
       summary.pages += pageCount
       entries.push({ doc, dir, pages: pageCount, location })
       opts.log(
-        `[docs] ${summary.docs + summary.skipped + summary.failed.length}/${docs.length} ${docTitle(doc)} (${pageCount} pages)`,
+        `[docs] ${summary.docs + summary.skipped + summary.failed.length}/${docs.length} ${docTitle(doc)} (${plural(pageCount, 'page')})`,
       )
     } catch (err) {
       summary.failed.push({ id: doc.id, error: (err as Error).message })
