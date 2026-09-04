@@ -183,14 +183,14 @@ describe('runExport attachment backfill', () => {
     })
     const base = { root, refresh: false, concurrency: 2, log: () => {}, download }
 
-    const first = await runExport(client as never, plan(['t1']), {
+    const first = await runExport(client, plan(['t1']), {
       ...base,
       downloadAttachments: false,
     })
     expect(first.attachmentsDownloaded).toBe(0)
     expect(existsSync(join(root, 'tasks', 't1', 'attachments', 'a1-x.png'))).toBe(false)
 
-    const second = await runExport(client as never, plan(['t1']), {
+    const second = await runExport(client, plan(['t1']), {
       ...base,
       downloadAttachments: true,
     })
