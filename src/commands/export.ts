@@ -16,6 +16,7 @@ import { renderUserIndex } from '../export/index-user.js'
 import { loadManifest } from '../export/manifest.js'
 import { writeRootReadme } from '../export/root-readme.js'
 import { createRateLimiter } from '../util/rate-limit.js'
+import { plural } from '../util/plural.js'
 
 export interface ExportOptions {
   out: string
@@ -64,9 +65,22 @@ function emptySummary(plan: ExportPlan, opts: ExportOptions): ExportSummary {
   }
 }
 
+/** custom_item_id -> name, so team indexes can label types without --item-id. */
+async function fetchTypeNames(
+  client: ClickUpClient,
+  teamId: string,
+): Promise<Record<number, string>> {
+  try {
+    const types = await client.getCustomTaskTypes(teamId)
+    return Object.fromEntries(types.map(t => [t.id, t.name]))
+  } catch {
+    return {}
+  }
+}
+
 function describePlan(plan: ExportPlan): string {
   const initiatives = plan.tasks.filter(t => t.initiative).length
-  return `Plan [${plan.slice.name}]: ${plan.tasks.length} tasks (${initiatives} initiatives) in workspace "${plan.workspace.name}"`
+  return `Plan [${plan.slice.name}]: ${plural(plan.tasks.length, 'task')} (${plural(initiatives, 'initiative')}) in workspace "${plan.workspace.name}"`
 }
 
 async function execute(
@@ -122,7 +136,7 @@ export async function exportUser(
 }
 
 export function formatExportSummary(s: ExportSummary): string {
-  if (s.dryRun) return `Dry run: ${s.planned} tasks would be exported to ${s.out}`
+  if (s.dryRun) return `Dry run: ${plural(s.planned, 'task')} would be exported to ${s.out}`
   const lines = [
     `Exported slice "${s.slice}" to ${s.out}`,
     `  tasks: ${s.fetched} fetched, ${s.skipped} already present, ${s.failed.length} failed`,
@@ -155,6 +169,7 @@ export async function exportTeam(
       .filter(([, s]) => s.kind === 'roadmap' || s.kind === 'initiatives')
       .map(([name, s]) => ({ name, listId: s.scope }))
     const tasks = Object.values(plan.tasksById ?? {})
+    const typeNames = await fetchTypeNames(client, teamId)
     writeSliceFiles(
       root,
       plan.slice.name,
@@ -162,6 +177,7 @@ export async function exportTeam(
         exportedAt: new Date().toISOString(),
         relatedSlices,
         initiativeItemId: opts.initiativeItemId,
+        typeNames,
       }),
       { hierarchy: plan.hierarchy, taskIds: plan.tasks.map(t => t.id) },
     )
@@ -257,7 +273,7 @@ export async function exportDocs(config: Config, opts: ExportOptions): Promise<D
   const root = resolve(opts.out)
   if (opts.dryRun) {
     const docs = await client.getAllDocs(teamId)
-    opts.log(`Plan [docs]: ${docs.length} docs`)
+    opts.log(`Plan [docs]: ${plural(docs.length, 'doc')}`)
     return {
       slice: 'docs',
       out: root,
@@ -278,7 +294,7 @@ export async function exportDocs(config: Config, opts: ExportOptions): Promise<D
 }
 
 export function formatDocsSummary(s: DocsSummary): string {
-  if (s.dryRun) return `Dry run: ${s.docs} docs would be exported to ${s.out}`
+  if (s.dryRun) return `Dry run: ${plural(s.docs, 'doc')} would be exported to ${s.out}`
   const lines = [
     `Exported docs to ${s.out}/docs`,
     `  docs: ${s.docs} fetched (${s.pages} pages), ${s.skipped} already present, ${s.failed.length} failed`,
@@ -340,9 +356,9 @@ export async function exportAll(config: Config, opts: ExportOptions): Promise<Al
 
   opts.log(`Workspace export plan for "${workspaceName}":`)
   opts.log(
-    `  ${spaces.length} spaces, ${listCount} lists, ${allTaskIds.size} tasks, ${docs.length} docs`,
+    `  ${plural(spaces.length, 'space')}, ${plural(listCount, 'list')}, ${plural(allTaskIds.size, 'task')}, ${plural(docs.length, 'doc')}`,
   )
-  opts.log(`  Already exported: ${alreadyExported} tasks (will be skipped)`)
+  opts.log(`  Already exported: ${plural(alreadyExported, 'task')} (will be skipped)`)
   opts.log(`  Estimated requests: ~${estRequests}`)
   opts.log(
     `  Estimated time at ${opts.rpm} req/min: ~${estMinutes < 60 ? `${estMinutes}m` : `${Math.floor(estMinutes / 60)}h ${estMinutes % 60}m`}`,
@@ -379,6 +395,7 @@ export async function exportAll(config: Config, opts: ExportOptions): Promise<Al
   }
 
   const spaceNames = Object.fromEntries(spaces.map(s => [s.id, s.name]))
+  const typeNames = await fetchTypeNames(client, teamId)
   const summary = { ...empty }
   for (const plan of plans) {
     const run = await runExport(client, plan, {
@@ -401,6 +418,7 @@ export async function exportAll(config: Config, opts: ExportOptions): Promise<Al
       renderTeamIndex(plan.hierarchy!, tasks, {
         exportedAt: new Date().toISOString(),
         initiativeItemId: opts.initiativeItemId,
+        typeNames,
       }),
       { hierarchy: plan.hierarchy, taskIds: plan.tasks.map(t => t.id) },
     )
@@ -412,7 +430,7 @@ export async function exportAll(config: Config, opts: ExportOptions): Promise<Al
 
 export function formatAllSummary(s: AllSummary): string {
   if (s.dryRun)
-    return `Dry run: ${s.planned} tasks across ${s.spaces.length} spaces would be exported to ${s.out}`
+    return `Dry run: ${plural(s.planned, 'task')} across ${plural(s.spaces.length, 'space')} would be exported to ${s.out}`
   const lines = [
     `Exported workspace to ${s.out}`,
     `  spaces: ${s.spaces.length} (${s.spaces.join(', ')})`,

@@ -1,6 +1,7 @@
 import type { Task } from '../api.js'
 import { isDoneStatus } from '../commands/tasks.js'
 import { formatDateISO } from '../date.js'
+import { plural } from '../util/plural.js'
 
 export interface UserIndexOptions {
   exportedAt: string
@@ -37,7 +38,7 @@ export function renderUserIndex(
   const lines: string[] = [
     `# ${user.username} — tasks`,
     '',
-    `Exported ${opts.exportedAt.slice(0, 10)} · ${tasks.length} tasks assigned · user id ${user.id}`,
+    `Exported ${opts.exportedAt.slice(0, 10)} · ${plural(tasks.length, 'task')} assigned · user id ${user.id}`,
     '',
   ]
 

@@ -11,6 +11,7 @@ const mockGetSpaces = vi.fn()
 const mockGetTaskForExport = vi.fn()
 const mockGetAllTaskComments = vi.fn()
 const mockGetThreadedComments = vi.fn()
+const mockGetCustomTaskTypes = vi.fn()
 const ctorArgs: unknown[] = []
 
 vi.mock('../../../src/api.js', async importOriginal => {
@@ -28,6 +29,7 @@ vi.mock('../../../src/api.js', async importOriginal => {
         getTaskForExport: mockGetTaskForExport,
         getAllTaskComments: mockGetAllTaskComments,
         getThreadedComments: mockGetThreadedComments,
+        getCustomTaskTypes: mockGetCustomTaskTypes,
       }
     }),
   }
@@ -183,9 +185,12 @@ describe('exportAll', () => {
     mockGetTasksFromList
       .mockReset()
       .mockImplementation(async (listId: string, _p: unknown, o: { archived?: boolean }) =>
-        o.archived ? [] : [task(`${listId}-t1`, { list: { id: listId, name: 'List' } })],
+        o.archived
+          ? []
+          : [task(`${listId}-t1`, { list: { id: listId, name: 'List' }, custom_item_id: 1 })],
       )
     mockGetAllDocs.mockReset().mockResolvedValue([{ id: 'd1', name: 'Doc', workspace_id: 1 }])
+    mockGetCustomTaskTypes.mockReset().mockResolvedValue([{ id: 1, name: 'milestone' }])
     mockGetDocPages
       .mockReset()
       .mockResolvedValue([{ id: 'p1', doc_id: 'd1', name: 'P', content: 'x' }])
@@ -209,6 +214,7 @@ describe('exportAll', () => {
         getTaskForExport: mockGetTaskForExport,
         getAllTaskComments: mockGetAllTaskComments,
         getThreadedComments: mockGetThreadedComments,
+        getCustomTaskTypes: mockGetCustomTaskTypes,
       }
     })
   })
@@ -229,7 +235,7 @@ describe('exportAll', () => {
   it('non-TTY without --yes: prints the plan and refuses to run', async () => {
     const { exportAll } = await import('../../../src/commands/export.js')
     await expect(exportAll(config, { ...base(), yes: false })).rejects.toThrow(/--yes/)
-    expect(logs.some(l => /2 spaces/.test(l) && /2 tasks/.test(l) && /1 docs/.test(l))).toBe(true)
+    expect(logs.some(l => /2 spaces/.test(l) && /2 tasks/.test(l) && /1 doc\b/.test(l))).toBe(true)
     expect(mockGetTaskForExport).not.toHaveBeenCalled()
     expect(existsSync(join(out, 'tasks'))).toBe(false)
   })
@@ -257,6 +263,10 @@ describe('exportAll', () => {
     const root = readFileSync(join(out, 'README.md'), 'utf8')
     expect(root).toContain('team-alpha')
     expect(root).toContain('team-beta')
+    // custom item types labelled by workspace name, not "type 1"
+    const alpha = readFileSync(join(out, 'slices', 'team-alpha', 'README.md'), 'utf8')
+    expect(alpha).toContain('| milestone |')
+    expect(alpha).not.toContain('| type 1 |')
   })
 
   it('--dry-run prints the plan and stops, no confirmation needed', async () => {

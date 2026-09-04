@@ -39,6 +39,7 @@ describe('renderTeamIndex', () => {
     expect(md).toMatch(/^# Kayenta \(space\)\n/)
     expect(md).toContain('4 tasks')
     expect(md).toContain('3 lists · 1 folder')
+    expect(md).toContain('· 4 tasks')
   })
 
   it('renders folderless lists then folders with their lists, tasks as tables', () => {
@@ -58,10 +59,36 @@ describe('renderTeamIndex', () => {
   it('shows only top-level tasks in list tables (subtasks live under their parent)', () => {
     expect(md).not.toContain('[Task sub]')
     expect(md).toContain('## Roadmap — 2 tasks')
+    expect(md).toContain('### Sprint 1 — 1 task\n')
   })
 
   it('says when a list has no tasks', () => {
     expect(md).toContain('## Empty list — 0 tasks')
+  })
+
+  it('labels custom item types by workspace name when no --item-id is given', () => {
+    const noItemId = renderTeamIndex(hierarchy, [t('m', { custom_item_id: 1 })], {
+      exportedAt: '2026-08-30T10:00:00.000Z',
+      typeNames: { 1: 'milestone' },
+    })
+    expect(noItemId).toContain('| [Task m](../../tasks/m/task.md) | to do |  | milestone |')
+  })
+
+  it('falls back to "type N" only when the id is unknown to the workspace', () => {
+    const unknown = renderTeamIndex(hierarchy, [t('m', { custom_item_id: 42 })], {
+      exportedAt: '2026-08-30T10:00:00.000Z',
+      typeNames: { 1: 'milestone' },
+    })
+    expect(unknown).toContain('| type 42 |')
+  })
+
+  it('--item-id wins over the workspace name for the initiative type', () => {
+    const both = renderTeamIndex(hierarchy, [t('m', { custom_item_id: 1 })], {
+      exportedAt: '2026-08-30T10:00:00.000Z',
+      typeNames: { 1: 'milestone' },
+      initiativeItemId: 1,
+    })
+    expect(both).toContain('| initiative |')
   })
 
   it('cross-links to a roadmap slice for the same list', () => {
@@ -94,6 +121,11 @@ describe('renderRoadmapIndex', () => {
   it('titles with the list and counts initiatives vs tasks', () => {
     expect(md).toMatch(/^# Kayenta Product Roadmap\n/)
     expect(md).toContain('2 initiatives · 6 tasks')
+    const one = renderRoadmapIndex({ id: 'l1', name: 'R' }, [tasks[0]!], {
+      exportedAt: '2026-08-30T10:00:00.000Z',
+      initiativeItemId: 1004,
+    })
+    expect(one).toContain('1 initiative · 1 task')
   })
 
   it('renders each initiative with metadata and a nested checklist tree of subtasks', () => {
