@@ -113,6 +113,41 @@ describe('exportDocs', () => {
     expect(readme).toContain('    - [Archived bit](welcome-p1/archived-bit-p1b.md) (archived)')
   })
 
+  it('labels every documented Doc parent type correctly', async () => {
+    const client = makeClient()
+    client.getTeams.mockResolvedValue([{ id: 'ws1', name: 'Example Workspace' }])
+    client.getAllDocs.mockResolvedValue([
+      {
+        id: 'folder-doc',
+        name: 'Folder Doc',
+        workspace_id: 1,
+        parent: { id: 'folder-1', type: 5 },
+      },
+      { id: 'list-doc', name: 'List Doc', workspace_id: 1, parent: { id: 'list-1', type: 6 } },
+      {
+        id: 'everything-doc',
+        name: 'Everything Doc',
+        workspace_id: 1,
+        parent: { id: 'root', type: 7 },
+      },
+      {
+        id: 'workspace-doc',
+        name: 'Workspace Doc',
+        workspace_id: 1,
+        parent: { id: 'ws1', type: 12 },
+      },
+    ])
+    client.getDocPages.mockResolvedValue([])
+
+    await exportDocs(client as never, 'ws1', { root, refresh: false, log: () => {} })
+
+    const index = readFileSync(join(root, 'docs', 'README.md'), 'utf8')
+    expect(index).toContain('| folder folder-1 |')
+    expect(index).toContain('| list list-1 |')
+    expect(index).toContain('| everything root |')
+    expect(index).toContain('| workspace Example Workspace |')
+  })
+
   it('writes a docs index and records docs in the manifest', async () => {
     await exportDocs(makeClient() as never, 'ws1', { root, refresh: false, log: () => {} })
     const index = readFileSync(join(root, 'docs', 'README.md'), 'utf8')

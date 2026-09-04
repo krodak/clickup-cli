@@ -190,6 +190,7 @@ export interface Comment {
   comment_text: string
   user: { username: string }
   date: string
+  reply_count?: string | number
 }
 
 export interface CustomTaskType {
@@ -336,7 +337,7 @@ export interface Doc {
   date_created?: string | number
   date_updated?: string | number
   pages?: DocPage[]
-  /** Where the doc lives. type: 7 workspace, 4 space, 6 folder, 5 list, 1 task (observed). */
+  /** Where the Doc lives. See the Docs API parent type enum. */
   parent?: { id: string; type: number }
   creator?: number
   deleted?: boolean

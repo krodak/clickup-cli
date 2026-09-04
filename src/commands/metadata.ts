@@ -11,13 +11,47 @@ export interface CommandFlagDefinition {
   long: string
 }
 
+export interface SubcommandMetadata {
+  name: string
+  description: string
+  flags?: readonly SubcommandFlagMetadata[]
+}
+
+export interface SubcommandFlagMetadata {
+  name: string
+  description: string
+  value?: string
+  completion?: 'directory'
+}
+
 export interface CommandMetadata {
   name: string
   description: string
   flags?: readonly string[]
+  subcommands?: readonly SubcommandMetadata[]
   bashFileCompletion?: boolean
   quickReference?: readonly QuickReferenceEntry[]
 }
+
+const exportFlags: readonly SubcommandFlagMetadata[] = [
+  { name: '--out', description: 'Archive directory', value: 'directory', completion: 'directory' },
+  { name: '--refresh', description: 'Re-fetch cached tasks' },
+  { name: '--no-attachments', description: 'Skip attachment downloads' },
+  { name: '--dry-run', description: 'Print the plan only' },
+  { name: '--rpm', description: 'Requests per minute', value: 'number' },
+  { name: '--yes', description: 'Skip confirmation' },
+  { name: '--item-id', description: 'Initiative custom item ID', value: 'id' },
+  { name: '--json', description: 'Force JSON output' },
+]
+
+export const exportSubcommands = [
+  { name: 'user', description: 'Export tasks assigned to a user', flags: exportFlags },
+  { name: 'team', description: 'Export every list in a Space', flags: exportFlags },
+  { name: 'roadmap', description: 'Export a roadmap List', flags: exportFlags },
+  { name: 'initiatives', description: 'Export initiative task trees', flags: exportFlags },
+  { name: 'docs', description: 'Export workspace Docs', flags: exportFlags },
+  { name: 'all', description: 'Export the whole workspace', flags: exportFlags },
+] as const satisfies readonly SubcommandMetadata[]
 
 export const commandMetadata = [
   {
@@ -436,6 +470,7 @@ export const commandMetadata = [
   {
     name: 'export',
     description: 'Export tasks and docs to a local archive (lossless JSON + rendered markdown)',
+    subcommands: exportSubcommands,
     quickReference: [
       {
         section: 'read',

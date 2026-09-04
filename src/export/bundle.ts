@@ -19,10 +19,9 @@ type BundleClient = Pick<
   'getTaskForExport' | 'getAllTaskComments' | 'getThreadedComments'
 >
 
-/** Comments carry reply_count in the raw API payload; the Comment type omits it. */
 function replyCount(c: Comment): number {
-  const n = (c as { reply_count?: unknown }).reply_count
-  return typeof n === 'number' ? n : 0
+  const count = Number(c.reply_count ?? 0)
+  return Number.isFinite(count) ? count : 0
 }
 
 export async function fetchTaskBundle(client: BundleClient, taskId: string): Promise<TaskBundle> {

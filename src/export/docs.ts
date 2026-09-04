@@ -20,12 +20,12 @@ export interface DocsExportSummary {
   failed: Array<{ id: string; error: string }>
 }
 
-/** Observed values of `Doc.parent.type`. */
 const PARENT_TYPES: Record<number, string> = {
-  7: 'workspace',
   4: 'space',
-  6: 'folder',
-  5: 'list',
+  5: 'folder',
+  6: 'list',
+  7: 'everything',
+  12: 'workspace',
   1: 'task',
 }
 

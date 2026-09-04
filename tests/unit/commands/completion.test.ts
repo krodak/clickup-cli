@@ -4,6 +4,7 @@ import { generateCompletion } from '../../../src/commands/completion.js'
 import { buildProgram } from '../../../src/index.js'
 import {
   commandMetadata,
+  exportSubcommands,
   parseCommandFlags,
   renderQuickReferenceSection,
   syncQuickReferenceSection,
@@ -404,6 +405,46 @@ describe('generateCompletion', () => {
       const result = generateCompletion('fish')
       expect(result).toContain("-a update -d 'Update a time entry'")
       expect(result).toContain("-a delete -d 'Delete a time entry'")
+    })
+  })
+
+  describe('export subcommand completions', () => {
+    it('bash includes export subcommands, flags, and directory completion', () => {
+      const result = generateCompletion('bash')
+
+      expect(result).toContain('user team roadmap initiatives docs all')
+      expect(result).toContain(
+        '--out --refresh --no-attachments --dry-run --rpm --yes --item-id --json',
+      )
+      expect(result).toContain('if [[ "$cmd" == "export" ]]')
+      expect(result).toContain('compgen -d -- "$cur"')
+      expect(result).toContain('while IFS= read -r candidate')
+      expect(result).toContain('COMPREPLY+=("$candidate")')
+    })
+
+    it('zsh derives export subcommands and flags from metadata', () => {
+      const result = generateCompletion('zsh')
+
+      for (const subcommand of exportSubcommands) {
+        expect(result).toContain(`'${subcommand.name}:${subcommand.description}'`)
+        for (const flag of subcommand.flags) expect(result).toContain(flag.name)
+      }
+      expect(result).toContain("'--out[Archive directory]:directory:_files -/'")
+    })
+
+    it('fish includes contextual export subcommands and value-taking flags', () => {
+      const result = generateCompletion('fish')
+
+      for (const subcommand of exportSubcommands) {
+        expect(result).toContain(
+          `__fish_seen_subcommand_from export; and not __fish_seen_subcommand_from user team roadmap initiatives docs all' -a ${subcommand.name}`,
+        )
+      }
+      expect(result).toContain(
+        "-l out -d 'Archive directory' -r -a '(__fish_complete_directories)'",
+      )
+      expect(result).toContain("-l rpm -d 'Requests per minute' -r")
+      expect(result).toContain("-l item-id -d 'Initiative custom item ID' -r")
     })
   })
 

@@ -45,6 +45,25 @@ describe('fetchTaskBundle', () => {
     expect(bundle.comments[1]!.replies).toEqual([])
   })
 
+  it('fetches replies when ClickUp returns reply_count as a string', async () => {
+    const client = makeClient({
+      getAllTaskComments: vi.fn().mockResolvedValue([
+        {
+          id: 'c1',
+          comment_text: 'root',
+          user: { username: 'user' },
+          date: '1',
+          reply_count: '1',
+        },
+      ]),
+    })
+
+    const bundle = await fetchTaskBundle(client, 't1')
+
+    expect(client.getThreadedComments).toHaveBeenCalledWith('c1')
+    expect(bundle.comments[0]!.replies.map(r => r.id)).toEqual(['r1'])
+  })
+
   it('exposes subtask ids and attachment metadata for the caller', async () => {
     const bundle = await fetchTaskBundle(makeClient(), 't1')
     expect(bundle.subtaskIds).toEqual(['s1'])

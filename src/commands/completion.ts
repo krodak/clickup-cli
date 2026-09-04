@@ -1,4 +1,9 @@
-import { commandMetadata, topLevelCommandDefinitions, topLevelCommandNames } from './metadata.js'
+import {
+  commandMetadata,
+  exportSubcommands,
+  topLevelCommandDefinitions,
+  topLevelCommandNames,
+} from './metadata.js'
 import type { CommandFlagDefinition, CommandMetadata } from './metadata.js'
 
 const bashSpecialCaseCommands = new Set([
@@ -11,10 +16,26 @@ const bashSpecialCaseCommands = new Set([
   'profile',
   'completion',
   'chat',
+  'export',
 ])
+
+const exportSubcommandNames = exportSubcommands.map(command => command.name).join(' ')
+const exportFlags = exportSubcommands[0].flags
+const exportFlagNames = exportFlags.map(flag => flag.name).join(' ')
 
 function escapeSingleQuotes(value: string): string {
   return value.replaceAll("'", "'\\''")
+}
+
+function renderZshExportFlags(): string {
+  return exportFlags
+    .map(flag => {
+      const value = flag.value
+        ? `:${flag.value}:${flag.completion === 'directory' ? '_files -/' : ''}`
+        : ''
+      return `'${flag.name}[${escapeSingleQuotes(flag.description)}]${value}'`
+    })
+    .join(' ')
 }
 
 function renderBashCommandCases(): string {
@@ -84,7 +105,7 @@ function renderFishTopLevelFlags(name: string): string {
 
 function bashCompletion(name: string): string {
   return `_${name}_completions() {
-  local cur prev words cword
+  local cur prev words cword candidate
 
   if type _init_completion &>/dev/null; then
     _init_completion || return
@@ -105,6 +126,15 @@ function bashCompletion(name: string): string {
   local cmd="\${words[1]}"
 
   case "$prev" in
+    --out)
+      if [[ "$cmd" == "export" ]]; then
+        COMPREPLY=()
+        while IFS= read -r candidate; do
+          COMPREPLY+=("$candidate")
+        done < <(compgen -d -- "$cur")
+        return
+      fi
+      ;;
     --priority)
       COMPREPLY=($(compgen -W "urgent high normal low" -- "$cur"))
       return
@@ -164,6 +194,13 @@ ${renderBashCommandCases()}
     chat)
       if [[ $cword -eq 2 ]]; then
         COMPREPLY=($(compgen -W "channels channel send messages reply replies react unreact reactions channel-create dm channel-update channel-delete members followers message-update message-delete" -- "$cur"))
+      fi
+      ;;
+    export)
+      if [[ $cword -eq 2 ]]; then
+        COMPREPLY=($(compgen -W "${exportSubcommandNames}" -- "$cur"))
+      elif [[ "$cur" == -* ]]; then
+        COMPREPLY=($(compgen -W "${exportFlagNames}" -- "$cur"))
       fi
       ;;
     completion)
@@ -1094,6 +1131,36 @@ ${renderZshTopLevelCommands(name)}
               ;;
           esac
           ;;
+        export)
+          local -a export_cmds
+          export_cmds=(
+${exportSubcommands.map(command => `            '${command.name}:${command.description}'`).join('\n')}
+          )
+          _arguments -C \
+            '1:export command:->export_cmd' \
+            '*::export_arg:->export_args'
+          case $state in
+            export_cmd)
+              _describe 'export command' export_cmds
+              ;;
+            export_args)
+              case $words[1] in
+                user)
+                  _arguments '1:user_ref:' ${renderZshExportFlags()}
+                  ;;
+                team)
+                  _arguments '1:space_ref:' ${renderZshExportFlags()}
+                  ;;
+                roadmap|initiatives)
+                  _arguments '1:list_id:' ${renderZshExportFlags()}
+                  ;;
+                docs|all)
+                  _arguments ${renderZshExportFlags()}
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
         completion)
           _arguments '1:shell:(bash zsh fish)'
           ;;
@@ -1203,6 +1270,19 @@ complete -c ${name} -n '__fish_seen_subcommand_from channel-update; and __fish_s
 complete -c ${name} -n '__fish_seen_subcommand_from channel-delete; and __fish_seen_subcommand_from chat' -l confirm -d 'Skip confirmation'
 complete -c ${name} -n '__fish_seen_subcommand_from message-update; and __fish_seen_subcommand_from chat' -s m -l message -d 'New message content'
 complete -c ${name} -n '__fish_seen_subcommand_from message-delete; and __fish_seen_subcommand_from chat' -l confirm -d 'Skip confirmation'
+
+${exportSubcommands
+  .map(
+    command =>
+      `complete -c ${name} -n '__fish_seen_subcommand_from export; and not __fish_seen_subcommand_from ${exportSubcommandNames}' -a ${command.name} -d '${escapeSingleQuotes(command.description)}'`,
+  )
+  .join('\n')}
+${exportFlags
+  .map(
+    flag =>
+      `complete -c ${name} -n '__fish_seen_subcommand_from export; and __fish_seen_subcommand_from ${exportSubcommandNames}' -l ${flag.name.slice(2)} -d '${escapeSingleQuotes(flag.description)}'${flag.value ? ' -r' : ''}${flag.completion === 'directory' ? " -a '(__fish_complete_directories)'" : ''}`,
+  )
+  .join('\n')}
 
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a list -d 'List all profiles'
 complete -c ${name} -n '__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from list add remove use' -a add -d 'Add a new profile'
