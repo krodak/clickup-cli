@@ -119,6 +119,7 @@ Status: :white_check_mark: implemented | :construction: planned | :no_entry_sign
 | List lists       | `cup lists <spaceId>`              | :white_check_mark: |
 | Create list      | `cup list-create <spaceId> <name>` | :white_check_mark: |
 | Rename list      | `cup list-rename <listId> <n>`     | :white_check_mark: |
+| List statuses    | `cup list-statuses <listId>`       | :white_check_mark: |
 | Delete list      | `cup list-delete <listId>`         | :white_check_mark: |
 | List folders     | `cup folders <spaceId>`            | :white_check_mark: |
 | Create folder    | `cup folder-create <spaceId> <n>`  | :white_check_mark: |

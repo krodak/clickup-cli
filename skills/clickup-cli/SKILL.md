@@ -217,6 +217,7 @@ All commands support `--help` for full flag details. All commands support `--jso
 | `cup doc-page-delete <docId> <pageId>` | Delete doc page |
 | `cup space-create <name>` | Create a space |
 | `cup list-create <spaceId> <name> [--folder folderId] [--copy-statuses-from id]` | Create a list in a space or folder |
+| `cup list-statuses <listId> [--set names] [--copy-from id]` | Show or set list statuses; first is open, last is closed |
 | `cup folder-create <spaceId> <name>` | Create a folder in a space |
 | `cup list-rename <listId> <newName>` | Rename a list |
 | `cup folder-rename <folderId> <newName>` | Rename a folder |
@@ -455,6 +456,7 @@ cup space-create "New Space"         # create a space
 cup folder-create <spaceId> "Q2"     # create a folder
 cup list-create <spaceId> "Backlog"  # create a list
 cup list-create <spaceId> "Sprint" --folder <folderId>
+cup list-statuses <listId> --set "open,in progress,done"  # replace list statuses (verified; names lowercased)
 cup space-rename <spaceId> "Platform"   # rename a space
 cup folder-rename <folderId> "Q3"       # rename a folder
 cup list-rename <listId> "Sprint 12"    # rename a list

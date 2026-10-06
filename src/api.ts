@@ -143,6 +143,7 @@ export interface List {
 
 export interface ListWithStatuses extends List {
   statuses: SpaceStatus[]
+  override_statuses?: boolean
 }
 
 interface Folder {
@@ -911,6 +912,7 @@ export class ClickUpClient {
     payload: {
       name?: string
       content?: string
+      override_statuses?: boolean
       statuses?: Array<{ status: string; color: string; type: string }>
     },
   ): Promise<{ id: string; name: string }> {

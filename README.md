@@ -188,11 +188,13 @@ Full CRUD for the core ClickUp workflow:
 | ⭐ **Favorites**     | Local favorites for quick access to sprint folders, spaces, lists, folders, views, tasks                                                                                                                      |
 | 👁️ **Views**         | List, get, create, update, delete views on lists                                                                                                                                                              |
 | 🔗 **Webhooks**      | List, create, update, delete webhooks; scope to space, folder, list, or task                                                                                                                                  |
-| 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template; subfolder parent IDs in JSON), members, user groups, task types, templates, plan, shared hierarchy                                                |
+| 🏢 **Workspace**     | Spaces, folders, lists (full CRUD + rename + from template + status sets; subfolder parent IDs in JSON), members, user groups, task types, templates, plan, shared hierarchy                                  |
 | 📎 **Attachments**   | Upload files to tasks, list task attachments, shown in detail views                                                                                                                                           |
 | 📦 **Export**        | Archive tasks and docs as lossless JSON + markdown: by user, space, roadmap list (initiatives grouped), or whole workspace; comment threads, subtask trees, custom fields, attachment binaries                |
 
 [Full API coverage details](docs/api-coverage.md) | [Command reference](docs/commands.md)
+
+`cup list-statuses <listId>` reads or replaces a list's status set. With `--set`, names are lowercased and an optional `:open`, `:custom`, `:done` or `:closed` suffix overrides the type; other colons remain part of the name. Status changes refuse to remove names still used by active, closed or archived tasks.
 
 ## Configuration
 

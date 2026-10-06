@@ -232,6 +232,7 @@ import {
   formatFilterDetail,
 } from './commands/filter.js'
 import { createListWithOptions } from './commands/list-create.js'
+import { listStatuses } from './commands/list-statuses.js'
 import { renameList } from './commands/list-rename.js'
 import { renameFolder } from './commands/folder-rename.js'
 import { renameSpace } from './commands/space-rename.js'
@@ -2774,6 +2775,35 @@ export function buildProgram(programName = basename(process.argv[1] ?? 'cup')): 
                 `  Copied ${result.statusesCopied} statuses from ${opts.copyStatusesFrom}`,
               )
             }
+          }
+        },
+      ),
+    )
+
+  program
+    .command('list-statuses <listId>')
+    .description('Show or set the status set of a list')
+    .option(
+      '--set <names>',
+      'Comma-separated statuses; first is open, last is closed, name:type overrides',
+    )
+    .option('--copy-from <id>', 'Copy the status set from this list or space ID')
+    .option('--json', 'Force JSON output even in terminal')
+    .action(
+      wrapAction(
+        async (listId: string, opts: { set?: string; copyFrom?: string; json?: boolean }) => {
+          const config = loadConfig(getProfileName())
+          const result = await listStatuses(config, listId, {
+            set: opts.set,
+            copyFrom: opts.copyFrom,
+          })
+          if (shouldOutputJson(opts.json ?? false)) {
+            console.log(JSON.stringify(result, null, 2))
+          } else {
+            console.log(
+              `${result.changed ? 'Set statuses on' : 'Statuses of'} list "${result.name}" (${result.id})`,
+            )
+            for (const s of result.statuses) console.log(`  ${s.status} (${s.type})`)
           }
         },
       ),

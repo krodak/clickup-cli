@@ -224,6 +224,7 @@ cup task https://app.clickup.com/t/9017679539/DEV-2760   # same as: cup task DEV
 | `cup doc-page-delete <docId> <pageId>`                   | Delete a doc page                                                           |
 | `cup space-create <name>`                                | Create a space                                                              |
 | `cup list-create <spaceId> <name>`                       | Create a list in a space                                                    |
+| `cup list-statuses <listId>`                             | Show or set list statuses                                                   |
 | `cup folder-create <spaceId> <name>`                     | Create a folder in a space                                                  |
 | `cup list-rename <listId> <newName>`                     | Rename a list                                                               |
 | `cup folder-rename <folderId> <newName>`                 | Rename a folder                                                             |
@@ -1378,7 +1379,7 @@ cup space-create "Design" --json
 
 ### `cup list-create <spaceId> <name>`
 
-Create a new list in a space. Optionally create it inside a folder with `--folder`. Use `--copy-statuses-from` to copy the status set from an existing list or space.
+Create a new list in a space. Optionally create it inside a folder with `--folder`. Use `--copy-statuses-from` to copy the status set from an existing list or space; the new list then overrides the space statuses and is read back to confirm the copy.
 
 ```bash
 cup list-create <spaceId> "Backlog"
@@ -1393,6 +1394,29 @@ cup list-create <spaceId> "New List" --copy-statuses-from <spaceId>
 | `--folder <folderId>`       | no       | Create the list inside a folder            |
 | `--copy-statuses-from <id>` | no       | Copy status set from this list or space ID |
 | `--json`                    | no       | Force JSON output                          |
+
+### `cup list-statuses <listId>`
+
+Show the status set of a list, or replace it. `--set` takes comma-separated names, which are lowercased before being sent to ClickUp: the first becomes the open status, the last the closed one, everything in between is custom. Append `:open`, `:custom`, `:done` or `:closed` to a name to set its type explicitly. Only a known type after the last colon is treated as an override; other colons remain part of the name. Existing statuses keep their color. `--copy-from` copies the set from another list or a space. The list then overrides the space statuses, and the command reads the list back to confirm ClickUp applied them.
+
+It refuses to drop a status that any task in the list still uses, including closed and archived tasks: ClickUp matches task statuses by name, so a direct rename orphans those tasks and clears their closed date. To rename, first set a list that keeps the old names, move the tasks, then set the final list. A closed status can only be moved to another closed one if the old one is temporarily `:done`, which keeps the original closed date.
+
+```bash
+cup list-statuses <listId>
+cup list-statuses <listId> --set "open,in progress,review,done"
+cup list-statuses <listId> --copy-from <otherListId>
+
+# Rename "complete" to "done" on a list whose tasks are complete
+cup list-statuses <listId> --set "to do,in progress,complete:done,done"
+cup update <taskId> --status done
+cup list-statuses <listId> --set "to do,in progress,done"
+```
+
+| Flag               | Required | Description                                                                                |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------ |
+| `--set <names>`    | no       | Comma-separated, lowercased statuses; first is open, last is closed, `name:type` overrides |
+| `--copy-from <id>` | no       | Copy the status set from this list or space ID                                             |
+| `--json`           | no       | Force JSON output                                                                          |
 
 ### `cup folder-create <spaceId> <name>`
 

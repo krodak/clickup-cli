@@ -125,6 +125,15 @@ describe('copyStatusesFrom', () => {
 describe('createListWithOptions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    for (const mock of [
+      mockGetListWithStatuses,
+      mockGetSpaceWithStatuses,
+      mockCreateList,
+      mockCreateFolderList,
+      mockUpdateList,
+    ]) {
+      mock.mockReset()
+    }
   })
 
   it('creates list without updateList when no --copy-statuses-from', async () => {
@@ -137,19 +146,43 @@ describe('createListWithOptions', () => {
 
   it('creates list and copies statuses when --copy-statuses-from given', async () => {
     mockCreateList.mockResolvedValue({ id: 'l2', name: 'My List' })
-    mockGetListWithStatuses.mockResolvedValue({
-      id: 'src1',
-      name: 'Source',
-      statuses: sampleStatuses,
-    })
+    mockGetListWithStatuses
+      .mockResolvedValueOnce({ id: 'src1', name: 'Source', statuses: sampleStatuses })
+      .mockResolvedValueOnce({
+        id: 'l2',
+        name: 'My List',
+        override_statuses: true,
+        statuses: sampleStatuses,
+      })
     const result = await createListWithOptions(config, 's1', 'My List', {
       copyStatusesFrom: 'src1',
     })
     expect(mockCreateList).toHaveBeenCalledWith('s1', 'My List')
     expect(mockUpdateList).toHaveBeenCalledWith('l2', {
+      override_statuses: true,
       statuses: expect.arrayContaining([expect.objectContaining({ status: 'open' })]),
     })
+    expect(mockGetListWithStatuses).toHaveBeenLastCalledWith('l2')
     expect(result.statusesCopied).toBe(3)
+    expect(result.statuses?.map(s => s.status)).toEqual(['open', 'in progress', 'done'])
+  })
+
+  it('fails with list ID when ClickUp ignores the copied statuses', async () => {
+    mockCreateList.mockResolvedValue({ id: 'l5', name: 'Ignored' })
+    mockGetListWithStatuses
+      .mockResolvedValueOnce({ id: 'src1', name: 'Source', statuses: sampleStatuses })
+      .mockResolvedValueOnce({
+        id: 'l5',
+        name: 'Ignored',
+        override_statuses: false,
+        statuses: [
+          { status: 'to do', color: '#000', type: 'open' },
+          { status: 'complete', color: '#222', type: 'closed' },
+        ],
+      })
+    await expect(
+      createListWithOptions(config, 's1', 'Ignored', { copyStatusesFrom: 'src1' }),
+    ).rejects.toThrow('"Ignored" (l5) was created but status copy failed')
   })
 
   it('creates list inside folder when --folder given', async () => {

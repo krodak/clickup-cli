@@ -760,6 +760,18 @@ export const commandMetadata = [
     ],
   },
   {
+    name: 'list-statuses',
+    description: 'Show or set the status set of a list',
+    flags: ['--set', '--copy-from', '--json'],
+    quickReference: [
+      {
+        section: 'write',
+        usage: 'list-statuses <listId>',
+        description: 'Show or set list statuses',
+      },
+    ],
+  },
+  {
     name: 'folder-create',
     description: 'Create a new folder in a space',
     flags: ['--json'],
