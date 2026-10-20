@@ -58,7 +58,7 @@
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
-    "tsup": "^8.0.0",
+    "tsup": "^9.0.0",
     "tsx": "^4.0.0",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.59.0",
